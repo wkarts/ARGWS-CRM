@@ -58,7 +58,7 @@ class Misc extends AdminController
 
     public function get_taxes_dropdown_template()
     {
-        if($this->companyAuxiliary!==null){$name=$this->input->post('name');if(!is_string($name))throw new DomainException('company_catalog_invalid');echo $this->nativeCatalog()->taxDropdown($name,$this->input->post('taxname'));return;}
+        if($this->companyAuxiliary!==null){CompanyRequestScope::assertNativeMutation($this);$name=$this->input->post('name');if(!is_string($name))throw new DomainException('company_catalog_invalid');$catalog=$this->nativeCatalog();$selected=$this->input->post('taxname')??[];if(!is_array($selected))throw new DomainException('company_catalog_invalid');echo $catalog->taxDropdown($name,$catalog->validateTaxSelections($selected));return;}
         $name    = $this->input->post('name');
         $taxname = $this->input->post('taxname');
         echo $this->misc_model->get_taxes_dropdown_template($name, $taxname);

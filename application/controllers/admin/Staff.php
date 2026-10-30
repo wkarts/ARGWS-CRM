@@ -610,6 +610,18 @@ class Staff extends AdminController
 
     public function save_completed_checklist_visibility()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$data=$this->input->post(null,false)?:[];
+                unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->security))unset($data[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($data),['task_id','hideCompleted'])||!isset($data['task_id'],$data['hideCompleted']))throw new DomainException('native_checklist_visibility_invalid');
+                require_once APPPATH.'services/NativeCompanyTaskChecklistVisibility.php';$ctx=CompanyRequestScope::context();
+                $value=(new NativeCompanyTaskChecklistVisibility($this->db,db_prefix()))->save($ctx->issuerId(),$ctx->staffId(),$data['task_id'],$data['hideCompleted']);
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'hide'=>$value],JSON_THROW_ON_ERROR));
+            }catch(DomainException $error){show_error('Não foi possível salvar a preferência desta tarefa.',str_contains($error->getMessage(),'denied')?403:422);}
+            catch(Throwable $error){show_error('Não foi possível confirmar a preferência desta tarefa.',503);}
+            return;
+        }
         hooks()->do_action('before_save_completed_checklist_visibility');
 
         $post_data = $this->input->post();

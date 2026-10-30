@@ -114,7 +114,7 @@ trait CompanyCreditWriter
         $check=$this->creditRows('SELECT status FROM '.db_prefix().'invoices WHERE id=? AND issuer_id=?',[$invoice['id'],$invoice['issuer_id']])[0]??[];if((int)($check['status']??0)!==$status)throw new \RuntimeException('issuer_credit_write_unconfirmed');
     }
     /** New entries use exact positive magnitudes; reversal kind and parent point to immutable original evidence. */
-    public function moveCompanyCredit($issuer,$actor,string $kind,array $input,string $key,?\CompanyFinancialApiGuard $apiGuard=null,?\CompanyPostRefundManualReversalSource $manualSource=null,?\CompanyLocalNoncashFundsSource$localSource=null):string
+    public function moveCompanyCredit($issuer,$actor,string $kind,array $input,string $key,?\CompanyFinancialApiGuard $apiGuard=null,?\CompanyPostRefundManualReversalSource $manualSource=null,?\CompanyLocalNoncashFundsSource$localSource=null,?string $expectedPaymentRevision=null):string
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);self::creditKey($key);
         if(!in_array($kind,['apply','unapply','refund','refund_reverse','manual_reverse'],true)||array_diff(array_keys($input),['credit_id','invoice_id','parent_key','payment_id','amount','date','reference','reason']))throw new \DomainException('company_credit_invalid_input');
@@ -125,12 +125,15 @@ trait CompanyCreditWriter
         if($data['date']>date('Y-m-d'))throw new \DomainException('company_credit_invalid_input');if($data['parent_key']!==null){if(!is_string($data['parent_key']))throw new \DomainException('company_credit_invalid_input');self::creditKey($data['parent_key']);}
         if($kind==='manual_reverse'?($data['credit_id']!==null||$data['payment_id']===null||$data['parent_key']!==null||$data['invoice_id']===null):($data['credit_id']===null||$data['payment_id']!==null||($kind==='apply'&&($data['invoice_id']===null||$data['parent_key']!==null))||($kind==='refund'&&($data['invoice_id']!==null||$data['parent_key']!==null))||($reverse&&$data['parent_key']===null)||($kind==='unapply'&&$data['invoice_id']===null)||($kind==='refund_reverse'&&$data['invoice_id']!==null)))throw new \DomainException('company_credit_invalid_input');
         $caps=$kind==='manual_reverse'?[['invoices','view'],['payments','delete']]:[['credit_notes','view'],['credit_notes','edit'],['payments',$reverse?'delete':'create']];if(in_array($kind,['apply','unapply'],true))$caps[]=['invoices','view'];
-        $hash=hash('sha256',json_encode([$kind,$data],JSON_THROW_ON_ERROR));
-        return $this->creditTransaction($issuer,$actor,$caps,function()use($issuer,$actor,$kind,$data,$key,$hash,$amount,$manualSource,$localSource):string{
+        if($expectedPaymentRevision!==null&&($kind!=='manual_reverse'||!preg_match('/^[a-f0-9]{64}$/D',$expectedPaymentRevision)))throw new \DomainException('company_credit_invalid_input');
+        $binding=[$kind,$data];if($expectedPaymentRevision!==null)$binding[]=$expectedPaymentRevision;
+        $hash=hash('sha256',json_encode($binding,JSON_THROW_ON_ERROR));
+        return $this->creditTransaction($issuer,$actor,$caps,function()use($issuer,$actor,$kind,$data,$key,$hash,$amount,$manualSource,$localSource,$expectedPaymentRevision):string{
             $localClaim=$localSource?->claim($this->db,db_prefix(),$issuer,$actor);
             $manualClaim=$manualSource?->claim($this->db,db_prefix(),$issuer,$actor,$data,$key);
             $p=db_prefix();$old=$this->creditRows('SELECT issuer_id,actor_id,input_hash,kind FROM '.$p.'company_credit_entries WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($old){if($localSource!==null&&!$localClaim['existing'])throw new \DomainException('company_local_settlement_conflict');if((int)$old['issuer_id']!==$issuer||(int)$old['actor_id']!==$actor||$old['kind']!==$kind||!hash_equals($old['input_hash'],$hash))throw new \DomainException('company_credit_request_conflict');if($data['credit_id']!==null)$this->ownedCredit($issuer,$data['credit_id']);if($data['invoice_id']!==null){$resource=$this->creditRows('SELECT currency FROM '.$p.'invoices WHERE id=? AND issuer_id=?',[$data['invoice_id'],$issuer])[0]??null;if(!$resource)throw new \DomainException('company_credit_access_denied');(new \CompanyCurrencyUnits($this->db,$p))->resolveRead($resource['currency']);}return $key;}
+            if($expectedPaymentRevision!==null){require_once __DIR__.'/CompanyInvoices.php';if(!hash_equals($expectedPaymentRevision,(new \CompanyInvoices($this->db,$p))->paymentRevision($issuer,$actor,$data['invoice_id'])))throw new \DomainException('company_invoice_stale');}
             $ref=hash('sha256',$data['reference']);if($this->creditRows('SELECT request_key FROM '.$p.'company_credit_entries WHERE issuer_id=? AND kind=? AND reference_hash=?',[$issuer,$kind,$ref]))throw new \DomainException('company_credit_reference_conflict');
             $credit=$data['credit_id']!==null?$this->ownedCredit($issuer,$data['credit_id']):null;$invoice=$data['invoice_id']!==null?($localSource!==null?$localClaim['invoice']:($manualSource!==null?$manualClaim['invoice']:$this->creditInvoice($issuer,$data['invoice_id']))):null;$native=0;
             if(($credit&&$data['date']<$credit['date'])||($invoice&&$data['date']<$invoice['date']))throw new \DomainException('company_credit_invalid_input');

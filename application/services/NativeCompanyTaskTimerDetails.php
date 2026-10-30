@@ -64,6 +64,12 @@ final class NativeCompanyTaskTimerDetails
         if($rate!==null)$rate=self::rate($rate);if($note!==null&&(strlen($note)>4000||!mb_check_encoding($note,'UTF-8')))throw new DomainException('native_timer_note_invalid');$json=$rate===null?null:json_encode($rate,JSON_THROW_ON_ERROR);$expectedNote=$kind==='company_blank_task_timer'?$this->source($i,$kind,$id)['note']:$note;if($kind==='company_blank_task_timer')$note=null;
         IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_task_timer_details(source_kind,timer_id,issuer_id,actor_id,rate_snapshot_json,note,revision) VALUES(?,?,?,?,?,?,1)',[$kind,$id,$i,$a,$json,$note]);if(method_exists($this->db,'affected_rows')&&(int)$this->db->affected_rows()!==1)throw new RuntimeException('native_timer_snapshot_unconfirmed');$after=$this->row($i,$a,$kind,$id);if($after!==['hourly_rate'=>$rate['hourly_rate']??null,'note'=>$expectedNote,'revision'=>1,'rate_basis'=>$rate,'declared'=>true])throw new RuntimeException('native_timer_snapshot_unconfirmed');
     }
+    public function captureForStaffInOwned(int $issuer,int $actor,int $subject,string $kind,int $id,object $proof,string $note):void
+    {
+        $this->prove($proof,$issuer,$subject,$kind,$id);$rates=new NativeCompanyStaffRates($this->db,$this->p);
+        $read=fn()=>$actor===$subject?$rates->forOwnTimerInOwned($issuer,$actor):$rates->forStaff($issuer,$actor,$subject);
+        $rate=$read();$this->insert($issuer,$subject,$kind,$id,$rate,$note);if($read()!==$rate)throw new DomainException('native_staff_rate_stale');
+    }
     public function captureNewInOwned(int$i,int$a,string$kind,int$id,object$proof,string$note):void
     {
         $this->prove($proof,$i,$a,$kind,$id);$rates=new NativeCompanyStaffRates($this->db,$this->p);$rate=$rates->forOwnTimerInOwned($i,$a);$this->insert($i,$a,$kind,$id,$rate,$note);if($rates->forOwnTimerInOwned($i,$a)!==$rate)throw new DomainException('native_staff_rate_stale');

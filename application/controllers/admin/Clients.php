@@ -819,7 +819,7 @@ class Clients extends AdminController
 
     public function mark_as_active($id)
     {
-        if($this->nativeCompanyClients()){$this->change_client_status($id,'1');return;}
+        if($this->nativeCompanyClients()){$this->change_client_status($id,'1');redirect(admin_url('clients/client/'.$id),'location',303);return;}
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { show_404(); return; }
         $this->db->where('userid', $id);
         $this->db->update(db_prefix() . 'clients', [

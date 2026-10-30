@@ -937,6 +937,16 @@ function sales_number_format($number, $format, $applied_prefix, $date)
  */
 function get_currency($id_or_name)
 {
+    $nativeCI = &get_instance();
+    if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($nativeCI)) {
+        // The currency catalog is public reference data. Native requests do not
+        // initialize the global model/object-cache graph merely to format money.
+        if ((!is_int($id_or_name) && !is_string($id_or_name)) || !preg_match('/^(?:[1-9][0-9]*|[A-Z]{3})$/D', (string)$id_or_name)) { throw new DomainException('company_currency_invalid'); }
+        $column = ctype_digit((string)$id_or_name) ? 'id' : 'name';
+        $rows = $nativeCI->db->query('SELECT * FROM '.db_prefix().'currencies WHERE '.$column.'=?', [$id_or_name])->result_array();
+        if (count($rows) !== 1) { throw new DomainException('company_currency_invalid'); }
+        return (object)$rows[0];
+    }
     $CI = &get_instance();
     if (! class_exists('currencies_model', false)) {
         $CI->load->model('currencies_model');

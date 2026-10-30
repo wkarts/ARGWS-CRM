@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyPdfTypography.php';
+require_once __DIR__.'/CompanyPdfLayout.php';
 
 /** Exact native sales PDF formats, without global options, hooks, file names or custom dimensions. */
 final class CompanyDocumentPdf
@@ -34,6 +35,11 @@ final class CompanyDocumentPdf
     {
         $prefs=$context['sales_preferences']??null;
         return is_array($prefs)&&in_array($prefs['format']??null,[3,5],true)?CompanyPdfTypography::validate($prefs['typography']??null):CompanyPdfTypography::historical('estimates');
+    }
+    public static function layout(array $context,string $kind):array
+    {
+        $prefs=$context['sales_preferences']??null;
+        return is_array($prefs)&&array_key_exists('layout',$prefs)?CompanyPdfLayout::validate($prefs['layout']):CompanyPdfLayout::historical($kind);
     }
     public static function choiceSpecification(string $choice):array
     {

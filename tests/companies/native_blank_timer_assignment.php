@@ -2,7 +2,8 @@
 require __DIR__.'/native_blank_timers.php';
 require_once APPPATH.'services/NativeCompanyWorkAssignmentsSchema.php';
 require_once APPPATH.'services/CompanyTasks.php';require_once APPPATH.'services/CompanyStandaloneTasks.php';
-foreach(CompanyProjectExtrasSchema::definitions($p)as$table=>$columns)if(!$db->table_exists($p.$table)){$ddl='CREATE TABLE '.$p.$table.'('.implode(',',$columns).')';$ddl=str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl);$db->query($ddl);}unset($db->data_cache['table_names']);
+if($db->driver()!=='sqlite')CompanyProjectExtrasSchema::ensure($db,$p);
+else foreach(CompanyProjectExtrasSchema::definitions($p)as$table=>$columns)if(!$db->table_exists($p.$table)){$ddl='CREATE TABLE '.$p.$table.'('.implode(',',$columns).')';$ddl=str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl);$db->query($ddl);}unset($db->data_cache['table_names']);
 NativeCompanyWorkAssignmentsSchema::ensure($db,$p);
 $db->query('UPDATE '.$p.'company_blank_task_timers SET closed_at=NULL,started_at=? WHERE id=?',[gmdate('Y-m-d H:i:s',time()-60),$second]);
 $beforeTask=$db->query('SELECT * FROM '.$p.'company_standalone_tasks WHERE id=?',[$task])->row_array();

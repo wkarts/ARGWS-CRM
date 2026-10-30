@@ -14,9 +14,10 @@ function site_url($v=''){return 'https://crm.invalid/'.$v;} function admin_url($
 function get_option(...$args){throw new RuntimeException('global options forbidden');} function hooks(){throw new RuntimeException('global hooks forbidden');}
 function is_admin(){throw new RuntimeException('global privilege helper forbidden');}
 function init_head(){} function init_tail(){} function form_close(){return '</form>';}
-function form_open_multipart($url,$attrs=[]){return '<form id="'.e($attrs['id']).'" data-native-ticket="'.e($attrs['data-native-ticket']).'">';}
-function form_open($url,$attrs=[]){return '<form id="'.e($attrs['id']).'">';}
+function form_open_multipart($url,$attrs=[]){return form_open($url,['enctype'=>'multipart/form-data']+$attrs);}
+function form_open($url,$attrs=[]){$html='<form action="'.e($url).'"';foreach($attrs as $key=>$value)$html.=' '.e($key).'="'.e($value).'"';return $html.'>';}
 function form_error($name){return '';}
+function show_error($message,$status=500){throw new DomainException('http_'.$status);}
 function form_hidden($name,$value=''){return '<input type="hidden" name="'.e($name).'" value="'.e($value).'">';}
 function file_upload_max_size(){return 1024;} function get_mime_by_extension($ext){return 'application/octet-stream';}
 require APPPATH.'helpers/tickets_helper.php';

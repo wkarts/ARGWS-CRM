@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_project_view)){ ?><div class="panel_s"><div class="panel-body"><h4>Apontamentos do projeto</h4><table class="table"><thead><tr><th>Tarefa</th><th>Profissional</th><th>Início</th><th>Fim</th><th>Duração</th></tr></thead><tbody><?php foreach($native_project_timesheets['timers']as$timer){ ?><tr><td><a href="<?= admin_url('tasks/list_tasks/'.$timer['task_id']); ?>" onclick="init_task_modal(<?= e($timer['task_id']); ?>);return false;"><?= e($timer['task_name']); ?></a></td><td><?= (int)$timer['staff_id']; ?></td><td><?= e(date('Y-m-d H:i:s',$timer['start_time'])); ?></td><td><?= $timer['end_time']===null?'Em execução':e(date('Y-m-d H:i:s',$timer['end_time'])); ?></td><td><?= e(gmdate('H:i:s',$timer['total_seconds'])); ?></td></tr><?php } ?></tbody></table><?php require __DIR__.'/native_timesheet_rules.php'; ?></div></div><?php return; } ?>
 <a href="#" onclick="new_timesheet();return false;" class="btn btn-primary tw-mb-2">
     <i class="fa-regular fa-plus tw-mr-1"></i>
     <?= _l('record_timesheet'); ?>

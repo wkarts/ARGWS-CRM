@@ -18,41 +18,22 @@ $address = static function (array $value) use ($escape, $lines): string {
 $date = static function (string $value): string { $parts = explode('-', $value); return $parts[2] . '/' . $parts[1] . '/' . $parts[0]; };
 $statuses = [1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancelada',6=>'Rascunho'];
 $identity = $data['identity'];
+$layout=CompanyInvoicePresentation::layout($identity,'invoices');
 ?>
-<table cellpadding="3" width="100%">
-<tr>
-<td width="58%">
-<?php if ($identity['logo_inline'] !== '') { ?>
-<img width="110" src="<?= $escape($identity['logo_inline']) ?>"><br />
-<?php } ?>
-<b><?= $escape($identity['legal_name']) ?></b><br />
-<?= $escape($identity['tax_id']) ?><br />
-<?= $escape($identity['address']) ?><br />
-<?= $escape($identity['city']) ?> / <?= $escape($identity['state']) ?><br />
-<?= $escape($identity['postcode']) ?> · <?= $escape($identity['country_code']) ?>
-<?php if ($identity['phone'] !== '') { ?><br /><?= $escape($identity['phone']) ?><?php } ?>
-<?php if ($identity['email'] !== '') { ?><br /><?= $escape($identity['email']) ?><?php } ?>
-</td>
-<td width="42%" align="right">
-<span style="font-size:22pt"><b>FATURA</b></span><br />
-<b><?= $escape($data['number']) ?></b><br />
-<?= $escape($statuses[$data['status']]) ?><br />
-Emissão: <?= $escape($date($data['date'])) ?><br />
-<?php if ($data['due_date'] !== null) { ?>Vencimento: <?= $escape($date($data['due_date'])) ?><?php } ?>
-</td>
-</tr>
-</table>
-<br />
-<table cellpadding="5" width="100%"><tr>
-<td width="58%"><b>Destinatário</b><br /><?= $escape($data['recipient']['name']) ?>
-<?php if ($data['recipient']['tax_id'] !== '') { ?><br /><?= $escape($data['recipient']['tax_id']) ?><?php } ?>
-<br /><?= $address($data['recipient']['billing']) ?></td>
-<td width="42%">
-<?php if ($data['recipient']['shipping'] !== null) { ?><b>Entrega</b><br /><?= $address($data['recipient']['shipping']) ?><?php } ?>
-</td></tr></table>
+<?php if ($identity['logo_inline'] !== '') { ?><img width="<?= $layout['logo_width']; ?>" src="<?= $escape($identity['logo_inline']); ?>"><br /><?php } ?>
+<h1>FATURA <?= $escape($data['number']); ?></h1>
+<?php if($layout['show_status']){ ?><?= $escape($statuses[$data['status']]); ?><br /><?php } ?>
+Emissão: <?= $escape($date($data['date'])); ?><br />
+<?php if($data['due_date']!==null){ ?>Vencimento: <?= $escape($date($data['due_date'])); ?><br /><?php } ?>
+<?php
+$sender='<b>'.$escape($identity['legal_name']).'</b><br />'.$escape($identity['tax_id']).'<br />'.$address(array_intersect_key($identity,array_flip(['address','city','state','postcode','country_code','phone','email'])));
+$recipient='<b>Destinatário</b><br />'.$escape($data['recipient']['name']).($data['recipient']['tax_id']!==''?'<br />'.$escape($data['recipient']['tax_id']):'').'<br />'.$address($data['recipient']['billing']);
+if($data['recipient']['shipping']!==null)$recipient.='<br /><b>Entrega</b><br />'.$address($data['recipient']['shipping']);
+echo CompanyPdfLayout::parties($sender,$recipient,$layout);
+?>
 <br />
 <table cellpadding="5" cellspacing="0" border="0" width="100%">
-<thead><tr style="background-color:#e8edf2;font-weight:bold;">
+<thead><tr style="background-color:<?= $escape($layout['heading_color']); ?>;color:<?= $escape($layout['heading_text_color']); ?>;font-weight:bold;">
 <th width="43%">Descrição</th><th width="13%" align="right"><?= $escape([1=>'Qtd.',2=>'Horas',3=>'Qtd./Horas'][$data['quantity_mode']]) ?></th><th width="22%" align="right">Valor unitário</th><th width="22%" align="right">Valor</th>
 </tr></thead><tbody>
 <?php foreach ($data['items'] as $item) { ?>
@@ -87,4 +68,12 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 <?php if ($data['note'] !== '') { ?><br /><b>Observações</b><br /><?= $lines($data['note']) ?><?php } ?>
 <?php if ($data['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($data['terms']) ?><?php } ?>
 
-<?php if(!empty($identity['signature_inline'])){ ?><br /><br /><img width="140" src="<?= $escape($identity['signature_inline']); ?>"><br />Assinatura do emitente<?php } ?>
+<?php if($layout['show_transactions']){if(!array_key_exists('transactions',$data))throw new DomainException('issuer_document_invalid_content'); ?>
+<br /><br /><b>Pagamentos registrados</b>
+<table cellpadding="5" width="100%"><thead><tr><th>Data / referência</th><th>Original</th><th>Revertido</th><th>Vigente</th></tr></thead><tbody>
+<?php foreach($data['transactions']as$payment){ ?><tr><td><?= $escape($date($payment['date'])); ?><br />#<?= $payment['id']; ?> <?= $escape($payment['mode']==='company_manual'?'Registro manual':$payment['mode']); ?><br /><?= $escape($payment['reference']); ?></td><td><?= $money($payment['original']); ?></td><td><?= $money($payment['reversed']); ?></td><td><?= $money($payment['effective']); ?></td></tr><?php } ?>
+</tbody></table><?php if(!$data['transactions']){ ?><p>Nenhum pagamento registrado.</p><?php } ?>
+<?php } ?>
+<?php if($layout['show_pay_link']&&isset($data['portal_path'])){require_once __DIR__.'/../../services/CompanyInvoicePaymentPresentation.php'; ?><p><a href="<?= $escape(CompanyInvoicePaymentPresentation::portalUrl($data['portal_path'])); ?>">Consultar fatura e opções de pagamento no portal</a>. O acesso e as opções disponíveis dependem da autenticação e das permissões do contato.</p><?php } ?>
+
+<?php if($layout['show_signature']&&!empty($identity['signature_inline'])){ ?><br /><br /><img width="140" src="<?= $escape($identity['signature_inline']); ?>"><br />Assinatura do emitente<?php } ?>

@@ -121,8 +121,4 @@ final class NativeCompanyTicketCommands extends CompanyContractsStorage
         IssuerTransaction::assertOwned($db,$p,['issuers_registry','company_tickets',NativeCompanyDepartmentSchema::TICKETS,NativeCompanyTicketCatalogSchema::REFERENCES]);
         $this->authorize($issuer,$actor,'create');if(!hash_equals($this->createdProof['frame'],$this->createdFrame($issuer,$id)))throw new DomainException('native_ticket_creation_proof_denied');
     }
-    protected function audit(int $issuer,int $actor,int $id,string $event):void
-    {
-        $before=(int)($this->rows('SELECT MAX(id) AS last_id FROM '.$this->p.'issuers_audit')[0]['last_id']??0);parent::audit($issuer,$actor,$id,$event);if((int)$this->db->insert_id()<=$before)throw new RuntimeException('issuer_ticket_write_unconfirmed');
-    }
 }

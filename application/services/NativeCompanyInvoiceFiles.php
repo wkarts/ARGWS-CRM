@@ -102,7 +102,11 @@ final class NativeCompanyInvoiceFiles
     }
     public function visibility(int $i,int $a,int $id,int $revision,bool $visible):int
     {
-        return$this->tx(function()use($i,$a,$id,$revision,$visible){$r=$this->readOwned($i,$a,$id,$revision);$this->authorizeParent($i,$a,$r['invoice_id'],'edit');if($r['file_key']!==null)(new CompanyInvoiceAttachments($this->db,$this->p))->visibilityInOwned($i,$a,$r['invoice_id'],$r['file_key'],$r['content_hash'],$visible,true);
+        return$this->tx(function()use($i,$a,$id,$revision,$visible){$source=$this->source($i,$id);$this->authorizeParent($i,$a,(int)$source['invoice_id'],'edit');
+            // Exact one-step replay: revalidate current private bytes and visibility,
+            // then return the prior result without changing its revision or audit.
+            if((int)$source['active']===1&&(int)$source['revision']===$revision+1&&(int)$source['visible_to_customer']===(int)$visible){$this->readOwned($i,$a,$id,$revision+1,false);return$revision+1;}
+            $r=$this->readOwned($i,$a,$id,$revision);if($r['file_key']!==null)(new CompanyInvoiceAttachments($this->db,$this->p))->visibilityInOwned($i,$a,$r['invoice_id'],$r['file_key'],$r['content_hash'],$visible,true);
             IssuerStorage::query($this->db,'UPDATE '.$this->p.'files SET visible_to_customer=? WHERE id=?',[(int)$visible,$id]);
             $nonce=bin2hex(random_bytes(32));IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_invoice_file_projection SET revision=revision+1,write_nonce=? WHERE file_id=? AND issuer_id=? AND revision=?',[$nonce,$id,$i,$revision]);$s=$this->source($i,$id);if((int)$s['revision']!==$revision+1||!hash_equals($nonce,$s['write_nonce']))throw new RuntimeException('native_invoice_file_unconfirmed');$this->readOwned($i,$a,$id,$revision+1);$this->audit($i,$a,$r['invoice_id'],$id,'native_invoice_file_visibility');return$revision+1;
         });

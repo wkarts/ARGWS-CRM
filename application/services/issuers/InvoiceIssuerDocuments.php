@@ -401,7 +401,7 @@ final class InvoiceIssuerDocuments
             }
             $registry = $this->one("SELECT id,active FROM {$this->tables}registry WHERE id=? FOR UPDATE", [$issuer]);
             if (!$registry || (int) $registry['active'] !== 1) { throw new DomainException('issuer_unavailable'); }
-            $record = $this->one("SELECT id,issuer_id,clientid,date,duedate,currency,subtotal,total_tax,total,adjustment,discount_total,status,clientnote,terms,show_quantity_as,
+            $record = $this->one("SELECT id,issuer_id,clientid,hash,date,duedate,currency,subtotal,total_tax,total,adjustment,discount_total,status,clientnote,terms,show_quantity_as,
                 billing_street,billing_city,billing_state,billing_zip,billing_country,shipping_street,shipping_city,shipping_state,shipping_zip,shipping_country,include_shipping,show_shipping_on_invoice
                 FROM {$this->prefix}invoices WHERE id=? FOR UPDATE", [$invoice]);
             if (!$record || !isset($record['issuer_id']) || IssuerPolicy::id($record['issuer_id']) !== $issuer) {
@@ -423,7 +423,11 @@ final class InvoiceIssuerDocuments
             $this->requireAccess($issuer, 'view_invoices');
             $balance=new CompanyInvoiceBalance($this->db,$this->prefix);$position=$this->portalSource?$balance->portalInOwned($this->portalSource,$this->portalSession,$issuer,$invoice):$balance->inOwned($issuer,$this->actor,$invoice);
             $this->requireAccess($issuer, 'render_invoices');$this->requireAccess($issuer, 'view_invoices');
-            return compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
+            $source=compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
+            $layout=CompanyInvoicePresentation::layout($snapshot['identity'],'invoices');
+            if($layout['show_transactions']){require_once __DIR__.'/../CompanyInvoicePaymentPresentation.php';$source['transactions']=CompanyInvoicePaymentPresentation::captureInOwned($this->db,$this->prefix,$issuer,$invoice,$position);}
+            if($layout['show_pay_link']&&in_array((int)$record['status'],[1,3,4],true)&&preg_match('/^[a-f0-9]{32}$/D',(string)$record['hash']))$source['portal_path']='invoice/'.$invoice.'/'.$record['hash'].'?issuer_id='.$issuer;
+            $this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');return $source;
     }
 
     /** Read-only. Missing/mismatched snapshots never fall back to global identity or number. */

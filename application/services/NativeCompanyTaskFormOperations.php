@@ -3,9 +3,11 @@ declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyTaskFormSchema.php';
 require_once __DIR__.'/NativeCompanyTaskFormValues.php';
 require_once __DIR__.'/NativeCompanyTaskRelationAuthority.php';
+require_once __DIR__.'/NativeCompanyTaskOriginalActions.php';
 /** Explicit native form entrypoints on the existing task writers, with the same transaction and billing fences. */
 trait NativeCompanyTaskFormOperations
 {
+    use NativeCompanyTaskOriginalActions;
     private bool $nativeChecklistActive=false;
     private ?array $nativeChecklistContext=null;
     private ?array $nativeStatusContext=null;
@@ -180,7 +182,7 @@ trait NativeCompanyTaskFormOperations
     private function nativeTaskTables():array
     {
         $kind=$this->taskKind()==='project'?'task':'standalone';$table=$kind==='task'?'company_task_assignees':'company_standalone_assignees';
-        require_once __DIR__.'/NativeCompanyWorkAssignments.php';$tables=$this->db->table_exists($this->p.$table)?(new NativeCompanyWorkAssignments($this->db,$this->p))->tableNames($kind):[];
+        require_once __DIR__.'/NativeCompanyWorkAssignments.php';$tables=$this->db->table_exists($this->p.$table)?(new NativeCompanyWorkAssignments($this->db,$this->p))->tableNames($kind):[];if($this->db->table_exists($this->p.'options'))$tables[]='options';
         require_once __DIR__.'/NativeCompanyTaskItems.php';$checklistTables=NativeCompanyTaskItems::tables($this->taskKind());$present=array_map(fn($name)=>$this->db->table_exists($this->p.$name),$checklistTables);
         if($this->nativeChecklistActive||in_array(true,$present,true)){if(in_array(false,$present,true))throw new RuntimeException('native_task_item_schema_invalid');$tables=array_merge($tables,$checklistTables);}
         if($this->db->table_exists($this->p.'company_task_checklist_templates')){require_once __DIR__.'/NativeCompanyTaskChecklistTemplates.php';$tables=array_merge($tables,(new NativeCompanyTaskChecklistTemplates($this->db,$this->p))->tableNames());}
@@ -241,7 +243,7 @@ trait NativeCompanyTaskFormOperations
     }
     private function confirmNativeTaskRelatedFrames():void
     {
-        foreach($this->nativeTaskRelatedFrames as$f){if(isset($f['task_relation'])){[$i,$a,$fields,$proof]=$f['task_relation'];if(NativeCompanyTaskRelationAuthority::fields($this->db,$this->p,$i,$a,$fields)!==$proof)throw new DomainException('native_task_relation_stale');continue;}if(isset($f['milestone_authority'])){[$i,$a]=$f['milestone_authority'];if(!(new IssuerResourceAccess($this->db,$this->p))->can($i,$a,'projects','edit'))throw new DomainException('company_project_portal_access_denied');}if($this->rows($f['query'],$f['args'])!==$f['rows'])throw new RuntimeException('issuer_project_write_unconfirmed');if(isset($f['follower_authority'])){[$i,$members,$project]=$f['follower_authority'];$acl=new IssuerResourceAccess($this->db,$this->p);foreach($members as$member)if(!$acl->can($i,$member,'tasks','view')||($project&&!$acl->can($i,$member,'projects','view')))throw new DomainException('native_assignment_denied');}}
+        foreach($this->nativeTaskRelatedFrames as$f){if(isset($f['task_relation'])){[$i,$a,$fields,$proof]=$f['task_relation'];if(NativeCompanyTaskRelationAuthority::fields($this->db,$this->p,$i,$a,$fields)!==$proof)throw new DomainException('native_task_relation_stale');continue;}if(isset($f['milestone_authority'])){[$i,$a]=$f['milestone_authority'];if(!(new IssuerResourceAccess($this->db,$this->p))->can($i,$a,'projects','edit'))throw new DomainException('company_project_portal_access_denied');}if($this->rows($f['query'],$f['args'])!==$f['rows'])throw new RuntimeException('issuer_project_write_unconfirmed');if(isset($f['comment_authority'])){[$i,$a,$comment,$action]=$f['comment_authority'];NativeCompanyTaskCommentPolicy::assertAllowed($this->db,$this->p,$i,$a,$comment,$action);}if(isset($f['follower_authority'])){[$i,$members,$project]=$f['follower_authority'];$acl=new IssuerResourceAccess($this->db,$this->p);foreach($members as$member)if(!$acl->can($i,$member,'tasks','view')||($project&&!$acl->can($i,$member,'projects','view')))throw new DomainException('native_assignment_denied');}}
     }
     private function rememberNativeTaskParent(int$i,int$a,int$id):void
     {

@@ -77,8 +77,17 @@ async function select(page, issuer) {
     assert.equal(sql('SELECT LENGTH(pfx_cipher)+LENGTH(password_cipher) FROM tblissuer_certificate_credentials WHERE issuer_id=' + a[0]), '0');
     assert.equal(sql('SELECT SHA2(pfx_cipher,256) FROM tblissuer_certificate_credentials WHERE issuer_id=' + b[0]), bCipher);
     await page.setViewportSize({ width: 390, height: 844 });
-    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'A1 form fits mobile');
+    // setViewportSize may resolve before the original resize handler changes
+    // the desktop sidebar/layout. Observe that real transition before measuring.
+    await page.waitForFunction(() => document.body.classList.contains('page-small'));
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const geometry = await page.evaluate(() => ({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyClasses:document.body.className}));
+    fs.writeFileSync(output + '/certificate-a-removed-mobile.json', JSON.stringify(geometry,null,2));
     await page.screenshot({ path: output + '/certificate-a-removed-mobile.png', fullPage: true });
+    assert(geometry.scrollWidth <= geometry.width + 1, 'A1 form fits mobile');
     console.log('Official Settings certificate browser: multipart, status, replacement, invalid password, stale revision/context, A/B isolation, removal and responsive screenshots passed with synthetic fixtures.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error.message); process.exit(1); });

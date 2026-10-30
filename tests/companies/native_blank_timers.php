@@ -6,7 +6,8 @@ $f=essentialFixture('1.0.2',1);$db=$f->db;$p=$f->prefix;IssuerCore::reconcile($d
 if($db->driver()==='sqlite'){
  foreach(array_merge(CompanyProjectsSchema::definitions($p),CompanyStandaloneTasksSchema::definitions($p))as$table=>$columns){$ddl='CREATE TABLE '.$p.$table.'('.implode(',',$columns).')';$ddl=str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl);$db->query($ddl);}
 }else{CompanyProjectsSchema::ensure($db,$p);CompanyStandaloneTasksSchema::ensure($db,$p);}
-foreach(CompanyProjectExtrasSchema::definitions($p)as$table=>$columns)if(!$db->table_exists($p.$table)){$ddl='CREATE TABLE '.$p.$table.'('.implode(',',$columns).')';$db->query(str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl));}
+if($db->driver()!=='sqlite')CompanyProjectExtrasSchema::ensure($db,$p);
+else foreach(CompanyProjectExtrasSchema::definitions($p)as$table=>$columns)if(!$db->table_exists($p.$table)){$ddl='CREATE TABLE '.$p.$table.'('.implode(',',$columns).')';$db->query(str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl));}
 require_once APPPATH.'services/NativeCompanyWorkAssignmentsSchema.php';NativeCompanyWorkAssignmentsSchema::ensure($db,$p);
 unset($db->data_cache['table_names']);NativeCompanyBlankTimerSchema::ensure($db,$p);require_once APPPATH.'services/NativeCompanyStaffRateSchema.php';NativeCompanyStaffRateSchema::ensure($db,$p);NativeCompanyTaskTimerDetailsSchema::ensure($db,$p);
 $db->query('CREATE TABLE '.$p.'taskstimers(id INT PRIMARY KEY,task_id INT NOT NULL,staff_id INT NOT NULL,end_time BIGINT NULL)');unset($db->data_cache['table_names']);

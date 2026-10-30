@@ -38,6 +38,7 @@ class Payments extends AdminController
     }
 
     public function batch_payment_modal() {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'batch_payment_modal',null);return;}
         $this->load->model('invoices_model');
         $data['invoices'] = $this->invoices_model->get_unpaid_invoices();
         $data['customers'] = $this->db->select('userid,' . get_sql_select_client_company())
@@ -48,6 +49,7 @@ class Payments extends AdminController
 
 	public function add_batch_payment()
 	{
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'add_batch_payment',null);return;}
 		if ($this->input->method() !== 'post') {
 			show_404();
 		}
@@ -68,11 +70,13 @@ class Payments extends AdminController
     /* In case if user go only on /payments */
     public function index()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'index',null);return;}
         $this->list_payments();
     }
 
     public function list_payments()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'list_payments',null);return;}
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -85,6 +89,7 @@ class Payments extends AdminController
 
     public function table($clientid = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'table',$clientid);return;}
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -99,6 +104,7 @@ class Payments extends AdminController
     /* Update payment data */
     public function payment($id = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'payment',$id);return;}
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -156,6 +162,7 @@ class Payments extends AdminController
      */
     public function pdf($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'pdf',$id);return;}
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -277,6 +284,7 @@ class Payments extends AdminController
     /* Delete payment */
     public function delete($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyPaymentsHttp.php';NativeCompanyPaymentsHttp::handle($this,'delete',$id);return;}
         if (staff_cant('delete', 'payments')) {
             access_denied('Delete Payment');
         }

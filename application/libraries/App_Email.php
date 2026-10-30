@@ -197,6 +197,8 @@ class App_Email extends App_mailer
                 NativeCompanyPrivacyMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 require_once APPPATH.'services/NativeCompanyEventMail.php';
                 require_once APPPATH.'services/NativeCompanyContractMail.php';
+                require_once APPPATH.'services/NativeCompanyFinancialMail.php';
+                NativeCompanyFinancialMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 NativeCompanyContractMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 NativeCompanyEventMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 require_once APPPATH.'services/NativeCompanyStaffInviteMail.php';
@@ -225,6 +227,8 @@ class App_Email extends App_mailer
                         $transport=NativeCompanyCustomerUploadMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(NativeCompanyPrivacyMail::HEADER,$headers)){
                         $transport=NativeCompanyPrivacyMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
+                    }elseif(array_key_exists(NativeCompanyFinancialMail::HEADER,$headers)){
+                        $transport=NativeCompanyFinancialMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(NativeCompanyContractMail::HEADER,$headers)){
                         $transport=NativeCompanyContractMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(NativeCompanyEventMail::HEADER,$headers)){
@@ -278,7 +282,7 @@ class App_Email extends App_mailer
                 if(array_key_exists(CompanyPortalRecoveryMail::HEADER,$headers)){
                     (new CompanyPortalMailQueueConsumer($this->CI->db,db_prefix(),(string)$this->CI->config->item('encryption_key')))->assertDispatch($email,$headers[CompanyPortalRecoveryMail::HEADER]);unset($headers[CompanyPortalRecoveryMail::HEADER]);
                 }
-                unset($headers[NativeCompanyContractMail::HEADER],$headers[NativeCompanyCustomerUploadMail::HEADER],$headers[NativeCompanyPrivacyMail::HEADER],$headers[NativeCompanyEventMail::HEADER],$headers[NativeCompanyStaffInviteMail::HEADER],$headers[NativePortalVerificationMail::HEADER],$headers[CompanyNativeContactMail::HEADER],$headers[NativeCompanyReminderDelivery::HEADER],$headers[NativeCompanyFileMessage::HEADER]);
+                unset($headers[NativeCompanyFinancialMail::HEADER],$headers[NativeCompanyContractMail::HEADER],$headers[NativeCompanyCustomerUploadMail::HEADER],$headers[NativeCompanyPrivacyMail::HEADER],$headers[NativeCompanyEventMail::HEADER],$headers[NativeCompanyStaffInviteMail::HEADER],$headers[NativePortalVerificationMail::HEADER],$headers[CompanyNativeContactMail::HEADER],$headers[NativeCompanyReminderDelivery::HEADER],$headers[NativeCompanyFileMessage::HEADER]);
                 $this->reset_account_transport();
                 $this->set_useragent($email->engine);
                 $this->initialize($transport);
@@ -341,6 +345,7 @@ class App_Email extends App_mailer
             $verificationPermit = null;
             $eventPermit = null;
             $contractPermit = null;
+            $financialPermit = null;
             $privacyPermit = null;
             $customerUploadPermit = null;
             $staffInvitePermit = null;
@@ -356,8 +361,10 @@ class App_Email extends App_mailer
                 $customerUploadPermit=NativeCompanyCustomerUploadMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
                 $privacyPermit=NativeCompanyPrivacyMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
                 $staffInvitePermit=NativeCompanyStaffInviteMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders,(string)$this->CI->config->item('encryption_key'));
+                $financialPermit=NativeCompanyFinancialMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
                 $contractPermit=NativeCompanyContractMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
                 $sent = $this->send(true);
+                if($financialPermit!==null)NativeCompanyFinancialMail::completeDispatch($this->CI->db,db_prefix(),$financialPermit,$sent);
                 if($contractPermit!==null)NativeCompanyContractMail::completeDispatch($this->CI->db,db_prefix(),$contractPermit,$sent);
                 if($eventPermit!==null)NativeCompanyEventMail::completeDispatch($this->CI->db,db_prefix(),$eventPermit,$sent);
 
@@ -374,6 +381,7 @@ class App_Email extends App_mailer
                 }
                 $status = $sent ? 'sent' : 'failed';
             } catch (Throwable $error) {
+                if($financialPermit!==null){try{NativeCompanyFinancialMail::completeDispatch($this->CI->db,db_prefix(),$financialPermit,false);}catch(Throwable $receiptError){log_message('error','Financial document email outcome requires review.');}}
                 if($contractPermit!==null){try{NativeCompanyContractMail::completeDispatch($this->CI->db,db_prefix(),$contractPermit,false);}catch(Throwable $receiptError){log_message('error','Owned contract email outcome requires review.');}}
                 if($eventPermit!==null){try{NativeCompanyEventMail::completeDispatch($this->CI->db,db_prefix(),$eventPermit,false);}catch(Throwable $receiptError){log_message('error','Owned event email outcome requires review.');}}
                 if($customerUploadPermit!==null){try{NativeCompanyCustomerUploadMail::completeDispatch($this->CI->db,db_prefix(),$customerUploadPermit,false);}catch(Throwable $receiptError){log_message('error','Customer upload email outcome requires review.');}}

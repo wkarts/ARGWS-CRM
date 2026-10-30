@@ -526,28 +526,26 @@ class Invoices extends AdminController
             try {
                 require_once APPPATH.'services/NativeCompanyInvoiceForm.php';
                 $context=CompanyRequestScope::context();$form=new NativeCompanyInvoiceForm($this->db,db_prefix());
-                // Existing documents require the separate revision-bound edit composition; no global fallback.
-                if ($id !== '') { throw new DomainException('native_invoice_existing_form_required'); }
                 $method=$this->input->method(true);
                 if ($method==='POST') {
                     CompanyRequestScope::assertNativeMutation($this);
                     $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
                     if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
-                    $result=$form->create($context->issuerId(),$context->staffId(),$input);
+                    $result=$id===''?$form->create($context->issuerId(),$context->staffId(),$input):$form->update($context->issuerId(),$context->staffId(),$id,$input);
                     if($result['action']==='save_and_record_payment')$this->session->set_userdata('record_payment',true);
-                    set_alert('success',_l('added_successfully',_l('invoice')));
+                    set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('invoice')));
                     redirect(admin_url('invoices/list_invoices/'.$result['result']['canonical_id']));
                 } elseif (in_array($method,['GET','HEAD'],true)) {
                     $query=$this->input->get(null,false)?:[];
                     if(array_diff(array_keys($query),['customer_id']))throw new DomainException('native_invoice_form_invalid');
-                    $data=$form->createData($context->issuerId(),$context->staffId(),$query['customer_id']??null);
+                    $data=$id===''?$form->createData($context->issuerId(),$context->staffId(),$query['customer_id']??null):$form->editData($context->issuerId(),$context->staffId(),$id);
                     if($method==='HEAD'){$this->output->set_output('');return;}
                     $this->load->view('admin/invoices/invoice',$data);
                 } else { show_error('Método não permitido.',405); }
             } catch (DomainException $error) {
                 $key=$error->getMessage();$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
                 show_error('Não foi possível confirmar esta operação da fatura nesta empresa.',$status);
-            } catch (Throwable $error) { show_error('Não foi possível confirmar a fatura.',503); }
+            } catch (Throwable $error) {  show_error('Não foi possível confirmar a fatura.',503); }
             return;
         }
         if ($this->input->post()) {
@@ -673,6 +671,13 @@ class Invoices extends AdminController
                 require_once APPPATH.'services/NativeCompanyInvoicePreviewData.php';
                 $context=CompanyRequestScope::context();
                 $data=(new NativeCompanyInvoicePreviewData($this->db,db_prefix()))->presentation($context->issuerId(),$context->staffId(),$id);
+                $data['native_invoice_reminder_sources']=(new NativeCompanyInvoiceCommunicationState($this->db,db_prefix()))->reminderSources($context->issuerId(),$context->staffId());
+                $acl=new IssuerResourceAccess($this->db,db_prefix());
+                if($acl->can($context->issuerId(),$context->staffId(),'invoices','edit')&&$acl->can($context->issuerId(),$context->staffId(),'customers','view')){
+                    require_once APPPATH.'services/CompanyInvoiceDelivery.php';
+                    $data['native_invoice_delivery']=(new CompanyInvoiceDelivery($this->db,db_prefix()))->state($context->issuerId(),$context->staffId(),$id);
+                    $data['native_invoice_delivery_key']=bin2hex(random_bytes(32));
+                }
                 $data+=['invoices_to_merge'=>[],'credits_available'=>0,'open_credits'=>[],'customer_currency'=>(object)['name'=>$data['invoice']->currency_name],
                     'invoice_recurring_invoices'=>[],'members'=>[],'activity'=>[],'record_payment'=>false,'send_later'=>false];
                 if($this->session->has_userdata('record_payment')){$data['record_payment']=true;$this->session->unset_userdata('record_payment');}
@@ -682,7 +687,7 @@ class Invoices extends AdminController
             } catch (DomainException $error) {
                 $reason=$error->getMessage();$status=$reason==='native_invoice_preview_method_denied'?405:(str_contains($reason,'changed')||str_contains($reason,'stale')?409:403);
                 show_error('Fatura indisponível ou solicitação não autorizada nesta empresa.',$status);
-            } catch (Throwable $error) { show_error('Não foi possível confirmar a visualização da fatura.',503); }
+            } catch (Throwable $error) {  show_error('Não foi possível confirmar a visualização da fatura.',503); }
             return;
         }
         if (staff_cant('view', 'invoices')
@@ -879,6 +884,18 @@ class Invoices extends AdminController
     /* Send invoice to email */
     public function send_to_email($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){
+            $this->output->set_header('Cache-Control: no-store');
+            try{
+                CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/CompanyInvoiceDelivery.php';
+                $context=CompanyRequestScope::context();$input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['sent_to','_native_invoice_revision','request_key'])||!is_array($input['sent_to']??null)||!array_is_list($input['sent_to'])||count($input['sent_to'])!==1||!is_string($input['_native_invoice_revision']??null)||!is_string($input['request_key']??null))throw new DomainException('company_invoice_delivery_invalid');
+                $this->load->library('encryption');
+                (new CompanyInvoiceDelivery($this->db,db_prefix()))->queue($context->issuerId(),$context->staffId(),$id,$input['sent_to'][0],$input['_native_invoice_revision'],$input['request_key'],$this->config->base_url(),fn($value)=>$this->encryption->decrypt($value));
+                set_alert('success','Notificação registrada na fila de envio.');redirect(admin_url('invoices/list_invoices/'.$id));
+            }catch(DomainException $error){$reason=$error->getMessage();show_error('Não foi possível registrar a notificação desta empresa.',str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403));}
+            catch(Throwable $error){show_error('Não foi possível confirmar a fila de envio.',503);}return;
+        }
         $canView = user_can_view_invoice($id);
         if (!$canView) {
             access_denied('Invoices');
@@ -926,6 +943,19 @@ class Invoices extends AdminController
     /* Delete invoice payment*/
     public function delete_payment($id, $invoiceid)
     {
+        if(CompanyRequestScope::nativeFor($this)){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                require_once APPPATH.'services/NativeCompanyInvoicePaymentReversal.php';$context=CompanyRequestScope::context();
+                (new NativeCompanyInvoicePaymentReversal($this->db,db_prefix()))->submit($context->issuerId(),$context->staffId(),$id,$invoiceid,$input);
+                CompanyRequestScope::invalidateCaches($this);
+                redirect(admin_url('invoices/list_invoices/'.IssuerPolicy::id($invoiceid)),'location',303);
+            }catch(DomainException $error){$key=$error->getMessage();show_error('Estorno não confirmado. Confira o recebimento, a revisão e as permissões.',str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_contains($key,'invalid')?422:403));}
+            catch(Throwable $error){show_error('Não foi possível confirmar o estorno.',503);}
+            return;
+        }
         if (staff_cant('delete', 'payments')) {
             access_denied('payments');
         }

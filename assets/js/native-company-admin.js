@@ -2,6 +2,7 @@
 (function(){'use strict';
  if(!document.body.classList.contains('native-company-admin'))return;
  NativeAdminRuntime.configureUploads();
+ init_task_checklist_events();
  $(function(){if(Array.isArray(app.available_tags))NativeAdminWidgets.initTags();NativeAdminWidgets.initTables();init_table_tickets();init_table_staff_projects();NativeAdminWidgets.initVisuals();if(app.options.calendar_first_day!==undefined)NativeAdminWidgets.initDates();NativeAdminWidgets.initSelects();if(window.NativeAdminCalendar)window.NativeAdminCalendar.init();});
 
  var config=window.NativeCompanyHeaderConfig;if(!config)return;

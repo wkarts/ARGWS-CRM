@@ -38,6 +38,16 @@ class Tickets extends AdminController
         $this->load->model('tickets_model');
     }
 
+    private function nativeTicketResponse(callable $action):void
+    {
+        try{$action();}
+        catch(DomainException $error){
+            $reason=$error->getMessage();
+            $status=str_contains($reason,'method')?405:(str_contains($reason,'stale')||str_contains($reason,'conflict')||str_contains($reason,'changed')?409:(str_contains($reason,'csrf')||str_contains($reason,'denied')||str_contains($reason,'access')?403:422));
+            show_error('Não foi possível confirmar a operação deste chamado nesta empresa. Reabra a tela e confira os dados.',$status);
+        }catch(RuntimeException $error){show_error('A operação do chamado não foi confirmada. Recarregue antes de repetir.',503);}
+    }
+
     private function nativeTicketCatalog():NativeCompanyTicketCatalogController
     {require_once APPPATH.'services/NativeCompanyTicketCatalogController.php';return new NativeCompanyTicketCatalogController($this);}
 
@@ -107,7 +117,7 @@ class Tickets extends AdminController
 
     public function add($userid = false)
     {
-        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketPage()->add($userid);return;}
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketResponse(fn()=>$this->nativeTicketPage()->add($userid));return;}
         if ($this->input->post()) {
             $data            = $this->input->post();
             $data['message'] = html_purify($this->input->post('message', false));
@@ -191,7 +201,7 @@ class Tickets extends AdminController
 
     public function delete_attachment($id)
     {
-        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->deleteAttachment((string)$id);return;}
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketResponse(fn()=>$this->nativeTicketLifecycle()->deleteAttachment((string)$id));return;}
         if (is_admin() || (! is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')) {
             if (get_option('staff_access_only_assigned_departments') == 1 && ! is_admin()) {
                 $attachment = $this->tickets_model->get_ticket_attachment($id);
@@ -239,6 +249,7 @@ class Tickets extends AdminController
     public function ticket($id)
     {
         if (CompanyRequestScope::nativeFor($this)) {
+            $this->nativeTicketResponse(function()use($id):void {
             $method = strtoupper($this->input->method());
             if ($method === 'GET' && $this->input->get('merge_preview') !== null) {
                 $this->nativeTicketLifecycle()->mergePreview($id);
@@ -250,6 +261,10 @@ class Tickets extends AdminController
                 return;
             }
             if ($method !== 'POST') throw new DomainException('native_ticket_method_invalid');
+            if ($this->input->post('native_ticket_command', false) === 'upload_files') {
+                $this->nativeTicketLifecycle()->uploadFiles($id);
+                return;
+            }
             if (in_array($this->input->post('action', false), ['portal_permission','portal_publish'], true)) {
                 try {
                     require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
@@ -269,6 +284,7 @@ class Tickets extends AdminController
                 return;
             }
             $this->nativeTicketLifecycle()->reply($id);
+            });
             return;
         }
         if (! $id) {
@@ -394,7 +410,7 @@ class Tickets extends AdminController
 
     public function change_status_ajax($id, $status)
     {
-        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->changeStatus($id,$status);return;}
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketResponse(fn()=>$this->nativeTicketLifecycle()->changeStatus($id,$status));return;}
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->tickets_model->change_ticket_status($id, $status));
         }
@@ -402,7 +418,7 @@ class Tickets extends AdminController
 
     public function update_single_ticket_settings()
     {
-        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->updateSettings();return;}
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketResponse(fn()=>$this->nativeTicketLifecycle()->updateSettings());return;}
         if ($this->input->post()) {
             if ($this->input->post('merge_ticket_ids') !== 0) {
                 $ticketsToMerge = explode(',', $this->input->post('merge_ticket_ids') ?: '');

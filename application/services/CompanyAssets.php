@@ -98,6 +98,14 @@ final class CompanyAssets
         $assets=$this->document($issuer)->{self::KEY}??new stdClass();
         return ['logo_inline'=>$assets->logo??'','signature_inline'=>$assets->signature??''];
     }
+    public function contractProfileInOwnedTransaction(int $issuer,int $actor):array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,['issuers_registry','issuers_installation_identity','issuers_resource_permissions','issuers_staff','staff']);
+        $acl=new IssuerResourceAccess($this->db,$this->prefix);
+        if(!$acl->can($issuer,$actor,'contracts','view')||!$acl->can($issuer,$actor,'contracts','edit'))throw new DomainException('company_asset_access_denied');
+        $assets=$this->document($issuer)->{self::KEY}??new stdClass();
+        return ['logo_inline'=>$assets->logo??'','signature_inline'=>$assets->signature??''];
+    }
     public function download($issuer,$actor,string $kind,string $revision):string
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);self::kind($kind);$this->authorize($issuer,$actor,'view');

@@ -2,6 +2,7 @@
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 const assert = require('node:assert/strict');
+const ticketDriver = require('../helpers/native_ticket_driver.cjs');
 const { execFileSync } = require('node:child_process');
 const { chromium } = require('playwright');
 const url = process.env.ISSUERS_BROWSER_URL;
@@ -42,7 +43,7 @@ function currentContract(page) {
     const contracts = {}, tickets = {};
     async function select(id) { await page.goto(url + '/admin/'); await selectCompanyOption(page, id); }
 
-    const legacyClient = sql('SELECT c.userid FROM tblclients c LEFT JOIN tblissuers_clients o ON o.client_id=c.userid WHERE o.client_id IS NULL ORDER BY c.userid LIMIT 1');
+    const legacyClient = sql("SELECT c.userid FROM tblclients c LEFT JOIN tblissuers_clients o ON o.client_id=c.userid WHERE c.company='Synthetic historical primary customer' AND o.client_id IS NULL");
     assert.match(legacyClient, /^[1-9]\d*$/, 'upgrade fixture retains an ownerless primary customer');
     sql("INSERT INTO tblcontracts(content,description,subject,client,datestart,dateend,contract_type,project_id,addedfrom,dateadded,isexpirynotified,contract_value,trash,not_visible_to_client,hash,signed,signature,marked_as_signed) SELECT '<p>Historical primary body</p>','Historical primary description','Browser historical primary contract'," + legacyClient + ",'2020-01-01','2030-01-01',NULL,NULL,17,UTC_TIMESTAMP(),0,10.00,0,0,MD5('browser-historical-primary-contract'),0,NULL,0 WHERE NOT EXISTS(SELECT 1 FROM tblcontracts WHERE subject='Browser historical primary contract')");
     const historical = sql("SELECT id FROM tblcontracts WHERE subject='Browser historical primary contract'");
@@ -77,47 +78,42 @@ function currentContract(page) {
       assert.equal(stale.status(), 409, 'stale contract cancel cannot overwrite activation');
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + contract.raw), 'active');
 
-      await nav(page, page.getByRole('button', { name: 'Copiar para novo rascunho', exact: true }));
+      await nav(page, page.locator('form[action$="/contracts/copy/'+contract.canonical+'"] button[type=submit]'));
       const copy = currentContract(page);
       assert.notEqual(copy.canonical, contract.canonical);
       await page.locator('#contract-edit-body').fill('New independent draft ' + letter);
       await nav(page, page.locator('form').filter({ has: page.locator('#contract-edit-body') }).locator('button[type=submit]'));
       assert.equal(sql('SELECT body FROM tblcompany_contracts WHERE id=' + copy.raw), 'New independent draft ' + letter);
-      await nav(page, page.getByRole('button', { name: 'Cancelar e preservar histórico', exact: true }));
+      await nav(page, page.locator('form').filter({has:page.locator('input[name=action][value=cancel]')}).locator('button[type=submit]'));
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + copy.raw), 'cancelled');
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + contract.raw), 'active', 'copy does not change source');
 
-      await page.goto(url + '/admin/tickets');
-      await page.locator('#ticket-client').selectOption(client);
-      await page.locator('#ticket-subject').fill('Browser support ' + letter + ' <script>');
-      await page.locator('#ticket-body').fill('Private support body ' + letter);
-      await nav(page, page.locator('form').filter({ has: page.locator('#ticket-subject') }).locator('button[type=submit]'));
-      const ticket = new URL(page.url()).searchParams.get('ticket');
-      tickets[issuer] = ticket;
-      assert.match(ticket || '', /^[1-9]\d*$/);
-      assert.equal(sql('SELECT issuer_id FROM tblcompany_tickets WHERE id=' + ticket), issuer);
-      const oldReply = await hidden(page.locator('form').filter({ has: page.locator('#ticket-reply') }));
-      await page.locator('#ticket-reply').fill('Synthetic private reply ' + letter + ' <script>');
-      await nav(page, page.locator('form').filter({ has: page.locator('#ticket-reply') }).locator('button[type=submit]'));
-      const freshReply = await hidden(page.locator('form').filter({ has: page.locator('#ticket-reply') }));
-      assert.equal((await ctx.request.post(url + '/admin/tickets', { form: { ...freshReply, ...oldReply, request_key: freshReply.request_key, reply: 'Stale reply' } })).status(), 409);
-      assert.equal(sql('SELECT COUNT(*) FROM tblcompany_ticket_replies WHERE ticket_id=' + ticket), '1');
-      await page.locator('#ticket-state').selectOption('resolved');
-      await nav(page, page.getByRole('button', { name: 'Salvar estado e responsável', exact: true }));
-      assert.equal(await page.locator('#ticket-reply').count(), 0);
-      await page.locator('#ticket-state').selectOption('open');
-      await nav(page, page.getByRole('button', { name: 'Salvar estado e responsável', exact: true }));
-      await page.locator('#ticket-reply').fill('After explicit reopening ' + letter);
-      await nav(page, page.locator('form').filter({ has: page.locator('#ticket-reply') }).locator('button[type=submit]'));
-      await page.locator('#ticket-state').selectOption('closed');
-      await nav(page, page.getByRole('button', { name: 'Salvar estado e responsável', exact: true }));
-      assert.equal(sql('SELECT status FROM tblcompany_tickets WHERE id=' + ticket), 'closed');
-      assert.equal(sql('SELECT COUNT(*) FROM tblcompany_ticket_replies WHERE ticket_id=' + ticket), '2');
+      const { ticket } = await ticketDriver.create(page,url,sql,{issuer,client,subject:'Browser support '+letter+' <script>',body:'Private support body '+letter});
+      tickets[issuer] = ticket.id;
+      assert.equal(sql('SELECT issuer_id FROM tblcompany_tickets WHERE id='+ticket.raw),issuer);
+      const oldReply = await ticketDriver.hidden(page.locator('#ticket-reply'));
+      await ticketDriver.reply(page,'Synthetic private reply '+letter+' <script>');
+      const freshReply = await ticketDriver.hidden(page.locator('#ticket-reply'));
+      assert.equal((await ctx.request.post(url+'/admin/tickets/ticket/'+ticket.id,{form:{...freshReply,...oldReply,request_nonce:freshReply.request_nonce,message:'Stale reply'}})).status(),409);
+      assert.equal(sql('SELECT COUNT(*) FROM tblcompany_ticket_replies WHERE ticket_id='+ticket.raw),'1');
+      // The current official catalog closes a completed ticket with Closed;
+      // the historical enum called this first completion Resolved. Preserve the
+      // terminal-state, denied-reply and explicit reopening assertions.
+      await ticketDriver.status(page,'closed');
+      assert.equal(await page.locator('#ticket-reply').count(),0);
+      const closedState=await ticketDriver.hidden(page.locator('form[data-ticket-status="open"]'));delete closedState.return_to_ticket;
+      assert.equal((await ctx.request.post(url+'/admin/tickets/ticket/'+ticket.id,{form:{...freshReply,...closedState,ticketid:ticket.id,message:'Denied while closed'}})).status(),422);
+      await ticketDriver.status(page,'open');
+      await ticketDriver.reply(page,'After explicit reopening '+letter);
+      await ticketDriver.status(page,'closed');
+      assert.equal(sql("SELECT c.code FROM tblcompany_ticket_catalog_references r JOIN tblcompany_ticket_catalog c ON c.id=r.source_id AND c.issuer_id=r.issuer_id AND c.kind=r.kind WHERE r.issuer_id="+issuer+" AND r.ticket_id="+ticket.raw+" AND r.kind='status'"),'closed');
+      assert.equal(sql('SELECT COUNT(*) FROM tblcompany_ticket_replies WHERE ticket_id='+ticket.raw),'2');
+
     }
 
     assert.equal((await ctx.request.get(url + '/admin/contracts/contract/' + contracts[a].canonical)).status(), 403);
     assert.equal((await ctx.request.get(url + '/admin/contracts/pdf/' + contracts[a].canonical)).status(), 403);
-    assert.equal((await ctx.request.get(url + '/admin/tickets?ticket=' + tickets[a])).status(), 409);
+    assert.equal((await ctx.request.get(url + '/admin/tickets/ticket/' + tickets[a])).status(), 403);
 
     await select(primary);
     let primaryClient = sql("SELECT userid FROM tblclients WHERE company='Browser primary contract customer'");

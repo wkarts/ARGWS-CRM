@@ -38,7 +38,7 @@ final class NativeCompanyTaskDetailRead
     }
     private function rows(string $table,int $issuer,int $task,?int $actor):array
     {
-        $args=[$issuer,$task];$where=' WHERE issuer_id=? AND task_id=?';if($actor!==null){$where.=' AND actor_id=?';$args[]=$actor;}
+        $args=[$issuer,$task];$where=' WHERE issuer_id=? AND task_id=?';if(str_ends_with($table,'_comments'))$where.=" AND body<>''";if($actor!==null){$where.=' AND actor_id=?';$args[]=$actor;}
         $rows=IssuerStorage::query($this->db,'SELECT * FROM '.$this->prefix.$table.$where.' ORDER BY id LIMIT 10001',$args)->result_array();
         if(count($rows)>10000)throw new DomainException('native_task_detail_limit');return$rows;
     }

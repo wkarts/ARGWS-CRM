@@ -22,13 +22,14 @@ final class NativeCompanyPresentationOptions
     {
         if(!class_exists('CompanySettingsRuntime',false)||!CompanySettingsRuntime::active()||CompanySettingsRuntime::issuerId()!==$issuer||CompanySettingsRuntime::staffId()!==$actor)throw new DomainException('native_company_options_context_mismatch');
         $values=[];$present=[];
-        foreach(['dateformat','time_format','desktop_notifications','auto_dismiss_desktop_notifications_after','tables_pagination_limit'] as $name){
+        foreach(['dateformat','time_format','desktop_notifications','auto_dismiss_desktop_notifications_after','tables_pagination_limit','task_modal_class'] as $name){
             $present[$name]=CompanySettingsRuntime::exists($name);
             $values[$name]=$present[$name]?CompanySettingsRuntime::get($name):null;
         }
         if($values['dateformat']!==null&&!array_key_exists($values['dateformat'],CompanySettingsFormats::dates()))throw new DomainException('native_company_options_invalid');
         if($values['time_format']!==null&&!in_array($values['time_format'],['12','24'],true))throw new DomainException('native_company_options_invalid');
         if($values['desktop_notifications']!==null&&!in_array($values['desktop_notifications'],['0','1'],true))throw new DomainException('native_company_options_invalid');
+        if($values['task_modal_class']!==null&&!in_array($values['task_modal_class'],['modal-lg','modal-xl','modal-xxl'],true))throw new DomainException('native_company_options_invalid');
         $delay=$values['auto_dismiss_desktop_notifications_after'];
         if($delay!==null&&(!preg_match('/^(0|[1-9][0-9]{0,4})$/D',$delay)||(int)$delay>86400))throw new DomainException('native_company_options_invalid');
         self::pagination(['values'=>$values]);

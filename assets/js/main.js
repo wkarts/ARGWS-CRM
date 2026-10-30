@@ -468,40 +468,7 @@ $(function () {
     $(".timesheet-duration input").val("");
   });
 
-  /* Insert new checklist items on enter press */
-  $("body").on(
-    "keypress",
-    'textarea[name="checklist-description"]',
-    function (event) {
-      if (event.which == "13") {
-        var that = $(this);
-        update_task_checklist_item(that).done(function () {
-          add_task_checklist_item(that.attr("data-taskid"));
-        });
-        return false;
-      }
-    }
-  );
-
-  /* Update tasks checklist items when focusing out */
-  $("body").on(
-    "blur paste",
-    'textarea[name="checklist-description"]',
-    function () {
-      update_task_checklist_item($(this));
-    }
-  );
-
-  $("body").on(
-    "show.bs.select",
-    "select.checklist-items-template-select",
-    _make_task_checklist_items_deletable
-  );
-  $("body").on(
-    "refreshed.bs.select",
-    "select.checklist-items-template-select",
-    _make_task_checklist_items_deletable
-  );
+  init_task_checklist_events();
 
   // trigger jquery validation validate
   $("body").on("changed.bs.select", "select", function (e) {
@@ -627,40 +594,6 @@ $(function () {
   if (typeof taskid !== "undefined" && taskid !== "") {
     init_task_modal(taskid);
   }
-
-  // Task checklist mark as complete/incomplete
-  $("body").on("change", 'input[name="checklist-box"]', function () {
-    if ($("body").hasClass("native-company-admin")) {
-      var checkbox = $(this), item = checkbox.closest('.checklist'), checked = checkbox.prop('checked');
-      native_task_checklist_command($('#checklist-items'), 'complete', {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision'), finished:checked ? '1' : '0'}).done(function () {
-        recalculate_checklist_items_progress();
-      }).fail(function () { checkbox.prop('checked', !checked); alert_float('danger', 'Não foi possível atualizar o item. Atualize a tarefa e tente novamente.'); });
-      return;
-    }
-    requestGet(
-      admin_url +
-        "tasks/checkbox_action/" +
-        $(this).parents(".checklist").data("checklist-id") +
-        "/" +
-        ($(this).prop("checked") === true ? 1 : 0)
-    );
-    recalculate_checklist_items_progress();
-    if (
-      $(this).prop("checked") &&
-      $('button[data-hide="1"]').hasClass("hide")
-    ) {
-      $(this).closest(".checklist ").addClass("hide");
-    }
-  });
-
-  // Fix task checklist content textarea height
-  $("body").on(
-    "keyup paste click",
-    "textarea[name='checklist-description']",
-    function (e) {
-      do_task_checklist_items_height($(this));
-    }
-  );
 
   // On click on task comment textarea make it tinymce, by default is plain textarea
   $("body").on("click focus", "#task_comment", function (e) {
@@ -1955,32 +1888,7 @@ $(document).keyup(function (e) {
   }
 });
 
-function _make_task_checklist_items_deletable() {
-  if (app.options.has_permission_tasks_checklist_items_delete == "1") {
-    var itemsHtml = $("body")
-      .find(".checklist-templates-wrapper ul.dropdown-menu li")
-      .not(":first-child");
-    var itemsSelect = $("body")
-      .find(".checklist-templates-wrapper select option")
-      .not(":first-child");
-    $.each(itemsSelect, function (i, item) {
-      var $item = $(item);
-      if (
-        $(itemsHtml[i]).find(".checklist-item-template-remove").length === 0
-      ) {
-        $(itemsHtml[i])
-          .find("a > span.text")
-          .after(
-            '<small class="checklist-item-template-remove" onclick="remove_checklist_item_template(' +
-              $item.attr("value") +
-              '); event.stopPropagation();"><i class="fa fa-remove"></i></small>'
-          );
-      }
-    });
-  }
-}
-
-
+// Original checklist template presentation shared from assets/js/native-tasks.js.
 
 // Fix for height on the wrapper
 
@@ -3658,137 +3566,7 @@ function init_table_announcements(manual) {
 // Remove task checklist items template
 // Shared original checklist template actions: assets/js/native-tasks.js.
 
-// Updates task checklist items order
-function update_checklist_order() {
-  var order = [];
-  var items = $("body").find(".checklist");
-  if (items.length === 0) {
-    return;
-  }
-  if ($("body").hasClass("native-company-admin")) {
-    var ids = items.map(function () { return $(this).attr('data-checklist-id'); }).get();
-    native_task_checklist_command($('#checklist-items'), 'reorder', {ids:ids}).fail(function () { alert_float('danger', 'Não foi possível alterar a ordem. Atualize a tarefa e tente novamente.'); });
-    return;
-  }
-  var i = 1;
-  $.each(items, function () {
-    order.push([$(this).data("checklist-id"), i]);
-    i++;
-  });
-  var data = {};
-  data.order = order;
-  $.post(admin_url + "tasks/update_checklist_order", data);
-}
-
-// New task checklist item
-function add_task_checklist_item(task_id, description, e) {
-  if ($("body").hasClass("native-company-admin")) {
-    var container = $('#checklist-items');
-    description = typeof description === 'string' ? description.trim() : '';
-    if (!description) {
-      var draft = $('<div><div class="checklist" data-native-checklist-draft="1"><div class="tw-flex"><div class="tw-grow"><textarea name="checklist-description" rows="1"></textarea></div><div class="mleft10"><a href="#" class="text-muted remove-checklist"><i class="fa-regular fa-trash-can"></i></a></div></div></div></div>');
-      draft.find('textarea').attr('data-taskid', String(task_id));draft.find('.remove-checklist').on('click', function (event) { event.preventDefault(); draft.remove(); });container.append(draft);draft.find('textarea').trigger('focus');return;
-    }
-    if (e) $(e).addClass('disabled');
-    native_task_checklist_command(container, 'add', {text:description}).done(function () { init_tasks_checklist_items(true, task_id); }).fail(function () { alert_float('danger', 'Não foi possível adicionar o item. Tente novamente.'); }).always(function () { if (e) $(e).removeClass('disabled'); });
-    return;
-  }
-  if (e) {
-    $(e).addClass("disabled");
-  }
-
-  description = typeof description == "undefined" ? "" : description;
-  var order = $("#checklist-items").find(".checklist").length;
-
-  $.post(admin_url + "tasks/add_checklist_item", {
-    taskid: task_id,
-    description: description,
-    list_order: order,
-  })
-    .done(function () {
-      init_tasks_checklist_items(true, task_id);
-    })
-    .always(function () {
-      if (e) {
-        $(e).removeClass("disabled");
-      }
-    });
-}
-
-function update_task_checklist_item(textArea) {
-  var deferred = $.Deferred();
-  setTimeout(function () {
-    var description = textArea.val();
-    description = description.trim();
-    var listid = textArea.parents(".checklist").data("checklist-id");
-    if ($("body").hasClass("native-company-admin")) {
-      var item = textArea.closest('.checklist');
-      if (item.attr('data-native-checklist-draft') === '1') {
-        if (!description) { item.parent().remove(); deferred.resolve(); return; }
-        native_task_checklist_command($('#checklist-items'), 'add', {text:description}).done(function () { init_tasks_checklist_items(true, textArea.attr('data-taskid')).done(function () { deferred.resolve(); }).fail(function () { deferred.reject(); }); }).fail(function () { alert_float('danger', 'Não foi possível adicionar o item. Tente novamente.'); deferred.reject(); });
-        return;
-      }
-      var command = description === '' ? 'delete' : 'edit';
-      var payload = {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision')};
-      if (command === 'edit') payload.text = description;
-      native_task_checklist_command($('#checklist-items'), command, payload).done(function () { if (command === 'delete') item.remove(); deferred.resolve(); }).fail(function () { alert_float('danger', 'Não foi possível atualizar o item. Atualize a tarefa e tente novamente.'); deferred.reject(); });
-      return;
-    }
-
-    $.post(admin_url + "tasks/update_checklist_item", {
-      description: description,
-      listid: listid,
-    }).done(function (response) {
-      deferred.resolve();
-      response = JSON.parse(response);
-      if (response.can_be_template === true) {
-        textArea
-          .parents(".checklist")
-          .find(".save-checklist-template")
-          .removeClass("hide");
-      }
-      if (description === "") {
-        $("#checklist-items")
-          .find('.checklist[data-checklist-id="' + listid + '"]')
-          .remove();
-      }
-    });
-  }, 300);
-  return deferred.promise();
-}
-
-// Remove task checklist item from the task
-function delete_checklist_item(id, field) {
-  if ($("body").hasClass("native-company-admin")) {
-    var item = $(field).closest('.checklist');
-    native_task_checklist_command($('#checklist-items'), 'delete', {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision')}).done(function () { item.remove(); recalculate_checklist_items_progress(); }).fail(function () { alert_float('danger', 'Não foi possível remover o item. Atualize a tarefa e tente novamente.'); });
-    return;
-  }
-  requestGetJSON("tasks/delete_checklist_item/" + id).done(function (response) {
-    if (response.success === true || response.success == "true") {
-      $(field).parents(".checklist").remove();
-      recalculate_checklist_items_progress();
-    }
-  });
-}
-
-// Fetches task checklist items.
-function init_tasks_checklist_items(is_new, task_id) {
-  return $.post(admin_url + "tasks/init_checklist_items", {
-    taskid: task_id,
-  }).done(function (data) {
-    $("#checklist-items").html(data);
-    if (typeof is_new != "undefined") {
-      var last = $("#checklist-items").find(".checklist textarea").eq(-1);
-      if (last.val() === "") {
-        last.focus();
-      }
-    }
-    recalculate_checklist_items_progress();
-    if (!$('body').hasClass('native-company-admin')) update_checklist_order();
-  });
-}
-
+// Original checklist functions shared from assets/js/native-tasks.js.
 function _task_attachments_more_and_less_checks() {
   var att_wrap = $("body").find(".task_attachments_wrapper");
   var attachments = att_wrap.find(".task-attachment-col");

@@ -11,7 +11,14 @@ final class NativeCompanyTicketFiles
         if(!preg_match('/^[a-f0-9]{64}$/D',(string)($r['file_key']??''))||!preg_match('/^[a-f0-9]{64}$/D',(string)($r['content_hash']??''))||(int)($r['active']??0)!==1)throw new DomainException('native_ticket_file_denied');
         $name=$r['filename']??null;$mime=$r['mime']??null;if(!is_string($name)||$name===''||strlen($name)>191||trim($name)!==$name||preg_match('//u',$name)!==1||preg_match('/[\\x00-\\x1f\\x7f\\\\\\/]/',$name)||!is_string($mime)||strlen($mime)>40||!preg_match('~^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$~D',$mime)||(int)$r['byte_size']<1||(int)$r['byte_size']>16777215)throw new DomainException('native_ticket_file_corrupt');
     }
-    public static function revision(array$row,string$parentRevision):string{self::metadata($row);if(!preg_match('/^[a-f0-9]{64}$/D',$parentRevision))throw new DomainException('native_ticket_file_denied');return hash('sha256',json_encode([$row,$parentRevision],JSON_THROW_ON_ERROR));}
+    public static function revision(array$row,string$parentRevision):string{
+        self::metadata($row);if(!preg_match('/^[a-f0-9]{64}$/D',$parentRevision))throw new DomainException('native_ticket_file_denied');
+        // mysqli returns numeric columns as strings; PDO SQLite returns integers.
+        // A logical active=1 proof must remain identical when a hide receipt
+        // reconstructs that value after the committed active=0 transition.
+        $canonical=array_map(static fn($value)=>$value===null?null:(string)$value,$row);
+        return hash('sha256',json_encode([$canonical,$parentRevision],JSON_THROW_ON_ERROR));
+    }
     private function work(int$i,int$a,$ticket,callable$read,bool$owned=false){
         if($owned)IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());CompanyOperationFilesSchema::assertValid($this->db,$this->p);
         $run=function()use($i,$a,$ticket,$read){$r=new NativeCompanyTicketRead($this->db,$this->p);$before=$r->getInOwnedTransaction($i,$a,$ticket);if($before['source_kind']!=='company_ticket')throw new DomainException('native_ticket_file_denied');$result=$read($before);if($r->getInOwnedTransaction($i,$a,$ticket)!==$before)throw new DomainException('native_ticket_file_denied');return$result;};

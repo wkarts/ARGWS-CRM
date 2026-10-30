@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
-if ($invoice->status == Invoices_model::STATUS_DRAFT) { ?>
+$nativeInvoicePreview=isset($native_invoice_preview_data);
+if ($invoice->status == (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)) { ?>
 <div class="alert alert-info">
     <?= _l('invoice_draft_status_info'); ?>
 </div>
@@ -54,7 +55,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                 <?php } elseif ($show_recurring_invoice_info) { ?>
                 <span class="label label-info">
                     <?php
-               if ($recurring_invoice->status == Invoices_model::STATUS_DRAFT) {
+               if ($recurring_invoice->status == (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)) {
                    echo '<i class="fa-solid fa-circle-exclamation fa-fw text-warning tw-mr-1" data-toggle="tooltip" title="' . _l('recurring_invoice_draft_notice') . '"></i>';
                }
                     echo _l('cycles_remaining'); ?>:&nbsp;
@@ -197,7 +198,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                     </tr>
                     <?php } ?>
                     <?php foreach ($items->taxes() as $tax) {
-                        echo '<tr class="tax-area"><td class="tw-font-medium !tw-text-neutral-700">' . e($tax['taxname']) . ' (' . e(app_format_number($tax['taxrate'])) . '%)</td><td>' . e(app_format_money($tax['total_tax'], $invoice->currency_name)) . '</td></tr>';
+                        echo '<tr class="tax-area"><td class="tw-font-medium !tw-text-neutral-700">' . e($tax['taxname']) . ' (' . e($nativeInvoicePreview ? NativeCompanyTaxRate::display($tax['taxrate']) : app_format_number($tax['taxrate'])) . '%)</td><td>' . e(app_format_money($tax['total_tax'], $invoice->currency_name)) . '</td></tr>';
                     } ?>
                     <?php if ((int) $invoice->adjustment != 0) { ?>
                     <tr>
@@ -242,7 +243,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                         </td>
                     </tr>
                     <?php } ?>
-                    <?php if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != Invoices_model::STATUS_CANCELLED) { ?>
+                    <?php if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
                     <tr>
                         <td>
                             <span

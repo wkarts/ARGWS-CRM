@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanyTaxRate.php';
 
 abstract class App_items_table_template
 {
@@ -227,9 +228,9 @@ abstract class App_items_table_template
                     $item_tax = '';
                     if ((count($item['taxes']) > 1 && get_option('remove_tax_name_from_item_table') == false) || get_option('remove_tax_name_from_item_table') == false || multiple_taxes_found_for_item($item['taxes'])) {
                         $tmp      = explode('|', $tax['taxname']);
-                        $item_tax = ($this->native_items_presentation ? e($tmp[0]) : $tmp[0]) . ' ' . e(app_format_number($tmp[1])) . '%<br />';
+                        $item_tax = ($this->native_items_presentation ? e($tmp[0]) : $tmp[0]) . ' ' . e($this->native_items_presentation ? NativeCompanyTaxRate::display($tmp[1]) : app_format_number($tmp[1])) . '%<br />';
                     } else {
-                        $item_tax .= e(app_format_number($tax['taxrate'])) . '%';
+                        $item_tax .= e($this->native_items_presentation ? NativeCompanyTaxRate::display($tax['taxrate']) : app_format_number($tax['taxrate'])) . '%';
                     }
 
                     $itemHTML .= $this->presentation_filter('item_tax_table_row', $item_tax, $item);

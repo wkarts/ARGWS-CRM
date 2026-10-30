@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__DIR__).'/issuers_core_support.php';
-register_shutdown_function(function(){foreach($GLOBALS['essentialFixtures']??[] as$f)if($f->db->driver()==='mysql')foreach(['company_invoice_draft_projection','company_invoice_draft_events','company_invoice_drafts']as$t)$f->db->pdo->exec('DROP TABLE IF EXISTS '.$f->prefix.$t);});
+// The shared essentialCleanup owns all random-prefix draft tables in child-first
+// order, including persistent lines and transfers installed by dependent fixtures.
 require __DIR__.'/invoice_copies.php';require_once APPPATH.'services/CompanyInvoiceDrafts.php';
 if($db->driver()==='mysql'){CompanyInvoiceDraftsSchema::ensure($db,$p);CompanyInvoiceDraftsSchema::ensure($db,$p);}else foreach(CompanyInvoiceDraftsSchema::definitions($p)as$table=>$parts){$cols=[];foreach($parts as$part){if(str_starts_with($part,'KEY ')||str_starts_with($part,'UNIQUE KEY '))continue;$cols[]=str_replace('int NOT NULL AUTO_INCREMENT PRIMARY KEY','INTEGER PRIMARY KEY AUTOINCREMENT',preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','',$part));}$db->query('CREATE TABLE '.$p.$table.'('.implode(',',$cols).')');}
 unset($db->data_cache['table_names']);$drafts=new CompanyInvoiceDrafts($db,$p);$draftInput=$legacyInput;$draftInput['items']=[['description'=>'Draft literal <script>','long_description'=>"Details\nsecond line",'unit'=>'horas','qty'=>'2.00','rate'=>'12.34','taxes'=>[['name'=>'Tax1','rate'=>'5.00'],['name'=>'Tax2','rate'=>'10.00']]],['description'=>'Unselected private optional','qty'=>'1.00','rate'=>'999.99','is_optional'=>1,'is_selected'=>0,'taxes'=>[]]];

@@ -1,6 +1,10 @@
 // Shared original native sales form source. Loaded in both principal and scoped contexts.
 // Endpoint admission and issuer authorization remain server-side; this file grants no capability.
 var lastAddedItemKey = null;
+var billingAndShippingFields = [
+  'billing_street', 'billing_city', 'billing_state', 'billing_zip', 'billing_country',
+  'shipping_street', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'
+];
 
 function native_invoice_catalog_context() {
   var form = $("#invoice-form");

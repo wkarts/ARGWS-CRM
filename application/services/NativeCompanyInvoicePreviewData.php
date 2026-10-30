@@ -125,7 +125,7 @@ final class NativeCompanyInvoicePreviewData
             'name'=>$method,
             'paymentmethod'=>'','transactionid'=>(string)$row['transactionid'],'date'=>$row['date'],
             'amount'=>$row['effective_amount'],'native_original_amount'=>$row['original_amount'],
-            'native_reversed_amount'=>$row['reversed_amount'],
+            'native_reversed_amount'=>$row['reversed_amount'],'native_can_reverse'=>$row['can_reverse'],
             ];
         }
         foreach([
@@ -153,6 +153,7 @@ final class NativeCompanyInvoicePreviewData
             catch(DomainException$error){if($error->getMessage()!=='company_credit_access_denied')throw$error;}
         }
         return ['invoice'=>$transaction,'native_invoice_preview_data'=>$data,
+            'native_payment_revision'=>(new CompanyInvoices($this->db,$this->prefix))->paymentRevision($issuer,$actor,$id),
             'native_invoice_metadata'=>$this->metadata($issuer,$actor,$id),
             'native_invoice_communication'=>$communication,
             'native_invoice_reminder_badge'=>$this->reminderBadge($issuer,$actor,$id),

@@ -106,6 +106,11 @@ final class InvoiceIssuerDocumentData
             'quantity_mode'=>(int)($record['show_quantity_as'] ?? 1),
         ];
         if(!in_array((string)($record['show_quantity_as']??1),['1','2','3'],true))throw new DomainException('issuer_document_invalid_content');
+        if(array_key_exists('transactions',$source)){
+            if(!is_array($source['transactions'])||!array_is_list($source['transactions']))throw new DomainException('issuer_document_invalid_content');$this->data['transactions']=[];
+            foreach($source['transactions']as$row){if(!is_array($row)||array_keys($row)!==['id','date','mode','reference','original','reversed','effective'])throw new DomainException('issuer_document_invalid_content');$original=self::cents($row['original']);$reversed=self::cents($row['reversed']);$effective=self::cents($row['effective']);if($original!==$reversed+$effective)throw new DomainException('issuer_document_invalid_totals');$this->data['transactions'][]=['id'=>IssuerPolicy::id($row['id']),'date'=>self::date($row['date']),'mode'=>self::text($row['mode'],100,true),'reference'=>self::text($row['reference'],191),'original'=>self::decimal($original),'reversed'=>self::decimal($reversed),'effective'=>self::decimal($effective)];}
+        }
+        if(array_key_exists('portal_path',$source)){if(!is_string($source['portal_path'])||!preg_match('~^invoice/'.$invoiceId.'/[a-f0-9]{32}\?issuer_id='.$issuerId.'$~D',$source['portal_path']))throw new DomainException('issuer_document_scope_mismatch');$this->data['portal_path']=$source['portal_path'];}
         if (strlen(json_encode($this->data, JSON_THROW_ON_ERROR)) > 16777215) {
             throw new DomainException('issuer_document_content_too_large');
         }

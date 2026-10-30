@@ -31,7 +31,7 @@ final class NativeCompanySettingsForms
     public static function availableGroups():array
     {
         return ['general','company','localization','certificates','email','sales_general','invoices','estimates','proposals','clients','tasks','tickets','google','calendar','misc',
-            'task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files','pdf'];
+            'task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files','pdf','tags'];
     }
     public function authorize(int $issuer,int $actor,string $cap):void
     {
@@ -70,6 +70,10 @@ final class NativeCompanySettingsForms
     {
         $this->authorize($issuer,$actor,'view');$storage=new CompanySettingsStorage($this->db,$this->p);$values=[];
         foreach(self::fields($group)as$name)$values[$name]=$group==='invoices'&&!$storage->exists($issuer,$name)?NativeCompanyInvoicePreferences::defaults()[$name]:$storage->get($issuer,$name);
+        // A new company has no stored upload preference yet. The existing
+        // general form must display the same bounded default used by uploads;
+        // an explicitly stored empty/invalid value must still be rejected.
+        if($group==='general'&&!$storage->exists($issuer,'allowed_files'))$values['allowed_files']=NativeCompanyUploadPreferences::defaultValue('allowed_files');
         $ticketPolicy=$group==='tickets'?(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor):null;
         if($ticketPolicy!==null)$values=$ticketPolicy['values'];
         $sequence=$group==='invoices'?(new NativeCompanyInvoiceSequencePreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor):null;
@@ -207,7 +211,7 @@ final class NativeCompanySettingsForms
     /** Narrow validation for the storage-owned transaction, not a generic principal batch bypass. */
     public static function assertStorage(string $group,array $values):void
     {
-        if($group==='pdf'){if(array_diff(array_keys($values),NativeCompanyPdfSettings::FORMATS))throw new DomainException('native_settings_invalid');NativeCompanyPdfSettings::validate($values);return;}
+        if($group==='pdf'){if(array_diff(array_keys($values),array_merge(NativeCompanyPdfSettings::FORMATS,array_keys(CompanyPdfLayout::DEFAULTS))))throw new DomainException('native_settings_invalid');NativeCompanyPdfSettings::validate($values);return;}
         if(in_array($group,['estimates','proposals'],true)){NativeCompanySalesSettings::validate($group,$values,false);return;}
         if($group==='misc'){NativeCompanyMiscSettings::validateExtras($values);return;}
         if($group==='tasks'){NativeCompanyTaskSettings::validateExtras($values);return;}

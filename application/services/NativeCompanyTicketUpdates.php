@@ -71,6 +71,36 @@ final class NativeCompanyTicketUpdates
             $after=$reader->getInOwnedTransaction($issuer,$actor,$ticket);if($after['revision_token']!==$expected||$after['metadata']['staff_replying_at']!==$stamp||($owner===null?$after['metadata']['staff_replying']!==null:(int)$after['metadata']['staff_replying']!==$owner))throw new RuntimeException('issuer_ticket_write_unconfirmed');$this->authorize($issuer,$actor);return['success'=>true,'revision'=>$expected]+$this->leaseProjection($issuer,$actor,$after);
         });
     }
+    /** Attach private evidence without manufacturing a reply or publishing it. */
+    public function uploadFiles(int $issuer,int $actor,$ticket,array $files,string $expected,string $nonce):array
+    {
+        require_once __DIR__.'/NativeCompanyTicketMultipart.php';
+        require_once __DIR__.'/CompanyOperationFilesSchema.php';
+        CompanyOperationFilesSchema::assertValid($this->db,$this->p);
+        $files=NativeCompanyTicketMultipart::normalize($files);
+        if(!$files)throw new DomainException('native_ticket_attachments_invalid');
+        $input=array_map(static fn($f)=>[$f['name'],$f['mime'],$f['hash'],$f['extension']],$files);$new=false;
+        return $this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_files_uploaded',$input,function(int $id,array $before)use($issuer,$actor,$files,$nonce,&$new){
+            $new=true;
+            if(in_array($before['catalog']['status']['code']??$before['historical_status'],['closed','resolved'],true))throw new DomainException('native_ticket_closed');
+            NativeCompanyTicketMultipart::assertPolicy($files,$before['policy']['values']);
+            $usage=$this->rows('SELECT COUNT(*) n,COALESCE(SUM(byte_size),0) bytes FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=?',[$issuer,$id])[0];
+            $count=(int)$usage['n'];$bytes=(int)$usage['bytes'];$now=date('Y-m-d H:i:s');
+            foreach($files as $n=>$file){
+                CompanyOperationFileContent::quota($count++,$bytes,strlen($file['bytes']));$bytes+=strlen($file['bytes']);
+                $key=hash('sha256','native-ticket-file|'.$issuer.'|'.$nonce.'|'.$n);
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_files(file_key,issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active,created_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,$issuer,$id,$actor,$file['name'],$file['mime'],$file['hash'],strlen($file['bytes']),$file['bytes'],$now]);
+            }
+        },['company_ticket_files'],function(int $id)use($issuer,$actor,$files,$nonce,&$new){
+            $policy=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);
+            NativeCompanyTicketMultipart::assertPolicy($files,$policy['values']);
+            foreach($files as $n=>$file){
+                $key=hash('sha256','native-ticket-file|'.$issuer.'|'.$nonce.'|'.$n);
+                $saved=$this->rows('SELECT issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active FROM '.$this->p.'company_ticket_files WHERE file_key=?',[$key])[0]??null;
+                if(!$saved||$new&&(int)$saved['active']!==1||(int)$saved['issuer_id']!==$issuer||(int)$saved['ticket_id']!==$id||(int)$saved['actor_id']!==$actor||$saved['filename']!==$file['name']||$saved['mime']!==$file['mime']||$saved['content_hash']!==$file['hash']||(int)$saved['byte_size']!==strlen($file['bytes'])||!hash_equals($file['hash'],hash('sha256',$saved['content'])))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            }
+        });
+    }
     public function hideFile(int$issuer,int$actor,$ticket,string$key,string$fileExpected,string$expected,string$nonce):array
     {
         require_once __DIR__.'/NativeCompanyTicketFiles.php';if(!preg_match('/^[a-f0-9]{64}$/D',$key)||!preg_match('/^[a-f0-9]{64}$/D',$fileExpected))throw new DomainException('native_ticket_file_denied');CompanyOperationFilesSchema::assertValid($this->db,$this->p);
@@ -267,6 +297,9 @@ final class NativeCompanyTicketUpdates
         if($normalized){require_once __DIR__.'/NativeCompanyTicketReplyFileSchema.php';require_once __DIR__.'/CompanyOperationFilesSchema.php';NativeCompanyTicketReplyFileSchema::assertValid($this->db,$this->p);CompanyOperationFilesSchema::assertValid($this->db,$this->p);$extra[]='company_ticket_files';$extra[]=NativeCompanyTicketReplyFileSchema::TABLE;}
         $input=[$message,$status,$cc,$assign];if($normalized)$input[]=array_map(static fn($f)=>[$f['name'],$f['mime'],$f['hash'],$f['extension']],$normalized);
         return$this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_replied',$input,function(int$id,array$before)use($issuer,$actor,$message,$status,$nonce,$cc,$assign,$normalized){
+            // A terminal ticket must be explicitly reopened. A reply cannot silently
+            // reopen it through its optional status field; exact durable retries still work.
+            if(in_array($before['catalog']['status']['code']??$before['historical_status'],['closed','resolved'],true))throw new DomainException('native_ticket_closed');
             NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);$now=date('Y-m-d H:i:s');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_replies(issuer_id,ticket_id,actor_id,body,created_at) VALUES(?,?,?,?,?)',[$issuer,$id,$actor,$message,$now]);$reply=(int)$this->db->insert_id();
             $row=$this->rows('SELECT issuer_id,ticket_id,actor_id,body,created_at FROM '.$this->p.'company_ticket_replies WHERE id=?',[$reply])[0]??null;

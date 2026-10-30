@@ -19,6 +19,10 @@ final class NativeCompanyTaskIndexProjection
 
     private function item(int $issuer, int $actor, array $reference): array
     {
+        if($reference['source_kind']==='task'){
+            require_once __DIR__.'/NativeCompanyLegacyTaskProjection.php';
+            return (new NativeCompanyLegacyTaskProjection($this->db,$this->prefix))->read($issuer,$actor,$reference);
+        }
         $kind = match ($reference['source_kind']) {
             'company_task' => 'project',
             'company_standalone_task' => 'standalone',
@@ -76,9 +80,7 @@ final class NativeCompanyTaskIndexProjection
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
         if (!$acl->can($issuer, $actor, 'tasks', 'view')) throw new DomainException('native_company_task_denied');
-        // The original principal controller continues to own historical records.
-        // Never silently omit them from this secondary-only projection.
-        if ($acl->primaryId() === $issuer) throw new DomainException('native_task_main_legacy_projection_required');
+        $primary=$acl->primaryId();
         $index = new NativeCompanyTaskIndexRead($this->db, $this->prefix);
         $references = $verify ? $index->read($issuer, $actor) : $index->captureForComparison($issuer, $actor);
         $items = [];
@@ -89,7 +91,7 @@ final class NativeCompanyTaskIndexProjection
                 if ($this->item($issuer, $actor, $reference) !== $items[$key]) throw new DomainException('native_task_index_changed');
             }
         }
-        if (!$acl->can($issuer, $actor, 'tasks', 'view') || $acl->primaryId() === $issuer) throw new DomainException('native_task_index_changed');
+        if (!$acl->can($issuer, $actor, 'tasks', 'view') || $acl->primaryId() !== $primary) throw new DomainException('native_task_index_changed');
         return $items;
     }
 }

@@ -399,7 +399,7 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
                                             data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                             <?php if ($rel_id != '' && $rel_type != '') {
                                 if ($nativeTaskForm !== null) { $rel_val = $nativeTaskForm['selected_relation']; } else { $rel_data = get_relation_data($rel_type, $rel_id); $rel_val = get_relation_values($rel_data, $rel_type); }
-                                echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                echo '<option value="' . e($rel_val['id']) . '" selected>' . ($nativeTaskForm !== null ? e($rel_val['name']) : $rel_val['name']) . '</option>';
                             } ?>
                                         </select>
                                     </div>
@@ -554,7 +554,7 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
         $('body').on('change', '#rel_id', function() {
             if ($(this).val() != '') {
                 if (_rel_type.val() == 'project') {
-                    $.get(admin_url + 'projects/get_rel_project_data/' + $(this).val() + '/' + taskid,
+                    $.get(admin_url + 'projects/get_rel_project_data/' + $(this).val() + '/' + <?= json_encode((string)$id,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>,
                         function(project) {
                             $("select[name='milestone']").html(project.milestones);
                             <?php if ($nativeTaskForm) { ?>

@@ -22,7 +22,8 @@ final class CompanySalesPreferences
             $base['format']=$profile===null?4:5;
             $base+=['number_format'=>$format,'padding'=>$padding];
         }
-        return $base+($profile===null?[]:['typography'=>$profile]);
+        $layout=CompanyPdfLayout::capture($store,$issuer,$kind);
+        return $base+($profile===null?[]:['typography'=>$profile])+($layout===null?[]:['layout'=>$layout]);
     }
     public static function presentation(string $kind,$number,array $context,string $legacyPrefix='',?string $documentDate=null):array
     {
@@ -37,6 +38,7 @@ final class CompanySalesPreferences
                 4=>['format','kind','prefix','terms','pdf','number_format','padding'],
                 5=>['format','kind','prefix','terms','pdf','number_format','padding','typography'],
             };
+            if(array_key_exists('layout',$prefs)){$keys[]='layout';CompanyPdfLayout::validate($prefs['layout']);}
             if(array_keys($prefs)!==$keys||$prefs['kind']!==$kind||!is_string($prefs['prefix'])||!is_string($prefs['terms']))throw new DomainException('company_sales_invalid');
             if($prefs['format']>=2)CompanyDocumentPdf::validate($prefs['pdf']);
             if(in_array($prefs['format'],[3,5],true))CompanyPdfTypography::validate($prefs['typography']);

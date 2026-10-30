@@ -171,6 +171,7 @@ class Contracts extends AdminController
 
     public function mark_as_signed($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('mark_as_signed',$id));return;}
         if (staff_cant('edit', 'contracts')) {
             access_denied('mark contract as signed');
         }
@@ -182,6 +183,7 @@ class Contracts extends AdminController
 
     public function unmark_as_signed($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('unmark_as_signed',$id));return;}
         if (staff_cant('edit', 'contracts')) {
             access_denied('mark contract as signed');
         }
@@ -254,6 +256,7 @@ class Contracts extends AdminController
 
     public function add_note($rel_id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('add_note',$rel_id));return;}
         if ($this->input->post() && (staff_can('view',  'contracts') || staff_can('view_own',  'contracts'))) {
             $this->misc_model->add_note($this->input->post(), 'contract', $rel_id);
             echo $rel_id;
@@ -262,6 +265,7 @@ class Contracts extends AdminController
 
     public function get_notes($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->notes($id));return;}
         if ((staff_can('view',  'contracts') || staff_can('view_own',  'contracts'))) {
             $data['notes'] = $this->misc_model->get_notes($id, 'contract');
             $this->load->view('admin/includes/sales_notes_template', $data);
@@ -270,6 +274,7 @@ class Contracts extends AdminController
 
     public function clear_signature($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('clear_signature',$id));return;}
         if (staff_can('delete',  'contracts')) {
             $this->contracts_model->clear_signature($id);
         }
@@ -279,6 +284,7 @@ class Contracts extends AdminController
 
     public function save_contract_data()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('save_contract_data'));return;}
         if (staff_cant('edit', 'contracts')) {
             header('HTTP/1.0 400 Bad error');
             echo json_encode([
@@ -375,6 +381,7 @@ class Contracts extends AdminController
 
     public function delete_renewal($renewal_id, $contractid)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('delete_renewal',$contractid,$renewal_id));return;}
         $success = $this->contracts_model->delete_renewal($renewal_id, $contractid);
         if ($success) {
             set_alert('success', _l('contract_renewal_deleted'));
@@ -425,6 +432,7 @@ class Contracts extends AdminController
     /* Manage contract types Since Version 1.0.3 */
     public function type($id = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->type($id));return;}
         if (!is_admin() && get_option('staff_members_create_inline_contract_types') == '0') {
             access_denied('contracts');
         }
@@ -460,6 +468,7 @@ class Contracts extends AdminController
 
     public function types()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->types());return;}
         if (!is_admin()) {
             access_denied('contracts');
         }
@@ -473,6 +482,7 @@ class Contracts extends AdminController
     /* Delete announcement from database */
     public function delete_contract_type($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->type($id,true));return;}
         if (!$id) {
             redirect(admin_url('contracts/types'));
         }
@@ -492,11 +502,13 @@ class Contracts extends AdminController
 
     public function add_contract_attachment($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('add_contract_attachment',$id));return;}
         handle_contract_attachment($id);
     }
 
     public function add_external_attachment()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('add_external_attachment'));return;}
         if ($this->input->post()) {
             $this->misc_model->add_attachment_to_database(
                 $this->input->post('contract_id'),
@@ -509,6 +521,7 @@ class Contracts extends AdminController
 
     public function delete_contract_attachment($attachment_id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('delete_contract_attachment',null,$attachment_id));return;}
         $file = $this->misc_model->get_file($attachment_id);
         if ($file->staffid == get_staff_user_id() || is_admin()) {
             echo json_encode([

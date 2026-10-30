@@ -7,7 +7,7 @@
 <?php $invoice_option = isset($native_invoice_editor_items)
     ? static function(string $key)use($native_invoice_options):string { if(!array_key_exists($key,$native_invoice_options)||!is_string($native_invoice_options[$key]))throw new DomainException('native_invoice_editor_options_invalid');return$native_invoice_options[$key]; }
     : 'get_option'; ?>
-<div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == Invoices_model::STATUS_CANCELLED))) ? 'hide' : ''; ?>"
+<div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == (isset($native_invoice_editor_items) ? 5 : Invoices_model::STATUS_CANCELLED)))) ? 'hide' : ''; ?>"
     id="invoice_top_info">
     <div class="panel_s">
         <div class="panel-body tw-bg-gradient-to-l tw-from-transparent tw-to-neutral-50">
@@ -20,7 +20,7 @@
                 <!--  When invoicing from project area the expenses are not visible here because you can select to bill expenses while trying to invoice project -->
                 <?php if (! isset($invoice_from_project)) { ?>
                 <div id="expenses_to_bill" class="col-md-6">
-                    <?php if (isset($invoice) && $invoice->status != Invoices_model::STATUS_CANCELLED) {
+                    <?php if (isset($invoice) && $invoice->status != (isset($native_invoice_editor_items) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                         $this->load->view('admin/invoices/bill_expenses', ['expenses_to_bill' => $expenses_to_bill]);
                     } ?>
                 </div>
@@ -61,7 +61,7 @@
                 </div>
                 <?php
                                         if (! isset($invoice_from_project)) { ?>
-                <div class="form-group select-placeholder projects-wrapper<?php if ((! isset($invoice)) || (isset($invoice) && ! customer_has_projects($invoice->clientid))) {
+                <div class="form-group select-placeholder projects-wrapper<?php if ((! isset($invoice)) || (isset($invoice) && !(isset($native_invoice_editor_items)?$native_invoice_customer_has_projects:customer_has_projects($invoice->clientid)))) {
                     echo (isset($customer_id) && (! isset($project_id) || ! $project_id)) ? ' hide' : '';
                 } ?>">
                     <label
@@ -75,7 +75,7 @@
                                 ($project_id ?? ''); ?>
 
                             <?php if ($project_id) {
-                                echo '<option value="' . $project_id . '" selected>' . e(get_project_name_by_id($project_id)) . '</option>';
+                                echo '<option value="' . e($project_id) . '" selected>' . e(isset($native_invoice_editor_items)?$native_invoice_project_name:get_project_name_by_id($project_id)) . '</option>';
                             } ?>
                         </select>
                     </div>
@@ -191,7 +191,7 @@ if ($format == 1) {
     }
 }
 
-$_is_draft            = (isset($invoice) && $invoice->status == Invoices_model::STATUS_DRAFT) ? true : false;
+$_is_draft            = (isset($invoice) && $invoice->status == (isset($native_invoice_editor_items) ? 6 : Invoices_model::STATUS_DRAFT)) ? true : false;
 $_invoice_number      = str_pad($__number, $invoice_option('number_padding_prefixes'), '0', STR_PAD_LEFT);
 $isedit               = isset($invoice) ? 'true' : 'false';
 $data_original_number = isset($invoice) ? $invoice->number : 'false';
@@ -271,7 +271,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                         <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                             <?= _l('tags'); ?></label>
                         <input type="text" class="tagsinput" id="tags" name="tags"
-                            value="<?= isset($invoice) ? prep_tags_input(get_tags_in($invoice->id, 'invoice')) : ''; ?>"
+                            value="<?= isset($native_invoice_editor_items) ? e($native_invoice_tags??'') : (isset($invoice) ? prep_tags_input(get_tags_in($invoice->id, 'invoice')) : ''); ?>"
                             data-role="tagsinput">
                     </div>
                     <div
@@ -530,7 +530,7 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                         <div class="input-group-addon input-group-addon-bill-tasks-help">
                             <?php
                     if (isset($invoice) && ! empty($invoice->project_id)) {
-                        $help_text = _l('showing_billable_tasks_from_project') . ' ' . get_project_name_by_id($invoice->project_id);
+                        $help_text = _l('showing_billable_tasks_from_project') . ' ' . (isset($native_invoice_editor_items)?$native_invoice_project_name:get_project_name_by_id($invoice->project_id));
                     } else {
                         $help_text = _l('invoice_task_item_project_tasks_not_included');
                     }

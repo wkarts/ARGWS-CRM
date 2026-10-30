@@ -174,7 +174,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
     $_tooltip_already_send = _l('invoice_already_send_to_client_tooltip', time_ago($invoice->datesend));
 }
 ?>
-                        <?php if (!$nativeInvoicePreview && staff_can('edit', 'invoices')) { ?>
+                        <?php if (staff_can('edit', 'invoices') && (!$nativeInvoicePreview || in_array((int)$invoice->status,[1,4],true))) { ?>
                         <a href="<?= admin_url('invoices/invoice/' . $invoice->id); ?>"
                             data-toggle="tooltip"
                             title="<?= _l('edit_invoice_tooltip'); ?>"
@@ -205,12 +205,12 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                 </li>
                             </ul>
                         </div>
-                        <?php if (!$nativeInvoicePreview && ! empty($invoice->clientid)) { ?>
-                        <span<?php if ($invoice->status == Invoices_model::STATUS_CANCELLED) { ?>
+                        <?php if ((!$nativeInvoicePreview || isset($native_invoice_delivery)) && ! empty($invoice->clientid)) { ?>
+                        <span<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
                             data-toggle="tooltip"
                             data-title="<?= _l('invoice_cancelled_email_disabled'); ?>"
                             <?php } ?>>
-                            <a href="#" class="invoice-send-to-client btn-with-tooltip sm:!tw-px-3 btn btn-default<?php if ($invoice->status == Invoices_model::STATUS_CANCELLED) {
+                            <a href="#" class="invoice-send-to-client btn-with-tooltip sm:!tw-px-3 btn btn-default<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                                 echo ' disabled';
                             } ?>" data-toggle="tooltip"
                                 title="<?= e($_tooltip); ?>"
@@ -249,7 +249,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                         </a>
                                         <?php } ?>
                                     </li>
-                                    <?php if ($invoice->status != Invoices_model::STATUS_CANCELLED
+                                    <?php if ($invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)
                                   && staff_can('create', 'credit_notes')
                                   && ! empty($invoice->clientid)) {?>
                                     <li>
@@ -278,21 +278,21 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                     <?php } ?>
                                     <?php if (staff_can('edit', 'invoices') || staff_can('create', 'invoices')) { ?>
                                     <li>
-                                        <?php if ($invoice->status != Invoices_model::STATUS_CANCELLED
-                                     && $invoice->status != Invoices_model::STATUS_PAID
-                                     && $invoice->status != Invoices_model::STATUS_PARTIALLY) { ?>
+                                        <?php if ($invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)
+                                     && $invoice->status != (isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID)
+                                     && $invoice->status != (isset($native_invoice_preview_data) ? 3 : Invoices_model::STATUS_PARTIALLY)) { ?>
                                         <a <?php if($nativeInvoicePreview){ ?>data-native-invoice-lifecycle-revision="<?= e($native_invoice_preview_data['revision']); ?>" onclick="return native_invoice_lifecycle(this);"<?php } ?>
                                             href="<?= admin_url('invoices/mark_as_cancelled/' . $invoice->id); ?>"><?= e(_l('invoice_mark_as', _l('invoice_status_cancelled'))); ?></a>
-                                        <?php } elseif ($invoice->status == Invoices_model::STATUS_CANCELLED) { ?>
+                                        <?php } elseif ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
                                         <a <?php if($nativeInvoicePreview){ ?>data-native-invoice-lifecycle-revision="<?= e($native_invoice_preview_data['revision']); ?>" onclick="return native_invoice_lifecycle(this);"<?php } ?>
                                             href="<?= admin_url('invoices/unmark_as_cancelled/' . $invoice->id); ?>"><?= e(_l('invoice_unmark_as', _l('invoice_status_cancelled'))); ?></a>
                                         <?php } ?>
                                     </li>
                                     <?php } ?>
-                                    <?php if (! in_array($invoice->status, [Invoices_model::STATUS_PAID, Invoices_model::STATUS_CANCELLED, Invoices_model::STATUS_DRAFT])
+                                    <?php if (! in_array($invoice->status, [(isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID), (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED), (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)])
                                   && staff_can('edit', 'invoices')
                                   && $invoice->duedate
-                                  && is_invoices_overdue_reminders_enabled()) { ?>
+                                  && ($nativeInvoicePreview ? ($native_invoice_reminder_sources['enabled']??false) : is_invoices_overdue_reminders_enabled())) { ?>
                                     <li>
                                         <?php if ($invoice->cancel_overdue_reminders == 1) { ?>
                                         <a
@@ -318,10 +318,10 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                     <?php if(!$nativeInvoicePreview)hooks()->do_action('after_invoice_preview_more_menu'); ?>
                                 </ul>
                             </div>
-                            <?php if (staff_can('create', 'payments') && abs($invoice->total) > 0) { ?>
+                            <?php if (staff_can('create', 'payments') && abs($invoice->total) > 0 && (!$nativeInvoicePreview || !in_array((int)$invoice->status,[2,5,6],true))) { ?>
                             <a href="#"
                                 onclick="record_payment(<?= e($invoice->id); ?>); return false;"
-                                class="mleft10 pull-right btn btn-success<?php if ($invoice->status == Invoices_model::STATUS_PAID || $invoice->status == Invoices_model::STATUS_CANCELLED) {
+                                class="mleft10 pull-right btn btn-success<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID) || $invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                                     echo ' disabled';
                                 } ?>">
                                 <i class="fa fa-plus-square"></i>
@@ -342,7 +342,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
             <hr class="hr-panel-separator" />
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane active" id="tab_invoice">
-                    <?php if ($invoice->status == Invoices_model::STATUS_CANCELLED && $invoice->recurring > 0) { ?>
+                    <?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED) && $invoice->recurring > 0) { ?>
                     <div class="alert alert-info">
                         Recurring invoice with status Cancelled <b>is still ongoing recurring invoice</b>. If you want
                         to stop this recurring invoice you should update the invoice recurring field to <b>No</b>.
@@ -561,6 +561,7 @@ foreach ($views_activity as $activity) { ?>
         </div>
     </div>
 </div>
+<?php if($nativeInvoicePreview && isset($native_invoice_delivery))$this->load->view('admin/invoices/invoice_send_to_client'); ?>
 <?php if(!$nativeInvoicePreview){$this->load->view('admin/invoices/invoice_send_to_client'); ?>
 <?php $this->load->view('admin/credit_notes/apply_invoice_credits'); ?>
 <?php $this->load->view('admin/credit_notes/invoice_create_credit_note_confirm');} ?>

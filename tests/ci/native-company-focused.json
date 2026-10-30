@@ -2549,6 +2549,14 @@
     [
       "php",
       "tests/companies/native_client_update_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/contracts_value_branding.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_issued_form_update.php"
     ]
   ],
   "node": [
@@ -2820,6 +2828,14 @@
     [
       "php",
       "tests/companies/native_pr52_actions_mysql.php"
+    ],
+    [
+      "php",
+      "tests/companies/contracts_value_branding.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_issued_form_update.php"
     ]
   ],
   "browser": [

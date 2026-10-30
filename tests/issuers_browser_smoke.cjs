@@ -149,6 +149,13 @@ async function captureRealScreens(page, routes) {
       await waitForUpgradeForm(page);
       assert(await page.locator('input[name=admin_database_upgrade_csrf]').getAttribute('value'));
       const before = sql('SELECT version FROM tblmigrations LIMIT 1');
+      // Seed existing business data in the genuinely old schema, before its
+      // authenticated upgrade. Later original-route tests retain this lineage.
+      sql("INSERT INTO tblclients(company,datecreated,active,addedfrom) SELECT 'Synthetic historical primary customer','2020-01-01 00:00:00',1,17 WHERE NOT EXISTS(SELECT 1 FROM tblclients WHERE company='Synthetic historical primary customer')");
+      const historicalCustomer = sql("SELECT JSON_ARRAY(userid,company,datecreated,active,addedfrom) FROM tblclients WHERE company='Synthetic historical primary customer'");
+      assert(historicalCustomer, 'old schema contains actual historical customer data before migration');
+      const preservedTables = [['tblclients','userid'],['tblcontacts','id'],['tblinvoices','id'],['tblinvoicepaymentrecords','id'],['tblcompany_projects','id'],['tblcompany_tasks','id'],['tblcompany_standalone_tasks','id'],['tblcompany_contracts','id'],['tblcompany_blank_task_timers','id']];
+      const preservedRows = preservedTables.filter(([table])=>sql("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='"+table+"'")==='1').map(([table,id])=>{const columns=sql("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='"+table+"' ORDER BY ORDINAL_POSITION").split('\n');for(const name of columns)assert.match(name,/^[A-Za-z0-9_]+$/);const fields=columns.map(name=>'`'+name+'`').join(',');return[table,id,fields,sql('SELECT '+fields+' FROM '+table+' ORDER BY '+id)];});
       const hasExistingIdentity = sql("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_installation_identity'") === '1';
       const existingMaster = hasExistingIdentity && sql('SELECT COUNT(*) FROM tblissuers_installation_identity WHERE id=1') === '1' ? sql("SELECT COALESCE(CAST(master_staff_id AS CHAR),'NULL') FROM tblissuers_installation_identity WHERE id=1") : null;
 
@@ -159,6 +166,12 @@ async function captureRealScreens(page, routes) {
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
       assert(!page.url().includes('/essential_modules'), 'same native POST finishes company core');
       assert.notEqual(sql('SELECT version FROM tblmigrations LIMIT 1'), before, 'real old schema migrated');
+      assert.equal(sql("SELECT JSON_ARRAY(userid,company,datecreated,active,addedfrom) FROM tblclients WHERE company='Synthetic historical primary customer'"), historicalCustomer, 'real upgrade preserves the historical customer fields and identity');
+      assert.equal(sql("SELECT COUNT(*) FROM tblclients c LEFT JOIN tblissuers_clients o ON o.client_id=c.userid WHERE c.company='Synthetic historical primary customer' AND o.client_id IS NULL"), '1', 'upgrade retains historical primary lineage without adopting it into a secondary company');
+      for(const [table,id,fields,snapshot] of preservedRows) assert.equal(sql('SELECT '+fields+' FROM '+table+' ORDER BY '+id),snapshot,'native upgrade preserves stored rows: '+table);
+      assert.equal(sql("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblcompany_blank_task_timers' AND COLUMN_NAME='target_kind'"),'varchar(32)','native migration supports the full standalone provenance identifier');
+      if(process.env.ISSUERS_BROWSER_UPGRADE_ONLY==='1'){console.log('Native HTTP upgrade only: CSRF rejection, authenticated migration, preserved historical customer and '+preservedRows.length+' business tables, timer provenance varchar(32): PASS.');return;}
+
       // Legacy access migration preserves the actor's principal membership/default.
       // That authorizes its dashboard, NOT installation-master/company-creation rights.
       assert.equal(sql("SELECT COUNT(*) FROM tblstaff s JOIN tblissuers_staff_defaults d ON d.staff_id=s.staffid JOIN tblissuers_installation_identity i ON i.id=1 AND i.primary_issuer_id=d.issuer_id JOIN tblissuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN tblissuers_staff m ON m.issuer_id=d.issuer_id AND m.staff_id=s.staffid AND m.can_view=1 WHERE s.email='admin-ci@example.invalid' AND s.active=1"), '1', 'legacy upgrade preserves a valid principal default and membership for this actor');

@@ -201,6 +201,10 @@
   }
 
   $(function () {
+    $('body').on('click.nativeInvoiceMail', '.invoice-send-to-client', function (event) {
+      event.preventDefault();
+      $('#invoice_send_to_client_modal').modal('show');
+    });
     initTable();
     root.init_invoices_total();
     initUpload();

@@ -3,6 +3,8 @@ declare(strict_types=1);
 /** Native taxes/item_tax use DECIMAL(15,2). Extra serialized zeros do not change precision. */
 final class NativeCompanyTaxRate
 {
+    public static function display($value):string
+    { return str_replace('.',',',rtrim(rtrim(self::exact($value),'0'),'.')); }
     public static function exact($value):string
     {
         if((!is_string($value)&&!is_int($value))||!preg_match('/^(0|[1-9][0-9]{0,12})(?:\.([0-9]{1,4}))?$/D',(string)$value,$m))throw new DomainException('native_tax_precision_review_required');

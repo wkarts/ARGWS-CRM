@@ -30,6 +30,12 @@ if(!function_exists('render_date_input')){function render_date_input($name,$labe
 if(!function_exists('_d')){function _d($value){return$value;}}
 extract($ci->load->data);ob_start();require APPPATH.'views/admin/invoices/record_payment_template.php';$html=ob_get_clean();
 essentialCheck(str_contains($html,'name="_native_payment_key"')&&str_contains($html,'data-native-mode-revision="'.$mode['revision'].'"')&&str_contains($html,'SMS indisponível'),'actual original payment template carries scoped mode revision, retry key and truthful SMS status');
+// A second payment also renders the existing receipt table. The child partial
+// must keep the scoped contract instead of invoking legacy action helpers.
+if(!function_exists('app_format_money')){function app_format_money($amount,$currency){return $amount.' '.$currency;}}
+$controller->record_invoice_payment_ajax($formInvoice);
+extract($ci->load->data);ob_start();require APPPATH.'views/admin/invoices/record_payment_template.php';$secondHtml=ob_get_clean();
+essentialCheck(count($invoice->payments)>0&&str_contains($secondHtml,'class="payment"')&&str_contains($secondHtml,'name="_native_payment_key"'),'second original payment form renders real previous receipts and retains the scoped command');
 CompanyRequestScope::$issuer=$b;try{$controller->record_invoice_payment_ajax($testInvoice);throw new RuntimeException('cross issuer accepted');}catch(InvoicePaymentHttpError $e){essentialCheck($e->getCode()===403,'original GET denies another company');}
 CompanyRequestScope::$issuer=$a;$ci->input->verb='POST';CompanyRequestScope::$csrf=false;try{$controller->record_payment();throw new RuntimeException('CSRF accepted');}catch(InvoicePaymentHttpError $e){essentialCheck($e->getCode()===403,'original POST denies invalid CSRF before payment and encryption');}
 CompanyRequestScope::$csrf=true;$ci->input->verb='GET';try{$controller->record_payment();throw new RuntimeException('GET payment accepted');}catch(InvoicePaymentHttpError $e){essentialCheck($e->getCode()===403,'original action cannot mutate through GET');}

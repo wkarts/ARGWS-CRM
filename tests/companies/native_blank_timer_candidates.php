@@ -23,8 +23,8 @@ essentialCheck($db->query('SELECT state FROM '.$p.'company_blank_task_timers WHE
 $db->query("UPDATE {$p}company_standalone_tasks SET status='done' WHERE id=?",[$task]);
 essentialCheck($service->assign($a,7,$next,1,'company_standalone_task',$task,1,'Testing is a distinct native workflow',hash('sha256','testing-import'))===$next,'Durable replay confirms past transfer after task completion, without opening a new assignment');
 $db->query('UPDATE '.$p.'company_standalone_tasks SET status=? WHERE id=?',[$before['status'],$task]);
+$next=$service->start($a,7,$off,hash('sha256','candidate-audit-revoke'));
 if($db->driver()==='sqlite'){
- $next=$service->start($a,7,$off,hash('sha256','candidate-audit-revoke'));
  $snapshot=$db->query('SELECT * FROM '.$p.'company_standalone_timers ORDER BY id')->result_array();
  $db->query('CREATE TRIGGER '.$p.'revoke_timer_target AFTER INSERT ON '.$p."issuers_audit WHEN NEW.event='company_native_blank_assigned' BEGIN UPDATE ".$p.'company_standalone_assignees SET active=0 WHERE issuer_id=NEW.issuer_id AND task_id='.$task.' AND staff_id=7; END');
  essentialThrows(fn()=>$service->assign($a,7,$next,1,'company_standalone_task',$task,1,'',hash('sha256','late-target-revocation')),'native_timer_assignee_required','audit-time target membership revocation rejects entire transfer');

@@ -55,12 +55,15 @@ final class CompanyRequestScope
     private static function ownedContractRoute($ci,string $class,string $method):bool
     {
         if($class!=='contracts')return false;
+        if(in_array($method,['types','type','delete_contract_type'],true)&&$ci->input->get('source',false)==='company')return true;
         if($method==='file')return true;
-        if(!in_array($method,['contract','pdf','send_to_email','renew','copy','delete','get_comments','add_comment','edit_comment','remove_comment'],true))return false;
+        if(!in_array($method,['contract','pdf','send_to_email','renew','copy','delete','get_comments','add_comment','edit_comment','remove_comment','mark_as_signed','unmark_as_signed','clear_signature','save_contract_data','add_note','get_notes','add_external_attachment','delete_renewal','add_contract_attachment','delete_contract_attachment'],true))return false;
         if($method==='contract'&&$ci->input->get('source',false)==='company')return true;
         $argument='';
         if(isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$argument=(string)$ci->uri->rsegment(3);
-        if(in_array($method,['renew','add_comment','edit_comment','remove_comment'],true))$argument=$ci->input->post('contract_id',false)??$ci->input->post('contractid',false)??'';
+        if($method==='delete_renewal'&&isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$argument=(string)$ci->uri->rsegment(4);
+        if($method==='delete_contract_attachment'&&preg_match('/^[a-f0-9]{64}$/D',$argument))return true;
+        if(in_array($method,['renew','add_comment','edit_comment','remove_comment','save_contract_data','add_external_attachment'],true))$argument=$ci->input->post('contract_id',false)??$ci->input->post('contractid',false)??'';
         if(!is_string($argument)&&!is_int($argument))return false;if($argument==='')return false;
         try{return NativeCompanyResourceId::decode('contract',$argument)['source_kind']==='company_contract';}
         catch(DomainException $error){
@@ -90,6 +93,46 @@ final class CompanyRequestScope
         // whose transport does not carry a query string.
         return NativeCompanyRoutes::admits('admin','', $class, $method,
             strtoupper((string) $ci->input->method(true)));
+    }
+
+    /** Primary payment history keeps its original adapter; named-company records use the same owned actions. */
+    private static function ownedPaymentsRoute($ci,string $class,string $method):bool
+    {
+        if($class!=='payments'||!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        if(in_array($method,['index','list_payments','table','batch_payment_modal','add_batch_payment'],true))return true;
+        if(!in_array($method,['payment','pdf','send_to_email','delete'],true))return false;
+        $id=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
+        if(!preg_match('/^[1-9][0-9]*$/D',$id))return true;
+        $row=IssuerStorage::query($ci->db,'SELECT i.issuer_id FROM '.db_prefix().'invoicepaymentrecords p JOIN '.db_prefix().'invoices i ON i.id=p.invoiceid WHERE p.id=?',[$id])->row_array();
+        return !$row||$row['issuer_id']!==null;
+    }
+
+    /** Preserve historical primary routes while resolving typed operational records identically. */
+    private static function ownedOperationalRoute($ci,string $class,string $method):bool
+    {
+        if(!in_array($class,['projects','tasks'],true))return false;
+        if(!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        if($class==='projects'&&in_array($method,['index','table','staff_projects'],true))return true;
+        if($class==='tasks'&&in_array($method,['index','list_tasks','table','kanban','switch_kanban','update_order','tasks_kanban_load_more'],true))return true;
+        $argument=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
+        if($class==='projects'){
+            if($method==='project'&&$argument===''&&!$ci->input->get('via_estimate_id'))return true;
+            require_once __DIR__.'/NativeCompanyProjectRuleCommands.php';
+            $command=$ci->input->post('action',false);
+            if(is_string($command)&&in_array($command,NativeCompanyProjectRuleCommands::ROUTES[$method]??[],true))return true;
+            if($method==='milestone'&&$command==='milestone')return true;
+            $candidates=[$argument,$ci->input->get('project_id',false),$ci->input->post('project_id',false)];$kind='project';$sources=['company_project'];
+        }else{
+            $candidates=[$argument,$ci->input->post('taskid',false),$ci->input->post('task_id',false),$ci->input->post('timesheet_task_id',false),$ci->input->get('task_id',false)];$kind='task';$sources=['company_task','company_standalone_task'];
+            if(in_array($method,['mark_as','change_priority'],true)&&isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$candidates[]=(string)$ci->uri->rsegment(4);
+            if($method==='task'&&$argument==='')return true;
+
+        }
+        foreach($candidates as$id){if((!is_string($id)&&!is_int($id))||$id==='')continue;
+            try{if(in_array(NativeCompanyResourceId::decode($kind,$id)['source_kind'],$sources,true))return true;}
+            catch(DomainException $error){if(preg_match('/^[1-9][0-9]{9,15}$/D',(string)$id)&&(int)$id>=4294967296)return true;}
+        }
+        return false;
     }
 
     public static function bootstrap($ci): void
@@ -172,13 +215,14 @@ final class CompanyRequestScope
             // Settings uses the same bounded, issuer-owned forms for the
             // principal and named companies, including asset actions.
             $sharedSettings = $native && $class === 'settings'
-                && in_array($method,['index','remove_company_logo','remove_signature_image','remove_fv','company_asset'],true);
+                && in_array($method,['index','remove_company_logo','remove_signature_image','remove_fv','company_asset','delete_tag'],true);
             // Customer import/export uses one owned writer and the original
             // Clients route in principal and named companies alike.
             $sharedClientImport = $native && $class === 'clients' && $method === 'import';
             $sharedClientLookup = $native && $class === 'clients' && $method === 'lookup';
             $sharedOwnedContract=$native&&self::ownedContractRoute($ci,$class,$method);
             $sharedOwnedClient = $native && self::ownedClientRoute($ci, $class, $method);
+            $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method));
             $sharedOwnedLead = $native && $class === 'leads'
                 && in_array($method, ['index', 'file', 'export'], true);
             // Estimates and proposals already dispatch to the bounded
@@ -192,7 +236,7 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $ownedStaffDownload) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedOperational || $ownedStaffDownload) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );

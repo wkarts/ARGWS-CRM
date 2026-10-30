@@ -6,17 +6,42 @@ require_once __DIR__.'/NativeSettingsSections.php';
 /** Adapter for Settings::index and the existing admin/settings/all template only. */
 final class NativeCompanySettingsController
 {
+    private static function tagCommand($ci,string $id,bool $remove):void
+    {
+        CompanyRequestScope::assertNativeMutation($ci);$data=$ci->input->post(null,false);
+        if(!is_array($data))throw new DomainException('native_tag_invalid');unset($data['_company_context'],$data['_native_company_csrf']);if(isset($ci->security))unset($data[$ci->security->get_csrf_token_name()]);
+        if(array_diff(array_keys($data),$remove?['revision','request_key']:['id','name','revision','request_key'])||!is_string($data['revision']??null)||!is_string($data['request_key']??null)||!$remove&&(!is_string($data['name']??null)||(string)($data['id']??'')!==$id))throw new DomainException('native_tag_invalid');
+        require_once __DIR__.'/NativeCompanyTagAdministration.php';$context=CompanyRequestScope::context();(new NativeCompanyTagAdministration($ci->db,db_prefix()))->change($context->issuerId(),$context->staffId(),$id,$data['revision'],$data['request_key'],$remove?null:$data['name']);
+        CompanyRequestScope::invalidateCaches($ci);redirect(admin_url('settings?group=tags'),'location',303);
+    }
+    public static function deleteTag($ci,$id):void
+    {
+        try{if(!CompanyRequestScope::nativeFor($ci)||!is_string($id)&&!is_int($id))throw new DomainException('native_tag_denied');self::tagCommand($ci,(string)$id,true);}
+        catch(DomainException $e){show_error('Não foi possível confirmar a alteração da etiqueta nesta empresa.',str_contains($e->getMessage(),'stale')||str_contains($e->getMessage(),'conflict')?409:(str_contains($e->getMessage(),'invalid')?422:403));}
+        catch(RuntimeException $e){show_error('A alteração da etiqueta não foi confirmada.',503);}
+    }
+    private static function tags($ci,int $issuer,int $actor,array $sections,array $selected):void
+    {
+        require_once __DIR__.'/NativeCompanyTagAdministration.php';
+        if(strtoupper($ci->input->method(true))==='POST'){self::tagCommand($ci,(string)$ci->input->post('id',false),false);return;}
+        if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true))throw new DomainException('native_settings_method');
+        $items=(new NativeCompanyTagAdministration($ci->db,db_prefix()))->listing($issuer,$actor);$selected['without_submit_button']=true;
+        $ci->load->view('admin/settings/all',['title'=>_l('options'),'sections'=>$sections,'group'=>$selected,'admin_tabs'=>[],'native_settings'=>true,'native_settings_tags'=>$items,'native_settings_revision'=>'','native_settings_assets'=>null,'native_settings_can_edit'=>true]);
+    }
     /** Known form failures have stable HTTP meanings; unknown errors remain denied. */
     private static function domainStatus(string $reason):int
     {
         return match($reason){
+            'native_tag_stale','native_tag_conflict'=>409,
+            'native_tag_invalid'=>422,
+            'native_tag_write_unconfirmed'=>503,
             'native_settings_stale','native_clients_settings_stale','native_google_settings_stale',
             'native_calendar_preferences_stale','native_mail_settings_stale','native_ticket_preferences_stale',
             'company_calendar_preferences_stale',
             'native_invoice_sequence_stale','native_sales_sequence_stale','native_sales_settings_stale','company_task_preferences_stale','company_task_operation_preferences_stale',
             'company_task_timer_preferences_stale','company_task_timer_stop_preferences_stale','company_ticket_preferences_stale',
             'company_pdf_typography_stale','company_project_file_settings_stale'=>409,
-            'native_settings_invalid','company_settings_invalid_input','issuer_invalid_name','issuer_invalid_tax_id',
+            'native_settings_invalid','company_settings_invalid_input','issuer_invalid_name','issuer_invalid_tax_id','native_upload_option_invalid',
             'native_custom_field_required','native_clients_settings_invalid','native_google_settings_invalid',
             'native_calendar_preferences_invalid','native_mail_settings_invalid','native_misc_settings_invalid',
             'company_calendar_preferences_invalid',
@@ -24,7 +49,7 @@ final class NativeCompanySettingsController
             'native_sales_settings_invalid','native_sales_sequence_invalid','native_sales_sequence_regression','native_sales_sequence_unemittable',
             'company_task_preferences_invalid','company_task_operation_preferences_invalid',
             'company_task_timer_preferences_invalid','company_task_timer_stop_preferences_invalid',
-            'company_ticket_preferences_invalid','company_pdf_typography_invalid','company_project_file_settings_invalid'=>422,
+            'company_ticket_preferences_invalid','company_pdf_typography_invalid','company_document_layout_invalid','company_project_file_settings_invalid'=>422,
             'company_calendar_source_unavailable'=>503,
             'company_settings_write_unconfirmed'=>503,
             default=>403,
@@ -168,6 +193,7 @@ final class NativeCompanySettingsController
             $selected=null;
             foreach($sections as$section)foreach($section['children']as$child)if($child['id']===$group)$selected=$child;
             if($selected===null)throw new DomainException('native_settings_group_unavailable');
+            if($group==='tags'){self::tags($ci,$issuer,$actor,$sections,$selected);return;}
             NativeCompanySettingsForms::fields($group);
             $method=strtoupper($ci->input->method(true));
             if($group==='certificates'){self::certificate($ci,$issuer,$actor,$sections,$selected,$forms);return;}
@@ -213,6 +239,7 @@ final class NativeCompanySettingsController
                 'title'=>_l('options'),'sections'=>$sections,'group'=>$selected,'admin_tabs'=>['update','info','argws_platform'],
                 'native_settings'=>true,'native_settings_clients'=>$group==='clients'?$page:null,'native_settings_misc'=>$group==='misc'?$page:null,'roles'=>$group==='misc'?$page['roles']:[],'native_settings_task_values'=>$group==='tasks'?$page['values']:null,'task_statuses'=>$taskStatuses,'native_settings_google'=>$group==='google'?$page:null,'native_settings_calendar_values'=>$group==='calendar'?$page['values']:null,'native_settings_email'=>$group==='email'?$page:null,'native_settings_ticket_values'=>$group==='tickets'?$page['values']:null,'native_settings_ticket_statuses'=>$ticketStatuses,'ticket_priorities'=>$ticketPriorities,'native_settings_issuer'=>$issuer,'native_settings_invoice_values'=>$group==='invoices'?$page['values']:null,'native_settings_company_values'=>$group==='company'?$page['values']:null,'native_settings_company_custom_fields'=>$group==='company'?$page['custom_fields']:null,'native_settings_company_field_definitions'=>$group==='company'?$page['custom_field_definitions']:null,'native_settings_tax_dropdown'=>$nativeTaxDropdown,'native_settings_revision'=>$page['revision'],'native_settings_assets'=>$page['assets'],
                 'native_settings_pdf_values'=>$group==='pdf'?$page['values']:null,
+                'native_settings_general_values'=>$group==='general'?$page['values']:null,
                 'native_settings_estimate_values'=>$group==='estimates'?$page['values']:null,
                 'native_settings_proposal_values'=>$group==='proposals'?$page['values']:null,
                 'native_settings_proposal_field_definitions'=>$proposalFields,
@@ -225,7 +252,7 @@ final class NativeCompanySettingsController
             // Only recognized persistence/transaction failures are mapped. An
             // unexpected programming error must not be silently reclassified.
             $policyFailure=isset($group)&&in_array($group,['task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files'],true);
-            if(!$policyFailure&&!in_array($e->getMessage(),['issuer_storage_failed','issuer_commit_unconfirmed','issuer_transactional_storage_required','issuer_calendar_preferences_unconfirmed','native_calendar_preferences_unconfirmed',
+            if(!$policyFailure&&!in_array($e->getMessage(),['native_tag_write_unconfirmed','issuer_storage_failed','issuer_commit_unconfirmed','issuer_transactional_storage_required','issuer_calendar_preferences_unconfirmed','native_calendar_preferences_unconfirmed',
                 'issuer_project_file_settings_write_unconfirmed','issuer_pdf_typography_write_unconfirmed','issuer_ticket_preferences_unconfirmed','issuer_task_preferences_unconfirmed',
                 'issuer_task_operation_preferences_unconfirmed','issuer_task_timer_preferences_unconfirmed','issuer_task_timer_stop_preferences_unconfirmed'],true))throw $e;
             show_error('Não foi possível confirmar a gravação das definições. Recarregue a página antes de tentar novamente.',503);

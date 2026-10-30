@@ -1,6 +1,7 @@
 <?php
 require __DIR__.'/native_invoice_form_post.php';
 foreach(['5'=>'5.00','5.0'=>'5.00','5.0000'=>'5.00','1.2300'=>'1.23','0.0100'=>'0.01']as$input=>$expected)essentialCheck(NativeCompanyTaxRate::exact((string)$input)===$expected,'native tax rate normalizes only representable values '.$input);
+foreach(['5.0000'=>'5','2.5000'=>'2,5','0.0100'=>'0,01','0.00'=>'0']as$rate=>$display)essentialCheck(NativeCompanyTaxRate::display($rate)===$display,'actual tax display preserves decimal magnitude '.$rate);
 foreach(['1.2345','0.0010','1e2','-1','1.00000']as$input)essentialThrows(fn()=>NativeCompanyTaxRate::exact($input),'native_tax_precision_review_required','incompatible rate is not rounded '.$input);
 $selection=(new NativeCompanyInvoiceSequencePreferences($db,$p))->readForInvoiceCreation($a,12);
 $taxWire=$wire;$taxWire['_native_invoice_request_key']=hash('sha256','native-exact-tax-wire');$taxWire['_native_invoice_number_revision']=$selection['revision'];$taxWire['number']=$selection['next_number'];

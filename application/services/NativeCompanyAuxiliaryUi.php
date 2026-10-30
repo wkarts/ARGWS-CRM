@@ -96,10 +96,10 @@ final class NativeCompanyAuxiliaryUi
     public function members():array{return$this->owned->members();}
     public function notes(string $type,$id):array{$rows=self::rows('note',$this->owned->notes($type,$id));if($this->legacy!==null){$rows=array_merge($rows,$this->legacy->notes($type,$id));usort($rows,static fn($a,$b)=>strcmp($b['dateadded'],$a['dateadded'])?:((int)$b['id']<=>(int)$a['id']));}return$rows;}
     public function note($id):array{$ref=NativeCompanyResourceId::decode('note',$id);if($ref['source_kind']==='note'&&$this->legacy!==null)return$this->legacy->note($ref['source_id']);return self::row('note',$this->owned->note(self::id('note',$id)));}
-    public function saveNote(string $type,$relId,array $input,$id=null,$revision=null):string
+    public function saveNote(string $type,$relId,array $input,$id=null,$revision=null,?string$requestKey=null,?int$parentRevision=null):string
     {
         if($id!==null){$ref=NativeCompanyResourceId::decode('note',$id);if($ref['source_kind']==='note'&&$this->legacy!==null){$row=$this->legacy->note($ref['source_id']);if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$relId)throw new DomainException('company_auxiliary_access_denied');$this->legacy->mutateRelation('note',$ref['source_id'],$revision,$input);return(string)$id;}}
-        return self::encoded('note',$this->owned->saveNote($type,$relId,$input,$id===null||$id===''?null:self::id('note',$id),$revision));
+        return self::encoded('note',$this->owned->saveNote($type,$relId,$input,$id===null||$id===''?null:self::id('note',$id),$revision,$requestKey,$parentRevision));
     }
     public function deleteNote($id,$revision):void{$ref=NativeCompanyResourceId::decode('note',$id);if($ref['source_kind']==='note'&&$this->legacy!==null){$this->legacy->mutateRelation('note',$ref['source_id'],$revision,null);return;}$this->owned->deleteNote(self::id('note',$id),$revision);}
     public function reminders(?string $type=null,$id=null,int $limit=100,int $offset=0):array{return$this->reminderTable($type,$id,$offset,$limit)['rows'];}
@@ -111,10 +111,10 @@ final class NativeCompanyAuxiliaryUi
         foreach([$this->owned,$this->legacy]as$source){for($pos=0;$pos<$need;$pos+=100){$part=$source->reminderTable($type,$id,$pos,min(100,$need-$pos),$search,$pendingOnly,$allVisible);if($pos===0){$total+=$part['total'];$filtered+=$part['filtered'];}foreach($part['rows']as$row)$rows[]=$source===$this->owned?self::row('reminder',$row):$row;if(count($part['rows'])<min(100,$need-$pos))break;}}
         usort($rows,static fn($a,$b)=>strcmp($a['date'],$b['date'])?:((int)$a['id']<=>(int)$b['id']));return['total'=>$total,'filtered'=>$filtered,'rows'=>array_slice($rows,$start,$length)];
     }
-    public function saveReminder(string $type,$relId,array $input,$id=null,$revision=null):string
+    public function saveReminder(string $type,$relId,array $input,$id=null,$revision=null,?string$requestKey=null,?int$parentRevision=null):string
     {
         if($id!==null){$ref=NativeCompanyResourceId::decode('reminder',$id);if($ref['source_kind']==='reminder'&&$this->legacy!==null){$row=$this->legacy->reminder($ref['source_id']);if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$relId)throw new DomainException('company_auxiliary_access_denied');$this->legacy->mutateRelation('reminder',$ref['source_id'],$revision,$input);return(string)$id;}}
-        return self::encoded('reminder',$this->owned->saveReminder($type,$relId,$input,$id===null||$id===''?null:self::id('reminder',$id),$revision));
+        return self::encoded('reminder',$this->owned->saveReminder($type,$relId,$input,$id===null||$id===''?null:self::id('reminder',$id),$revision,$requestKey,$parentRevision));
     }
     public function deleteReminder($id,$revision):void{$ref=NativeCompanyResourceId::decode('reminder',$id);if($ref['source_kind']==='reminder'&&$this->legacy!==null){$this->legacy->mutateRelation('reminder',$ref['source_id'],$revision,null);return;}$this->owned->deleteReminder(self::id('reminder',$id),$revision);}
 }

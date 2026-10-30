@@ -33,8 +33,9 @@ $formAttributes = [
     'class' => isset($group['update_url']) ? 'custom-update-url' : '',
 ];
 
-echo form_open_multipart($actionUrl, $formAttributes);
-if($isNativeSettings){echo form_hidden('native_settings_revision',$native_settings_revision);echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('_company_context',CompanyRequestScope::token());}
+$individualTagForms=$isNativeSettings&&$group['id']==='tags';
+if(!$individualTagForms)echo form_open_multipart($actionUrl, $formAttributes);
+if($isNativeSettings&&!$individualTagForms){echo form_hidden('native_settings_revision',$native_settings_revision);echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('_company_context',CompanyRequestScope::token());}
 ?>
                         <div class="panel_s">
                             <div class="panel-body">
@@ -52,7 +53,7 @@ if($isNativeSettings){echo form_hidden('native_settings_revision',$native_settin
                             </div>
                             <?php } ?>
                         </div>
-                        <?= form_close(); ?>
+                        <?= $individualTagForms?'':form_close(); ?>
 <?php
 $settingsPresentation=['title'=>_l('settings'),'heading'=>$group['name'],'active'=>$group['id'],'sections'=>$settingsNavigation,'content'=>ob_get_clean()];
 require __DIR__.'/presentation_layout.php';

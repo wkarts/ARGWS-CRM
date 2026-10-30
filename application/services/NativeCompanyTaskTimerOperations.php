@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyTimerPolicy.php';
+require_once __DIR__.'/NativeCompanyTaskTimesheetOperations.php';
 /** Native timer entry points on the existing task writers; historical activity() is unchanged. */
 trait NativeCompanyTaskTimerOperations
 {
+    use NativeCompanyTaskTimesheetOperations;
     private ?array $nativeTimerContext=null;
     private function nativeTimerExtraTables():array
     {
@@ -19,6 +21,7 @@ trait NativeCompanyTaskTimerOperations
     }
     private function nativeTimerFrame(int$i,int$a):array
     {
+        if(str_starts_with($this->nativeTimerContext['action'],'manual_'))return $this->nativeManualFrame($i,$a);
         $frame=['policy'=>(new NativeCompanyTimerPolicy($this->db,$this->p))->readInOwned($i,$a),'timers'=>$this->nativeActorTimers($a),'targets'=>[]];$details=new NativeCompanyTaskTimerDetails($this->db,$this->p);
         foreach($this->nativeTimerContext['targets']as[$kind,$id]){$writer=$kind==='project'?new CompanyTasks($this->db,$this->p):new CompanyStandaloneTasks($this->db,$this->p);$frame['targets'][]=$writer->nativeBlankTimerTargetInOwned($i,$a,$id);$table=$kind==='project'?'company_task_timers':'company_standalone_timers';$source=$kind==='project'?'company_task_timer':'company_standalone_timer';foreach($frame['timers'][$table]as$t)if((int)$t['issuer_id']===$i&&(int)$t['task_id']===$id)$frame['details'][$source.':'.$t['id']]=$details->ownInOwned($i,$a,$source,(int)$t['id']);}
         if($this->nativeTimerContext['action']==='start'){$frame['rate']=(new NativeCompanyStaffRates($this->db,$this->p))->forOwnTimerInOwned($i,$a);$frame['transition']=CompanyTaskTimerPreferences::readInOwnedTransaction($this->db,$this->p,$i);}return$frame;

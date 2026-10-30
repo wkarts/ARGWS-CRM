@@ -12,7 +12,17 @@ essentialThrows(fn()=>$projection->readOne($b,7,$new),'native_company_task_denie
 foreach ($records as $record) essentialCheck((int) $record['row']['issuer_id'] === $a && $record['reference']['canonical_id'] === $record['id'], 'Every projected row retains the exact issuer and canonical identity');
 $other = $projection->read($b, 7);
 foreach ($other as $record) essentialCheck((int) $record['row']['issuer_id'] === $b && !isset($named[$record['id']]), 'Second company cannot project identities from the first company');
-essentialThrows(fn() => $projection->read(1, 7), 'native_task_main_legacy_projection_required', 'Secondary-only reader refuses to omit principal legacy tasks');
+// Restore real historical table shapes now consumed by the principal union.
+foreach(['tasks','task_assigned','task_followers','taskstimers','tags','taggables','customfields','customfieldsvalues']as$table)if(!$db->table_exists($p.$table)){
+    $seed=file_get_contents(dirname(__DIR__,2).'/install/database.sql');preg_match('/CREATE TABLE `tbl'.$table.'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$seed,$ddl);if(!$ddl)throw new RuntimeException('Missing native table definition');
+    $sql=str_replace('`tbl'.$table.'`','`'.$p.$table.'`',$ddl[0]);if($db->driver()==='sqlite')$sql=preg_replace('/ CHARACTER SET [a-zA-Z0-9_]+ COLLATE [a-zA-Z0-9_]+/','',$sql);$db->query($sql);
+}
+unset($db->data_cache['table_names']);$legacyId=NativeCompanyResourceId::decode('task',$new)['source_id'];
+$db->query('INSERT INTO '.$p.'tasks(id,name,description,priority,dateadded,startdate,status,addedfrom,rel_type,rel_id,billable,billed) VALUES(?,?,?,2,?,?,1,7,NULL,NULL,1,0)',[$legacyId,'Preserved primary task','Actual historical values','2020-01-01 12:00:00','2020-01-01']);
+$primaryProjection=$projection->read(1,7);
+essentialCheck(array_column($primaryProjection,'id')===[(string)$legacyId]&&$primaryProjection[0]['source_kind']==='task'&&$primaryProjection[0]['row']['name']==='Preserved primary task'&&$primaryProjection[0]['fields']['start_date']==='2020-01-01','Principal projection preserves historical ID/date and excludes secondary task with coincident numeric ID');
+essentialCheck($projection->read($a,7)===$records,'Introducing a coincident primary ID cannot change the secondary projection');
+
 essentialCheck((new IssuerResourceAccess($db, $p))->can($a, 92, 'tasks', 'view'), 'Ordinary secondary actor initially has task view');
 $db->query('UPDATE ' . $p . 'issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=92', [$a]);
 essentialThrows(fn() => $projection->read($a, 92), 'native_company_task_denied', 'Revoked issuer membership blocks the projection');

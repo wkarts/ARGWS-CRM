@@ -15,7 +15,7 @@ abstract class CompanyPortalSupportStorage extends CompanyPortalOperationsStorag
  protected static function text($v,int $max):string{if(!is_string($v)||strlen($v)>$max||trim($v)===''||preg_match('//u',$v)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$v))throw new DomainException('company_portal_support_invalid');return trim($v);}
  protected function owned(array $who,int $issuer,int $id):array
  {
-  NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,$id);$row=$this->rows('SELECT p.* FROM '.$this->p.'company_tickets p JOIN '.$this->p.'company_portal_tickets v ON v.issuer_id=p.issuer_id AND v.ticket_id=p.id AND v.visible=1 WHERE p.issuer_id=? AND p.id=? AND p.client_id=? FOR UPDATE',[$issuer,$id,$who['client_id']])[0]??null;if(!$row)throw new DomainException('company_portal_operation_unavailable');return $row;
+  NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,$id);$row=$this->rows('SELECT p.* FROM '.$this->p.'company_tickets p JOIN '.$this->p.'company_portal_tickets v ON v.issuer_id=p.issuer_id AND v.ticket_id=p.id AND v.visible=1 WHERE p.issuer_id=? AND p.id=? AND p.client_id=? FOR UPDATE',[$issuer,$id,$who['client_id']])[0]??null;if(!$row)throw new DomainException('company_portal_operation_unavailable');return (new NativeCompanyTicketPortalProjection($this->db,$this->p))->ticket($issuer,$row);
  }
  protected function operation(array $session,int $issuer,string $operation,string $key,array $payload,callable $work,?callable $replay=null):int
  {

@@ -52,6 +52,7 @@ final class NativeCompanyRoutes
         // Settings::index is the original native Settings route. Its bounded
         // form adapters decide which groups and writes are available.
         'settings' => [
+            'delete_tag'=>['POST'],
             'index'=>['GET','HEAD','POST'], 'remove_company_logo'=>['POST'],
             'remove_signature_image'=>['POST'], 'remove_fv'=>['POST'],
             'company_asset'=>['GET','HEAD'],
@@ -62,6 +63,7 @@ final class NativeCompanyRoutes
             'sent_smtp_test_email'=>['POST'], 'delete_queued_email'=>['POST'], 'clear_queued_emails'=>['POST'],
         ],
         'misc' => [
+            'get_currency'=>['GET'], 'get_taxes_dropdown_template'=>['POST'],
             'dismiss_announcement'=>['POST'], 'staff_email_exists'=>['POST'],
             'add_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'],
             'upload_sales_file'=>['POST'], 'add_sales_external_attachment'=>['POST'],
@@ -73,6 +75,14 @@ final class NativeCompanyRoutes
             'validate_dynamic_date'=>['POST'],
         ],
         'tasks'=>[
+            'log_time'=>['POST'], 'update_timesheet'=>['POST'], 'delete_timesheet'=>['POST'], 'delete_user_unfinished_timesheet'=>['POST'],
+            'copy'=>['POST'],
+            'kanban'=>['GET','HEAD'], 'tasks_kanban_load_more'=>['GET','HEAD'], 'update_order'=>['POST'], 'switch_kanban'=>['POST'],
+            'edit_comment'=>['POST'], 'remove_comment'=>['POST'], 'task_single_inline_update'=>['POST'],
+            'add_reminder'=>['POST'], 'edit_reminder'=>['POST'], 'delete_reminder'=>['POST'],
+            'update_task_description'=>['POST'], 'make_public'=>['POST'], 'update_tags'=>['POST'],
+            'add_task_assignees'=>['POST'], 'remove_assignee'=>['POST'], 'add_task_followers'=>['POST'], 'remove_follower'=>['POST'],
+            'change_milestone'=>['POST'], 'unmark_complete'=>['POST'],
             'index'=>['GET','HEAD'], 'list_tasks'=>['GET','HEAD'], 'table'=>['POST'],
             'init_relation_tasks'=>['POST'], 'task'=>['GET','HEAD','POST'],
             'get_task_data'=>['GET'],
@@ -95,6 +105,8 @@ final class NativeCompanyRoutes
             'init_checklist_items'=>['POST'],
             'checklist_visibility'=>['POST'],
             'checklist_command'=>['POST'],
+            'checkbox_action'=>['POST'], 'add_checklist_item'=>['POST'], 'update_checklist_order'=>['POST'],
+            'delete_checklist_item'=>['POST'], 'update_checklist_item'=>['POST'], 'save_checklist_assigned_staff'=>['POST'],
             'add_task_comment'=>['POST'],
             'upload_file'=>['POST'],
             'remove_task_attachment'=>['POST'],
@@ -103,11 +115,13 @@ final class NativeCompanyRoutes
             'copies'=>['GET','HEAD','POST'], 'recurring'=>['GET','HEAD','POST'], 'standalone'=>['GET','HEAD','POST'],
             'billing'=>['GET','HEAD','POST'], 'time_batches'=>['GET','HEAD','POST'],
         ], 'projects'=>[
+            'discussions'=>['GET','HEAD'], 'discussion'=>['GET','HEAD','POST'], 'add_discussion_comment'=>['POST'], 'update_discussion_comment'=>['POST'], 'delete_discussion_comment'=>['POST'], 'delete_discussion'=>['POST'], 'change_activity_visibility'=>['POST'], 'get_discussion_comments'=>['GET','HEAD'], 'milestones'=>['GET','HEAD'], 'milestones_kanban'=>['GET','HEAD'], 'milestones_kanban_load_more'=>['GET','HEAD'], 'milestone'=>['POST'], 'update_task_milestone'=>['POST'], 'gantt'=>['GET','HEAD'],
+
             'index'=>['GET','HEAD'],
             'staff_projects'=>['POST'],
             'table'=>['POST'],
             'project'=>['GET','HEAD','POST'],
-            'view'=>['GET','HEAD'],
+            'view'=>['GET','HEAD','POST'],
             'upload_file'=>['POST'],
             'remove_file'=>['POST'],
             'add_edit_members'=>['POST'],
@@ -127,7 +141,7 @@ final class NativeCompanyRoutes
             'consents'=>['GET','HEAD'],
             'contact_email_exists'=>['POST'], 'change_contact_status'=>['POST'],
             'lookup'=>['POST'], 'check_duplicate_customer_name'=>['POST'],
-            'change_client_status'=>['POST'],
+            'change_client_status'=>['POST'], 'mark_as_active'=>['POST'],
             'delete_contact'=>['POST'], 'confirm_registration'=>['POST'],
             'delete_contact_profile_image'=>['POST'],
             'upload_attachment'=>['POST'], 'delete_attachment'=>['POST'],
@@ -150,6 +164,11 @@ final class NativeCompanyRoutes
             'export'=>['GET','HEAD'],
         ],
         'contracts'=>[
+            'add_external_attachment'=>['POST'],
+            'types'=>['GET','HEAD'], 'type'=>['POST'], 'delete_contract_type'=>['POST'],
+            'add_note'=>['POST'], 'get_notes'=>['GET','HEAD'],
+            'mark_as_signed'=>['POST'], 'unmark_as_signed'=>['POST'], 'clear_signature'=>['POST'], 'save_contract_data'=>['POST'], 'delete_renewal'=>['POST'],
+            'add_contract_attachment'=>['POST'], 'delete_contract_attachment'=>['POST'],
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'send_to_email'=>['POST'], 'renew'=>['POST'], 'copy'=>['POST'], 'delete'=>['POST'], 'get_comments'=>['GET','HEAD'], 'add_comment'=>['POST'], 'edit_comment'=>['POST'], 'remove_comment'=>['POST'],
             'contract'=>['GET','HEAD','POST'],
             'pdf'=>['GET','HEAD'],
@@ -157,6 +176,7 @@ final class NativeCompanyRoutes
         ],
         'gdpr'=>['contact_consent_opt_action'=>['POST']],
         'invoices'=>[
+            'send_to_email'=>['POST'],
             'index'=>['GET','HEAD'], 'list_invoices'=>['GET','HEAD'], 'table'=>['POST'],
             'invoice'=>['GET','HEAD','POST'], 'client_change_data'=>['GET'],
             'drafts'=>['GET','HEAD','POST'], 'copy'=>['GET','HEAD','POST'],
@@ -166,7 +186,7 @@ final class NativeCompanyRoutes
             'pause_overdue_reminders'=>['POST'], 'resume_overdue_reminders'=>['POST'],
             'mark_as_sent'=>['POST'], 'mark_as_cancelled'=>['POST'], 'unmark_as_cancelled'=>['POST'],
             'get_invoices_total'=>['POST'], 'record_invoice_payment_ajax'=>['GET','HEAD'],
-            'record_payment'=>['POST'], 'delete_attachment'=>['POST'],
+            'record_payment'=>['POST'], 'delete_payment'=>['POST'], 'delete_attachment'=>['POST'],
             'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'],
         ],
         'estimates'=>[
@@ -184,17 +204,21 @@ final class NativeCompanyRoutes
             'index'=>['GET','HEAD','POST'], 'list_credit_notes'=>['GET','HEAD','POST'],
         ],
         'expenses'=>[
+            'expense'=>['GET','HEAD','POST'],'categories'=>['GET','HEAD'],'category'=>['POST'],'delete_category'=>['POST'],
+            'get_expense_data_ajax'=>['GET','HEAD'],'delete'=>['POST'],'add_expense_attachment'=>['POST'],'delete_expense_attachment'=>['POST'],
+            'convert_to_invoice'=>['POST'],'import'=>['GET','HEAD','POST'],
             'index'=>['GET','HEAD','POST'], 'list_expenses'=>['GET','HEAD','POST'],
             'copy'=>['GET','HEAD','POST'], 'purchases'=>['GET','HEAD','POST'],
         ],
         'reports'=>['index'=>['GET','HEAD']],
         'payments'=>[
+            'index'=>['GET','HEAD'],'list_payments'=>['GET','HEAD'],'table'=>['POST'],'payment'=>['GET','HEAD','POST'],'pdf'=>['GET','HEAD'],'delete'=>['POST'],'batch_payment_modal'=>['GET','HEAD'],'add_batch_payment'=>['POST'],
             'post_refund'=>['GET','HEAD','POST'], 'post_refund_manual'=>['GET','HEAD','POST'],
         ],
         'staff'=>[
             'index'=>['GET','HEAD','POST'], 'member'=>['GET','HEAD','POST'],
             'role_changed'=>['GET'],
-            'save_dashboard_widgets_order'=>['POST'], 'save_dashboard_widgets_visibility'=>['POST'],
+            'save_completed_checklist_visibility'=>['POST'], 'save_dashboard_widgets_order'=>['POST'], 'save_dashboard_widgets_visibility'=>['POST'],
             'reset_dashboard'=>['POST'], 'save_hidden_table_columns'=>['POST'],
             'timesheets'=>['GET','HEAD'], 'delete'=>['POST'],
             'edit_profile'=>['GET','HEAD','POST'], 'remove_staff_profile_image'=>['POST'],

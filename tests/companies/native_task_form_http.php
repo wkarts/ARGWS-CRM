@@ -8,6 +8,8 @@ else foreach(CompanyTaskRecurringSchema::definitions($p)as$table=>$parts)if(!$db
     $db->query('CREATE TABLE '.$p.$table.'('.preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',implode(',',$parts)).')');
 unset($db->data_cache['table_names']);
 require_once APPPATH.'services/NativeCompanyTaskItemSchema.php';NativeCompanyTaskItemSchema::ensure($db,$p);
+require dirname(__DIR__).'/helpers/native_auxiliary_schema_fixture.php';
+(new CompanySettingsStorage($db,$p))->mutate($a,7,'add','time_format','24');
 $db->query('CREATE TABLE '.$p.'user_meta(umeta_id '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',staff_id int NOT NULL,meta_key varchar(191) NOT NULL,meta_value text NULL)');
 unset($db->data_cache['table_names']);
 require_once APPPATH.'services/NativeCompanyBlankTimerSchema.php';NativeCompanyBlankTimerSchema::ensure($db,$p);
@@ -20,7 +22,6 @@ function admin_url($path=''){return'https://crm.invalid/sub/admin/'.$path;}
 function site_url($path=''){return'https://crm.invalid/sub/'.ltrim($path,'/');}
 function get_staff_user_id(){return 7;}
 function is_mobile(){return false;}
-function file_upload_max_size(){return 10485760;} // PHP upload cap boundary; actual upload gate is separate.
 function html_purify($value){return strip_tags((string)$value,'<p><b>');}
 function get_option(){throw new \RuntimeException('Unexpected global option');}
 function total_rows(){throw new \RuntimeException('Unexpected global row query');}
@@ -45,7 +46,7 @@ class AdminController {
  public $db,$input,$output,$load,$config,$uri,$security;
  function __construct(){
  $this->db=$GLOBALS['db'];$this->input=new class{public string$verb='GET';public array$body=[],$query=[];function method($v=true){return$this->verb;}function get($k){return$this->query[$k]??null;}function post($k=null,$clean=false){return$k===null?$this->body:($this->body[$k]??null);}};
- $this->output=new class{public string$body='';function set_header($h){return$this;}function set_content_type($type){return$this;}function set_output($v){$this->body=$v;return$this;}};
+ $this->output=new class{public string$body='';public int$status=200;public array$headers=[];function set_status_header($status){$this->status=$status;return$this;}function set_header($h){$this->headers[]=$h;return$this;}function set_content_type($type){return$this;}function set_output($v){$this->body=$v;return$this;}};
  $this->config=new class{function site_url($p){return'https://crm.invalid/sub/'.$p;}function item($k){return false;}};$this->uri=new class{function uri_string(){return'admin/tasks/task';}};$this->security=new class{function get_csrf_token_name(){return'framework_csrf';}};
  $this->load=new class($this){function __construct(private$ci){}function model($n){throw new RuntimeException('Global model hydration');}function is_loaded($n){return false;}function view($path,$data,$return=false){if(!in_array($path,['admin/tasks/task','admin/tasks/view_task_template','admin/tasks/checklist_items_template'],true))throw new RuntimeException('Alternate modal');$html=\Closure::bind(function()use($path,$data){extract($data);ob_start();try{require APPPATH.'views/'.$path.'.php';return ob_get_clean();}catch(Throwable$e){ob_end_clean();throw$e;}},$this->ci)();if($return)return$html;echo$html;return null;}};$GLOBALS['CI']=$this;
  }

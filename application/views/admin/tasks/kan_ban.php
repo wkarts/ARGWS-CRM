@@ -1,5 +1,18 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
+if(isset($native_task_board)){
+    foreach($task_statuses as$status){$items=array_values(array_filter($native_task_board['items'],static fn($item)=>$item['fields']['workflow_status']===$status['id'])); ?>
+    <ul class="kan-ban-col tasks-kanban" data-col-status-id="<?= e($status['id']); ?>"><li class="kan-ban-col-wrapper"><div class="border-right panel_s"><div class="panel-heading tw-font-medium" style="background:<?= e($status['color']); ?>;color:#fff"><?= e($status['name']); ?></div><div class="kan-ban-content-wrapper"><div class="kan-ban-content"><ul class="status tasks-status relative">
+    <?php foreach($items as$item){$this->load->view('admin/tasks/_kan_ban_card',['native_task_card'=>$item,'native_task_board'=>$native_task_board,'native_task_board_preference'=>$native_task_board_preference,'native_task_context'=>$native_task_context,'native_task_csrf'=>$native_task_csrf]);} ?>
+    <?php if(!$items){ ?><li class="text-center not-sortable"><p><?= e(_l('no_tasks_found')); ?></p></li><?php } ?>
+    </ul></div></div></div></li></ul>
+    <?php } ?>
+    <div class="clearfix"></div>
+    <?php if($native_task_board['offset']>0){ ?><a class="btn btn-default" href="<?= e(admin_url('tasks?kanban=1&offset='.max(0,$native_task_board['offset']-50).'&search='.rawurlencode($this->input->get('search')??''))); ?>">Página anterior</a><?php } ?>
+    <?php if($native_task_board['next']!==null){ ?><a class="btn btn-default" href="<?= e(admin_url('tasks?kanban=1&offset='.$native_task_board['next'].'&search='.rawurlencode($this->input->get('search')??''))); ?>"><?= e(_l('load_more')); ?></a><?php } ?>
+    <?php return;
+}
+
 $where = [];
 if ($this->input->get('project_id')) {
     $where['rel_id']   = $this->input->get('project_id');

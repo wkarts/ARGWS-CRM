@@ -4,10 +4,12 @@ require_once __DIR__.'/CompanyTaskCopiesSchema.php';
 require_once __DIR__.'/CompanyTasks.php';
 require_once __DIR__.'/CompanyProjects.php';
 require_once __DIR__.'/CompanyStandaloneTasks.php';
+require_once __DIR__.'/NativeCompanyTaskCopyComposition.php';
 
 /** Reviewed new task only: source remains private and no operational authority is inherited. */
 final class CompanyTaskCopies
 {
+    use NativeCompanyTaskCopyComposition;
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private static function json(array $v):string{return json_encode($v,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);}
@@ -29,24 +31,24 @@ final class CompanyTaskCopies
         foreach([['tasks','view'],['tasks','create']]as[$f,$c])if(!$acl->can($issuer,$actor,$f,$c))throw new DomainException('company_task_copy_denied');
         if($kind==='project'&&!$acl->can($issuer,$actor,'projects','view'))throw new DomainException('company_task_copy_denied');
     }
-    private function source(int $issuer,string $kind,int $id):array
+    private function source(int $issuer,string $kind,int $id,?int $actor=null):array
     {
         $table=$kind==='project'?'company_tasks':'company_standalone_tasks';$row=$this->rows('SELECT * FROM '.$this->p.$table.' WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;
-        if(!$row||!in_array($row['status'],['todo','in_progress','done'],true))throw new DomainException('company_task_copy_denied');
+        if(!$row||!in_array($row['status'],['todo','awaiting_feedback','testing','in_progress','done'],true))throw new DomainException('company_task_copy_denied');
         $row['priority']=CompanyTaskPriority::read($this->db,$this->p,$kind,$issuer,$id);$project=null;if($kind==='project'){$project=$this->rows('SELECT * FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$row['project_id']])[0]??null;if(!$project)throw new DomainException('company_task_copy_denied');}
         $checklist=json_decode($row['checklist_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($checklist)||!array_is_list($checklist)||count($checklist)>30)throw new DomainException('company_task_copy_invalid');
-        return ['kind'=>$kind,'task'=>$row,'project'=>$project];
+        $snapshot=['kind'=>$kind,'task'=>$row,'project'=>$project];if($actor!==null&&($row['native_fields_json']??null)!==null)$snapshot['native']=$this->nativeCopySource($issuer,$actor,$kind,$row);return $snapshot;
     }
     public function preview($issuer,$actor,string $kind,$source):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$kind=self::kind($kind);$source=IssuerPolicy::id($source);
-        return $this->tx(function()use($issuer,$actor,$kind,$source){$this->authorize($issuer,$actor,$kind);$snapshot=$this->source($issuer,$kind,$source);$writer=$kind==='project'?new CompanyTasks($this->db,$this->p):new CompanyStandaloneTasks($this->db,$this->p);$staff=$writer->staffOptions($issuer,$actor);$projects=$kind==='project'?(new CompanyProjects($this->db,$this->p))->page($issuer,$actor)['items']:[];$this->authorize($issuer,$actor,$kind);return ['source'=>$snapshot,'revision'=>self::hash($snapshot),'staff'=>$staff,'projects'=>$projects];});
+        return $this->tx(function()use($issuer,$actor,$kind,$source){$this->authorize($issuer,$actor,$kind);$snapshot=$this->source($issuer,$kind,$source,$actor);$writer=$kind==='project'?new CompanyTasks($this->db,$this->p):new CompanyStandaloneTasks($this->db,$this->p);$staff=$writer->staffOptions($issuer,$actor);$projects=$kind==='project'?(new CompanyProjects($this->db,$this->p))->page($issuer,$actor)['items']:[];$this->authorize($issuer,$actor,$kind);return ['source'=>$snapshot,'revision'=>self::hash($snapshot),'staff'=>$staff,'projects'=>$projects];});
     }
     private static function review(array $r,string $kind):array
     {
-        if(array_diff(array_keys($r),['source_revision','name','due_date','assignee_id','target_project_id'])||count($r)!==5)throw new DomainException('company_task_copy_invalid');
+        $native=array_key_exists('native',$r)?self::nativeCopyOptions($r['native']):null;if(array_diff(array_keys($r),['source_revision','name','due_date','assignee_id','target_project_id','native'])||count($r)!==($native===null?5:6))throw new DomainException('company_task_copy_invalid');
         $target=$kind==='project'?IssuerPolicy::id($r['target_project_id']):0;if($kind==='standalone'&&!in_array($r['target_project_id'],[0,'0'],true))throw new DomainException('company_task_copy_invalid');
-        return ['source_revision'=>self::key($r['source_revision']),'name'=>self::text($r['name']),'due_date'=>self::date($r['due_date']),'assignee_id'=>IssuerPolicy::id($r['assignee_id']),'target_project_id'=>$target];
+        return ['source_revision'=>self::key($r['source_revision']),'name'=>self::text($r['name']),'due_date'=>$native!==null&&$r['due_date']===null?null:self::date($r['due_date']),'assignee_id'=>$native!==null&&$r['assignee_id']===null?null:IssuerPolicy::id($r['assignee_id']),'target_project_id'=>$target]+($native===null?[]:['native'=>$native]);
     }
     private function confirmed(array $r,int $issuer,int $actor):array
     {
@@ -55,21 +57,21 @@ final class CompanyTaskCopies
         $source=json_decode($r['source_json'],true,32,JSON_THROW_ON_ERROR);$review=self::review(json_decode($r['review_json'],true,32,JSON_THROW_ON_ERROR),$kind);$result=json_decode($r['result_json'],true,32,JSON_THROW_ON_ERROR);
         if(($source['kind']??null)!==$kind||(int)($source['task']['id']??0)!==(int)$r['source_id']||$review['source_revision']!==$r['source_hash']||($result['kind']??null)!==$kind||($result['request_key']??null)!==$r['request_key']||($result['task_id']??null)!==(int)$r['result_id'])throw new RuntimeException('issuer_task_copy_unconfirmed');
         if(($result['project_id']??null)!==$review['target_project_id'])throw new RuntimeException('issuer_task_copy_unconfirmed');
-        $this->source($issuer,$kind,(int)$r['source_id']);$target=$this->source($issuer,$kind,(int)$r['result_id']);if($kind==='project'&&(int)$target['task']['project_id']!==$review['target_project_id'])throw new RuntimeException('issuer_task_copy_unconfirmed');return $result;
+        $this->source($issuer,$kind,(int)$r['source_id'],$actor);$target=$this->source($issuer,$kind,(int)$r['result_id'],$actor);if($kind==='project'&&(int)$target['task']['project_id']!==$review['target_project_id'])throw new RuntimeException('issuer_task_copy_unconfirmed');return $result;
     }
     public function create($issuer,$actor,string $kind,$source,array $review,string $key):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$kind=self::kind($kind);$source=IssuerPolicy::id($source);$review=self::review($review,$kind);$key=self::key($key);$inputHash=self::hash($review);
         return $this->tx(function()use($issuer,$actor,$kind,$source,$review,$key,$inputHash){
-            $this->authorize($issuer,$actor,$kind);$this->source($issuer,$kind,$source);
+            $this->authorize($issuer,$actor,$kind);$this->source($issuer,$kind,$source,$actor);
             $old=$this->rows('SELECT * FROM '.$this->p.'company_task_copy_requests WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($old){if($old['kind']!==$kind||(int)$old['source_id']!==$source||!hash_equals($old['input_hash'],$inputHash))throw new DomainException('company_task_copy_conflict');return $this->confirmed($old,$issuer,$actor);}
-            $snapshot=$this->source($issuer,$kind,$source);if(!hash_equals(self::hash($snapshot),$review['source_revision']))throw new DomainException('company_task_copy_stale');
+            $snapshot=$this->source($issuer,$kind,$source,$actor);if(!hash_equals(self::hash($snapshot),$review['source_revision']))throw new DomainException('company_task_copy_stale');
             $task=$snapshot['task'];$checks=array_map(static fn($v)=>['text'=>$v['text'],'done'=>0],json_decode($task['checklist_json'],true,32,JSON_THROW_ON_ERROR));
             $input=['assignee_id'=>$review['assignee_id'],'name'=>$review['name'],'description'=>$task['description'],'due_date'=>$review['due_date'],'status'=>'todo','checklist'=>$checks];
             if($this->db->table_exists($this->p.CompanyTaskPriority::table($kind)))$input['priority']=$task['priority'];$writer=$kind==='project'?new CompanyTasks($this->db,$this->p):new CompanyStandaloneTasks($this->db,$this->p);if($kind==='project')$input=['project_id'=>$review['target_project_id']]+$input;
-            $id=$writer->createReviewedTaskCopyInOwnedTransaction($issuer,$actor,$input);$targetFrame=CompanyTaskPriority::frame($this->db,$this->p,$kind,$issuer,$id);
-            if($this->source($issuer,$kind,$source)!==$snapshot)throw new DomainException('company_task_copy_stale');
+            $fields=null;$related=null;if(isset($review['native'])){if(!isset($snapshot['native']))throw new DomainException('company_task_copy_invalid');[$input,$fields,$related]=$this->nativeCopyTarget($kind,$snapshot,$review);}$id=$writer->createReviewedTaskCopyInOwnedTransaction($issuer,$actor,$input,$fields,$related);if(isset($review['native'])&&$review['native']['attachments'])$this->nativeCopyFiles($issuer,$actor,$kind,$snapshot,$id,$review['target_project_id'],$key);$targetFrame=CompanyTaskPriority::frame($this->db,$this->p,$kind,$issuer,$id);
+            if($this->source($issuer,$kind,$source,$actor)!==$snapshot)throw new DomainException('company_task_copy_stale');
             $result=['kind'=>$kind,'task_id'=>$id,'project_id'=>$review['target_project_id'],'request_key'=>$key];if($targetFrame['priority']!==null)$result['task_birth_hash']=CompanyTaskPriority::birthHash($this->db,$this->p,$kind,$issuer,$id);
             $row=['request_key'=>$key,'issuer_id'=>$issuer,'actor_id'=>$actor,'kind'=>$kind,'source_id'=>$source,'result_id'=>$id,'source_hash'=>$review['source_revision'],'input_hash'=>$inputHash,'result_hash'=>self::hash($result),'source_json'=>self::json($snapshot),'review_json'=>self::json($review),'result_json'=>self::json($result),'created_at'=>gmdate('Y-m-d H:i:s')];
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_task_copy_requests (`'.implode('`,`',array_keys($row)).'`) VALUES('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));
@@ -77,7 +79,7 @@ final class CompanyTaskCopies
             $audit=(int)$this->db->insert_id();if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND actor_id=? AND event=? AND issuer_id=? AND subject_id=?',[$audit,$actor,'company_task_copied',$issuer,$id]))throw new RuntimeException('issuer_task_copy_unconfirmed');
             $stored=$this->rows('SELECT * FROM '.$this->p.'company_task_copy_requests WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if(!$stored)throw new RuntimeException('issuer_task_copy_unconfirmed');foreach($row as$field=>$value)if((string)($stored[$field]??'')!==(string)$value)throw new RuntimeException('issuer_task_copy_unconfirmed');
-            if(CompanyTaskPriority::frame($this->db,$this->p,$kind,$issuer,$id)!==$targetFrame||$this->source($issuer,$kind,$source)!==$snapshot)throw new RuntimeException('issuer_task_priority_unconfirmed');$this->authorize($issuer,$actor,$kind);return $this->confirmed($stored,$issuer,$actor);
+            if(CompanyTaskPriority::frame($this->db,$this->p,$kind,$issuer,$id)!==$targetFrame||$this->source($issuer,$kind,$source,$actor)!==$snapshot)throw new RuntimeException('issuer_task_priority_unconfirmed');$this->authorize($issuer,$actor,$kind);return $this->confirmed($stored,$issuer,$actor);
         });
     }
     public function receipt($issuer,$actor,string $key):array

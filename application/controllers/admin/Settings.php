@@ -361,6 +361,7 @@ class Settings extends AdminController
 
     public function delete_tag($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';NativeCompanySettingsController::deleteTag($this,$id);return;}
         if (! $id) {
             redirect(admin_url('settings?group=tags'));
         }

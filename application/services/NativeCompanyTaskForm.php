@@ -7,6 +7,7 @@ final class NativeCompanyTaskForm
 {
     public function __construct(private$db,private string$p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
     private function authorize(int$i,int$a,string$cap):void{$acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($i,$a,'tasks','view')||!$acl->can($i,$a,'tasks',$cap))throw new DomainException('native_task_form_denied');}
+    public function parseDate(int $issuer,$value,bool $nullable=false):?string{return $this->date($issuer,$value,$nullable);}
     private function date(int$i,$value,bool$nullable=false):?string
     {
         if($nullable&&($value===''||$value===null))return null;if(!is_string($value))throw new DomainException('native_task_form_date_invalid');

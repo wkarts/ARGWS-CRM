@@ -14,8 +14,9 @@ final class NativeCompanyTicketLifecycleController
         CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$data=$this->ci->input->post(null,false);
         if(!is_array($data))throw new DomainException('native_ticket_input_invalid');
         unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->ci->security))unset($data[$this->ci->security->get_csrf_token_name()]);
-        if(array_diff(array_keys($data),['revision','request_nonce'])||!is_string($data['revision']??null)||!is_string($data['request_nonce']??null))throw new DomainException('native_ticket_input_invalid');
+        if(array_diff(array_keys($data),['revision','request_nonce','return_to_ticket'])||isset($data['return_to_ticket'])&&$data['return_to_ticket']!=='1'||!is_string($data['revision']??null)||!is_string($data['request_nonce']??null))throw new DomainException('native_ticket_input_invalid');
         $result=(new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->changeStatus($this->issuer,$this->actor,$id,$status,$data['revision'],$data['request_nonce']);$this->authorize();
+        if(($data['return_to_ticket']??null)==='1'){redirect(CompanyRequestScope::adminUrl($this->ci,'tickets/ticket/'.$id),'location',303);return;}
         $result+=['success'=>true,'alert'=>'success','message'=>_l('ticket_status_changed_successfully')];
         $this->ci->output->set_content_type('application/json')->set_output(json_encode($result,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
     }
@@ -51,8 +52,20 @@ final class NativeCompanyTicketLifecycleController
 
     public function deleteAttachment(string$key):void{
         CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$d=$this->ci->input->post(null,false);if(!is_array($d))throw new DomainException('native_ticket_input_invalid');unset($d['_company_context'],$d['_native_company_csrf']);if(isset($this->ci->security))unset($d[$this->ci->security->get_csrf_token_name()]);
-        if(array_diff(array_keys($d),['revision','parent_revision','request_nonce'])||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null)||!is_string($d['parent_revision']??null))throw new DomainException('native_ticket_input_invalid');$ticket=$this->ci->input->get('ticket_id');
-        $r=(new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->hideFile($this->issuer,$this->actor,$ticket,$key,$d['revision'],$d['parent_revision'],$d['request_nonce']);$this->authorize();$this->ci->output->set_content_type('application/json')->set_output(json_encode($r+['success'=>true],JSON_THROW_ON_ERROR));
+        if(array_diff(array_keys($d),['revision','parent_revision','request_nonce','return_to_ticket'])||isset($d['return_to_ticket'])&&$d['return_to_ticket']!=='1'||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null)||!is_string($d['parent_revision']??null))throw new DomainException('native_ticket_input_invalid');$ticket=$this->ci->input->get('ticket_id');
+        $r=(new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->hideFile($this->issuer,$this->actor,$ticket,$key,$d['revision'],$d['parent_revision'],$d['request_nonce']);$this->authorize();
+        if(($d['return_to_ticket']??null)==='1'){redirect(CompanyRequestScope::adminUrl($this->ci,'tickets/ticket/'.$ticket),'location',303);return;}
+        $this->ci->output->set_content_type('application/json')->set_output(json_encode($r+['success'=>true],JSON_THROW_ON_ERROR));
+    }
+
+    public function uploadFiles($ticket):void{
+        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$d=$this->ci->input->post(null,false);
+        if(!is_array($d))throw new DomainException('native_ticket_input_invalid');
+        unset($d['_company_context'],$d['_native_company_csrf']);if(isset($this->ci->security))unset($d[$this->ci->security->get_csrf_token_name()]);
+        if(array_diff(array_keys($d),['native_ticket_command','revision','request_nonce'])||($d['native_ticket_command']??null)!=='upload_files'||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null)||array_keys($_FILES)!==['operation_file'])throw new DomainException('native_ticket_input_invalid');
+        require_once __DIR__.'/CompanyOperationFilesHttp.php';[$name,$bytes]=CompanyOperationFilesHttp::upload();
+        (new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->uploadFiles($this->issuer,$this->actor,$ticket,[['name'=>$name,'bytes'=>$bytes]],$d['revision'],$d['request_nonce']);$this->authorize();
+        redirect(CompanyRequestScope::adminUrl($this->ci,'tickets/ticket/'.$ticket),'location',303);
     }
 
     public function deleteRecord($ticket,$reply=null):void{
@@ -64,6 +77,7 @@ final class NativeCompanyTicketLifecycleController
     public function updateSettings():void{
         CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$d=$this->ci->input->post(null,false);if(!is_array($d))throw new DomainException('native_ticket_input_invalid');unset($d['_company_context'],$d['_native_company_csrf']);if(isset($this->ci->security))unset($d[$this->ci->security->get_csrf_token_name()]);
         foreach(['revision','tags_revision','custom_fields_revision','request_nonce']as$k)if(!is_string($d[$k]??null))throw new DomainException('native_ticket_input_invalid');if(!isset($d['ticketid']))throw new DomainException('native_ticket_input_invalid');
+        $return=$d['return_to_ticket']??null;if($return!==null&&$return!=='1')throw new DomainException('native_ticket_input_invalid');unset($d['return_to_ticket']);
         $merge=$d['merge_ticket_ids']??'';if(!is_string($merge))throw new DomainException('native_ticket_input_invalid');$children=[];
         if($merge!==''){
             if(!is_array($d['merge_revisions']??null))throw new DomainException('native_ticket_merge_revisions_required');$ids=explode(',',$merge);if(count($ids)>100||count(array_unique($ids))!==count($ids))throw new DomainException('native_ticket_input_invalid');
@@ -73,17 +87,18 @@ final class NativeCompanyTicketLifecycleController
         $ticket=$d['ticketid'];$expected=$d['revision'];$tags=$d['tags_revision'];$fields=$d['custom_fields_revision'];$nonce=$d['request_nonce'];unset($d['ticketid'],$d['revision'],$d['tags_revision'],$d['custom_fields_revision'],$d['request_nonce'],$d['merge_ticket_ids'],$d['merge_revisions']);
         $updates=new NativeCompanyTicketUpdates($this->ci->db,db_prefix());
         if($children){$before=(new NativeCompanyTicketRead($this->ci->db,db_prefix()))->get($this->issuer,$this->actor,$ticket);$r=$updates->settingsAndMerge($this->issuer,$this->actor,$ticket,$d,$children,$before['status'],$expected,$tags,$fields,$nonce);}
-        else$r=$updates->settings($this->issuer,$this->actor,$ticket,$d,$expected,$tags,$fields,$nonce);$this->authorize();$this->ci->output->set_content_type('application/json')->set_output(json_encode($r+['success'=>true],JSON_THROW_ON_ERROR));
+        else$r=$updates->settings($this->issuer,$this->actor,$ticket,$d,$expected,$tags,$fields,$nonce);$this->authorize();if($return==='1'){redirect(CompanyRequestScope::adminUrl($this->ci,'tickets/ticket/'.$ticket),'location',303);return;}$this->ci->output->set_content_type('application/json')->set_output(json_encode($r+['success'=>true],JSON_THROW_ON_ERROR));
     }
 
     /** Original detail form POST. A successful local reply is not an SMTP delivery claim. */
     public function reply($ticket):void{
         CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$d=$this->ci->input->post(null,false);if(!is_array($d))throw new DomainException('native_ticket_input_invalid');unset($d['_company_context'],$d['_native_company_csrf']);if(isset($this->ci->security))unset($d[$this->ci->security->get_csrf_token_name()]);
-        if(array_diff(array_keys($d),['ticketid','message','status','cc','assign_to_current_user','ticket_add_response_and_back_to_list','revision','request_nonce'])||(string)($d['ticketid']??'')!==(string)$ticket||!is_string($d['message']??null)||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null))throw new DomainException('native_ticket_input_invalid');
+        if(array_diff(array_keys($d),['ticketid','message','status','cc','assign_to_current_user','ticket_add_response_and_back_to_list','revision','request_nonce','no_editor'])||isset($d['no_editor'])&&$d['no_editor']!=='1'||(string)($d['ticketid']??'')!==(string)$ticket||!is_string($d['message']??null)||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null))throw new DomainException('native_ticket_input_invalid');
         foreach(['assign_to_current_user','ticket_add_response_and_back_to_list']as$key)if(isset($d[$key])&&!in_array($d[$key],['1','on'],true))throw new DomainException('native_ticket_input_invalid');
         require_once __DIR__.'/NativeCompanyTicketMultipart.php';$files=NativeCompanyTicketMultipart::attachments();
         $options=['assign_to_current_user'=>isset($d['assign_to_current_user'])];if(array_key_exists('cc',$d))$options['cc']=$d['cc'];$status=$d['status']??null;if($status==='')$status=null;
-        (new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->reply($this->issuer,$this->actor,$ticket,$d['message'],$status,$d['revision'],$d['request_nonce'],$options,$files);$this->authorize();
+        $message=($d['no_editor']??null)==='1'?nl2br(htmlspecialchars($d['message'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')):$d['message'];
+        (new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->reply($this->issuer,$this->actor,$ticket,$message,$status,$d['revision'],$d['request_nonce'],$options,$files);$this->authorize();
         redirect(CompanyRequestScope::adminUrl($this->ci,isset($d['ticket_add_response_and_back_to_list'])?'tickets':'tickets/ticket/'.$ticket),'location',303);
     }
     public function mergePreview($ticket):void{

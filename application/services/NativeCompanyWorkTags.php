@@ -28,7 +28,7 @@ final class NativeCompanyWorkTags
         if(!is_string($label)||preg_match('//u',$label)!==1||preg_match('/[\x00-\x1f\x7f]/',$label)||mb_strlen($label)>100||trim($label)==='')throw new DomainException('native_tags_invalid');return trim($label);
     }
     /** Header suggestion data; no global tag query is made for a secondary company. */
-    public function catalog($issuer,$actor):array
+    public function catalog($issuer,$actor,bool $deduplicate=true):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$permission=$this->permissions($issuer,$actor);NativeCompanyWorkTagsSchema::assertValid($this->db,$this->p);
         $sql='SELECT * FROM '.$this->p.'company_work_tags WHERE issuer_id=? ORDER BY id LIMIT 1001';$owned=$this->rows($sql,[$issuer]);if(count($owned)>1000)throw new DomainException('native_tags_limit');$out=[];$proofs=[];$linkProofs=[];
@@ -49,7 +49,7 @@ final class NativeCompanyWorkTags
         foreach($proofs as[$feature,$source,$id,$ref])if($this->resolve($issuer,$actor,$feature,$source,$id)!==$ref)throw new DomainException('native_tags_changed');
         if($this->permissions($issuer,$actor)!==$permission||$this->rows($sql,[$issuer])!==$owned)throw new DomainException('native_tags_changed');
         // A tag's transport ID is decorative in tag-it; mutations resolve labels against the actual resource.
-        $unique=[];foreach($out as$row){$key=mb_strtolower($row['name'],'UTF-8');if(!isset($unique[$key]))$unique[$key]=$row;}ksort($unique,SORT_STRING);$rows=array_values($unique);
+        $unique=[];foreach($out as$row){$key=$deduplicate?mb_strtolower($row['name'],'UTF-8'):$row['id'];if(!isset($unique[$key]))$unique[$key]=$row;}ksort($unique,SORT_STRING);$rows=array_values($unique);
         return ['tags'=>$rows,'available_tags'=>array_column($rows,'name'),'available_tags_ids'=>array_column($rows,'id')];
     }
 }

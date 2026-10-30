@@ -144,7 +144,7 @@
             $(el).addClass('hide');
             $(el).siblings().removeClass('hide');
             <?php if ($nativeChecklist) { ?>
-            $.ajax({url:admin_url + 'tasks/checklist_visibility/' + encodeURIComponent('<?= e($task_id) ?>'),type:'POST',dataType:'json',data:{hide:_hideCompleted}}).fail(function () {
+            $.ajax({url:admin_url + 'staff/save_completed_checklist_visibility',type:'POST',dataType:'json',data:{task_id:'<?= e($task_id) ?>',hideCompleted:_hideCompleted}}).fail(function () {
                 _task_checklist_items.filter(':checked').closest('.checklist').toggleClass('hide');$(el).removeClass('hide');$(el).siblings().addClass('hide');alert_float('danger','Não foi possível salvar a preferência. Tente novamente.');
             });
             <?php } else { ?>

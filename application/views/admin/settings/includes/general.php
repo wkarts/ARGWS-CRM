@@ -105,6 +105,6 @@
 		<hr />
 		<?php render_yes_no_option('rtl_support_client', 'settings_rtl_support_client'); ?>
 		<hr />
-		<?= render_input('settings[allowed_files]', 'settings_allowed_upload_file_types', get_option('allowed_files')); ?>
+		<?= render_input('settings[allowed_files]', 'settings_allowed_upload_file_types', $native_settings_general_values['allowed_files']??get_option('allowed_files')); ?>
 	</div>
 </div>

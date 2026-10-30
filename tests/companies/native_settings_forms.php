@@ -23,6 +23,11 @@ essentialThrows(fn()=>$forms->save($a,7,'company',['invoice_company_name'=>'Must
 essentialCheck($forms->page($a,7,'company')===$before,'entire native form atomic after custom-field failure');
 echo 'Native Settings existing company/localization forms: '.($GLOBALS['essentialChecks']-$start).' checks passed; route admission and remaining sections are separate gates.'.PHP_EOL;
 $general=$forms->page($a,7,'general');$generalB=$forms->page($b,7,'general');
+essentialCheck($generalB['values']['allowed_files']===NativeCompanyUploadPreferences::defaultValue('allowed_files'),'new company general form uses the same bounded default as uploads');
+essentialCheck(!$store->exists($b,'allowed_files'),'reading the default does not create a setting');
+$generalDefault=$forms->save($b,7,'general',['allowed_files'=>$generalB['values']['allowed_files']],[],$generalB['revision']);
+essentialThrows(fn()=>$forms->save($b,7,'general',['allowed_files'=>''],[],$generalDefault['revision']),'native_upload_option_invalid','explicit empty upload option is not silently replaced');
+$generalB=$forms->page($b,7,'general');
 $im=imagecreatetruecolor(2,2);ob_start();imagepng($im);$png=ob_get_clean();unset($im);
 $input=['companyname'=>'Same native brand','main_domain'=>'https://example.invalid/','rtl_support_admin'=>'0','rtl_support_client'=>'0','allowed_files'=>'.png,.pdf'];
 $result=$forms->save($a,7,'general',$input,[],$general['revision'],['logo'=>$png,'logo_dark'=>$png,'favicon'=>$png,'signature'=>$png]);

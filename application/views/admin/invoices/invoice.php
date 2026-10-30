@@ -9,6 +9,7 @@
                 echo form_hidden('_native_invoice_revision', $native_invoice_revision ?? '');
                 echo form_hidden('_native_invoice_request_key', $native_invoice_request_key);
                 echo form_hidden('_native_invoice_number_revision', $native_invoice_number_selection['revision']);
+                if(isset($native_invoice_tags_revision))echo form_hidden('_native_invoice_tags_revision', $native_invoice_tags_revision);
             } ?>
             <?php if (isset($invoice)) {
                 echo form_hidden('isedit');
@@ -16,7 +17,7 @@
             <div class="col-md-12">
                 <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 tw-flex tw-items-center tw-space-x-2">
                     <span>
-                        <?= e(isset($invoice) ? format_invoice_number($invoice) : _l('create_new_invoice')); ?>
+                        <?= e(isset($invoice) ? ($native_invoice_formatted_number ?? format_invoice_number($invoice)) : _l('create_new_invoice')); ?>
                     </span>
                     <?= isset($invoice) ? format_invoice_status($invoice->status) : ''; ?>
                 </h4>

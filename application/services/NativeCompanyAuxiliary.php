@@ -38,6 +38,7 @@ final class NativeCompanyAuxiliary
         NativeCompanyAuxiliarySchema::assertValid($this->db, $this->p);
         $tables = self::tableNames();
         if($relationType!==null){require_once __DIR__.'/NativeCompanyResourceReferences.php';$tables=array_values(array_unique(array_merge($tables,NativeCompanyResourceReferences::transactionTables($this->db,$this->p,$relationType))));}
+        foreach(match($relationType){'contract'=>['company_contracts'],'task'=>['company_tasks','company_standalone_tasks'],default=>[]}as$table)if($this->db->table_exists($this->p.$table))$tables[]=$table;
         return IssuerTransaction::run($this->db, $this->p, $tables, function () use ($operation) {
             $this->access->lockFinancialIdentity($this->issuer,$this->actor);
             $this->member(); $result = $operation(); $this->member(); return $result;
@@ -66,12 +67,37 @@ final class NativeCompanyAuxiliary
     {
         if ($limit < 1 || $limit > 100 || $offset < 0 || $offset > 100000) { throw new DomainException('company_auxiliary_invalid_page'); }
     }
-    private function audit(string $event, int $id): void
+    private function audit(string $event, int $id, array $details=[]): void
     {
-        $meta = json_encode(['version' => 1, 'source' => 'native_company_utilities', 'operation_nonce' => bin2hex(random_bytes(16))], JSON_THROW_ON_ERROR);
+        $meta = json_encode(['version' => 1, 'source' => 'native_company_utilities', 'operation_nonce' => bin2hex(random_bytes(16))]+$details, JSON_THROW_ON_ERROR);
         IssuerStorage::query($this->db, 'INSERT INTO '.$this->p.'issuers_audit(issuer_id,actor_id,subject_id,event,metadata_json,created_at) VALUES(?,?,?,?,?,?)', [$this->issuer,$this->actor,$id,$event,$meta,gmdate('Y-m-d H:i:s')]);
         $auditId=(int)$this->db->insert_id();
         if (!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=?',[$auditId,$this->issuer,$this->actor,$id,$event,$meta])) { throw new RuntimeException('issuer_auxiliary_audit_unconfirmed'); }
+    }
+    /** Optional durable browser request; ordinary utility callers keep their existing contract. */
+    private function request(?string $key,string $operation,array $payload):array
+    {
+        if($key===null)return[null,null];
+        if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_auxiliary_invalid_input');
+        $hash=hash('sha256',json_encode([$operation,$payload],JSON_THROW_ON_ERROR));
+        $needle=json_encode(['request_key'=>$key],JSON_THROW_ON_ERROR);
+        $rows=$this->rows("SELECT actor_id,subject_id,metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND event='native_auxiliary_request' AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$this->issuer,$needle]);
+        if(count($rows)>1)throw new RuntimeException('issuer_auxiliary_audit_unconfirmed');
+        if($rows){$row=$rows[0];$receipt=json_decode($row['metadata_json'],true,32,JSON_THROW_ON_ERROR);if((int)$row['actor_id']!==$this->actor||($receipt['operation']??null)!==$operation||!hash_equals((string)($receipt['input_hash']??''),$hash))throw new DomainException('company_auxiliary_request_conflict');return[$hash,(int)$row['subject_id']];}
+        return[$hash,null];
+    }
+    private function recordRequest(?string$key,?string$hash,string$operation,int$id):void
+    {
+        if($key!==null)$this->audit('native_auxiliary_request',$id,['request_key'=>$key,'input_hash'=>$hash,'operation'=>$operation]);
+    }
+    private function parentRevision(array $reference,?int $revision):void
+    {
+        if($revision===null)return;
+        $table=match($reference['source_kind']){'company_contract'=>'company_contracts','company_task'=>'company_tasks','company_standalone_task'=>'company_standalone_tasks',default=>throw new DomainException('company_auxiliary_access_denied')};
+        IssuerTransaction::assertOwned($this->db,$this->p,[$table]);
+        $row=$this->rows('SELECT revision,status FROM '.$this->p.$table.' WHERE issuer_id=? AND id=? FOR UPDATE',[$this->issuer,$reference['source_id']])[0]??null;
+        if(!$row||$row['status']==='deleted')throw new DomainException('company_auxiliary_access_denied');
+        if((int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
     }
     public function todos(bool $finished, int $limit = 10, int $offset = 0): array
     {
@@ -282,20 +308,24 @@ final class NativeCompanyAuxiliary
         $rows=$this->rows('SELECT n.*,COALESCE(s.firstname,\'\') AS firstname,COALESCE(s.lastname,\'\') AS lastname FROM '.$this->p.'company_notes n LEFT JOIN '.$this->p.'staff s ON s.staffid=n.addedfrom WHERE n.issuer_id=? AND n.rel_type=? AND n.rel_id=? ORDER BY n.id DESC',[$this->issuer,$type,$ref['canonical_id']]);
         foreach($rows as&$row){$this->validateStoredRelation($row);try{$this->validateStoredRelation($row,'edit');$this->author($row,isset($row['addedfrom'])?'addedfrom':'creator');$row['can_edit']=true;}catch(DomainException $error){$row['can_edit']=false;}}unset($row);return$rows;
     }
-    public function saveNote(string $type,$relId,array $input,$id=null,$revision=null):int
+    public function saveNote(string $type,$relId,array $input,$id=null,$revision=null,?string $requestKey=null,?int $parentRevision=null):int
     {
         if(array_diff(array_keys($input),['description']))throw new DomainException('company_auxiliary_invalid_input');
         $description=self::text($input['description']??null,16000);$id=$id===null?null:IssuerPolicy::id($id);$revision=$id===null?null:self::revision($revision);
-        return$this->tx(function()use($type,$relId,$description,$id,$revision):int{
+        return$this->tx(function()use($type,$relId,$description,$id,$revision,$requestKey,$parentRevision):int{
             $ref=$this->relation($type,$relId,'edit');
+            [$hash,$replay]=$this->request($requestKey,'note',[$type,$ref['canonical_id'],$description,$id,$revision,$parentRevision]);
+            if($replay!==null){$saved=$this->note($replay);if($saved['rel_type']!==$type||(string)$saved['rel_id']!==$ref['canonical_id'])throw new DomainException('company_auxiliary_access_denied');return$replay;}
+            $this->parentRevision($ref,$parentRevision);
+            $before=null;
             if($id===null){
                 IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_notes(issuer_id,rel_type,rel_id,source_kind,source_id,description,addedfrom,dateadded,date_contacted,revision) VALUES(?,?,?,?,?,?,?,?,NULL,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$description,$this->actor,gmdate('Y-m-d H:i:s')]);$id=(int)$this->db->insert_id();$this->assertInserted();
             }else{
-                $row=$this->note($id);$this->author($row,'addedfrom');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
+                $row=$this->note($id);$before=$row;$this->author($row,'addedfrom');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
                 IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_notes SET description=?,revision=revision+1 WHERE issuer_id=? AND id=? AND revision=?',[$description,$this->issuer,$id,$revision]);
             }
             $saved=$this->note($id);if($saved['description']!==$description||(int)$saved['revision']!==($revision===null?1:$revision+1))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');
-            $this->audit('native_note_saved',$id);return$id;
+            $this->audit('native_note_saved',$id,['before'=>$before,'after'=>$saved]);$this->recordRequest($requestKey,$hash,'note',$id);return$id;
         },$type);
     }
     public function note($id):array
@@ -308,7 +338,7 @@ final class NativeCompanyAuxiliary
         $id=IssuerPolicy::id($id);$revision=self::revision($revision);$this->member();$relationType=$this->rows('SELECT rel_type FROM '.$this->p.'company_notes WHERE issuer_id=? AND id=?',[$this->issuer,$id])[0]['rel_type']??null;if(!is_string($relationType))throw new DomainException('company_auxiliary_access_denied');$this->tx(function()use($id,$revision):void{
             $row=$this->note($id);$this->author($row,'addedfrom');$this->validateStoredRelation($row,'edit');if((int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
             IssuerStorage::query($this->db,'DELETE FROM '.$this->p.'company_notes WHERE issuer_id=? AND id=? AND revision=?',[$this->issuer,$id,$revision]);
-            if($this->rows('SELECT id FROM '.$this->p.'company_notes WHERE issuer_id=? AND id=?',[$this->issuer,$id]))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_note_deleted',$id);
+            if($this->rows('SELECT id FROM '.$this->p.'company_notes WHERE issuer_id=? AND id=?',[$this->issuer,$id]))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_note_deleted',$id,['before'=>$row]);
         },$relationType);
     }
     public function reminders(?string $type=null,$relId=null,int $limit=100,int $offset=0):array
@@ -360,22 +390,26 @@ final class NativeCompanyAuxiliary
         $this->member();$row=$this->rows('SELECT * FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=?',[$this->issuer,IssuerPolicy::id($id)])[0]??null;
         if(!$row)throw new DomainException('company_auxiliary_access_denied');$this->validateStoredRelation($row);return$row;
     }
-    public function saveReminder(string $type,$relId,array $input,$id=null,$revision=null):int
+    public function saveReminder(string $type,$relId,array $input,$id=null,$revision=null,?string $requestKey=null,?int $parentRevision=null):int
     {
         if(array_diff(array_keys($input),['description','date','staff','notify_by_email']))throw new DomainException('company_auxiliary_invalid_input');
         $description=self::text($input['description']??null,16000);$date=self::text($input['date']??null,19);$parsed=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$date,new DateTimeZone('UTC'));
         if(!$parsed||$parsed->format('Y-m-d H:i:s')!==$date)throw new DomainException('company_auxiliary_invalid_input');
         $staff=IssuerPolicy::id($input['staff']??null);$notify=self::bit($input['notify_by_email']??0);$id=$id===null?null:IssuerPolicy::id($id);$revision=$id===null?null:self::revision($revision);
-        return$this->tx(function()use($type,$relId,$description,$date,$staff,$notify,$id,$revision):int{
+        return$this->tx(function()use($type,$relId,$description,$date,$staff,$notify,$id,$revision,$requestKey,$parentRevision):int{
             $ref=$this->relation($type,$relId,'edit');if(!$this->access->can($this->issuer,$staff,$ref['feature'],'view'))throw new DomainException('company_auxiliary_access_denied');
             $recipientRef=NativeCompanyResourceReferences::resolve($this->db,$this->p,$this->issuer,$staff,$type,$relId,'view');if($recipientRef['source_kind']!==$ref['source_kind']||$recipientRef['source_id']!==$ref['source_id'])throw new DomainException('company_auxiliary_access_denied');
+            [$hash,$replay]=$this->request($requestKey,'reminder',[$type,$ref['canonical_id'],$description,$date,$staff,$notify,$id,$revision,$parentRevision]);
+            if($replay!==null){$saved=$this->reminder($replay);if($saved['rel_type']!==$type||(string)$saved['rel_id']!==$ref['canonical_id'])throw new DomainException('company_auxiliary_access_denied');return$replay;}
+            $this->parentRevision($ref,$parentRevision);
+            $before=null;
             if($id===null){
                 IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_reminders(issuer_id,rel_type,rel_id,source_kind,source_id,staff,creator,description,date,isnotified,notify_by_email,revision) VALUES(?,?,?,?,?,?,?,?,?,0,?,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$staff,$this->actor,$description,$date,$notify]);$id=(int)$this->db->insert_id();$this->assertInserted();
             }else{
-                $row=$this->reminder($id);$this->author($row,'creator');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision||(int)$row['isnotified']!==0)throw new DomainException('company_auxiliary_stale');
+                $row=$this->reminder($id);$before=$row;$this->author($row,'creator');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision||(int)$row['isnotified']!==0)throw new DomainException('company_auxiliary_stale');
                 IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_reminders SET description=?,date=?,staff=?,notify_by_email=?,revision=revision+1 WHERE issuer_id=? AND id=? AND revision=? AND isnotified=0',[$description,$date,$staff,$notify,$this->issuer,$id,$revision]);
             }
-            $saved=$this->reminder($id);if($saved['description']!==$description||(int)$saved['revision']!==($revision===null?1:$revision+1))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_reminder_saved',$id);if($recipientRef!==NativeCompanyResourceReferences::resolve($this->db,$this->p,$this->issuer,$staff,$type,$relId,'view'))throw new DomainException('company_auxiliary_access_denied');return$id;
+            $saved=$this->reminder($id);if($saved['description']!==$description||(int)$saved['revision']!==($revision===null?1:$revision+1))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_reminder_saved',$id,['before'=>$before,'after'=>$saved]);$this->recordRequest($requestKey,$hash,'reminder',$id);if($recipientRef!==NativeCompanyResourceReferences::resolve($this->db,$this->p,$this->issuer,$staff,$type,$relId,'view'))throw new DomainException('company_auxiliary_access_denied');return$id;
         },$type);
     }
     public function deleteReminder($id,$revision):void
@@ -383,8 +417,25 @@ final class NativeCompanyAuxiliary
         $id=IssuerPolicy::id($id);$revision=self::revision($revision);$this->member();$relationType=$this->rows('SELECT rel_type FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=?',[$this->issuer,$id])[0]['rel_type']??null;if(!is_string($relationType))throw new DomainException('company_auxiliary_access_denied');$this->tx(function()use($id,$revision):void{
             $row=$this->reminder($id);$this->author($row,'creator');$this->validateStoredRelation($row,'edit');if((int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
             IssuerStorage::query($this->db,'DELETE FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=? AND revision=?',[$this->issuer,$id,$revision]);
-            if($this->rows('SELECT id FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=?',[$this->issuer,$id]))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_reminder_deleted',$id);
+            if($this->rows('SELECT id FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=?',[$this->issuer,$id]))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');$this->audit('native_reminder_deleted',$id,['before'=>$row]);
         },$relationType);
+    }
+    /** Original Tasks POST: deletion and durable receipt share the resource lock. */
+    public function removeTaskReminder($canonical,$id,$revision,string $key,int $taskRevision):void
+    {
+        $id=IssuerPolicy::id($id);$revision=self::revision($revision);
+        $this->tx(function()use($canonical,$id,$revision,$key,$taskRevision):void{
+            $ref=$this->relation('task',$canonical,'edit');
+            [$hash,$replay]=$this->request($key,'reminder_delete',[$ref['canonical_id'],$id,$revision,$taskRevision]);
+            if($replay!==null){if($replay!==$id)throw new RuntimeException('issuer_auxiliary_audit_unconfirmed');return;}
+            $this->parentRevision($ref,$taskRevision);$row=$this->reminder($id);$this->author($row,'creator');
+            if($row['rel_type']!=='task'||(string)$row['rel_id']!==$ref['canonical_id'])throw new DomainException('company_auxiliary_access_denied');
+            if((int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
+            IssuerStorage::query($this->db,'DELETE FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=? AND revision=?',[$this->issuer,$id,$revision]);
+            if($this->rows('SELECT id FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=?',[$this->issuer,$id]))throw new RuntimeException('issuer_auxiliary_write_unconfirmed');
+            $this->audit('native_reminder_deleted',$id,['before'=>$row]);$this->recordRequest($key,$hash,'reminder_delete',$id);
+            if($this->relation('task',$canonical,'edit')!==$ref)throw new DomainException('company_auxiliary_access_denied');
+        },'task');
     }
 
 }

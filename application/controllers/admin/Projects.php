@@ -8,10 +8,12 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 require_once APPPATH.'services/CompanyOperationalPortalAdmin.php';
 require_once APPPATH.'services/NativeCompanyResourceId.php';
+require_once APPPATH.'services/NativeCompanyProjectOriginalHttp.php';
 
 class Projects extends AdminController
 {
     use NativeCompanySpecializedOperations;
+    use \NativeCompanyProjectOriginalHttp;
 
     public function extras() { $this->nativeProjectExtras(); }
     public function portal_rules() { $this->nativeProjectPortalRules(); }
@@ -150,12 +152,13 @@ class Projects extends AdminController
     }
 
     private function nativeProjectPortalCsrf():string{$token=$this->session->userdata('company_projects_csrf');if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)){$token=bin2hex(random_bytes(32));$this->session->set_userdata('company_projects_csrf',$token);}return $token;}
-    private function nativeProjectView($id):void
+    private function nativeProjectView($id,?string $selectedGroup=null):void
     {
         $this->output->set_header('Cache-Control: no-store');
         try{
             $method=strtoupper($this->input->method(true));
             if($method==='POST'){
+                if(in_array($this->input->post('action',false),NativeCompanyProjectRuleCommands::ROUTES['view'],true)){$this->nativeProjectRuleAction('view',$id);return;}
                 CompanyRequestScope::assertNativeMutation($this);
                 $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
                 $token=$this->input->post('company_projects_csrf',false);if(!is_string($token)||!hash_equals($this->nativeProjectPortalCsrf(),$token))throw new DomainException('company_portal_csrf_invalid');
@@ -165,7 +168,7 @@ class Projects extends AdminController
             }
             if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
             $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
-            $group=(string)($this->input->get('group')?:'project_overview');if(!in_array($group,['project_overview','project_files'],true))throw new DomainException('native_project_group_not_composed');
+            $group=$selectedGroup??(string)($this->input->get('group')?:'project_overview');if(!in_array($group,['project_overview','project_files','project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt'],true))throw new DomainException('native_project_group_not_composed');
             $period=(string)($this->input->get('overview_chart')?:'this_week');
             require_once APPPATH.'services/NativeCompanyProjectDetail.php';$detail=new NativeCompanyProjectDetail($this->db,db_prefix());
             $overview=$detail->overview($ctx->issuerId(),$ctx->staffId(),$id,$period,'_l');$files=$detail->files($ctx->issuerId(),$ctx->staffId(),$id);
@@ -173,12 +176,14 @@ class Projects extends AdminController
             $staff=$canEdit?(new CompanyProjects($this->db,db_prefix()))->staffOptions($ctx->issuerId(),$ctx->staffId()):[];
             $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];
             $portalControls=null;$portalRevision=null;$portalCsrf=null;if(($facts['reference']['source_kind']??null)==='company_project'){$portalRow=(new CompanyProjects($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);$portalControls=CompanyOperationalPortalAdmin::controls($this,$ctx->issuerId(),$ctx->staffId(),'projects',$portalRow);$portalRevision=(int)$portalRow['revision'];$portalCsrf=$this->nativeProjectPortalCsrf();}$data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,'portal_controls'=>$portalControls,'portal_revision'=>$portalRevision,'company_projects_csrf'=>$portalCsrf,
-                'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'canonical_id'=>$facts['reference']['canonical_id']]];
+                'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'can_create_task'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','view')&&$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','create'),'canonical_id'=>$facts['reference']['canonical_id']]];
+            $clock=time();$work=$this->nativeProjectWorkData($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id'],$group,$clock);$data+=$work;$data['actor']=$ctx->staffId();$data['company_project_rules_csrf']=$this->nativeProjectRulesCsrf();
             // The admin shell is prepared once by the request scope. Rebuilding it
             // here repeats the same issuer checks and can observe a different
             // snapshot after the project facts have already been sealed.
-            $this->load->view('admin/projects/view',$data);
+            $html=$this->load->view('admin/projects/view',$data,true);
             if(!$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','view')||$detail->read($ctx->issuerId(),$ctx->staffId(),$id)!==$facts)throw new DomainException('native_project_snapshot_changed');
+            if($this->nativeProjectWorkData($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id'],$group,$clock)!==$work)throw new DomainException('native_project_snapshot_changed');$this->output->set_output($html);
         }catch(DomainException$e){$reason=$e->getMessage();$status=str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'csrf')||str_contains($reason,'denied')||str_contains($reason,'access')?403:422);show_error('Não foi possível confirmar o projeto, seus arquivos ou suas permissões.', $status);}
         catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
     }
@@ -250,6 +255,7 @@ class Projects extends AdminController
 
     public function gantt()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_gantt');return;}
         $data['title'] = _l('project_gant');
 
         $selected_statuses = [];
@@ -605,6 +611,7 @@ class Projects extends AdminController
 
     public function update_task_milestone()
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('update_task_milestone');return;}
         if ($this->input->post()) {
             $this->projects_model->update_task_milestone($this->input->post());
         }
@@ -648,6 +655,7 @@ class Projects extends AdminController
 
     public function discussions($project_id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($project_id,'project_discussions');return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('project_discussions', [
@@ -659,6 +667,7 @@ class Projects extends AdminController
 
     public function discussion($id = '')
     {
+        if($this->nativeProjects()){ if(strtoupper($this->input->method(true))==='POST')$this->nativeProjectRuleAction('discussion',null,$id);else$this->nativeProjectGroupRead($this->input->get('project_id'),'project_discussions');return;}
         if ($this->input->post()) {
             $message = '';
             $success = false;
@@ -692,11 +701,13 @@ class Projects extends AdminController
 
     public function get_discussion_comments($id, $type)
     {
+        if($this->nativeProjects()){ $this->nativeProjectDiscussionComments($id,$type);return;}
         echo json_encode($this->projects_model->get_discussion_comments($id, $type));
     }
 
     public function add_discussion_comment($discussion_id, $type)
     {
+        if($this->nativeProjects()){ if($type!=='regular'){show_error('Tipo de conversa inválido.',422);return;}$this->nativeProjectRuleAction('add_discussion_comment',null,$discussion_id);return;}
         echo json_encode($this->projects_model->add_discussion_comment(
             $this->input->post(null, false),
             $discussion_id,
@@ -706,16 +717,19 @@ class Projects extends AdminController
 
     public function update_discussion_comment()
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('update_discussion_comment');return;}
         echo json_encode($this->projects_model->update_discussion_comment($this->input->post(null, false)));
     }
 
     public function delete_discussion_comment($id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('delete_discussion_comment',null,$id);return;}
         echo json_encode($this->projects_model->delete_discussion_comment($id));
     }
 
     public function delete_discussion($id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('delete_discussion',null,$id);return;}
         $success = false;
         if (staff_can('delete', 'projects')) {
             $success = $this->projects_model->delete_discussion($id);
@@ -765,6 +779,7 @@ class Projects extends AdminController
 
     public function change_activity_visibility($id, $visible)
     {
+        if($this->nativeProjects()){ if($visible!=='0'&&$visible!=='1'){show_error('Visibilidade inválida.',422);return;}$this->nativeProjectRuleAction('change_activity_visibility',null,$id);return;}
         if (staff_can('create', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->projects_model->change_activity_visibility($id, $visible);
@@ -790,6 +805,7 @@ class Projects extends AdminController
 
     public function milestones_kanban()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_milestones');return;}
         $data['milestones_exclude_completed_tasks'] = $this->input->get('exclude_completed_tasks') && $this->input->get('exclude_completed_tasks') == 'yes';
 
         $data['project_id'] = $this->input->get('project_id');
@@ -813,6 +829,7 @@ class Projects extends AdminController
 
     public function milestones_kanban_load_more()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_milestones');return;}
         $milestones_exclude_completed_tasks = $this->input->get('exclude_completed_tasks') && $this->input->get('exclude_completed_tasks') == 'yes';
 
         $status     = $this->input->get('status');
@@ -831,6 +848,7 @@ class Projects extends AdminController
 
     public function milestones($project_id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($project_id,'project_milestones');return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('milestones', [
@@ -842,6 +860,7 @@ class Projects extends AdminController
 
     public function milestone($id = '')
     {
+        if($this->nativeProjects()){ $this->nativeProjectMilestoneAction($id);return;}
         if ($this->input->post()) {
             $message = '';
             $success = false;

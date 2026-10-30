@@ -43,7 +43,7 @@ essentialCheck($db->query("SELECT * FROM {$p}contracts WHERE id=?",[$primaryId])
 $route=new ReflectionMethod(CompanyRequestScope::class,'ownedContractRoute');
 $probe=new class{
     public object$input;public object$uri;
-    public function __construct(){$this->input=new class{public array$get=[];function get($key,$filter=false){return$this->get[$key]??null;}};$this->uri=new class{public string$value='';function rsegment($position){return$position===3?$this->value:'';}};}
+    public function __construct(){$this->input=new class{public array$get=[];public array$post=[];function get($key,$filter=false){return$this->get[$key]??null;}function post($key,$filter=false){return$this->post[$key]??null;}};$this->uri=new class{public string$value='';public string$parent='';function rsegment($position){return$position===3?$this->value:($position===4?$this->parent:'');}};}
 };
 $probe->uri->value=(string)$primaryId;
 essentialCheck(!$route->invoke(null,$probe,'contracts','contract'),'raw colliding ID remains on the historical Contracts action');
@@ -55,5 +55,24 @@ $probe->uri->value='';$probe->input->get=['source'=>'company'];
 essentialCheck($route->invoke(null,$probe,'contracts','contract'),'explicit owned create selects the company adapter');
 $probe->input->get=[];
 essentialCheck(!$route->invoke(null,$probe,'contracts','index')&&$route->invoke(null,$probe,'contracts','file'),'principal index remains the legacy union while owned files use the scoped reader');
+
+foreach(['mark_as_signed','unmark_as_signed','clear_signature','add_contract_attachment']as$action){
+    $probe->uri->value=$canonical;
+    essentialCheck($route->invoke(null,$probe,'contracts',$action),'principal original '.$action.' resolves its typed owned contract');
+    $probe->uri->value=(string)$primaryId;
+    essentialCheck(!$route->invoke(null,$probe,'contracts',$action),'principal original '.$action.' preserves the colliding historical contract route');
+}
+$probe->uri->value='17';$probe->uri->parent=$canonical;
+essentialCheck($route->invoke(null,$probe,'contracts','delete_renewal'),'renewal cancellation resolves the parent contract argument, never the audit ID');
+$probe->uri->parent=(string)$primaryId;
+essentialCheck(!$route->invoke(null,$probe,'contracts','delete_renewal'),'historical renewal cancellation retains its original numeric parent');
+$probe->uri->value=str_repeat('a',64);
+essentialCheck($route->invoke(null,$probe,'contracts','delete_contract_attachment'),'opaque owned attachment key selects the scoped action even for a verb that must be denied');
+$probe->uri->value='17';
+essentialCheck(!$route->invoke(null,$probe,'contracts','delete_contract_attachment'),'historical numeric attachment identifier remains distinct');
+$probe->input->post=['contractid'=>$canonical];
+essentialCheck($route->invoke(null,$probe,'contracts','save_contract_data'),'original content POST resolves the typed contract body field');
+$probe->input->post=['contractid'=>(string)$primaryId];
+essentialCheck(!$route->invoke(null,$probe,'contracts','save_contract_data'),'original content POST preserves a colliding historical contract identifier');
 
 echo 'Primary contracts legacy/owned union and typed collision routing: '.($GLOBALS['essentialChecks']).' cumulative checks passed ('.$db->driver().').'.PHP_EOL;

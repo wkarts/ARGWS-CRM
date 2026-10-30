@@ -161,10 +161,11 @@ class Download extends App_Controller
                     || !is_string($attachmentid) || !preg_match('/^[a-f0-9]{64}$/D', $attachmentid)) { throw new DomainException('native_ticket_file_denied'); }
                 require_once APPPATH . 'services/NativeCompanyTicketFiles.php';
                 $file = (new NativeCompanyTicketFiles($this->db, db_prefix()))->read($ctx->issuerId(), $ctx->staffId(), (int) $ticket, $attachmentid);
+                $inline = $this->input->get('preview', false) === '1' && $file['mime'] === 'image/png';
                 $this->output->set_header('Cache-Control: private, no-store')
                     ->set_header('X-Content-Type-Options: nosniff')
                     ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
-                    ->set_header('Content-Disposition: attachment; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
+                    ->set_header('Content-Disposition: '.($inline?'inline':'attachment').'; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
                     ->set_content_type($file['mime'])
                     ->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
             } catch (Throwable $error) { show_404(); }
@@ -183,10 +184,11 @@ class Download extends App_Controller
             try {
                 require_once APPPATH . 'services/NativeCompanyInvoiceFiles.php';
                 $file = (new NativeCompanyInvoiceFiles($this->db, db_prefix()))->readKey($ctx->issuerId(), $ctx->staffId(), (string) $attachmentid);
+                $disposition=$this->input->get('inline')==='1'&&$file['mime']==='image/png'?'inline':'attachment';
                 $this->output->set_header('Cache-Control: private, no-store')
                     ->set_header('X-Content-Type-Options: nosniff')
                     ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
-                    ->set_header('Content-Disposition: attachment; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
+                    ->set_header('Content-Disposition: '.$disposition.'; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
                     ->set_content_type($file['mime'])
                     ->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
             } catch (Throwable $error) { show_404(); }

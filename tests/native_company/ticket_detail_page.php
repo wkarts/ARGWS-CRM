@@ -17,9 +17,10 @@ $ci->session=new class{private array $data=[];function userdata($key){return $th
 $ci->router=new class{function fetch_method(){return'ticket';}};
 $ci->input->verb='GET';$ci->input->data=[];$ci->input->query=[];
 $ci->load=new class{
-    public string$html='';public array$data=[];
+    public string$html='';public array$data=[];function __get($name){return $GLOBALS['ci']->$name;}
     function model($name){throw new RuntimeException('global model hydration forbidden');}
     function view($path,$data=[]){
+        if($path==='admin/tickets/partials/ticket-settings'){extract($data);require APPPATH.'views/'.$path.'.php';return;}
         kc($path==='admin/tickets/single','original ticket detail template selected');
         $this->data=$data;extract($data);ob_start();try{require APPPATH.'views/'.$path.'.php';$this->html=ob_get_clean();}catch(Throwable$e){ob_end_clean();throw$e;}
     }
@@ -27,6 +28,7 @@ $ci->load=new class{
 $GLOBALS['ci']=$ci;$page=new Tickets();$page->ticket($id);$html=$ci->load->html;$data=$ci->load->data;
 kc(isset($data['native_ticket_page'])&&$data['ticket']->ticketid===$id,'actual route composes issuer-owned detail DTO');
 kc(str_contains($html,'id="ticket-reply"')&&str_contains($html,'name="_company_context"')&&str_contains($html,'name="_native_company_csrf"'),'original detail carries both context-bound mutation proofs');
+kc(str_contains($html,'id="ticket-settings-form"')&&str_contains($html,'name="tags_revision"')&&str_contains($html,'data-ticket-status="closed"'),'detail composes the original settings partial and scoped status actions');
 kc(str_contains($html,'Typed <strong>response</strong>')&&!str_contains($html,'global model hydration'),'actual owned reply renders with proven rich-text provenance');
 kc(str_contains($html,'download/file/ticket/'.$key.'?ticket_id='.$id),'private attachment uses the scoped original download route');
 $ci->input->verb='PUT';$deny(fn()=>$page->ticket($id));

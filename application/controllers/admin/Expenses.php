@@ -70,6 +70,7 @@ class Expenses extends AdminController
 
     public function expense($id = '')
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'expense'); return; }
         if ($this->input->post()) {
             if ($id == '') {
                 if (staff_cant('create', 'expenses')) {
@@ -143,6 +144,7 @@ class Expenses extends AdminController
 
     public function import()
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { $this->nativeSettingsImports('expenses/import','admin/expenses/import'); return; }
         if (staff_cant('create', 'expenses')) {
             access_denied('Items Import');
         }
@@ -262,6 +264,7 @@ class Expenses extends AdminController
 
     public function delete($id)
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'delete'); return; }
         if (staff_cant('delete', 'expenses')) {
             access_denied('expenses');
         }
@@ -305,6 +308,7 @@ class Expenses extends AdminController
 
     public function convert_to_invoice($id)
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'convert_to_invoice'); return; }
         if (staff_cant('create', 'invoices')) {
             access_denied('Convert Expense to Invoice');
         }
@@ -337,6 +341,7 @@ class Expenses extends AdminController
 
     public function get_expense_data_ajax($id)
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'get_expense_data_ajax'); return; }
         if (staff_cant('view', 'expenses') && staff_cant('view_own', 'expenses')) {
             echo _l('access_denied');
             die;
@@ -371,6 +376,7 @@ class Expenses extends AdminController
 
     public function categories()
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,null,'categories'); return; }
         if (!is_admin()) {
             access_denied('expenses');
         }
@@ -383,6 +389,7 @@ class Expenses extends AdminController
 
     public function category()
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,null,'category'); return; }
         if (!is_admin() && get_option('staff_members_create_inline_expense_categories') == '0') {
             access_denied('expenses');
         }
@@ -408,6 +415,7 @@ class Expenses extends AdminController
 
     public function delete_category($id)
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'delete_category'); return; }
         if (!is_admin()) {
             access_denied('expenses');
         }
@@ -427,6 +435,7 @@ class Expenses extends AdminController
 
     public function add_expense_attachment($id)
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'add_expense_attachment'); return; }
         handle_expense_attachments($id);
         echo json_encode([
             'url' => admin_url('expenses/list_expenses/' . $id),
@@ -435,6 +444,7 @@ class Expenses extends AdminController
 
     public function delete_expense_attachment($id, $preview = '')
     {
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'delete_expense_attachment'); return; }
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'expense');
         $file = $this->db->get(db_prefix() . 'files')->row();

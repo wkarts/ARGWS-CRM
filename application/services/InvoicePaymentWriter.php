@@ -68,6 +68,44 @@ final class InvoicePaymentWriter
         });
     }
 
+    /** Only this bounded operation can compose the existing writer in one owned transaction. */
+    private ?array $nativeBatchContext=null;
+    private function nativeManualModeTables(bool $revision=true):array
+    {
+        $p=db_prefix();$optional=[];
+        foreach(['bb_origins','asaas_payment_origins','efi_company_origins','company_invoice_native_relations']as$table)if($this->db->table_exists($p.$table))$optional[]=$table;
+        return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','company_payment_modes','payment_modes','invoices','itemable','item_tax','invoicepaymentrecords','issuers_invoice_documents','credits','company_payment_receipts','company_payment_notice_intents'],$optional,(new \CompanyCurrencyUnits($this->db,$p))->tables(),(new \CompanyFinancialJournal($this->db,$p))->tables('payment'),(new \CompanyInvoiceBalance($this->db,$p))->tables())));
+    }
+    public function recordCompanyManualBatch($issuer,$actor,array $items,string $requestKey):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$p=db_prefix();
+        if($this->nativeBatchContext!==null||!preg_match('/^[a-f0-9]{64}$/D',$requestKey)||!array_is_list($items)||!$items||count($items)>50)throw new \DomainException('company_payment_batch_invalid');
+        $seen=[];foreach($items as$item){
+            if(!is_array($item)||array_diff(array_keys($item),['invoice_id','input','mode','mode_revision','invoice_revision','notice'])||!is_array($item['input']??null)||!is_bool($item['notice']??null))throw new \DomainException('company_payment_batch_invalid');
+            $id=self::invoiceId($item['invoice_id']??null);if(isset($seen[$id]))throw new \DomainException('company_payment_batch_invalid');$seen[$id]=true;
+            foreach(['mode_revision','invoice_revision']as$field)if(!is_string($item[$field]??null)||!preg_match('/^[a-f0-9]{64}$/D',$item[$field]))throw new \DomainException('company_payment_batch_invalid');
+        }
+        $hash=hash('sha256',json_encode($items,JSON_THROW_ON_ERROR));$event='company_payment_batch_recorded';
+        return \IssuerTransaction::run($this->db,$p,$this->nativeManualModeTables(),function()use($issuer,$actor,$p,$items,$requestKey,$hash,$event):array{
+            $acl=new \IssuerResourceAccess($this->db,$p);$acl->lockFinancialIdentity($issuer,$actor);
+            foreach([['invoices','view'],['payments','create']]as[$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new \DomainException('company_payment_access_denied');
+            $prior=\IssuerStorage::query($this->db,"SELECT actor_id,metadata_json FROM {$p}issuers_audit WHERE issuer_id=? AND event=? AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$issuer,$event,json_encode(['request_key'=>$requestKey],JSON_THROW_ON_ERROR)])->result_array();
+            if(count($prior)>1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
+            if($prior){$proof=json_decode($prior[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR);if((int)$prior[0]['actor_id']!==$actor||($proof['input_hash']??null)!==$hash)throw new \DomainException('company_payment_request_conflict');}
+            $this->nativeBatchContext=[$issuer,$actor];$ids=[];
+            try{foreach($items as$n=>$item)$ids[]=$this->recordCompanyManualWithMode($issuer,$actor,$item['invoice_id'],$item['input'],hash('sha256','payment-batch:'.$requestKey.':'.$n),$item['mode'],$item['mode_revision'],$item['notice'],$item['invoice_revision']);}
+            finally{$this->nativeBatchContext=null;}
+            $metadata=json_encode(['request_key'=>$requestKey,'input_hash'=>$hash,'payments'=>$ids],JSON_THROW_ON_ERROR);
+            if($prior){if($prior[0]['metadata_json']!==$metadata)throw new \RuntimeException('issuer_payment_write_unconfirmed');}
+            else{
+                \IssuerStorage::query($this->db,'INSERT INTO '.$p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$actor,$event,$issuer,$ids[0],gmdate('Y-m-d H:i:s'),$metadata]);$audit=(int)$this->db->insert_id();
+                if($audit<1||!\IssuerStorage::query($this->db,'SELECT id FROM '.$p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND event=? AND metadata_json=?',[$audit,$issuer,$actor,$event,$metadata])->row_array())throw new \RuntimeException('issuer_payment_write_unconfirmed');
+            }
+            foreach([['invoices','view'],['payments','create']]as[$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new \DomainException('company_payment_access_denied');
+            return$ids;
+        });
+    }
+
     /** Native invoice form: persist the selected, company-owned offline mode with the receipt. */
     public function recordCompanyManualWithMode($issuer,$actor,$invoice,array $input,string $requestKey,$mode,string $modeRevision,bool $noticeRequested,?string $invoiceRevision=null): int
     {
@@ -80,8 +118,8 @@ final class InvoicePaymentWriter
         $origins=[];foreach(['bb_origins','asaas_payment_origins','efi_company_origins'] as $table)if($this->db->table_exists($prefix.$table))$origins[]=$table;
         $modes=new \NativeCompanyPaymentModes($this->db,$prefix);
         if($invoiceRevision!==null&&$this->db->table_exists($prefix.'company_invoice_native_relations'))$originsRevision=['company_invoice_native_relations'];else $originsRevision=[];
-        $tables=array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','company_payment_modes','payment_modes','invoices','itemable','item_tax','invoicepaymentrecords','issuers_invoice_documents','credits','company_payment_receipts','company_payment_notice_intents'],$origins,$originsRevision,(new \CompanyCurrencyUnits($this->db,$prefix))->tables(),(new \CompanyFinancialJournal($this->db,$prefix))->tables('payment'),(new \CompanyInvoiceBalance($this->db,$prefix))->tables())));
-        return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$invoice,$input,$requestKey,$mode,$modeRevision,$noticeRequested,$invoiceRevision,$prefix,$origins,$modes):int{
+        $tables=$this->nativeManualModeTables($invoiceRevision!==null);
+        $work=function()use($issuer,$actor,$invoice,$input,$requestKey,$mode,$modeRevision,$noticeRequested,$invoiceRevision,$prefix,$origins,$modes):int{
             $check=function()use($issuer,$actor,$invoice,$mode,$modeRevision,$prefix,$modes):array{
                 $selected=$modes->get($issuer,$actor,$mode,'invoices',false);
                 if(!hash_equals($selected['revision'],$modeRevision))throw new \DomainException('native_payment_mode_stale');
@@ -112,7 +150,12 @@ final class InvoicePaymentWriter
             $saved=\IssuerStorage::query($this->db,'SELECT invoiceid,paymentmode,paymentmethod,amount,transactionid FROM '.$prefix.'invoicepaymentrecords WHERE id=?',[$id])->row_array();
             if(!$saved||(int)$saved['invoiceid']!==$invoice||(string)$saved['paymentmode']!==$mode||$saved['paymentmethod']!==$selected['name']||self::minorUnits($saved['amount'])!==$amount||$saved['transactionid']!==$data['transactionid'])throw new \RuntimeException('issuer_payment_write_unconfirmed');
             return$id;
-        });
+        };
+        if($this->nativeBatchContext!==null){
+            if($this->nativeBatchContext!==[$issuer,$actor])throw new \DomainException('company_payment_access_denied');
+            \IssuerTransaction::assertOwned($this->db,$prefix,$tables);return$work();
+        }
+        return \IssuerTransaction::run($this->db,$prefix,$tables,$work);
     }
 
     /** The exact final LOCAL source composes native primitives; ordinary/manual/provider paths retain their origin veto. */

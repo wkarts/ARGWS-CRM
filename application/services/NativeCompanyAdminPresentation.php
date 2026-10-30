@@ -237,11 +237,15 @@ final class NativeCompanyAdminPresentation
         require_once APPPATH.'helpers/datatables_helper.php';
         // The original Vue filter component consumes the trusted product catalog.
         foreach(['confirm','filters','default_filter_info','no_filters_found'] as $key)$lang[$key]=self::label($key);
+        // The official sales item editor reads these keys when adding rows.
+        // Use the same trusted translations as the primary header.
+        foreach(['unit','item_is_optional','item_is_selected','invoice_number_exists','invoice_task_billable_timers_found','invoice_task_item_project_tasks_not_included','item_forgotten_in_preview','no_items_warning','showing_billable_tasks_from_project']as$key)$lang[$key]=self::label($key);
+        $lang['item_field_not_formatted']=self::label('numbers_not_formatted_while_editing');
         foreach(self::$language as $key=>$value)if(str_starts_with((string)$key,'filter_'))$lang[$key]=self::label($key);
         $lang['datatables']=get_datatables_language_array([self::class,'label']);
         $app=['dtFilters'=>[],'version'=>ARGWS_VERSION,'locale'=>$data['locale'],'tinymce_lang'=>'pt_BR','user_language'=>'portuguese_br',
             'browser'=>in_array($data['browser'],['safari','firefox','chrome','edge'],true)?$data['browser']:'other',
-            'user_id'=>(string)$data['staff']['staffid'],'is_mobile'=>$data['is_mobile']?'1':'0',
+            'user_id'=>(string)$data['staff']['staffid'],'is_mobile'=>$data['is_mobile'],
             'options'=>$options,'lang'=>$lang];
         $app['user_is_admin']=self::$issuer!==null&&(new IssuerResourceAccess($ci->db,db_prefix()))->administrative(self::$issuer,(int)$data['staff']['staffid'])?1:0;
         if(isset($data['work_tags'])){$app['available_tags']=$data['work_tags']['available_tags'];$app['available_tags_ids']=$data['work_tags']['available_tags_ids'];}

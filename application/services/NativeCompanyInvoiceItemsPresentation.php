@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyInvoices.php';
 require_once __DIR__.'/NativeCompanyCustomFields.php';
+require_once __DIR__.'/NativeCompanyTaxRate.php';
 /** Authorized issued-line data for the original App_items_table renderer; no alternate markup. */
 final class NativeCompanyInvoiceItemsPresentation
 {

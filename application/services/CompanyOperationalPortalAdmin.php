@@ -14,6 +14,6 @@ final class CompanyOperationalPortalAdmin
  }
  public static function controls($controller,int $issuer,int $actor,string $kind,array $row):array
  {
-  $state=(new CompanyOperationPublication($controller->db,db_prefix()))->get($issuer,$actor,$kind,$row['id']);$state['permissions']=[];$acl=new IssuerResourceAccess($controller->db,db_prefix());$state['can_contact_edit']=$acl->can($issuer,$actor,'customers','edit');if($acl->can($issuer,$actor,'customers','view')){try{$state['permissions']=(new CompanyContactOperationAccess($controller->db,db_prefix(),$kind))->page($issuer,$actor,$row['client_id']);}catch(DomainException $denied){$state['permissions']=[];}}return $state;
+  $state=(new CompanyOperationPublication($controller->db,db_prefix()))->get($issuer,$actor,$kind,$row['id']);$state['permissions']=[];$acl=new IssuerResourceAccess($controller->db,db_prefix());$state['can_contact_edit']=$acl->can($issuer,$actor,'customers','edit');$state['can_publish']=$acl->can($issuer,$actor,$kind,'edit');if($acl->can($issuer,$actor,'customers','view')){try{$state['permissions']=(new CompanyContactOperationAccess($controller->db,db_prefix(),$kind))->page($issuer,$actor,$row['client_id']);}catch(DomainException $denied){$state['permissions']=[];}}return $state;
  }
 }

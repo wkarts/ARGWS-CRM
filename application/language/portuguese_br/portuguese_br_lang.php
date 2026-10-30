@@ -4254,3 +4254,21 @@ $lang['issuer_contact_invoice_access'] = 'Acesso dos contatos às faturas no por
 $lang['issuer_contact_invoice_access_help'] = 'A permissão vale somente para as faturas desta empresa e exige um contato ativo.';
 $lang['issuer_contact_invoice_grant'] = 'Permitir acesso a faturas';
 $lang['issuer_contact_invoice_revoke'] = 'Revogar acesso a faturas';
+
+$lang['company_project_status_active'] = 'Ativo';
+
+$lang['company_ticket_status_open'] = 'Aberto';
+
+$lang['company_ticket_status_resolved'] = 'Resolvido';
+
+$lang['company_ticket_status_closed'] = 'Fechado';
+
+$lang['back_to_list'] = 'Voltar à lista';
+
+$lang['project_tasks'] = 'Tarefas';
+
+$lang['project_gantt'] = 'Cronograma';
+
+$lang['search'] = 'Pesquisar';
+
+$lang['ticket_dt_date_created'] = 'Data de criação';
