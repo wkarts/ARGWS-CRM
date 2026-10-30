@@ -2557,6 +2557,10 @@
     [
       "php",
       "tests/companies/native_invoice_issued_form_update.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_table_legacy_filter.php"
     ]
   ],
   "node": [

@@ -10,6 +10,17 @@ final class NativeCompanyRelatedTaskPage
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     public static function request(array$input,array$definitions):array
     {
+        // The original dashboard's 'My tasks' tab sends a single legacy hidden
+        // flag. Translate that exact actor-bound selection to the already
+        // authorized BooleanRule; never admit arbitrary legacy filter keys.
+        if(array_key_exists('my_tasks',$input)){
+            if(!in_array($input['my_tasks'],[true,1,'1','true'],true))throw new DomainException('native_task_table_request_invalid');
+            unset($input['my_tasks']);
+            $existing=$input['filters']??['match_type'=>'and','rules'=>[]];
+            if(!is_array($existing)||($existing['match_type']??null)!=='and'||!is_array($existing['rules']??null)||!array_is_list($existing['rules'])||count($existing['rules'])>=100)throw new DomainException('native_task_table_request_invalid');
+            $existing['rules'][]=['id'=>'my_tasks','type'=>'BooleanRule','operator'=>'equal','value'=>'1','has_dynamic_value'=>false];
+            $input['filters']=$existing;
+        }
         if(array_diff(array_keys($input),['draw','start','length','search','order','columns','filters','tasks_related_to','custom_view','last_order_identifier']))throw new DomainException('native_task_table_request_invalid');
         $int=static function($v,int$max):int{if((!is_int($v)&&!is_string($v))||!preg_match('/^(0|[1-9][0-9]*)$/D',(string)$v)||(int)$v>$max)throw new DomainException('native_task_table_request_invalid');return(int)$v;};
         $draw=$int($input['draw']??0,2147483647);$start=$int($input['start']??0,2147483647);$length=$int($input['length']??25,500);if(!$length||($input['custom_view']??'')!==''||!in_array($input['tasks_related_to']??[],[[],null,''],true)||isset($input['last_order_identifier'])&&$input['last_order_identifier']!=='tasks')throw new DomainException('native_task_table_request_invalid');
