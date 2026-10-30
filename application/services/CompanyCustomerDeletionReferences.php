@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/issuers/IssuerTransaction.php';
 
-/** Dependency inventory for a future native customer deletion writer.
+/** Dependency inventory for the bounded native customer deletion writer.
  * A clear result is not sufficient to delete: extensions and all participating
  * writers still require an explicit concurrency contract and independent audit.
  */

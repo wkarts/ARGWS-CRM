@@ -1,10 +1,12 @@
 # Exclusão de clientes: limite atual
 
-A rota de exclusão de clientes da empresa secundária permanece fechada. O
-controlador também impede acesso à cascata legada para esse contexto. O método
-interno `CompanyClients::deleteUnreferenced` é uma base experimental, ainda não
-autorizada para exposição: não há comprovação de que todas as extensões e todos
-os escritores legados concorrentes respeitem a mesma transação.
+A rota de exclusão de clientes da empresa secundária é um escritor nativo
+limitado: aceita somente `POST`, CSRF nativo, empresa proprietária, permissão
+explícita e a revisão atual do cliente. O controlador nunca alcança a cascata
+legada. Dependências financeiras, contatos, históricos, vínculos polimórficos,
+importações confirmadas e relações desconhecidas fazem a operação falhar de
+forma conservadora; o método `CompanyClients::deleteUnreferenced` executa a
+remoção somente dentro dessa guarda e da transação da empresa.
 
 `CompanyCustomerDeletionReferences` verifica, nas tabelas existentes, referências
 diretas de contatos, chamados, contratos, documentos financeiros, despesas,
@@ -27,8 +29,9 @@ classe isoladamente não constitui prova de segurança.
 
 Os testes `native_customer_delete_references.php`,
 `native_customer_delete_writer.php` e `native_customer_delete_guard.php` cobrem a
-enumeração presente, rollback, isolamento, histórico e o bloqueio da rota; não
-validam integrações desconhecidas ou concorrência real de todos os módulos.
+enumeração presente, rollback, isolamento, histórico, revisão/ownership/CSRF e
+a ausência de fallback para a cascata legada; não validam integrações
+desconhecidas ou concorrência real de todos os módulos.
 
 ## Evidência de concorrência
 
