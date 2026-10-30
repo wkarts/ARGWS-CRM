@@ -1,9 +1,0 @@
-"Contas a pagar: declarações externas manuais; não são confirmação nem ordem bancária"
-Fornecedor,Pedido,"Documento interno","Documento fornecedor",Data,Vencimento,Moeda,Valor,"Quitação declarada","Em aberto",Vencido,"Despesa canônica","Moeda base capturada","Câmbio declarado capturado"
-"'=Vendor a <script>literal</script>",HTTP_A-PED-1,HTTP_A-DOC-1,'=DOC-a-1,2026-10-21,2026-10-21,BRL,11.01,0.00,11.01,0.00,1,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-1,HTTP_A-DOC-2,'=DOC-a-2,2026-10-21,2026-10-21,BRL,22.02,0.00,22.02,0.00,2,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-2,HTTP_A-DOC-3,'=DOC-a-1,2026-10-21,2026-10-21,BRL,11.01,0.00,11.01,0.00,4,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-2,HTTP_A-DOC-4,'=DOC-a-2,2026-10-21,2026-10-21,BRL,22.02,0.00,22.02,0.00,5,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-3,HTTP_A-DOC-5,HTTP-API-4.99,2026-10-21,2026-10-21,BRL,4.99,0.00,4.99,0.00,8,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-4,HTTP_A-DOC-6,'=DOC-a-1,2026-10-21,2026-10-21,BRL,11.01,0.00,11.01,0.00,9,BRL,1.000000
-"'=Vendor a <script>literal</script>",HTTP_A-PED-4,HTTP_A-DOC-7,'=DOC-a-2,2026-10-21,2026-10-21,BRL,22.02,0.00,22.02,0.00,10,BRL,1.000000

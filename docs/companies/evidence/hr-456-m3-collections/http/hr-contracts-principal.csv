@@ -1,6 +1,0 @@
-employee_id,employee_code,name,contract_id,number,starts_on,ends_on,state,salary_minor,currency,hours_per_week,acknowledged_at
-7,HTTP-principal-f322aa0ad1f2-E,"HR Principal",3,1,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:08:06"
-12,HTTP-principal-c4c5d189de16-E,"HR Principal",6,2,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:13:09"
-17,HTTP-principal-67e29714717d-E,"HR Principal",9,3,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:33:52"
-22,HTTP-principal-7e6a21b559a5-E,"HR Principal",12,4,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:37:33"
-27,HTTP-principal-36b41beb07f5-E,"HR Principal",15,5,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:50:49"

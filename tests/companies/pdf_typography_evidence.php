@@ -1,2 +1,0 @@
-<?php
-function typographyEvidence(string$name,string$bytes,array$profile):void{essentialCheck(str_starts_with($bytes,'%PDF-')&&strlen($bytes)>1000,'actual canonical TCPDF bytes: '.$name);$dir=getenv('CRM_PDF_TYPOGRAPHY_EVIDENCE');if(!$dir)return;if(!preg_match('~^/tmp/crm-typography-pdf-[A-Za-z0-9_-]+$~D',$dir)||!is_dir($dir))throw new RuntimeException('invalid evidence directory');file_put_contents($dir.'/'.$name.'.pdf',$bytes);file_put_contents($dir.'/'.$name.'.json',json_encode($profile,JSON_THROW_ON_ERROR));}

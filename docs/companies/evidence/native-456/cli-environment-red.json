@@ -1,7 +1,0 @@
-{
-  "phase": "RED",
-  "exit_code": 1,
-  "test_sha256": "ec7db9d647511b1ca66d3e13c723ae6fdbf4cb417e2f1c5a397862c4024e2307",
-  "wrapper_sha256": "6e05ee61135342eba6b512b2d9c43d9a1e238592458e9541108cbff7c2cae65b",
-  "cause": "New real fresh-installation HR CLI block requires canonical legacy binding; the prior environment fixture declared only upgrade and expected every block after the initial browser to use upgrade."
-}

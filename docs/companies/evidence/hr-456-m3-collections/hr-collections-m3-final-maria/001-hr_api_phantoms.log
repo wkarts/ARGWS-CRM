@@ -1,5 +1,0 @@
-{"case":"employees","error":"issuer_hr_write_unconfirmed","actual_employee_count":1,"snapshot_unchanged":true,"returned_count":null}
-{"case":"report","error":"issuer_hr_write_unconfirmed","actual_employee_count":1,"snapshot_unchanged":true,"returned_count":null}
-{"case":"export","error":"issuer_hr_write_unconfirmed","actual_employee_count":1,"snapshot_unchanged":true,"returned_count":null}
-{"case":"structure","error":"issuer_hr_write_unconfirmed","actual_employee_count":1,"snapshot_unchanged":true,"returned_count":null}
-HR original collection witnesses and coherent structure DTO: 39 checks; 8.3.6; 128MiB.

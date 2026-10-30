@@ -1,2 +1,0 @@
-employee_id,employee_code,name,contract_id,number,starts_on,ends_on,state,salary_minor,currency,hours_per_week,acknowledged_at
-1,HTTP-a-e50ce7e326ff-E,"HR Reader",1,1,2026-01-01,,active,123456,BRL,40,"2026-10-21 13:11:52"

@@ -1,9 +1,0 @@
-# Same native issued-invoice item renderer
-
-`NativeCompanyInvoiceItemsPresentation::load(db,prefix,issuer,actor,invoice)` reads the authorized persisted issued document, real itemable identifiers, line custom fields and content revision. `transaction()` provides the existing `App_items_table` shape; the typed projection validates these fields before rendering. The actual `App_items_table` and its template remain the single markup source. The original legacy branch retains its hooks and custom-field helpers.
-
-For the named projection, global hooks/model/custom-field tax hydration are not invoked. Tax and custom-field text is escaped; row amounts come from the canonical decimal DTO. Original scoped display settings still use the existing `get_option` runtime. Table identity/revision use real storage IDs and the exact reorder CAS. An untyped marker or altered transaction is rejected. Named rendering without a projection fails closed.
-
-The standalone PHP fixture executes the real services against SQLite and the real table classes, plus the legacy branch. Formatting/localization helpers are doubles. This is **not** an HTTP/browser proof or complete preview/editor admission. Private drafts require the separate persisted line identity/transfer work; this factory does not manufacture itemable IDs for drafts. The final preview controller must pass this projection and use canonical totals/position rather than treating the table's historical floating-point tax display helper as a financial writer.
-
-The HTML projection reads all actual persisted lines through `CompanyInvoices::previewItems` with view authority, preserving optional/unselected flags. This is deliberately distinct from the PDF DTO's charged-line list. The original row opacity behavior remains; amounts for each displayed row use the same canonical decimal calculator. Optional rows never enter canonical invoice totals merely because they are displayed.

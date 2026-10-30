@@ -1,2 +1,0 @@
-{"separate_connections":true,"negative_candidate_observed":true,"secondary_blocked":true,"secondary_committed":false,"final_membership":0,"returned_count":1}
-HR excluded eligibility current-read lock: 2 checks; 8.1.2-1ubuntu2.25; 128MiB.

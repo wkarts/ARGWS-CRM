@@ -1,8 +1,0 @@
-<?php
-require __DIR__.'/task_billing.php';
-if($db->driver()==='mysql'){
- $db->query('ALTER TABLE '.$p.'company_task_billing_origins MODIFY source_hash varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL');essentialThrows(fn()=>CompanyTaskBillingSchema::assertValid($db,$p),'issuer_task_billing_schema_invalid','schema refuses weakened source hash collation');$db->query('ALTER TABLE '.$p.'company_task_billing_origins MODIFY source_hash varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL');CompanyTaskBillingSchema::assertValid($db,$p);
- $failed=false;try{$old=$db->query('SELECT * FROM '.$p.'company_task_billing_origins WHERE id=?',[$oa])->row_array();unset($old['id']);$old['issuer_id']=$b;$old['request_key']=$tk('bad-scope-fk');$db->query('INSERT INTO '.$p.'company_task_billing_origins (`'.implode('`,`',array_keys($old)).'`) VALUES('.implode(',',array_fill(0,count($old),'?')).')',array_values($old));}catch(PDOException $e){$failed=true;}essentialCheck($failed,'actual composite task FK rejects forged origin issuer before any service hydration');
- $db->query('ALTER TABLE '.$p.'company_task_billing_links ADD unexpected_authority int NULL');essentialThrows(fn()=>CompanyTaskBillingSchema::assertValid($db,$p),'issuer_task_billing_schema_invalid','schema refuses unknown authority column');$db->query('ALTER TABLE '.$p.'company_task_billing_links DROP unexpected_authority');CompanyTaskBillingSchema::assertValid($db,$p);
-}
-echo 'Native task billing exact schema/provenance: '.$GLOBALS['essentialChecks'].' cumulative checks passed ('.$db->driver().').'.PHP_EOL;

@@ -1,6 +1,0 @@
-<?php
-/** Reviewed task copies deliberately retain explicit reviewed values, independent of creation defaults. */
-require dirname(__DIR__).'/companies/task_copies.php';require_once APPPATH.'services/CompanyTaskPreferences.php';
-$start=$GLOBALS['essentialChecks'];$preferences=new CompanyTaskPreferences($db,$p);
-foreach([$a,$b,$primary]as$owner){$preferences->save($owner,7,0,['default_task_status'=>'in_progress','new_task_auto_assign_current_member'=>'0']);foreach(['project'=>$sourceProject[$owner],'standalone'=>$sourceStandalone[$owner]]as$kind=>$source){$preview=$taskCopies->preview($owner,7,$kind,$source);$review=taskCopyReview($preview,'Explicit copy ignores status default '.$owner,$targets[$owner]);$result=$taskCopies->create($owner,7,$kind,$source,$review,$key('defaults-copy-explicit-'.$kind.'-'.$owner));$writer=$kind==='project'?$ts:$standaloneWriter;$record=$writer->get($owner,7,$result['task_id']);essentialCheck($record['status']==='todo'&&(int)$record['assignee_id']===7&&$record['timers']===[]&&$record['billing_state']==='none','explicit reviewed copy defaults remain reopened with no timers/financial adoption');}}
-echo 'Own task preference copy isolation: '.($GLOBALS['essentialChecks']-$start).' added / '.$GLOBALS['essentialChecks'].' cumulative ('.$db->driver().').'.PHP_EOL;

@@ -1,6 +1,0 @@
-<?php
-require __DIR__.'/native_task_items_controller.php';
-$task_id=$canonical;$current_user_is_creator=true;$hide_completed_items=0;$task_staff_members=[['staffid'=>7,'firstname'=>'Scoped','lastname'=>'User']];$checklists=[];foreach($response['checklist']['items']as$item)$checklists[]=['id'=>$item['id'],'revision'=>$item['revision'],'description'=>$item['description'],'finished'=>$item['finished'],'finished_from'=>$item['finished_by'],'addedfrom'=>$item['created_by'],'assigned'=>$item['assigned_id']];
-$checklists[0]['description']='</textarea><script>bad()</script>';$native_task_checklist=['actor'=>7,'admin'=>false,'can_edit'=>true,'can_delete'=>true,'can_create_template'=>true,'names'=>['7'=>'Scoped User'],'template_descriptions'=>[]];
-ob_start();require APPPATH.'views/admin/tasks/checklist_items_template.php';$html=ob_get_clean();essentialCheck(str_contains($html,'data-checklist-item-revision=')&&str_contains($html,'native_task_checklist_command')&&!str_contains($html,'</textarea><script>bad()'),'Original checklist partial uses scoped revisions and escapes text');
-echo 'Original checklist partial: '.$GLOBALS['essentialChecks']." cumulative checks passed; full modal and browser still pending.\n";

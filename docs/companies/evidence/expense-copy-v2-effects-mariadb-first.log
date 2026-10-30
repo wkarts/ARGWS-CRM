@@ -1,5 +1,0 @@
-Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-ts2w1fq_
-Company expense operations: 47 checks passed (mysql). No provider calls.
-Recreated reviewed expense copies442: 90 checks (mysql).
-Expense copy442 atomic native source/receipt/readbacks: 132 checks (mysql).
-Expense copy442 V2 final canonical effects confirmed: 163 checks (mysql).

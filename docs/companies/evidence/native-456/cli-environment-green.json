@@ -1,7 +1,0 @@
-{
-  "phase": "GREEN",
-  "exit_code": 0,
-  "test_sha256": "88ec16da3467316127c8d8b3efdd5da199fd94c402c498856f50c5620932bef7",
-  "wrapper_sha256": "6e05ee61135342eba6b512b2d9c43d9a1e238592458e9541108cbff7c2cae65b",
-  "preserved_assertions": "All historical command blocks retain their original expected binding; the newly added HR CLI block explicitly requires fresh legacy target, and still verifies all seven disposable environment variables."
-}

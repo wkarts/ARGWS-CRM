@@ -1,6 +1,0 @@
-[
-  {
-    "argv": ["php", "tests/issuers_original_administrator.php"],
-    "reason": "Added by aa01d59e; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
-  }
-]

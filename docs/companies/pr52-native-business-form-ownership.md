@@ -1,9 +1,0 @@
-# Validação dos formulários nativos sem capturar o seletor
-
-Basecca60c413fb4f45cea90db8c824e6501c185b6cf. Revisão das39 views PHP de departamentos, impostos, avisos, itens, chamados e equipe encontrou seis inicializações appValidateForm($('form')). O helper oficial destrói/recria o validator em cada formulário da seleção e atribui seu onSubmit: assim, um formulário de negócio também passava a validar/interceptar o seletor da empresa e o formulário de status na sidebar.
-
-Corrigidas conjuntamente as views oficiais de departamento, imposto, aviso, resposta predefinida, prioridade e status de chamado. Cada uma inicializa somente seu formulário por ID; os quatro sem ID receberam identificador no form_open existente. Regras, endpoints, callbacks, CSRF, campos, permissões e estrutura visual preservados. Itens/importação/Staff já usavam seletores específicos e foram mantidos. Não há nova tela ou controller.
-
-O navegador existente agora exige que o seletor não tenha validator de negócio após inicialização das rotas nativas. Em Departamentos executa a seleção real para a principal e o retorno à secundária, pelo mesmo seletor POST, sem requisição montada manualmente.125 assertions anteriores mantidas e três assertions adicionadas ao código (a verificação por rota se repete no loop). Nenhum force/timeout ampliado, nenhum acesso externo.
-
-Sem executor local: parser JS disponível passou no smoke; PHP/Node/Playwright e inventários locais não executados. Os dois hashes agregados serão reconciliados a partir dos geradores oficiais do CI, que continuam falhando se o resumo estiver desatualizado. Os seis arquivos não constam no auditor e o censo de ações só varre controllers; nenhum candidato foi marcado como resolvido. A camada visual paralela restante e CNAB400 continuam incompletos; PR em rascunho, operational_ready=false.

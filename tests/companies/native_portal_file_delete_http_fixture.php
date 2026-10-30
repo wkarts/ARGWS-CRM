@@ -1,5 +1,0 @@
-<?php
-/** Original Clients controller, actual project/task writers; HTTP session and redirect transport are fixtures. */
-require __DIR__.'/native_portal_http_fixture.php';require_once APPPATH.'services/ValidatesContact.php';require_once APPPATH.'services/NativePortalIdentity.php';require_once APPPATH.'controllers/Clients.php';
-function set_alert($type,$message){}
-$ci=(new ReflectionClass(Clients::class))->newInstanceWithoutConstructor();foreach(get_object_vars($auth)as$k=>$v)$ci->$k=$v;$ci->router->class='clients';$ci->router->method='delete_file';$ci->input->verb='POST';$ci->input->get=['issuer_id'=>(string)$a];(new NativePortalIdentity($db,$p,str_repeat('synthetic-',4)))->establish($ci->session,$a,$sessions[$a]);$set=static function($name,$value){(new ReflectionProperty(PortalRequestScope::class,$name))->setValue(null,$value);};foreach(['active'=>true,'candidate'=>true,'resolved'=>true,'native'=>true,'owner'=>$ci,'issuer'=>$a,'class'=>'clients','method'=>'delete_file','identity'=>['binding'=>$sessions[$a]]]as$k=>$v)$set($k,$v);$ci->input->post=['issuer_id'=>(string)$a,'_native_portal_csrf'=>PortalRequestScope::csrfToken($ci)];

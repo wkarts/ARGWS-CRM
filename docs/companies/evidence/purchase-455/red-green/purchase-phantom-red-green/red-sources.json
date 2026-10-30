@@ -1,6 +1,0 @@
-{
-  "application/services/CompanyPurchases.php": "a4872a3060cdb10e27a4a7104014e42f2a306c56268a001258897a7b5c389c98",
-  "application/services/CompanyPurchasesStorage.php": "74eb6bdd2e068edf1574744de2e6279cdd62d377b9acb5bfcdecc846feeb0c72",
-  "application/services/CompanyPurchasesFinance.php": "2d9baf9753a6ce882cf4e38ca2b5312c553df7c5b2432fed724c79a795003f43",
-  "application/services/CompanyPurchasesReports.php": "76c338c1b0f6513f58177734a25034cc6d81c1a16f8a5cbf1e38c8f03d7cb946"
-}

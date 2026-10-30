@@ -1,6 +1,0 @@
-<?php
-declare(strict_types=1);
-require __DIR__.'/ticket_status_endpoint.php';$reader=new NativeCompanyTicketRead($wrapped,'tbl');$revision=$reader->get(2,17,$id)['revision_token'];
-$ci->router=new class{function fetch_method(){return'update_staff_replying';}};$page=new Tickets();$ci->input->data=['revision'=>$revision,'_native_company_csrf'=>'synthetic-csrf'];$page->update_staff_replying($id,'17');kc(json_decode($ci->output->body,true)['state']==='active','actual original lease update endpoint');$deny(fn()=>$page->update_staff_replying($id,'18'));$ci->input->verb='GET';$deny(fn()=>$page->update_staff_replying($id,'17'));
-$ci->router=new class{function fetch_method(){return'check_staff_replying';}};$page=new Tickets();$page->check_staff_replying($id);kc(json_decode($ci->output->body,true)['state']==='active','original poll endpoint read only');$ci->input->verb='POST';$deny(fn()=>$page->check_staff_replying($id));$page->update_staff_replying($id,'');kc(json_decode($ci->output->body,true)['state']==='vacant','same authenticated actor releases');
-echo "Original Tickets lease endpoints passed real SQLite/controller: read-only GET, POST CSRF/revision, URL actor spoof rejection and confirmed release. Browser not executed.\n";

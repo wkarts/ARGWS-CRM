@@ -1,6 +1,0 @@
-employee_id,employee_code,name,contract_id,number,starts_on,ends_on,state,salary_minor,currency,hours_per_week,acknowledged_at
-6,HTTP-b-f322aa0ad1f2-E,"HR Foreign",2,1,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:07:40"
-11,HTTP-b-c4c5d189de16-E,"HR Foreign",5,2,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:12:41"
-16,HTTP-b-67e29714717d-E,"HR Foreign",8,3,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:33:20"
-21,HTTP-b-7e6a21b559a5-E,"HR Foreign",11,4,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:36:54"
-26,HTTP-b-36b41beb07f5-E,"HR Foreign",14,5,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:50:15"

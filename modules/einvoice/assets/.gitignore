@@ -1,3 +1,0 @@
-# Ignore compiled assets
-mix-manifest.json
-builds/*

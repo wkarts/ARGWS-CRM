@@ -1,8 +1,0 @@
-settings_primary_sales_browser.cjs exit=0
-Principal actual legacy Settings proposal terms literal escape/save/validation/atomic failure503/recovery/own-storage and A/B isolation passed. No external transport.
-
-settings_sales_pdf_browser.cjs exit=0
-Real Chromium A/B/principal settings, native PDF dimensions, immutable snapshots, exact validation, SQL rollback503/recovery, stale409 and cross-origin denial passed. No external SMTP/bank traffic.
-
-settings_document_pdf_browser.cjs exit=0
-Real Chromium A/B/principal invoice/credit/contract settings, native PDF dimensions, immutable snapshots, exact validation, SQL rollback503/recovery, stale409 and cross-origin denial passed. No external SMTP/bank traffic.
