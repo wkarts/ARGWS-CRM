@@ -123,6 +123,18 @@ async function captureRealScreens(page, routes) {
   const page = await context.newPage();
   const errors = [];
   const errorDiagnostics = [];
+  // Safe HTTP metadata for the canonical task DataTable: no query strings,
+  // form values, credentials, request headers or response bodies are recorded.
+  const taskAjaxResponses = [];
+  const rememberTaskAjax = response => {
+    const request=response.request();
+    let path;
+    try { path=new URL(response.url()).pathname; } catch { return; }
+    if (path !== '/admin/tasks/table') return;
+    taskAjaxResponses.push({method:request.method(),path,status:response.status(),
+      content_type:(response.headers()['content-type']||'').split(';')[0]});
+  };
+  page.on('response', rememberTaskAjax);
   let nativeCalendarStage = 'not_started';
   const calendarStage = stage => { nativeCalendarStage = stage; console.log('Native calendar browser stage: ' + stage); };
   page.on('pageerror', error => {
@@ -659,7 +671,7 @@ async function captureRealScreens(page, routes) {
     // Closed stage names locate an actual browser failure without logging form,
     // response, URL query, company context, CSRF or credential values.
     const diagnostic = {calendar_stage:nativeCalendarStage, page_error_count:errors.length,
-      missing_identifiers:errors.map(message => /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(message)?.[1]).filter(Boolean), error_diagnostics:errorDiagnostics};
+      missing_identifiers:errors.map(message => /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(message)?.[1]).filter(Boolean), error_diagnostics:errorDiagnostics, task_ajax:taskAjaxResponses.slice(-80)};
     console.error('Native browser failure stage: ' + JSON.stringify(diagnostic));
     fs.writeFileSync(output + '/native-browser-failure-stage.json', JSON.stringify(diagnostic,null,2));
     throw error;
