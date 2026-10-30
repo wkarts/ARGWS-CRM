@@ -21,7 +21,7 @@
                 <br />
                 <?php if($native_customers){ ?>
                     <?php if($native_customer_owned&&$native_customer_capabilities['edit']){ ?>
-                    <?= form_open(admin_url('clients/mark_as_active/'.$client->userid),['class'=>'native-customer-activate']); ?>
+                    <?= form_open(admin_url('clients/change_client_status/'.$client->userid.'/1'),['class'=>'native-customer-activate']); ?>
                     <?= form_hidden('_native_company_csrf',$company_clients_csrf); ?>
                     <?= form_hidden('revision',$native_customer_revision); ?>
                     <button type="submit" class="btn btn-link alert-link"><?= e(_l('mark_as_active')); ?></button>
