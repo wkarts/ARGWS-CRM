@@ -153,7 +153,7 @@ jobs:
         run: php scripts/company-surface-inventory.php --check
       - name: Capturar inventário operacional para diagnóstico
         if: always() && matrix.shard == 1 && matrix.php == '8.1'
-        run: php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces-full.json
+        run: php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
       - name: Guardar inventário operacional para revisão
         if: always() && matrix.shard == 1 && matrix.php == '8.1'
         uses: actions/upload-artifact@v4
