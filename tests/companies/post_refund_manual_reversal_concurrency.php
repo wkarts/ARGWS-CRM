@@ -6,7 +6,10 @@ if(($argv[1]??'')==='worker'){
     try{(new CompanyPostRefundManual($db,$p))->reverse($v['issuer'],7,$v['invoice'],$v['manual_request_key'],$v['revision'],$v['key'],$v['entry'],$v['evidence'],true);echo'confirmed';}
     catch(DomainException$e){if(!in_array($e->getMessage(),['company_post_refund_manual_reversal_conflict','company_credit_access_denied','asaas_refund_grant_required','asaas_company_access_denied','company_invoice_stale'],true))throw$e;echo$e->getMessage();}exit(0);
 }
-require __DIR__.'/post_refund_manual_reversal.php';$observer=pvrConnection($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
+require __DIR__.'/post_refund_manual_reversal.php';
+// This concurrency test never asserts SQL diagnostics after fixture setup; release
+// the large setup trace before five real worker races and keep polling bounded.
+$db->queries=[];$db->recordQueries=false;$observer=pvrConnection($p);$observer->recordQueries=false;$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
 foreach(['same','conflicting','new-key','grant','actor']as$scenario){
     $f=pmFresh('local-reversal-race-'.$scenario);$payment=$pmRecord($f);$view=$manualService->page($a,7,$f['invoice'],true);$v=['issuer'=>$a,'invoice'=>$f['invoice'],'manual_request_key'=>$view['manual_request_key'],'revision'=>$view['revision'],'key'=>$rvKey('race-'.$scenario),'entry'=>['amount'=>'105.53','date'=>gmdate('Y-m-d'),'reference'=>'Independent local correction race '.$scenario,'reason'=>'Independent reviewed local full correction of NEW manual cash'],'evidence'=>$rvKey('race-proof-'.$scenario)];$events=(int)$db->query('SELECT COUNT(*) n FROM '.$p.'company_financial_events')->row()->n;$workers=[];$db->trans_begin();$db->query('SELECT id FROM '.$p.'issuers_lock WHERE id=1 FOR UPDATE');
     try{
