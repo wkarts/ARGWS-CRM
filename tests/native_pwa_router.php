@@ -28,6 +28,7 @@ if ($route === 'outside') { header('Content-Type: text/html'); echo '<!doctype h
 if ($route !== 'admin') { http_response_code(404); exit; }
 define('BASEPATH', $root);
 define('APPPATH', $root . '/application/');
+define('FCPATH', $root . '/');
 function e($value) { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
 function base_url($value = '') { global $prefix; return $prefix . $value; }
 header('Content-Type: text/html; charset=utf-8');
