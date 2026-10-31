@@ -1,8 +1,11 @@
 <?php
 /** Additive fixture preparation: all production schema validators run unchanged on MySQL. */
 require_once APPPATH.'services/CompanyPortalOperations.php';require_once APPPATH.'services/CompanyOperationPublication.php';require_once APPPATH.'services/CompanyContactOperationAccess.php';require_once APPPATH.'services/CompanyContacts.php';require_once APPPATH.'services/CompanyProjects.php';require_once APPPATH.'services/CompanyProjectExtras.php';require_once APPPATH.'services/CompanyOperationFiles.php';
-foreach(['CompanyContractsSchema','CompanyProjectsSchema','CompanyProjectExtrasSchema','CompanyStandaloneTasksSchema','CompanyOperationFilesSchema'] as $schema){if($db->driver()==='mysql')$schema::ensure($db,$p);else foreach($schema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}
+require_once APPPATH.'services/NativeCompanyTicketCatalogSchema.php';require_once APPPATH.'services/NativeCompanyDepartmentSchema.php';require_once APPPATH.'services/NativeCompanyTicketReplySchema.php';
 $native=file_get_contents(dirname(__DIR__,2).'/install/database.sql');foreach(['contacts','contact_permissions'] as $name){if($db->table_exists($p.$name))continue;preg_match('/CREATE TABLE `tbl'.preg_quote($name,'/').'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$native,$match);$sql=str_replace('`tbl'.$name.'`','`'.$p.$name.'`',$match[0]);$sql=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$sql);if($db->driver()==='sqlite'){$sql=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$sql);$sql=preg_replace('/enum\([^)]*\)/','varchar(50)',$sql);}$db->query($sql);}
+// Native ticket catalog FKs require the historical ticket parent before sidecars.
+if(!$db->table_exists($p.'tickets'))$db->query('CREATE TABLE '.$p.'tickets(ticketid int NOT NULL PRIMARY KEY)');
+foreach(['CompanyContractsSchema','CompanyProjectsSchema','CompanyProjectExtrasSchema','CompanyStandaloneTasksSchema','CompanyOperationFilesSchema','NativeCompanyTicketCatalogSchema','NativeCompanyDepartmentSchema','NativeCompanyTicketReplySchema'] as $schema){if($db->driver()==='mysql')$schema::ensure($db,$p);else foreach($schema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}
 if(!$db->table_exists($p.'company_portal_tokens'))$db->query('CREATE TABLE '.$p.'company_portal_tokens(token_hash varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,contact_id int NOT NULL,client_id int NOT NULL,identity_hash varchar(64) NOT NULL,expires_at datetime NOT NULL,created_at datetime NOT NULL)');
 unset($db->data_cache['table_names']);if($db->driver()==='mysql'){CompanyPortalOperationsSchema::ensure($db,$p);CompanyPortalOperationsSchema::ensure($db,$p);}else{
  foreach(CompanyPortalOperationsSchema::TARGETS as $t)$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.$t['files'].'_portal_origin ON '.$p.$t['files'].'(issuer_id,'.$t['field'].',file_key)');$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'reply_portal_origin ON '.$p.'company_ticket_replies(issuer_id,ticket_id,id)');
@@ -18,6 +21,13 @@ if($db->driver()==='mysql')CompanyPortalSupportWriteSchema::ensure($db,$p);else{
 require_once APPPATH.'services/CompanyPortalSupportFilesSchema.php';if($db->driver()==='mysql')CompanyPortalSupportFilesSchema::ensure($db,$p);else foreach(CompanyPortalSupportFilesSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}unset($db->data_cache['table_names']);
 
 require_once APPPATH.'services/CompanyContractDiscussionsSchema.php';if($db->driver()==='mysql')CompanyContractDiscussionsSchema::ensure($db,$p);else{$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_contract_client ON '.$p.'company_contracts(issuer_id,id,client_id)');foreach(CompanyContractDiscussionsSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
+
+// Contract pages also read the shared notes/taxes/items sidecars. Keep the
+// controller fixture aligned with the installed 474 schema instead of hiding
+// a missing table behind the controller's generic 503 response.
+require_once APPPATH.'services/NativeCompanyAuxiliarySchema.php';
+if($db->driver()==='mysql')NativeCompanyAuxiliarySchema::ensure($db,$p);else foreach(NativeCompanyAuxiliarySchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
+unset($db->data_cache['table_names']);
 
 require_once APPPATH.'services/CompanyProjectPortalRulesSchema.php';if($db->driver()==='mysql')CompanyProjectPortalRulesSchema::ensure($db,$p);else{$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_task_origin ON '.$p.'company_tasks(issuer_id,project_id,id)');foreach(CompanyProjectPortalRulesSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
 
@@ -43,3 +53,49 @@ foreach(['CompanyProjectDiscussionsSchema','CompanyProjectDiscussionExtrasSchema
  }
  unset($db->data_cache['table_names']);
 }
+
+// Match the installation migration: each existing secondary company receives
+// its public ticket defaults inside the same declared transaction.
+require_once APPPATH.'services/NativeCompanyTicketCatalog.php';
+foreach($db->query('SELECT id FROM '.$p.'issuers_registry')->result_array() as $row) {
+    IssuerTransaction::run($db,$p,['issuers_lock','issuers_registry','issuers_installation_identity',NativeCompanyTicketCatalogSchema::CATALOG],
+        fn()=>NativeCompanyTicketCatalog::initializeInOwnedTransaction($db,$p,(int)$row['id'],null));
+}
+
+if(!IssuerStorage::fieldExists($db,'is_not_staff',$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD is_not_staff int NOT NULL DEFAULT 0');
+
+// The shared ticket reader declares historical lookup tables even for owned
+// tickets. Install the original empty DDL; never fabricate historical records.
+require_once dirname(__DIR__).'/support/NativeInstalledSchemaFixture.php';
+$nativePlan=NativeInstalledSchemaFixture::plan($native,$p);
+foreach(['tickets_status','tickets_priorities','ticket_replies','projects','departments','staff_departments','tags','taggables','currencies'] as $table){
+    if($db->table_exists($p.$table))continue;
+    $ddl=$nativePlan[$table]['create'];
+    if($db->driver()==='sqlite'){
+        $ddl=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$ddl);
+        $ddl=preg_replace('/enum\([^)]*\)/','varchar(50)',$ddl);
+    }
+    $db->query($ddl);
+    if($db->driver()==='mysql')foreach($nativePlan[$table]['alters'] as $ddl)$db->query($ddl);
+}
+unset($db->data_cache['table_names']);
+
+if($db->driver()==='sqlite'){
+    require_once dirname(__DIR__).'/support/DeclaredMySqlMetadata.php';
+    foreach(NativeCompanyTicketReplySchema::definitions($p) as $table=>$parts)$db->declaredMysqlMetadata[$p.$table]=DeclaredMySqlMetadata::parse($parts);
+}
+foreach(['NativeCompanyProjectMetadataSchema','NativeCompanyWorkAssignmentsSchema','NativeCompanyCustomFieldSchema','NativeCompanyWorkTagsSchema'] as $schema){
+    require_once APPPATH.'services/'.$schema.'.php';
+    $schema::ensure($db,$p);
+}
+
+require_once APPPATH.'services/NativeCompanyTaskFormSchema.php';
+if($db->driver()==='mysql')NativeCompanyTaskFormSchema::ensure($db,$p);
+else foreach(['company_tasks','company_standalone_tasks'] as $table)foreach(NativeCompanyTaskFormSchema::ADDITIONS as $column=>$type){
+    if(!IssuerStorage::fieldExists($db,$column,$p.$table))$db->query('ALTER TABLE '.$p.$table.' ADD '.$column.' '.$type.' NULL');
+}
+require_once APPPATH.'services/CompanyTaskRecurringSchema.php';
+if($db->driver()==='mysql')CompanyTaskRecurringSchema::ensure($db,$p);
+else foreach(CompanyTaskRecurringSchema::definitions($p) as $table=>$parts)if(!$db->table_exists($p.$table))$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB'));
+unset($db->data_cache['table_names']);
+

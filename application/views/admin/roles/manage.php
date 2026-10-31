@@ -4,12 +4,14 @@
     <div class="content">
         <div class="row">
             <div class="col-md-12">
+                <?php if (empty($native_staff_roles) || $native_staff_roles_can_create) { ?>
                 <div class="tw-mb-2">
                     <a href="<?php echo admin_url('roles/role'); ?>" class="btn btn-primary">
                         <i class="fa-regular fa-plus tw-mr-1"></i>
                         <?php echo _l('new_role'); ?>
                     </a>
                 </div>
+                <?php } ?>
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="panel-table-full">

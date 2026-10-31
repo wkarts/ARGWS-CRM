@@ -54,7 +54,13 @@ final class CompanyTicketPreferences
     public function save($issuer,$actor,int $revision,array $settings):void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);self::prepare($settings);if($revision<0||$revision>2147483647)throw new DomainException('company_ticket_preferences_invalid');$this->authorize($issuer,$actor,'edit');
-        IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$revision,$settings){
+        IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->saveInOwnedTransaction($issuer,$actor,$revision,$settings));
+    }
+    /** Same writer enlisted by the native Settings form, not a second preference node. */
+    public function saveInOwnedTransaction(int $issuer,int $actor,int $revision,array $settings):void
+    {
+        self::prepare($settings);if($revision<0||$revision>2147483647)throw new DomainException('company_ticket_preferences_invalid');
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'edit');$row=$this->row($issuer);$doc=self::document((string)$row['settings_json']);$old=$doc->{self::NODE}??null;
             if(($old?->revision??0)!==$revision)throw new DomainException('company_ticket_preferences_stale');
             if($old&&$old->{self::KEY}===$settings[self::KEY])return;
@@ -66,6 +72,5 @@ final class CompanyTicketPreferences
             $now=gmdate('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)',[$actor,'company_ticket_preferences_saved',$issuer,$now]);$audit=(int)$this->db->insert_id();
             if($audit<1||count(IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND actor_id=? AND event=? AND issuer_id=? AND subject_id IS NULL AND created_at=?',[$audit,$actor,'company_ticket_preferences_saved',$issuer,$now])->result_array())!==1)throw new RuntimeException('issuer_ticket_preferences_unconfirmed');
             self::confirmInOwnedTransaction($this->db,$this->p,$issuer,$expected);$this->authorize($issuer,$actor,'edit');
-        });
     }
 }

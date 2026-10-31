@@ -2,10 +2,10 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
         run: |
           ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
       - name: Validar ordem dos preflights e isolamento das ferramentas
-        run: node --test tests/ci_preflight_order.test.cjs
+        run: node --test tests/ci_preflight_order.test.cjs tests/native_company/mail_queue_form.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -60,14 +60,14 @@ jobs:
           echo "NODE_PATH=$RUNNER_TEMP/ci-browser/node_modules" >> "$GITHUB_ENV"
           sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Testar navegação das abas no shell isolado de Empresas
-        run: node tests/company_context_tabs_browser.cjs
+        run: node tests/native_context_tabs_browser.cjs
       - name: Testar apresentação e escolha com POST no shell de Empresas
         id: company_shell_browser
         env:
           SCREENSHOT_DIR: /tmp/company-shell-evidence
         run: |
           mkdir -p "$SCREENSHOT_DIR"
-          node tests/company_shell_browser.cjs
+          node tests/native_shell_browser.cjs
       - name: Preservar capturas dos fixtures de apresentação de Empresas
         # Retain partial captures after a test failure, but do not collect a skipped test.
         if: always() && (steps.company_shell_browser.outcome == 'success' || steps.company_shell_browser.outcome == 'failure')
@@ -81,7 +81,7 @@ jobs:
         id: company_identity_browser
         env:
           SCREENSHOT_DIR: /tmp/company-identity-evidence
-        run: node tests/company_identity_browser.cjs
+        run: node tests/native_identity_browser.cjs
       - name: Preservar capturas sintéticas do cadastro de empresa
         if: always() && (steps.company_identity_browser.outcome == 'success' || steps.company_identity_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4

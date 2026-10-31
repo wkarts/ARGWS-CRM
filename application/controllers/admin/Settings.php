@@ -1,25 +1,26 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 require_once APPPATH . 'services/CompanySettingsRuntime.php';
 require_once APPPATH . 'services/CompanySettingsFormats.php';
 require_once APPPATH . 'services/CompanySettingsCatalog.php';
-require_once APPPATH . 'services/CompanyProjectFileSettings.php';
-require_once APPPATH . 'services/CompanyPdfTypography.php';
-require_once APPPATH . 'services/CompanyTicketPreferences.php';
-require_once APPPATH.'services/CompanyTaskTimerStopPreferences.php';require_once APPPATH.'services/CompanyTaskTimerPreferences.php';require_once APPPATH . 'services/CompanyTaskPreferences.php';require_once APPPATH.'services/CompanyTaskPriority.php';
 
 class Settings extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function pusher() { $this->nativeSettingsPusher(); }
+    public function asaas() { $this->nativeSettingsAsaas(); }
+    public function imports() { $this->nativeSettingsImports(); }
+    public function efi() { $this->nativeSettingsEfi(); }
+    public function microsoft_mail_oauth() { $this->nativeSettingsMicrosoftMailOauth(); }
+    public function google_mail_oauth() { $this->nativeSettingsGoogleMailOauth(); }
+    public function api_tokens() { $this->nativeSettingsApiTokens(); }
     public function __construct()
     {
         parent::__construct();
-        if ($this->isolated_company()) {
-            if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::sealedFor($this)) { show_error('Acesso negado.', 403); return; }
-            $this->load->library('encryption');
-            $this->load->model('settings_model');
-            return;
-        }
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { return; }
         $this->load->model('payment_modes_model');
         $this->load->model('settings_model');
     }
@@ -27,7 +28,7 @@ class Settings extends AdminController
     // View all settings
     public function index()
     {
-        if ($this->isolated_company() || (CompanySettingsRuntime::active() && in_array($this->input->get('group'),['task_timer_stop','task_timers','task_operations','project_files','pdf_typography','ticket_preferences','task_defaults'],true))) { return $this->isolated_index(); }
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::index($this); return; }
         if (!$this->settings_allowed('view')) {
             access_denied('settings');
         }
@@ -35,7 +36,6 @@ class Settings extends AdminController
         $group = $this->input->get('group');
         if (CompanySettingsRuntime::active() && in_array($group, ['update', 'info'], true)
             && !CompanySettingsRuntime::canInfrastructure()) { access_denied('settings'); }
-        if ($this->isolated_company() && $group === 'tags') { access_denied('settings'); }
         $nativeUpgradeSuccess = false;
         if ($group === 'update' && $this->input->method(true) === 'GET'
             && !$this->input->is_ajax_request() && is_staff_logged_in() && is_admin()) {
@@ -114,17 +114,11 @@ class Settings extends AdminController
                 $post_data['settings'], $this->payment_modes_model->get_payment_gateways(true)
             );
 
-            if ($this->isolated_company()) {
-                if (isset($post_data['tags']) || isset($post_data['custom_fields']) || $this->has_uploaded_files()) {
-                    access_denied('settings');
-                }
-            } else {
-                hooks()->do_action('before_update_system_options', $post_data);
-            }
+            hooks()->do_action('before_update_system_options', $post_data);
 
-            $logo_uploaded     = (!$this->isolated_company() && handle_company_logo_upload() ? true : false);
-            $favicon_uploaded  = (!$this->isolated_company() && handle_favicon_upload() ? true : false);
-            $signatureUploaded = (!$this->isolated_company() && handle_company_signature_upload() ? true : false);
+            $logo_uploaded     = handle_company_logo_upload() ? true : false;
+            $favicon_uploaded  = handle_favicon_upload() ? true : false;
+            $signatureUploaded = handle_company_signature_upload() ? true : false;
 
             $tmpData = $this->input->post(null, false);
 
@@ -153,6 +147,8 @@ class Settings extends AdminController
                 log_message('error','Principal sales preferences unconfirmed; no submitted values logged.');
                 show_error('Não foi possível confirmar as preferências. Recarregue a página antes de tentar novamente.', 503); return;
             }
+
+            require_once APPPATH.'services/NativePwaIdentity.php';NativePwaIdentity::publish($this);
 
             if ($success > 0) {
                 set_alert('success', _l('settings_updated'));
@@ -240,126 +236,10 @@ class Settings extends AdminController
         }
     }
 
-    /** Same Settings route and model, with no legacy global navigation or callback hydration. */
-    private function isolated_index()
-    {
-        if (!$this->settings_allowed('view')) { show_error('Acesso negado.', 403); return; }
-        $group = $this->input->get('group') ?: 'company';
-        $groups = CompanySettingsCatalog::groups();
-        if (!isset($groups[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
-        $fields = CompanySettingsCatalog::fields($group);
-        if($group==='company'){$this->load->helper(['fields','form']);}
-        $error = null;
-        $saved = false;
-        if ($this->input->post()) {
-            if (!$this->settings_allowed('edit')) { show_error('Acesso negado.', 403); return; }
-            $post = $this->input->post(null, false);
-            $settings = $post['settings'] ?? null;
-            try {
-                if (!is_array($settings) || isset($post['tags']) || isset($post['custom_fields']) || $this->has_uploaded_files()
-                    || array_diff(array_keys($settings), $fields)) { throw new DomainException('company_settings_invalid_input'); }
-                $settings = CompanySettingsCatalog::prepare($group, $settings);
-                if ($group === 'email') {
-                    if (!empty($post['clear_smtp_password'])) { $settings['smtp_password'] = ''; }
-                    elseif (($settings['smtp_password'] ?? '') === '') { unset($settings['smtp_password']); }
-                    $settings['mail_engine'] = 'phpmailer';
-                    $settings['email_protocol'] = 'smtp';
-                }
-                if($group==='task_timer_stop'){$revision=$post['task_timer_stop_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_task_timer_stop_preferences_invalid');(new CompanyTaskTimerStopPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='task_timers'){$revision=$post['task_timers_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_task_timer_preferences_invalid');(new CompanyTaskTimerPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='task_operations'){
-                    $revision=$post['task_operations_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_task_operation_preferences_invalid');
-                    (new CompanyTaskOperationPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='task_defaults'){
-                    $revision=$post['task_defaults_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_task_preferences_invalid');
-                    (new CompanyTaskPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='ticket_preferences'){
-                    $revision=$post['ticket_preferences_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_ticket_preferences_invalid');
-                    (new CompanyTicketPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='pdf_typography'){
-                    $revision=$post['pdf_typography_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_pdf_typography_invalid');
-                    (new CompanyPdfTypography($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }elseif($group==='project_files'){
-                    $revision=$post['project_files_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_project_file_settings_invalid');
-                    (new CompanyProjectFileSettings($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
-                }else{$this->settings_model->update(['settings' => $settings]);}
-                $saved = true;
-            } catch (DomainException $exception) {
-                $this->output->set_status_header(in_array($exception->getMessage(),['company_project_file_settings_stale','company_pdf_typography_stale','company_ticket_preferences_stale','company_task_preferences_stale','company_task_timer_preferences_stale','company_task_timer_stop_preferences_stale','company_task_operation_preferences_stale'],true)?409:422);
-                $messages = [
-                    'issuer_invalid_name' => 'Informe um nome válido para a empresa.',
-                    'issuer_invalid_tax_id' => 'Informe um CPF ou CNPJ válido.',
-                    'issuer_tax_conflict' => 'Este CPF ou CNPJ já está cadastrado em outra empresa.',
-                    'company_settings_encryption_failed' => 'Não foi possível proteger a senha. Nenhuma senha em texto aberto foi salva.',
-                ];
-                $error = $messages[$exception->getMessage()] ?? 'Não foi possível salvar os dados. Verifique os campos e sua permissão nesta empresa.';
-            } catch (RuntimeException $exception) {
-                $this->output->set_status_header(503);
-                $error = 'Não foi possível confirmar a gravação. Recarregue a página antes de tentar novamente.';
-            }
-        }
-        $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
-        $pdfTypography=$group==='pdf_typography'?(new CompanyPdfTypography($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $projectFiles=$group==='project_files'?(new CompanyProjectFileSettings($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $taskTimerStop=$group==='task_timer_stop'?(new CompanyTaskTimerStopPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $taskTimers=$group==='task_timers'?(new CompanyTaskTimerPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $taskOperations=$group==='task_operations'?(new CompanyTaskOperationPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $taskDefaults=$group==='task_defaults'?(new CompanyTaskPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $ticketPreferences=$group==='ticket_preferences'?(new CompanyTicketPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
-        $values = [];
-        foreach ($fields as $name) {
-            if ($name !== 'smtp_password') { $values[$name] = $taskTimerStop!==null?$taskTimerStop[$name]:($taskTimers!==null?$taskTimers[$name]:($taskOperations!==null?$taskOperations[$name]:($taskDefaults!==null?$taskDefaults[$name]:($ticketPreferences!==null?$ticketPreferences[$name]:($pdfTypography!==null?$pdfTypography[$name]:($projectFiles!==null?$projectFiles[$name]:(CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name)))))))); }
-        }
-        $this->load->view('admin/settings/company_scoped', [
-            'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
-            'group' => $group, 'groups' => $groups, 'values' => $values, 'can_edit' => $this->settings_allowed('edit'),
-            'password_configured' => $group === 'email' && CompanySettingsRuntime::get('smtp_password') !== '',
-            'error' => $error, 'saved' => $saved,
-            'pdf_typography_revision'=>$pdfTypography['revision']??null,
-            'project_files_revision'=>$projectFiles['revision']??null,
-            'ticket_preferences_revision'=>$ticketPreferences['revision']??null,
-            'task_defaults_revision'=>$taskDefaults['revision']??null,
-            'task_timer_stop_revision'=>$taskTimerStop['revision']??null,'task_operations_revision'=>$taskOperations['revision']??null,'task_timers_revision'=>$taskTimers['revision']??null,
-            'context_token' => CompanyRequestScope::token(),
-            'company_urls' => [
-                'task_timer_stop'=>CompanyRequestScope::adminUrl($this,'settings?group=task_timer_stop'),
-                'task_timers'=>CompanyRequestScope::adminUrl($this,'settings?group=task_timers'),
-                'task_operations'=>CompanyRequestScope::adminUrl($this,'settings?group=task_operations'),
-                'task_defaults'=>CompanyRequestScope::adminUrl($this,'settings?group=task_defaults'),
-                'ticket_preferences'=>CompanyRequestScope::adminUrl($this,'settings?group=ticket_preferences'),
-                'pdf_typography'=>CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),
-                'project_files'=>CompanyRequestScope::adminUrl($this,'settings?group=project_files'),
-                'companies' => CompanyRequestScope::adminUrl($this, 'company_context'),
-                'company' => CompanyRequestScope::adminUrl($this, 'settings?group=company'),
-                'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
-                'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
-                'documents' => CompanyRequestScope::adminUrl($this, 'settings?group=documents'),
-                'sales_documents' => CompanyRequestScope::adminUrl($this, 'settings?group=sales_documents'),
-                'document_pdf' => CompanyRequestScope::adminUrl($this, 'settings?group=document_pdf'),
-                'sales_pdf' => CompanyRequestScope::adminUrl($this, 'settings?group=sales_pdf'),
-                'email_content' => CompanyRequestScope::adminUrl($this, 'settings?group=email_content'),
-            ],
-        ]);
-    }
-
     private function settings_allowed(string $capability): bool
     {
         return CompanySettingsRuntime::active()
             ? CompanySettingsRuntime::can($capability) : staff_can($capability, 'settings');
-    }
-
-    private function isolated_company(): bool
-    {
-        return CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary();
-    }
-
-    private function has_uploaded_files(): bool
-    {
-        foreach ($_FILES as $file) {
-            $errors = (array) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-            foreach ($errors as $error) { if ((int) $error !== UPLOAD_ERR_NO_FILE) { return true; } }
-        }
-        return false;
     }
 
     private function normalize_argws_platform_settings(array &$settings)
@@ -408,7 +288,6 @@ class Settings extends AdminController
             'email' => trim((string) getenv('CRM_SUPPORT_EMAIL')),
             'website' => trim((string) getenv('CRM_SUPPORT_SITE_URL')),
         ];
-        if ($this->isolated_company()) { $fallback = ['whatsapp' => '', 'email' => '', 'website' => '']; }
         $selection = ['whatsapp' => $phone, 'email' => $email, 'website' => $site];
         if (isset($selection[$contactChannel]) && $selection[$contactChannel] === ''
             && $fallback[$contactChannel] === '') {
@@ -484,7 +363,7 @@ class Settings extends AdminController
 
     public function delete_tag($id)
     {
-        if ($this->isolated_company()) { access_denied('settings'); }
+        if(CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';NativeCompanySettingsController::deleteTag($this,$id);return;}
         if (! $id) {
             redirect(admin_url('settings?group=tags'));
         }
@@ -503,7 +382,7 @@ class Settings extends AdminController
 
     public function remove_signature_image()
     {
-        if ($this->isolated_company()) { access_denied('settings'); }
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,'signature'); return; }
         if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
@@ -518,10 +397,21 @@ class Settings extends AdminController
         redirect(admin_url('settings?group=pdf&tab=signature'));
     }
 
+    /** Private company branding bytes exposed through the official Settings controller. */
+    public function company_asset($kind = '')
+    {
+        if (class_exists('CompanyRequestScope', false) && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH . 'services/NativeCompanySettingsController.php';
+            NativeCompanySettingsController::downloadAsset($this, is_string($kind) ? $kind : '');
+            return;
+        }
+        show_404();
+    }
+
     // Remove company logo from settings / ajax
     public function remove_company_logo($type = '')
     {
-        if ($this->isolated_company()) { access_denied('settings'); }
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,($type===''?'logo':($type==='dark'?'logo_dark':'invalid'))); return; }
         hooks()->do_action('before_remove_company_logo');
 
         if (!$this->settings_allowed('delete')) {
@@ -544,7 +434,7 @@ class Settings extends AdminController
 
     public function remove_fv()
     {
-        if ($this->isolated_company()) { access_denied('settings'); }
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,'favicon'); return; }
         hooks()->do_action('before_remove_favicon');
         if (!$this->settings_allowed('delete')) {
             access_denied('settings');

@@ -11,6 +11,7 @@ class Emails extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { return; }
         if ($this->isolated_company() && (!class_exists('CompanyRequestScope',false) || !CompanyRequestScope::sealedFor($this))) { show_error('Acesso negado.',403); return; }
         $this->load->model('emails_model');
     }
@@ -230,7 +231,7 @@ class Emails extends AdminController
         require_once APPPATH.'services/CompanySettingsIdentity.php';
         require_once APPPATH.'services/EmailTemplateLocale.php';
         $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read(CompanySettingsRuntime::issuerId());
-        $this->load->view('admin/emails/company_scoped',[
+        $this->load->view('admin/emails/scoped',[
             'company_identity'=>$identity,'selected'=>$selected,'templates'=>$selected?[]:$this->emails_model->get(['language'=>'portuguese_br']),
             'can_edit'=>CompanySettingsRuntime::canResource('email_templates','edit'),'saved'=>$saved,'error'=>$error,
             'context_token'=>CompanyRequestScope::token(),'list_url'=>CompanyRequestScope::adminUrl($this,'emails'),
@@ -241,6 +242,7 @@ class Emails extends AdminController
     /* Since version 1.0.1 - test your smtp settings */
     public function sent_smtp_test_email()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::testMail($this);}
         if ($this->input->post()) {
             $this->load->config('email');
             // Simulate fake template to be parsed
@@ -294,6 +296,7 @@ class Emails extends AdminController
 
     public function delete_queued_email($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::removeQueue($this,$id);}
         if (staff_can('edit', 'settings')) {
             $this->email->delete_queued_email($id);
              set_alert('success', _l('deleted', _l('email_queue')));
@@ -304,6 +307,7 @@ class Emails extends AdminController
 
     public function clear_queued_emails()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::removeQueue($this,null);}
         if (staff_can('edit', 'settings')) {
             $this->email->clear_queued_emails();
             set_alert('success', _l('email_queue_cleared'));

@@ -6,7 +6,8 @@
             <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700">
                 <?= e($title); ?>
             </h4>
-            <?= form_open($this->uri->uri_string()); ?>
+            <?= form_open($this->uri->uri_string(), ['id' => 'announcement-form']); ?>
+            <?php if (CompanyRequestScope::nativeFor(get_instance())) { echo form_hidden('revision', isset($announcement) ? $announcement->revision : ''); } ?>
             <div class="panel_s">
                 <div class="panel-body">
                     <?php $value = (isset($announcement) ? $announcement->name : ''); ?>
@@ -56,7 +57,7 @@
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
+        appValidateForm($('#announcement-form'), {
             name: 'required'
         });
     });

@@ -11,6 +11,7 @@ class Consent extends ClientsController
 
     public function contact($key = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($this)){require_once APPPATH.'services/NativePortalConsentHttp.php';(new NativePortalConsentHttp($this))->contact((string)$key);return;}
         if (!$key) {
             show_404();
         }

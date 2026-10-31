@@ -1,0 +1,10 @@
+<?php
+require __DIR__.'/portal_task_write_setup.php';require_once APPPATH.'services/CompanySettingsStorage.php';
+$start=$GLOBALS['essentialChecks'];$settings=new CompanySettingsStorage($db,$p);
+foreach([$a,$b,$primary]as$owner){$project=$portalParents['projects'][$owner];$save434($owner,$write434(),'native-task-delete-flags-'.$owner);$projectRevision=$projectWriter->get($owner,7,$project)['revision'];$task=$taskContact->create($sessions[$owner],$owner,$project,$projectRevision,$input434(),$key('native-task-delete-create-'.$owner))['task_id'];$file=$key('native-task-delete-file-'.$owner);$taskContact->upload($sessions[$owner],$owner,$project,$task,1,'Own.pdf',$pdf,$file);
+ essentialThrows(fn()=>$taskContact->hideNative($sessions[$owner],$owner,$project,$task,2,$file,$key('native-task-delete-off-'.$owner)),'company_portal_task_unavailable','native task removal requires original option');
+ if($owner===$primary)$db->query("INSERT INTO {$p}options(name,value) VALUES('allow_contact_to_delete_files','1')");else$settings->mutate($owner,7,'update','allow_contact_to_delete_files','1');
+ $taskContact->hideNative($sessions[$owner],$owner,$project,$task,2,$file,$key('native-task-delete-ok-'.$owner));essentialCheck((int)$db->query('SELECT active FROM '.$p.'company_project_files WHERE file_key=?',[$file])->row()->active===0,'same task writer revokes exact authored file');essentialCheck($db->query('SELECT content FROM '.$p.'company_project_files WHERE file_key=?',[$file])->row()->content===$pdf,'task removal retains immutable bytes');
+ if($owner===$primary)$db->query("UPDATE {$p}options SET value='0' WHERE name='allow_contact_to_delete_files'");else$settings->mutate($owner,7,'update','allow_contact_to_delete_files','0');
+ essentialThrows(fn()=>$taskContact->hideNative($sessions[$owner],$owner,$project,$task,2,$file,$key('native-task-delete-ok-'.$owner)),'company_portal_task_unavailable','current option also fences task replay');}
+echo 'Native task file deletion policy: '.($GLOBALS['essentialChecks']-$start).' actual SQLite A/B/principal checks passed.'.PHP_EOL;

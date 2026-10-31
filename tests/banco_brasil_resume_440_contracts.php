@@ -14,7 +14,7 @@ function bb439Check(bool $value,string $label):void { ++$GLOBALS['bb439Checks'];
 function bb439Reject(callable $work,string $expected):void { $actual=null;try{$work();}catch(Throwable $error){$actual=$error->getMessage();}bb439Check($actual===$expected,'expected '.$expected.', got '.var_export($actual,true)); }
 function bb439OneFlag(array $wire,string $flag):void { foreach($wire as $name=>$value)if(str_starts_with($name,'indicador'))bb439Check($value===($name===$flag?'S':'N'),'exact operational flag '.$name); }
 // This suite preserves the120 protocol contract while the shipped runtime advances.
-$bb440Supported=['1.2.0'=>[120,'4.4.0'],'1.2.1'=>[121,'4.4.2'],'1.2.2'=>[122,'4.4.3'],'1.2.3'=>[123,'4.4.7'],'1.2.4'=>[124,'4.7.3'],'1.2.5'=>[125,'4.7.3'],'1.2.6'=>[126,'4.7.3']];
+$bb440Supported=['1.2.0'=>[120,'4.4.0'],'1.2.1'=>[121,'4.4.2'],'1.2.2'=>[122,'4.4.3'],'1.2.3'=>[123,'4.4.7'],'1.2.4'=>[124,'4.7.3'],'1.2.5'=>[125,'4.7.3'],'1.2.6'=>[126,'4.7.3'],'1.2.7'=>[127,'4.7.3'],'1.2.8'=>[128,'4.7.3'],'1.2.9'=>[129,'4.7.4'],'1.3.0'=>[130,'4.7.4'],'1.3.1'=>[131,'4.7.4'],'1.3.2'=>[132,'4.7.4'],'1.3.3'=>[133,'4.7.4'],'1.3.4'=>[134,'4.7.4'],'1.3.5'=>[135,'4.7.4']];
 $bb440Header=file_get_contents(dirname(__DIR__).'/modules/banco_brasil/banco_brasil.php');
 bb439Check(preg_match('/^Version: ([0-9]+\.[0-9]+\.[0-9]+)$/m',$bb440Header,$bb440Version)===1&&isset($bb440Supported[$bb440Version[1]]),'shipped header is an explicitly supported native release');
 [$bb440Marker,$bb440Minimum]=$bb440Supported[$bb440Version[1]];

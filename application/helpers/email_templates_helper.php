@@ -211,5 +211,30 @@ function create_email_template($subject, $message, $type, $name, $slug, $active 
  */
 function is_email_template_active($slug)
 {
+    $CI = &get_instance();
+    $scoped = false;
+    $issuer = null;
+
+    // Interactive requests and explicit settings operations both bind this
+    // availability check to a server-owned issuer context.
+    if (class_exists('CompanyRequestScope', false) && ($context = CompanyRequestScope::context()) !== null) {
+        $scoped = true;
+        $issuer = $context->issuerId();
+    } elseif (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+        $scoped = true;
+        $issuer = CompanySettingsRuntime::issuerId();
+    }
+
+    if ($scoped) {
+        if ($issuer === null) { return false; }
+        require_once APPPATH . 'services/CompanyEmailTemplates.php';
+        $scope = CompanyEmailTemplates::scopeSql($CI->db, db_prefix(), 'active_template', $issuer);
+        return (bool) IssuerStorage::query(
+            $CI->db,
+            'SELECT 1 FROM ' . db_prefix() . 'emailtemplates active_template WHERE active_template.slug=? AND active_template.active=1 AND ' . $scope . ' LIMIT 1',
+            [$slug]
+        )->row();
+    }
+
     return total_rows(db_prefix() . 'emailtemplates', ['slug' => $slug, 'active' => 1]) > 0;
 }

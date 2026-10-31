@@ -1,7 +1,6 @@
 # Shared Settings presentation envelope
 
-`admin/settings/all.php` and `admin/settings/company_scoped.php` now render the
-same `presentation_layout.php`: the native responsive columns, heading hierarchy,
+`admin/settings/all.php` renders the shared `presentation_layout.php`: the native responsive columns, heading hierarchy,
 section spacing, links/icons, active styles and panel sidebar. The scoped parent
 no longer loads its approximate `company-settings-native.css`. Both parents retain
 their own existing form body/footer, action, CSRF, edit permissions and revisions.
@@ -11,10 +10,9 @@ server view rendering, never request HTML. Labels and URLs are escaped; unsafe
 URL schemes/protocol-relative URLs, malformed identifiers and icon attributes fail
 closed. Section admission remains the caller's authorization responsibility.
 
-The principal parent alone still obtains its native section catalog and calls its
-three existing Settings hooks. The scoped parent supplies only its existing admitted
-catalog and previously authorized company assets/certificate links. It does not
-load `all.php`, a global catalog, or global hooks. No backend capability is added.
+The same official parent is used for the principal and selected company. It obtains
+the issuer-owned section catalog and never loads a parallel Settings shell or global
+catalog for a selected company.
 
 Company identity fields already use `includes/company_identity_fields.php` in both
 parents. Custom company fields/free-form company formatting, the broader native

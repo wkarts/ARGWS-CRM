@@ -1,0 +1,23 @@
+<?php
+require __DIR__.'/native_contact_message.php';
+require_once APPPATH.'services/NativePortalVerificationMail.php';
+NativePortalRegistrationSchema::ensure($db,$p);
+foreach(['email_verified_at'=>'datetime','email_verification_key'=>'varchar(32)','email_verification_sent_at'=>'datetime']as$name=>$type)if(!$db->field_exists($name,$p.'contacts'))$db->query('ALTER TABLE '.$p.'contacts ADD '.$name.' '.$type);
+$verify=new NativePortalVerificationMail($db,$p,$portalSecret);$start=$GLOBALS['essentialChecks'];$req=hash('sha256','verification-registration');
+$db->query('INSERT INTO '.$p.'company_native_portal_registrations VALUES(?,?,?,?,?,?,?)',[$a,$req,hash('sha256','input'),$client,101,gmdate('Y-m-d H:i:s'),hash('sha256','nonce')]);
+$db->query("UPDATE {$p}emailtemplates SET active=1 WHERE slug='contact-verification-email' AND issuer_id=?",[$a]);
+$queue=IssuerTransaction::run($db,$p,$verify->tables(),fn()=>$verify->queueRegistrationInOwned($a,$client,101,$req,$base,$decrypt));
+$email=(object)$db->query('SELECT * FROM '.$p.'mail_queue WHERE id=?',[$queue])->row_array();$headers=unserialize($email->headers,['allowed_classes'=>false]);preg_match('/#token=([a-f0-9]{32})/',$email->message,$m);$token=$m[1]??'';
+essentialCheck(strlen($token)===32&&str_contains($email->message,'/verification/verify/101/native?issuer_id='.$a),'verification uses original native route with fragment secret');
+$stored=$db->query('SELECT email_verification_key,email_verified_at FROM '.$p.'contacts WHERE id=101')->row_array();essentialCheck($stored['email_verified_at']===null&&$stored['email_verification_key']!==$token&&strlen($stored['email_verification_key'])===32,'contact stores purpose-bound HMAC, not verification bearer');
+$verify->state($email,$headers);essentialCheck(true,'source-bound queue authorizes matching owned verification');
+$removed=$headers;unset($removed[NativePortalVerificationMail::HEADER]);essentialThrows(fn()=>NativePortalVerificationMail::assertQueueRouting($db,$p,$email,$removed),'native_portal_verification_denied','removing header cannot downgrade queue authority');
+essentialThrows(fn()=>$verify->verify($b,101,$token),'native_portal_verification_denied','other issuer cannot consume verification token');
+essentialCheck(!$verify->verify($a,101,str_repeat('f',32)),'wrong token cannot verify');
+$db->query('UPDATE '.$p.'mail_queue SET status=\'sending\' WHERE id=?',[$queue]);$email->status='sending';
+$permit=NativePortalVerificationMail::claimDispatch($db,$p,$email,$headers,$portalSecret);essentialCheck(is_array($permit),'verified source claims one durable dispatch');
+NativePortalVerificationMail::completeDispatch($db,$p,$permit,false);
+essentialThrows(fn()=>NativePortalVerificationMail::claimDispatch($db,$p,$email,$headers,$portalSecret),'company_mail_dispatch_review_required','unknown dispatch cannot be sent again');
+essentialCheck($verify->verify($a,101,$token)&&!$verify->verify($a,101,$token),'correct token is single-use without login or staff impersonation');
+essentialThrows(fn()=>$verify->state($email,$headers),'native_portal_verification_denied','consumed verification invalidates queued message');
+echo 'Native portal verification: '.($GLOBALS['essentialChecks']-$start).' real SQLite checks passed; SMTP/controller wiring separate.'.PHP_EOL;

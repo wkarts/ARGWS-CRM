@@ -5,6 +5,39 @@ require_once __DIR__.'/issuers/IssuerStorage.php';require_once __DIR__.'/issuers
 /** Opt-in native project file uploads, contact provenance and immutable private receipts. */
 final class CompanyProjectContactFilesSchema
 {
+    /** Exact parent keys required by the two composite foreign keys. */
+    private static function parentIndexes($db,string $p,bool $create):void
+    {
+        $conn=$db->pdo??$db->conn_id??null;
+        if($conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite')return;
+        foreach(['company_project_files'=>['project_contact_file_origin'=>['issuer_id','project_id','file_key']],
+                 'contacts'=>['portal_support_contact'=>['userid','id']]] as$table=>$indexes){
+            foreach($indexes as$name=>$columns){
+                $sql='SELECT COLUMN_NAME,NON_UNIQUE,SUB_PART FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME=? ORDER BY SEQ_IN_INDEX';
+                $rows=IssuerStorage::query($db,$sql,[$p.$table,$name])->result_array();
+                if(!$rows&&$create){IssuerStorage::query($db,'ALTER TABLE `'.$p.$table.'` ADD UNIQUE KEY `'.$name.'` (`'.implode('`,`',$columns).'`)');$rows=IssuerStorage::query($db,$sql,[$p.$table,$name])->result_array();}
+                if(array_column($rows,'COLUMN_NAME')!==$columns||array_filter($rows,static fn($row)=>(int)$row['NON_UNIQUE']!==0||$row['SUB_PART']!==null))throw new RuntimeException('issuer_project_contact_files_schema_invalid');
+            }
+        }
+    }
+    /** Additive repair for installations that already ran the original schema migration. */
+    public static function ensureParentIndexes($db,string $p):void
+    {
+        $definitions=self::definitions($p);IssuerTransaction::assertIndependent($db);
+        $names=array_map(static fn($suffix)=>$p.$suffix,array_merge(['company_project_files','contacts'],array_keys($definitions)));
+        $marks=implode(',',array_fill(0,count($names),'?'));$conn=$db->pdo??$db->conn_id??null;
+        $sqlite=$conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';
+        $sql=$sqlite?"SELECT name AS table_name FROM sqlite_master WHERE type='table' AND name IN ($marks)":"SELECT TABLE_NAME AS table_name,ENGINE AS engine FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' AND TABLE_NAME IN ($marks)";
+        $found=[];foreach(IssuerStorage::query($db,$sql,$names)->result_array() as$row)$found[$row['table_name']]=$row;
+        if(!isset($found[$p.'company_project_files'],$found[$p.'contacts'])){
+            // A historic install without this optional extension is not an error.
+            // Partial extension tables, however, must never be silently accepted.
+            foreach(array_keys($definitions) as$table)if(isset($found[$p.$table]))throw new RuntimeException('issuer_project_contact_files_schema_invalid');
+            return;
+        }
+        if(!$sqlite)foreach(['company_project_files','contacts'] as$table)if(strtoupper((string)($found[$p.$table]['engine']??''))!=='INNODB')throw new RuntimeException('issuer_project_contact_files_schema_invalid');
+        self::parentIndexes($db,$p,true);
+    }
     public static function definitions(string $p):array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$i='`issuer_id` int unsigned NOT NULL';$project='`project_id` int unsigned NOT NULL';$client='`client_id` int NOT NULL';$contact='`contact_id` int NOT NULL';$file='`file_key` varchar(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL';$pf='FOREIGN KEY (`issuer_id`,`project_id`) REFERENCES `'.$p.'company_projects` (`issuer_id`,`id`)';$cf='FOREIGN KEY (`client_id`,`contact_id`) REFERENCES `'.$p.'contacts` (`userid`,`id`)';
@@ -18,12 +51,13 @@ final class CompanyProjectContactFilesSchema
     }
     public static function ensure($db,string $p):void
     {
-        $definitions=self::definitions($p);IssuerTransaction::assertIndependent($db);foreach($definitions as $table=>$parts)IssuerStorage::query($db,'CREATE TABLE IF NOT EXISTS `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB');
+        $definitions=self::definitions($p);IssuerTransaction::assertIndependent($db);self::parentIndexes($db,$p,true);foreach($definitions as $table=>$parts)IssuerStorage::query($db,'CREATE TABLE IF NOT EXISTS `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB');
+        if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);
         self::assertValid($db,$p);
     }
     public static function assertValid($db,string $p):void
     {
-        self::definitions($p);$conn=$db->pdo??$db->conn_id??null;if($conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite')return;
+        self::definitions($p);$conn=$db->pdo??$db->conn_id??null;if($conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite')return;self::parentIndexes($db,$p,false);
         foreach(self::definitions($p) as $table=>$parts){
             $name=$p.$table;$columns=[];
             foreach(IssuerStorage::query($db,'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,COLLATION_NAME,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->result_array() as $r)$columns[$r['COLUMN_NAME']]=$r;

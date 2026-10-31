@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_expense_import)){require APPPATH.'views/admin/settings/native_imports.php';return;} ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

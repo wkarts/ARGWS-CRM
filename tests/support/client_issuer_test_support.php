@@ -1,6 +1,7 @@
 <?php
 /** Real production models with a PDO/SQLite query-builder adapter; not a full CI HTTP runtime. */
 define('BASEPATH', __DIR__);
+require_once __DIR__ . '/TestPdo.php';
 require __DIR__ . '/../../application/services/ClientIssuerScope.php';
 require __DIR__ . '/../../application/services/utilities/Arr.php';
 #[AllowDynamicProperties]
@@ -122,12 +123,13 @@ $GLOBALS['hooks'] = new class {
     public function apply_filters($name, $value, ...$args) { $GLOBALS['effects'][] = $name; return $value; }
     public function do_action($name, ...$args) { $GLOBALS['effects'][] = $name; }
 };
-$pdo = new PDO('sqlite::memory:'); $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo = TestPdo::connect('sqlite::memory:'); $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 // Synthetic staff emails are ASCII. This adapter enables the real identity SQL;
 // it is not a proof of MySQL/MariaDB Unicode collation semantics.
-$pdo->sqliteCreateCollation('utf8mb4_unicode_ci', static fn($a, $b) => strcasecmp($a, $b));
+$collation=static fn($a, $b) => strcasecmp($a, $b);
+TestPdo::registerSqliteCollation($pdo,'utf8mb4_unicode_ci',$collation);
 $concat = fn(...$parts) => implode('', $parts);
-if (method_exists($pdo, 'createFunction')) { $pdo->createFunction('CONCAT', $concat); } else { @$pdo->sqliteCreateFunction('CONCAT', $concat); }
+TestPdo::registerSqliteFunction($pdo,'CONCAT',$concat);
 $pdo->exec("CREATE TABLE q_clients(userid INTEGER PRIMARY KEY,company TEXT,vat TEXT,country INT,active INT DEFAULT 1,default_currency INT DEFAULT 1,show_primary_contact INT DEFAULT 0,billing_country INT DEFAULT 0,shipping_country INT DEFAULT 0,address TEXT DEFAULT '',billing_street TEXT DEFAULT '',billing_city TEXT DEFAULT '',billing_state TEXT DEFAULT '',billing_zip TEXT DEFAULT '',shipping_street TEXT DEFAULT '',shipping_city TEXT DEFAULT '',shipping_state TEXT DEFAULT '',shipping_zip TEXT DEFAULT '');
 CREATE TABLE q_countries(country_id INT,short_name TEXT);
 CREATE TABLE q_contacts(id INTEGER PRIMARY KEY,userid INT,is_primary INT,active INT,email TEXT,firstname TEXT DEFAULT '',lastname TEXT DEFAULT '',password TEXT DEFAULT 'private-hash',new_pass_key TEXT DEFAULT 'private-reset',new_pass_key_requested TEXT DEFAULT '',email_verification_key TEXT DEFAULT 'private-verification',email_verified_at TEXT,email_verification_sent_at TEXT,last_password_change TEXT);

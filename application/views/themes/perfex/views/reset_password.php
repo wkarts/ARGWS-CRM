@@ -8,6 +8,7 @@
             <div class="panel_s text-left">
                 <div class="panel-body">
                     <?= form_open($this->uri->uri_string()); ?>
+                    <?php if(!empty($native_portal))echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf).form_hidden('native_reset_token',$native_reset_token??''); ?>
                     <?= validation_errors('<div class="alert alert-danger text-center">', '</div>'); ?>
                     <?php if ($this->session->flashdata('message-danger')) { ?>
                     <div class="alert alert-danger">
@@ -26,3 +27,8 @@
         </div>
     </div>
 </div>
+<?php if(!empty($native_portal)){ ?>
+<script>
+(function(){'use strict';var form=document.querySelector('#content form');if(!form)return;var field=form.querySelector('input[name="native_reset_token"]');if(!field)return;var fragment=new URLSearchParams(location.hash.slice(1)),token=fragment.get('token');if(token&&/^[a-f0-9]{64}$/.test(token)){field.value=token;history.replaceState(null,'',location.pathname+location.search);}})();
+</script>
+<?php } ?>

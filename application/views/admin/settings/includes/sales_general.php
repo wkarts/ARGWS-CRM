@@ -44,11 +44,11 @@
 <hr />
 <?php render_yes_no_option('items_table_amounts_exclude_currency_symbol', 'items_table_amounts_exclude_currency_symbol'); ?>
 <hr />
-<?php $default_tax = unserialize(get_option('default_tax')); ?>
+<?php $default_tax = !empty($native_settings) ? [] : unserialize(get_option('default_tax')); ?>
 <div class="form-group">
     <label
         for="default_tax"><?= _l('settings_default_tax'); ?></label>
-    <?= $this->misc_model->get_taxes_dropdown_template('settings[default_tax][]', $default_tax); ?>
+    <?= !empty($native_settings) ? $native_settings_tax_dropdown : $this->misc_model->get_taxes_dropdown_template('settings[default_tax][]', $default_tax); ?>
 </div>
 <div class="clearfix"></div>
 <hr />

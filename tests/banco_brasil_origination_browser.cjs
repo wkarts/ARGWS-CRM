@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
-const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
+const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync, spawnSync } = require('node:child_process');
@@ -44,14 +44,36 @@ async function next(page) { await navigate(page, page.locator('section form butt
   execFileSync('docker',['cp','tests/banco_brasil_http_fixture.php',app+':/app/tests/banco_brasil_http_fixture.php']);
   execFileSync('docker',['cp','tests/support/BbPdoDatabase.php',app+':/app/tests/support/BbPdoDatabase.php']);
   execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_http_fixture.php'],{stdio:'pipe'});
-  async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
-  await select(a);
+  async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
+  let capturedChannelA;
+  for(const id of [a,b]){
+   await select(id);await page.goto(url+'/admin/banco_brasil?issuer_id='+id);
+   assert.equal(await page.locator('body.native-company-admin #header').count(),1,'BB uses the original CRM header');
+   assert.equal(await page.locator('body.company-context-shell').count(),0,'BB no longer uses the company application shell');
+   assert.equal(await page.locator('#bb_issuer').count(),0,'sidebar is the sole company selector');
+   await page.locator('#bb-tab-auth').click();
+   for(const channel of ['api','cnab']){
+    const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});
+    assert.equal(await form.count(),1,'each company has two independent native channel controls');
+    if(id===a&&channel==='api')capturedChannelA=await form.evaluate(el=>Object.fromEntries(new FormData(el).entries()));
+    if(await form.locator('input[name=enabled]').inputValue()==='1')await navigate(page,form.locator('button'));
+   }
+   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+id),'true');
+   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+id),'true');
+   if(id===b)assert.equal((await context.request.post(url+'/admin/banco_brasil/save_channel_preferences',{form:capturedChannelA})).status(),409,'A channel form cannot change B after company switch');
+  }
+  await select(a);await page.goto(url+'/admin/banco_brasil?issuer_id='+a);
+  const apiToggle=()=>page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value=api]')});
+  await navigate(page,apiToggle().locator('button'));
+  assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+a),'false');
+  assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+a),'true','CNAB remains enabled without API');
+  await navigate(page,apiToggle().locator('button'));
   // CPF is a source field of the invoice snapshot, never a remittance form override.
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");
-  await page.goto(url+'/admin/company_clients?client='+client);
+  await page.goto(url+'/admin/clients/client/'+client);
   const vat=page.locator('#edit_vat');await vat.fill('11144477735');
   await navigate(page,vat.locator('xpath=ancestor::form').locator('button[type=submit]'));
-  await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
+  await page.goto(url+'/admin/invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
   // A bank credit cannot predate invoice issuance: choose the bank's business date explicitly, independent of the PHP default timezone.
   await page.locator('#invoice-date').fill(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await page.locator('#invoice-item-0-description').fill('SYNTHETIC BB SERVICE');await page.locator('#invoice-item-0-qty').fill('1');await page.locator('#invoice-item-0-rate').fill('100.00');
@@ -97,6 +119,13 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const multipart={...hiddenReturn,connection_id:connection,layout_binding_id:binding,return_file:{name:'synthetic.ret',mimeType:'application/octet-stream',buffer:returned}};
   const imported=await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(imported.status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'0','upload cannot become an automatic payment');
   await page.reload();await page.locator('#bb-tab-return').click();const event=sql('SELECT id FROM tblbb_return_events WHERE issuer_id='+a);assert.match(event,/^[1-9]\d*$/);
+  const originalForm=page.locator('form[action*="download_return"]').first();
+  const originalFields=await originalForm.evaluate(el=>Object.fromEntries(new FormData(el).entries()));
+  const originalResponse=await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields});
+  assert.equal(originalResponse.status(),200);assert.deepEqual(await originalResponse.body(),returned,'private original download retains every uploaded byte');
+  assert.match(originalResponse.headers()['cache-control'],/no-store/);assert.match(originalResponse.headers()['content-disposition'],/^attachment;/);
+  assert.equal((await context.request.get(url+'/admin/banco_brasil/download_return')).status(),403,'original download requires scoped POST');
+
   let detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();await navigate(page,detail.locator('form[action*="link_event"] button'));
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_event_links WHERE event_id='+event),'1');detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();
   const settle=detail.locator('form[action*="settle_event"]');await settle.locator('input[type=checkbox]').check();await settle.locator('input[name="settlement[reason]"]').fill('Synthetic credit independently reviewed');await settle.locator('input[name="settlement[reference]"]').fill('SYNTHETIC CI CREDIT ONLY');
@@ -129,6 +158,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin),'1','API credit and canonical provenance commit together');
   await context.request.post(url+'/admin/banco_brasil/settle_api',{form:apiCreditFields});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','browser retry does not duplicate API payment');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
+  assert.equal((await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields})).status(),409,'old original download form is rejected after switching company');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   // Complete positive UI credit path for B, with a distinct account/agreement/profile.
   await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();

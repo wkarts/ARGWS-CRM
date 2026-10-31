@@ -1,4 +1,16 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_portal_proposal)) { $record=$native_portal_proposal;$display=CompanySalesPreferences::presentation('proposals',$record['number'],$record['context'],'',$record['payload']['date']);$currency=$record['context']['currency']['name']; ?>
+<div id="proposal-wrapper"><div class="panel_s"><div class="panel-body">
+<h3><?= e($display['formatted_number']); ?></h3><p><?= e($record['state']==='converted'?'Convertida em fatura':'Aceita'); ?> · <?= e($record['payload']['date']); ?><?php if(($record['payload']['due_date']??null)!==null){ ?> · <?= e($record['payload']['due_date']); ?><?php } ?></p>
+<p><?= e($record['context']['identity']['legal_name']); ?> · <?= e($record['context']['recipient']['name']); ?></p>
+<div class="table-responsive"><table class="table"><thead><tr><th><?= e(_l('proposal_item')); ?></th><th><?= e(_l('proposal_item_quantity')); ?></th><th><?= e(_l('proposal_item_rate')); ?></th></tr></thead><tbody>
+<?php foreach($record['payload']['items']as$item){ ?><tr><td><?= e($item['description']); ?><?php if(($item['long_description']??'')!==''){ ?><br><?= nl2br(e($item['long_description'])); ?><?php }foreach($item['taxes']as$tax){ ?><br><?= e($tax['name'].' '.$tax['rate'].'%'); ?><?php } ?></td><td><?= e($item['qty'].(($item['unit']??'')!==''?' '.$item['unit']:'')); ?></td><td><?= e($item['rate']); ?></td></tr><?php } ?>
+</tbody></table></div><p class="text-right"><strong><?= e(_l('proposal_total')); ?>: <?= e($currency.' '.$record['total']); ?></strong></p>
+<?php if(($record['payload']['note']??'')!==''){ ?><p><?= nl2br(e($record['payload']['note'])); ?></p><?php }if(($display['terms']??'')!==''){ ?><p><?= nl2br(e($display['terms'])); ?></p><?php } ?>
+<?php foreach($native_portal_proposal_files as$file){$external=$file['external']??null;$fileUrl=$external??(NativePortalPresentation::url('download/file/sales_attachment/'.$file['file_key']).'&proposal_id='.$record['id'].'&proposal_hash='.$native_portal_proposal_hash); ?><p><a href="<?= e($fileUrl); ?>"<?= $external!==null?' target="_blank" rel="noopener noreferrer"':''; ?>><?= e($file['filename']); ?></a></p><?php } ?>
+<?= form_open(NativePortalPresentation::url('proposal/'.$record['id'].'/'.$native_portal_proposal_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><?= form_hidden('action','proposal_pdf'); ?><button type="submit" class="btn btn-default"><?= e(_l('clients_invoice_html_btn_download')); ?></button><?= form_close(); ?>
+<a class="btn btn-default" href="<?= e(NativePortalPresentation::url('clients/proposals')); ?>"><?= e(_l('client_go_to_dashboard')); ?></a>
+</div></div></div><?php return; } ?>
 <div id="proposal-wrapper">
     <?php
       ob_start();

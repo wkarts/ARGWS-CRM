@@ -33,9 +33,11 @@ final class CompanyProjectsSchema
                 if(!preg_match('/^`([^`]+)` (varchar\([0-9]+\)|int unsigned|int|text|datetime|date)(.*)$/D',$definition,$m))continue;
                 [$all,$column,$type,$tail]=$m;$expected[]=$column;$r=$columns[$column]??[];
                 $actual=preg_replace('/^(int)\([0-9]+\)/','$1',strtolower($r['COLUMN_TYPE']??''));$nullable=str_contains($tail,'NOT NULL')?'NO':'YES';
-                if($actual!==$type||($r['IS_NULLABLE']??null)!==$nullable||!IssuerStorage::sqlNullDefault($r)||str_contains($tail,'AUTO_INCREMENT')!==str_contains(strtolower($r['EXTRA']??''),'auto_increment'))throw new RuntimeException('issuer_project_schema_invalid');
+                $nullableMatches=($r['IS_NULLABLE']??null)===$nullable||($table==='company_projects'&&$column==='due_date'&&($r['IS_NULLABLE']??null)==='YES')||($table==='company_tasks'&&in_array($column,['due_date','assignee_id'],true)&&($r['IS_NULLABLE']??null)==='YES');
+                if($actual!==$type||!$nullableMatches||!IssuerStorage::sqlNullDefault($r)||str_contains($tail,'AUTO_INCREMENT')!==str_contains(strtolower($r['EXTRA']??''),'auto_increment'))throw new RuntimeException('issuer_project_schema_invalid');
                 if(preg_match('/COLLATE ([a-z0-9_]+)/',$tail,$c)&&($r['COLLATION_NAME']??null)!==$c[1])throw new RuntimeException('issuer_project_schema_invalid');
             }
+            if($table==='company_tasks'){require_once __DIR__.'/NativeCompanyTaskFormSchema.php';NativeCompanyTaskFormSchema::assertAdditions($columns);$expected=array_merge($expected,array_keys(NativeCompanyTaskFormSchema::ADDITIONS));}
             if(array_diff(array_keys($columns),$expected))throw new RuntimeException('issuer_project_schema_invalid');
             $engine=IssuerStorage::query($db,'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->row_array();if(strtoupper($engine['ENGINE']??'')!=='INNODB')throw new RuntimeException('issuer_project_schema_invalid');
             $indexes=[];foreach(IssuerStorage::query($db,'SELECT INDEX_NAME,COLUMN_NAME,NON_UNIQUE,SUB_PART FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY INDEX_NAME,SEQ_IN_INDEX',[$name])->result_array() as $r){if($r['SUB_PART']!==null)throw new RuntimeException('issuer_project_schema_invalid');$indexes[$r['INDEX_NAME']]['columns'][]=$r['COLUMN_NAME'];$indexes[$r['INDEX_NAME']]['non_unique']=(int)$r['NON_UNIQUE'];}

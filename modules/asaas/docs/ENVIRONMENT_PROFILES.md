@@ -62,7 +62,7 @@ seleção única de ambiente por empresa, nome de apresentação, descrição co
 herança dos 26 parâmetros globais. A nova configuração não escolhe um ambiente
 silenciosamente, não desabilita contas antigas e não altera cobranças existentes.
 O contrato de schema, autorização, snapshots e rollback está em
-[COMPANY_PREFERENCES.md](COMPANY_PREFERENCES.md).
+[NATIVE_PREFERENCES.md](NATIVE_PREFERENCES.md).
 
 A moeda nominal permanece BRL; juros, multa e desconto permanecem zero. Vencimento,
 prorrogação, atualização remota, parcelamento e sincronização por parâmetros não

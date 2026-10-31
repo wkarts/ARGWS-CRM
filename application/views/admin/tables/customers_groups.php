@@ -7,7 +7,9 @@ $aColumns = ['name'];
 $sIndexColumn = 'id';
 $sTable       = db_prefix() . 'customers_groups';
 
-$result  = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], ['id']);
+$where=[];
+if($this->ci->db->table_exists(db_prefix().'company_customer_group_owners'))$where[]='AND NOT EXISTS (SELECT 1 FROM '.db_prefix().'company_customer_group_owners o WHERE o.group_id='.$sTable.'.id)';
+$result  = data_tables_init($aColumns, $sIndexColumn, $sTable, [], $where, ['id']);
 $output  = $result['output'];
 $rResult = $result['rResult'];
 

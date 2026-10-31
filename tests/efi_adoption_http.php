@@ -52,7 +52,7 @@ foreach(['5.1.4','5.1.3','5.1.4 sdk','5.1.6'] as $source) {
 foreach(['5.1.4 sdk f'=>'explicit_adoption','5.1.4 sdk final'=>'explicit_adoption','5.1.4'=>'invalid_version','5.1.3'=>'invalid_version','5.1.4 sdk'=>'invalid_version'] as $source=>$status) {
     $modules=(new ReflectionClass(App_modules::class))->newInstanceWithoutConstructor();
     foreach(['modules'=>['gerencianet_gateway'=>['headers'=>['version'=>'5.1.5']]],'db_modules'=>['gerencianet_gateway'=>(object)['installed_version'=>$source,'active'=>0]]] as $property=>$value){
-        $prop=new ReflectionProperty(App_modules::class,$property);$prop->setAccessible(true);$prop->setValue($modules,$value);
+        $prop=new ReflectionProperty(App_modules::class,$property);$prop->setValue($modules,$value);
     }
     $inventory=$modules->database_maintenance_inventory();
     efiHttpCheck($inventory['gerencianet_gateway']['status']===$status,'actual inventory preserves explicit origin policy');

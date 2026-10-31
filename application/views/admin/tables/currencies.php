@@ -7,6 +7,7 @@ $aColumns = [
 ];
 $sIndexColumn = 'id';
 $sTable       = db_prefix() . 'currencies';
+if(isset($native_currency_rows)){$output=['draw'=>$native_currency_draw,'iTotalRecords'=>$native_currency_total,'iTotalDisplayRecords'=>$native_currency_filtered,'aaData'=>[]];$rResult=$native_currency_rows;}else{
 $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
     'id',
     'isdefault',
@@ -16,6 +17,7 @@ $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
 ]);
 $output  = $result['output'];
 $rResult = $result['rResult'];
+}
 
 foreach ($rResult as $aRow) {
     $row = [];
@@ -46,6 +48,11 @@ foreach ($rResult as $aRow) {
         <i class="fa-regular fa-pen-to-square fa-lg"></i>
     </a>';
 
+    if(isset($native_currency_rows)){
+        foreach(['make_base_currency'=>'fa-star','delete'=>'fa-trash-can']as$method=>$icon){if($method==='make_base_currency'&&$aRow['isdefault']==1)continue;
+            $options.='<form method="post" action="'.e(admin_url('currencies/'.$method.'/'.$aRow['id'])).'"><input type="hidden" name="_company_context" value="'.e(CompanyRequestScope::token()).'"><input type="hidden" name="_native_company_csrf" value="'.e(CompanyRequestScope::nativeCsrfToken(get_instance())).'"><button type="submit" class="btn btn-link" aria-label="'.e(_l($method==='delete'?'delete':'make_base_currency')).'"><i class="fa-regular '.$icon.' fa-lg"></i></button></form>';
+        }
+    }else{
     if ($aRow['isdefault'] == 0) {
         $options .= '<a href="' . admin_url('currencies/make_base_currency/' . $aRow['id']) . '" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700" ' . _attributes_to_string([
             'data-toggle' => 'tooltip',
@@ -60,8 +67,11 @@ foreach ($rResult as $aRow) {
         <i class="fa-regular fa-trash-can fa-lg"></i>
     </a>';
 
+    }
     $options .= '</div>';
 
     $row[]              = $options;
     $output['aaData'][] = $row;
 }
+
+if(isset($native_currency_rows))echo json_encode($output,JSON_THROW_ON_ERROR);

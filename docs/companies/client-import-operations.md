@@ -1,10 +1,10 @@
 # Importação revisada e exportação de clientes privados
 
-A revisão2 pede fluxos positivos para importadores/exportadores (seção5, “Projetos, tarefas, despesas e demais consumidores”). A importação anterior `CompanyImports` é exclusiva de despesas; `Clients::import`/`Import_customers` ainda usa contatos, configurações e modelos legados. Este incremento acrescenta uma vertical própria para **novas identidades privadas de cliente**, pelo writer nativo existente. Não abre o importador legado nem declara concluída a importação de contatos, endereços, campos personalizados ou dados financeiros.
+A revisão2 pede fluxos positivos para importadores/exportadores (seção5, “Projetos, tarefas, despesas e demais consumidores”). A importação `CompanyImports` é exclusiva de despesas. Clientes usam agora a rota oficial `Clients::import` com o writer transacional de identidades privadas; o importador global `Import_customers` permanece somente no caminho histórico da instalação principal.
 
 ## Operação
 
-Rota administrativa exata: `admin/company_client_imports`, método `index`, selada por `CompanyRequestScope`. A página oferece upload CSV/JSON, preview obrigatório, confirmação de lote inteiro, reabertura do resultado e exportação paginada de identidades próprias. Não cria contatos, logins, permissões do portal, compartilhamentos ou mensagens. A política de CPF/CNPJ e de documento vazio permanece a do diretório `CompanyClients`.
+Rota administrativa exata: `admin/clients/import`, método `import`, selada por `CompanyRequestScope`. A página oferece upload CSV/JSON, preview obrigatório, confirmação de lote inteiro, reabertura do resultado e exportação paginada de identidades próprias. Não cria contatos, logins, permissões do portal, compartilhamentos ou mensagens. A política de CPF/CNPJ e de documento vazio permanece a do diretório `CompanyClients`.
 
 Até **100 clientes e 256 KiB**, UTF-8. CSV com ponto e vírgula, aspas duplas com duplicação e cabeçalho exato:
 
@@ -38,7 +38,7 @@ A auditoria do hash/cursor/escopo precisa ser confirmada antes dos bytes. Não h
 
 - `CompanyClientImportSchema::ensure($db,$prefix)` cria somente `company_client_import_batches`, depois dos schemas nativos do núcleo/recibos de clientes. InnoDB, campos/defaults/collations, índices integrais, unicidade e FK de empresa são validados. Reexecução é segura; os testes recusam índice prefixado e default textual indevido.
 - `CompanyClients::tables(bool $receipts=true)` fornece os participantes; `previewInOwnedTransaction` e `createInOwnedTransaction` exigem a fronteira própria de `IssuerTransaction`. A auditoria do writer confirma seu readback.
-- Wiring integrador: adicionar somente `company_client_imports/index` ao selamento nativo, navegação condicionada a `customers/view`, e executar o novo ensure na migration futura. Nenhuma abertura genérica de rota, importador legado ou token é necessária.
+- Wiring integrador: adicionar somente `clients/import` ao selamento nativo, navegação condicionada a `customers/view`, e executar o novo ensure na migration futura. Nenhuma abertura genérica de rota, importador legado ou token é necessária.
 - Não alterar migrations históricas. Futuro rollback operacional fecha a rota e conserva clientes/recibos/lotes; não apaga clientes importados ou suas relações.
 
 ## Evidência

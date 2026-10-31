@@ -1,4 +1,100 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (isset($native_project_view)) { ?>
+<?php
+$esc=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
+$discussion_state=$discussion_state??null;
+$url=function($suffix='',?string $action=null,$child=null)use($native_project_view,$discussion_state){
+    $base='projects/view/'.$native_project_view['canonical_id'];$group=$native_project_view['group'];
+    if($action!==null){$thread=$discussion_state['thread']['id']??null;
+        $route=match($action){
+            'discussion_open'=>'projects/discussion',
+            'discussion_thread_state'=>'projects/discussion/'.(int)$thread,
+            'discussion_comment'=>'projects/add_discussion_comment/'.(int)$thread.'/regular',
+            'discussion_edit'=>'projects/update_discussion_comment',
+            'discussion_delete'=>'projects/delete_discussion_comment/'.(int)$child,
+            'save_milestone_details'=>'projects/milestone/'.(int)$child,
+            'save_milestone_tasks'=>'projects/update_task_milestone',
+            default=>$base,
+        };return admin_url($route);
+    }
+    $query=[];parse_str(ltrim($suffix,'?'),$query);unset($query['project']);$query=array_intersect_key($query,array_flip(['discussion','milestone','task','after']));
+    return admin_url($base.'?'.http_build_query(['group'=>$group]+$query,'','&',PHP_QUERY_RFC3986));
+};
+?>
+<?php init_head(); ?>
+<div id="wrapper"><div class="content"><div class="row"><div class="col-md-12">
+    <div class="panel_s"><div class="panel-body">
+        <div class="tw-flex tw-items-start tw-justify-between tw-gap-4">
+            <div><h3 class="tw-font-bold tw-mt-0"><?php echo e($native_project_overview['facts']['project']['name']); ?></h3>
+                <span class="label" style="color:<?php echo e($native_project_overview['status']['color']); ?>;border:1px solid <?php echo e($native_project_overview['status']['color']); ?>"><?php echo e($native_project_overview['status']['name']); ?></span>
+            </div>
+            <div><a class="btn btn-default" href="<?php echo admin_url('projects'); ?>"><?php echo _l('back_to_list'); ?></a>
+            <?php if($native_project_view['can_create_task']??false){ ?><a class="btn btn-default" href="#" onclick="new_task_from_relation(undefined,'project',<?php echo e($native_project_view['canonical_id']); ?>);return false;"><?php echo _l('new_task'); ?></a><?php } ?>
+            <?php if ($native_project_view['can_edit']) { ?><a class="btn btn-primary" href="<?php echo admin_url('projects/project/'.$native_project_view['canonical_id']); ?>"><?php echo _l('edit_project'); ?></a><?php } ?>
+            <?php if(isset($native_project_pin)){echo form_open(admin_url('projects/pin_action/'.$native_project_view['canonical_id']),['class'=>'tw-inline']);echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('project_id',$native_project_view['canonical_id']);echo form_hidden('revision',$native_project_overview['facts']['project']['revision']);echo form_hidden('pin_revision',$native_project_pin['revision']);echo form_hidden('pinned',$native_project_pin['pinned']?'0':'1');echo form_hidden('request_key',bin2hex(random_bytes(32))); ?><button class="btn btn-default" type="submit"><?= $native_project_pin['pinned']?'Desafixar projeto':'Fixar projeto'; ?></button><?php echo form_close();} ?></div>
+        </div>
+        <ul class="nav nav-tabs tw-mt-5">
+            <?php foreach($native_project_tabs??[] as$slug=>$tab){ if($slug==='sales'){ ?><li class="dropdown <?= in_array($native_project_view['group'],array_column($tab['children'],'slug'),true)?'active':''; ?>"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><?= e($tab['name']); ?> <span class="caret"></span></a><ul class="dropdown-menu"><?php foreach($tab['children'] as$child){ ?><li class="<?= $native_project_view['group']===$child['slug']?'active':''; ?>"><a href="<?= admin_url('projects/view/'.$native_project_view['canonical_id'].'?group='.$child['slug']); ?>"><?= e($child['name']); ?></a></li><?php } ?></ul></li><?php }else{ ?><li class="<?= $native_project_view['group']===$slug?'active':''; ?>"><a href="<?= admin_url('projects/view/'.$native_project_view['canonical_id'].'?group='.$slug); ?>"><?= e($tab['name']); ?></a></li><?php }} ?>
+        </ul>
+    </div></div>
+
+    <?php if (is_array($portal_controls)) { ?>
+    <div class="panel_s" id="operation-portal-publication"><div class="panel-body">
+        <h4 class="tw-font-bold tw-mt-0">Portal do cliente</h4>
+        <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização.</p>
+        <?php if (!$portal_controls['private_client']) { ?><div class="alert alert-warning">O cadastro não pertence a esta empresa.</div><?php } ?>
+        <?php if ($portal_controls['can_contact_edit']) { foreach ($portal_controls['permissions'] as $contact => $permission) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_permission'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('contact_id',$contact); echo form_hidden('contact_revision',$permission['revision']); ?>
+        <label><input type="checkbox" name="allowed" value="1" <?php echo $permission['allowed']?'checked':''; ?>> <?php echo e($permission['name']); ?></label>
+        <button class="btn btn-default btn-sm" type="submit">Salvar acesso</button><?php echo form_close(); ?>
+        <?php } } ?>
+        <?php if ($portal_controls['can_publish'] && $portal_controls['private_client'] && $portal_controls['eligible']) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','record'); ?>
+        <label><input type="checkbox" name="visible" value="1" <?php echo $portal_controls['visible']?'checked':''; ?>> Disponibilizar projeto no portal</label><?php ?>
+        <button class="btn btn-default" type="submit">Salvar publicação do projeto</button><?php echo form_close(); ?>
+        <?php foreach ($portal_controls['files'] as $file) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','file'); echo form_hidden('file_key',$file['file_key']); ?>
+        <label><input type="checkbox" name="visible" value="1" <?php echo $file['visible']?'checked':''; ?>> Disponibilizar anexo <?php echo e($file['filename']); ?></label><?php ?>
+        <button class="btn btn-default btn-sm" type="submit">Salvar publicação do anexo</button><?php echo form_close(); ?>
+        <?php } ?>
+        <?php } ?>
+    </div></div>
+    <?php } ?>
+
+    <?php if(in_array($native_project_view['group'],['project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt'],true)){ $this->load->view('admin/projects/'.$native_project_view['group'],get_defined_vars()); } elseif($native_project_view['group']==='project_notes'){ $this->load->view('admin/projects/native_notes',get_defined_vars()); } elseif($native_project_view['group']==='project_expenses'){ $this->load->view('admin/projects/native_expenses',get_defined_vars()); } elseif(isset($native_project_section)){ $this->load->view('admin/projects/native_section',get_defined_vars()); } ?>
+    <?php if ($native_project_view['group']==='project_overview') { ?>
+        <?php $this->load->view('admin/projects/project_overview',['native_project_overview'=>$native_project_overview]); ?>
+        <div class="panel_s"><div class="panel-body"><h4 class="tw-font-bold tw-mt-0"><?php echo _l('project_members'); ?></h4>
+        <?php if ($native_project_view['can_edit']) { ?>
+            <?php echo form_open(admin_url('projects/add_edit_members/'.$native_project_view['canonical_id']),['id'=>'native-project-members']); ?>
+            <?php echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_members_revision',$native_project_view['members_revision']); ?>
+            <?php $selected=array_map('intval',array_column($native_project_overview['facts']['members']['members'],'staffid')); ?>
+            <select class="selectpicker" multiple name="project_members[]" data-width="100%" data-live-search="true">
+                <?php foreach($native_project_staff as $member){$staffId=(int)$member['staffid']; ?><option value="<?php echo e($staffId); ?>"<?php echo in_array($staffId,$selected,true)?' selected':''; ?>><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></option><?php } ?>
+            </select><button class="btn btn-primary tw-mt-3" type="submit"><?php echo _l('submit'); ?></button><?php echo form_close(); ?>
+        <?php } else { ?><ul><?php foreach($native_project_overview['facts']['members']['members'] as $member){ ?><li><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></li><?php } ?></ul><?php } ?>
+        </div></div>
+    <?php } elseif($native_project_view['group']==='project_files') { ?>
+        <div class="panel_s"><div class="panel-body">
+            <?php if ($native_project_view['can_edit']) { ?>
+            <?php echo form_open_multipart(admin_url('projects/upload_file/'.$native_project_view['canonical_id']),['id'=>'native-project-file-upload']); ?>
+            <?php echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_project_revision',$native_project_files['revision']);echo form_hidden('native_request_key',bin2hex(random_bytes(32))); ?>
+            <div class="form-group"><label for="native-project-file"><?php echo _l('project_files'); ?></label><input class="form-control" id="native-project-file" type="file" name="file" required></div>
+            <button class="btn btn-primary" type="submit"><?php echo _l('upload_file'); ?></button><?php echo form_close(); ?><hr>
+            <?php } ?>
+            <div class="table-responsive"><table class="table"><thead><tr><th><?php echo _l('project_file_filename'); ?></th><th><?php echo _l('project_file__filetype'); ?></th><th><?php echo _l('options'); ?></th></tr></thead><tbody>
+            <?php foreach($native_project_files['items'] as $file){ ?><tr><td><a href="<?php echo site_url('download/file/project/'.$file['file_key'].'?project_id='.$native_project_view['canonical_id']); ?>"><?php echo e($file['filename']); ?></a></td><td><?php echo e($file['mime']); ?></td><td>
+                <?php if($native_project_view['can_edit']){echo form_open(admin_url('projects/remove_file/'.$native_project_view['canonical_id'].'/'.$file['file_key']),['class'=>'tw-inline']);echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_project_revision',$native_project_files['revision']);echo form_hidden('native_request_key',bin2hex(random_bytes(32))); ?><button class="btn btn-danger btn-xs" type="submit"><?php echo _l('delete'); ?></button><?php echo form_close(); } ?>
+            </td></tr><?php } ?>
+            <?php if(!$native_project_files['items']){ ?><tr><td colspan="3"><?php echo _l('no_files_found'); ?></td></tr><?php } ?>
+            </tbody></table></div>
+        </div></div>
+    <?php } ?>
+</div></div></div></div>
+<?php init_tail(); ?></body></html><?php return; } ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <?= form_hidden('project_id', $project->id) ?>
@@ -85,7 +181,7 @@
                                             data-toggle="tooltip">
                                             <?php if (staff_can('edit', 'projects')) { ?>
                                             <a href="<?= admin_url('projects/remove_team_member/' . $project->id . '/' . $member['staff_id']); ?>"
-                                                class="_delete group-hover:tw-inline-flex tw-hidden tw-rounded-full tw-absolute tw-items-center tw-justify-center tw-bg-neutral-300/50 tw-h-7 tw-w-7 tw-cursor-pointer tw-text-neutral-500 hover:tw-text-neutral-600 focus:tw-text-neutral-600">
+                                                class="<?= isset($native_project_view) ? 'native-project-member-remove' : '_delete'; ?> group-hover:tw-inline-flex tw-hidden tw-rounded-full tw-absolute tw-items-center tw-justify-center tw-bg-neutral-300/50 tw-h-7 tw-w-7 tw-cursor-pointer tw-text-neutral-500 hover:tw-text-neutral-600 focus:tw-text-neutral-600">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                     stroke-width="1.5" stroke="currentColor" class="tw-w-4 tw-h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -206,6 +302,7 @@
 <div class="modal fade" id="add-edit-members" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('projects/add_edit_members/' . $project->id)); ?>
+        <?php if (isset($native_project_view)) { echo form_hidden('_company_context', $native_project_view['context_token']); echo form_hidden('_native_company_csrf', $native_project_view['csrf_token']); echo form_hidden('native_members_revision', $native_project_view['members_revision']); } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

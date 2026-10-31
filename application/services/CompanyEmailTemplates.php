@@ -47,7 +47,7 @@ final class CompanyEmailTemplates
 
     public static function defaults(): array
     {
-        $rows=json_decode(file_get_contents(__DIR__.'/email_templates_ptbr/company_defaults.json'),true,512,JSON_THROW_ON_ERROR);
+        $rows=json_decode(file_get_contents(__DIR__.'/email_templates_ptbr/defaults.json'),true,512,JSON_THROW_ON_ERROR);
         $result=[];
         foreach ($rows as $row) {
             $result[]=$row;

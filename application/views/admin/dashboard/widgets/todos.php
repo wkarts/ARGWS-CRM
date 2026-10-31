@@ -34,7 +34,7 @@
             </h4>
             <ul class="list-unstyled todo unfinished-todos todos-sortable sortable">
                 <?php foreach ($todos as $todo) { ?>
-                <li>
+                <li<?php if(isset($company_dashboard)) { ?> data-todo-id="<?= e($todo['todoid']); ?>" data-todo-revision="<?= e($todo['revision']); ?>"<?php } ?>>
                     <?php echo form_hidden('todo_order', $todo['item_order']); ?>
                     <?php echo form_hidden('finished', 0); ?>
                     <div class="media tw-mt-2">
@@ -76,7 +76,7 @@
             </h4>
             <ul class="list-unstyled todo finished-todos todos-sortable sortable">
                 <?php foreach ($todos_finished as $todo_finished) { ?>
-                <li>
+                <li<?php if(isset($company_dashboard)) { ?> data-todo-id="<?= e($todo_finished['todoid']); ?>" data-todo-revision="<?= e($todo_finished['revision']); ?>"<?php } ?>>
                     <?php echo form_hidden('todo_order', $todo_finished['item_order']); ?>
                     <?php echo form_hidden('finished', 1); ?>
                     <div class="media tw-mt-2">

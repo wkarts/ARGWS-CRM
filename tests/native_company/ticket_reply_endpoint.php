@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/ticket_status_endpoint.php';require_once APPPATH.'services/NativeCompanyTicketReplySchema.php';
+foreach(NativeCompanyTicketReplySchema::definitions('tbl')as$table=>$parts)if($table!==NativeCompanyTicketReplySchema::BODY)ticketSqliteDdl($table,$parts,$db);
+$wrapped=new TicketCreateDb($db,NativeCompanyTicketReplySchema::definitions('tbl'));$ci->db=$wrapped;$reader=new NativeCompanyTicketRead($wrapped,'tbl');$before=$reader->get(2,17,$id);
+$ci->router=new class{function fetch_method(){return 'ticket';}};$ci->input->verb='POST';$page=new Tickets();$_FILES=[];
+$data=['ticketid'=>$id,'message'=>'<p>Native <strong>response</strong></p><script>evil()</script>','status'=>$status,'cc'=>'copy@example.test','assign_to_current_user'=>'on','revision'=>$before['revision_token'],'request_nonce'=>hash('sha256','native-detail-post'),'_native_company_csrf'=>'synthetic-csrf'];$ci->input->data=$data;
+$page->ticket($id);kc($GLOBALS['ticketRedirect']===[CompanyRequestScope::adminUrl($ci,'tickets/ticket/'.$id),303],'original detail POST redirects to same native detail');$rows=$db->query('SELECT * FROM tblcompany_ticket_replies')->result_array();kc(count($rows)===1&&str_contains($rows[0]['body'],'<strong>')&&!str_contains($rows[0]['body'],'script'),'real response writer purifies and persists once');$page->ticket($id);kc(count($db->query('SELECT * FROM tblcompany_ticket_replies')->result_array())===1,'original POST replay does not duplicate');
+$ci->input->data['_native_company_csrf']='bad';$deny(fn()=>$page->ticket($id));$ci->input->data=$data;$ci->input->data['issuer_id']=3;$deny(fn()=>$page->ticket($id));$ci->input->data=$data;$deny(fn()=>$page->ticket(NativeCompanyResourceId::encode('company_ticket',999)));
+$ci->input->data=$data;$_FILES=['attachments'=>['error'=>[UPLOAD_ERR_OK]]];$deny(fn()=>$page->ticket($id));$_FILES=[];
+$next=$reader->get(2,17,$id);$ci->input->data=$data+['ticket_add_response_and_back_to_list'=>'1'];$ci->input->data['revision']=$next['revision_token'];$ci->input->data['request_nonce']=hash('sha256','native-detail-return-list');$page->ticket($id);kc($GLOBALS['ticketRedirect']===[CompanyRequestScope::adminUrl($ci,'tickets'),303],'original back to list action retained');
+kc(count($db->query('SELECT * FROM tblcompany_ticket_replies')->result_array())===2,'rejections never inserted a reply');
+echo "Original Tickets detail POST + real SQLite passed: source authorization, POST/CSRF, purified reply/status/CC/assignee, replay and original redirect choices. GET detail, attachments and SMTP remain pending; no delivery claim.\n";

@@ -8,7 +8,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: e-Invoice
 Description: Default module for e-Invoice
-Version: 1.0.1
+Version: 1.0.2
 Requires at least: 3.3.*
 */
 

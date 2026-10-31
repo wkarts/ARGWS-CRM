@@ -2,6 +2,7 @@
 <div class="modal fade" id="kb_group_modal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?php echo form_open(admin_url('knowledge_base/group'), ['id' => 'kb_group_form']); ?>
+        <?php if (isset($native_knowledge)) { echo form_hidden('_company_context', $native_knowledge_context); echo form_hidden('_native_company_csrf', $native_knowledge_csrf); } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -20,7 +21,7 @@
                         </div>
                         <?php echo render_color_picker('color', _l('kb_group_color')); ?>
                         <?php echo render_textarea('description', 'kb_group_add_edit_description'); ?>
-                        <?php echo render_input('group_order', 'kb_group_order', total_rows(db_prefix() . 'knowledge_base_groups') + 1, 'number'); ?>
+                        <?php echo render_input('group_order', 'kb_group_order', (isset($native_knowledge) ? $native_knowledge_group_count : total_rows(db_prefix() . 'knowledge_base_groups')) + 1, 'number'); ?>
                         <div class="kb-group-disable-option">
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="disabled" id="disabled">
@@ -73,11 +74,11 @@ function manage_kb_groups(form) {
         if(!articleAddEdit) {
            window.location.reload();
         } else {
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
             if(response.success == true){
                 if(typeof(response.id) != 'undefined') {
                     var group = $('#articlegroup');
-                    group.find('option:first').after('<option value="'+response.id+'">'+response.name+'</option>');
+                    group.find('option:first').after($('<option>').val(response.id).text(response.name));
                     group.selectpicker('val',response.id);
                     group.selectpicker('refresh');
                 }
@@ -96,7 +97,8 @@ function new_kb_group() {
 
 // Edit KB group, 2 places groups view or articles view directly click on kanban
 function edit_kb_group(invoker, id) {
-    $('#additional').append(hidden_input('id', id));
+    $('#additional').empty().append(hidden_input('id', id));
+    if (window.NativeCompanyTransport) $('#additional').append(hidden_input('revision', $(invoker).attr('data-native-revision')));
     $('#kb_group_slug').removeClass('hide');
     $('#kb_group_slug input').rules('add', {required:true});
     $('#kb_group_slug input').val($(invoker).data('slug'));

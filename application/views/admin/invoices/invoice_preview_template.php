@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php if ((credits_can_be_applied_to_invoice($invoice->status) && $credits_available > 0)) { ?>
+<?php $nativeInvoicePreview=isset($native_invoice_preview_data); ?>
+<?php if (!$nativeInvoicePreview && (credits_can_be_applied_to_invoice($invoice->status) && $credits_available > 0)) { ?>
 <div class="alert alert-warning mbot5">
     <?= e(_l('x_credits_available', app_format_money($credits_available, $customer_currency->name))); ?>
     <br />
@@ -66,7 +67,7 @@
                             </a>
                         </li>
                         <?php } ?>
-                        <?php if (count($invoice_recurring_invoices) > 0 || $invoice->recurring != 0) { ?>
+                        <?php if ($nativeInvoicePreview ? count($native_invoice_recurring)>0 : (count($invoice_recurring_invoices) > 0 || $invoice->recurring != 0)) { ?>
                         <li role="presentation">
                             <a href="#tab_child_invoices" aria-controls="tab_child_invoices" role="tab"
                                 data-toggle="tab">
@@ -74,6 +75,7 @@
                             </a>
                         </li>
                         <?php } ?>
+                        <?php if (!$nativeInvoicePreview) { ?>
                         <li role="presentation">
                             <a href="#tab_tasks"
                                 onclick="init_rel_tasks_table(<?= e($invoice->id); ?>,'invoice'); return false;"
@@ -92,7 +94,7 @@
                                 aria-controls="tab_reminders" role="tab" data-toggle="tab">
                                 <?= _l('estimate_reminders'); ?>
                                 <?php
-                        $total_reminders = total_rows(
+                        $total_reminders = isset($native_invoice_preview_data) ? $native_invoice_reminder_badge : total_rows(
                             db_prefix() . 'reminders',
                             [
                                 'isnotified' => 0,
@@ -107,6 +109,7 @@ if ($total_reminders > 0) {
 ?>
                             </a>
                         </li>
+                        <?php } ?>
                         <li role="presentation" class="tab-separator">
                             <a href="#tab_notes"
                                 onclick="get_sales_notes(<?= e($invoice->id); ?>,'invoices'); return false"
@@ -120,6 +123,7 @@ if ($total_reminders > 0) {
                                 </span>
                             </a>
                         </li>
+                        <?php if (!$nativeInvoicePreview) { ?>
                         <li role="presentation" data-toggle="tooltip"
                             title="<?= _l('emails_tracking'); ?>"
                             class="tab-separator">
@@ -143,13 +147,14 @@ if ($total_reminders > 0) {
                                 <?php } ?>
                             </a>
                         </li>
+                        <?php } ?>
                         <li role="presentation" data-toggle="tooltip"
                             data-title="<?= _l('toggle_full_view'); ?>"
                             class="tab-separator toggle_view">
                             <a href="#" onclick="small_table_full_view(); return false;">
                                 <i class="fa fa-expand"></i></a>
                         </li>
-                        <?php hooks()->do_action('after_admin_invoice_preview_template_tab_menu_last_item', $invoice); ?>
+                        <?php if(!$nativeInvoicePreview)hooks()->do_action('after_admin_invoice_preview_template_tab_menu_last_item', $invoice); ?>
                     </ul>
                 </div>
             </div>
@@ -169,7 +174,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
     $_tooltip_already_send = _l('invoice_already_send_to_client_tooltip', time_ago($invoice->datesend));
 }
 ?>
-                        <?php if (staff_can('edit', 'invoices')) { ?>
+                        <?php if (staff_can('edit', 'invoices') && (!$nativeInvoicePreview || in_array((int)$invoice->status,[1,4],true))) { ?>
                         <a href="<?= admin_url('invoices/invoice/' . $invoice->id); ?>"
                             data-toggle="tooltip"
                             title="<?= _l('edit_invoice_tooltip'); ?>"
@@ -200,12 +205,12 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                 </li>
                             </ul>
                         </div>
-                        <?php if (! empty($invoice->clientid)) { ?>
-                        <span<?php if ($invoice->status == Invoices_model::STATUS_CANCELLED) { ?>
+                        <?php if ((!$nativeInvoicePreview || isset($native_invoice_delivery)) && ! empty($invoice->clientid)) { ?>
+                        <span<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
                             data-toggle="tooltip"
                             data-title="<?= _l('invoice_cancelled_email_disabled'); ?>"
                             <?php } ?>>
-                            <a href="#" class="invoice-send-to-client btn-with-tooltip sm:!tw-px-3 btn btn-default<?php if ($invoice->status == Invoices_model::STATUS_CANCELLED) {
+                            <a href="#" class="invoice-send-to-client btn-with-tooltip sm:!tw-px-3 btn btn-default<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                                 echo ' disabled';
                             } ?>" data-toggle="tooltip"
                                 title="<?= e($_tooltip); ?>"
@@ -214,7 +219,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                         class="fa-regular fa-envelope"></i></span></a>
                             </span>
                             <?php } ?>
-                            <?php hooks()->do_action('before_invoice_preview_more_menu_button', $invoice); ?>
+                            <?php if(!$nativeInvoicePreview)hooks()->do_action('before_invoice_preview_more_menu_button', $invoice); ?>
                             <!-- Single button -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-default pull-left dropdown-toggle"
@@ -223,6 +228,13 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-right">
+                                    <?php if($nativeInvoicePreview && staff_can('edit', 'invoices')){ ?>
+                                    <li>
+                                        <a href="#" data-toggle="modal"
+                                            data-target="#sales_attach_file"><?= _l('invoice_attach_file'); ?></a>
+                                    </li>
+                                    <?php } ?>
+                                    <?php if(!$nativeInvoicePreview){ ?>
                                     <li>
                                         <a href="<?= site_url('invoice/' . $invoice->id . '/' . $invoice->hash) ?>"
                                             target="_blank"><?= _l('view_invoice_as_customer_tooltip'); ?>
@@ -237,7 +249,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                         </a>
                                         <?php } ?>
                                     </li>
-                                    <?php if ($invoice->status != Invoices_model::STATUS_CANCELLED
+                                    <?php if ($invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)
                                   && staff_can('create', 'credit_notes')
                                   && ! empty($invoice->clientid)) {?>
                                     <li>
@@ -256,40 +268,44 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                             href="<?= admin_url('invoices/copy/' . $invoice->id); ?>"><?= _l('invoice_copy'); ?></a>
                                     </li>
                                     <?php } ?>
+                                    <?php } ?>
                                     <?php if ($invoice->sent == 0) { ?>
                                     <li>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/mark_as_sent/' . $invoice->id); ?>"><?= _l('invoice_mark_as_sent'); ?></a>
                                     </li>
                                     <?php } ?>
                                     <?php if (staff_can('edit', 'invoices') || staff_can('create', 'invoices')) { ?>
                                     <li>
-                                        <?php if ($invoice->status != Invoices_model::STATUS_CANCELLED
-                                     && $invoice->status != Invoices_model::STATUS_PAID
-                                     && $invoice->status != Invoices_model::STATUS_PARTIALLY) { ?>
-                                        <a
+                                        <?php if ($invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)
+                                     && $invoice->status != (isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID)
+                                     && $invoice->status != (isset($native_invoice_preview_data) ? 3 : Invoices_model::STATUS_PARTIALLY)) { ?>
+                                        <a <?php if($nativeInvoicePreview){ ?>data-native-invoice-lifecycle-revision="<?= e($native_invoice_preview_data['revision']); ?>" onclick="return native_invoice_lifecycle(this);"<?php } ?>
                                             href="<?= admin_url('invoices/mark_as_cancelled/' . $invoice->id); ?>"><?= e(_l('invoice_mark_as', _l('invoice_status_cancelled'))); ?></a>
-                                        <?php } elseif ($invoice->status == Invoices_model::STATUS_CANCELLED) { ?>
-                                        <a
+                                        <?php } elseif ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
+                                        <a <?php if($nativeInvoicePreview){ ?>data-native-invoice-lifecycle-revision="<?= e($native_invoice_preview_data['revision']); ?>" onclick="return native_invoice_lifecycle(this);"<?php } ?>
                                             href="<?= admin_url('invoices/unmark_as_cancelled/' . $invoice->id); ?>"><?= e(_l('invoice_unmark_as', _l('invoice_status_cancelled'))); ?></a>
                                         <?php } ?>
                                     </li>
                                     <?php } ?>
-                                    <?php if (! in_array($invoice->status, [Invoices_model::STATUS_PAID, Invoices_model::STATUS_CANCELLED, Invoices_model::STATUS_DRAFT])
+                                    <?php if (! in_array($invoice->status, [(isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID), (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED), (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)])
                                   && staff_can('edit', 'invoices')
                                   && $invoice->duedate
-                                  && is_invoices_overdue_reminders_enabled()) { ?>
+                                  && ($nativeInvoicePreview ? ($native_invoice_reminder_sources['enabled']??false) : is_invoices_overdue_reminders_enabled())) { ?>
                                     <li>
                                         <?php if ($invoice->cancel_overdue_reminders == 1) { ?>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/resume_overdue_reminders/' . $invoice->id); ?>"><?= _l('resume_overdue_reminders'); ?></a>
                                         <?php } else { ?>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/pause_overdue_reminders/' . $invoice->id); ?>"><?= _l('pause_overdue_reminders'); ?></a>
                                         <?php } ?>
                                     </li>
                                     <?php } ?>
-                                    <?php
+                                    <?php if(!$nativeInvoicePreview){
                                   if ((get_option('delete_only_on_last_invoice') == 1 && is_last_invoice($invoice->id)) || (get_option('delete_only_on_last_invoice') == 0)) { ?>
                                     <?php if (staff_can('delete', 'invoices')) { ?>
                                     <li data-toggle="tooltip"
@@ -298,14 +314,14 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                             class="text-danger delete-text _delete"><?= _l('delete_invoice'); ?></a>
                                     </li>
                                     <?php } ?>
-                                    <?php } ?>
-                                    <?php hooks()->do_action('after_invoice_preview_more_menu'); ?>
+                                    <?php }} ?>
+                                    <?php if(!$nativeInvoicePreview)hooks()->do_action('after_invoice_preview_more_menu'); ?>
                                 </ul>
                             </div>
-                            <?php if (staff_can('create', 'payments') && abs($invoice->total) > 0) { ?>
+                            <?php if (staff_can('create', 'payments') && abs($invoice->total) > 0 && (!$nativeInvoicePreview || !in_array((int)$invoice->status,[2,5,6],true))) { ?>
                             <a href="#"
                                 onclick="record_payment(<?= e($invoice->id); ?>); return false;"
-                                class="mleft10 pull-right btn btn-success<?php if ($invoice->status == Invoices_model::STATUS_PAID || $invoice->status == Invoices_model::STATUS_CANCELLED) {
+                                class="mleft10 pull-right btn btn-success<?php if ($invoice->status == (isset($native_invoice_preview_data) ? 2 : Invoices_model::STATUS_PAID) || $invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                                     echo ' disabled';
                                 } ?>">
                                 <i class="fa fa-plus-square"></i>
@@ -326,7 +342,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
             <hr class="hr-panel-separator" />
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane active" id="tab_invoice">
-                    <?php if ($invoice->status == Invoices_model::STATUS_CANCELLED && $invoice->recurring > 0) { ?>
+                    <?php if ($invoice->status == (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED) && $invoice->recurring > 0) { ?>
                     <div class="alert alert-info">
                         Recurring invoice with status Cancelled <b>is still ongoing recurring invoice</b>. If you want
                         to stop this recurring invoice you should update the invoice recurring field to <b>No</b>.
@@ -358,13 +374,17 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                 <?php foreach ($applied_credits as $credit) { ?>
                                 <tr>
                                     <td>
+                                        <?php if($nativeInvoicePreview){ ?>
+                                        <?= e($credit['credit_number']); ?>
+                                        <?php }else{ ?>
                                         <a
                                             href="<?= admin_url('credit_notes/list_credit_notes/' . $credit['credit_id']); ?>"><?= e(format_credit_note_number($credit['credit_id'])); ?></a>
+                                        <?php } ?>
                                     </td>
                                     <td><?= e(_d($credit['date'])); ?>
                                     </td>
                                     <td><?= app_format_money($credit['amount'], $invoice->currency_name) ?>
-                                        <?php if (staff_can('delete', 'credit_notes')) { ?>
+                                        <?php if (!$nativeInvoicePreview && staff_can('delete', 'credit_notes')) { ?>
                                         <a href="<?= admin_url('credit_notes/delete_invoice_applied_credit/' . $credit['id'] . '/' . $credit['credit_id'] . '/' . $invoice->id); ?>"
                                             class="pull-right text-danger _delete"><i class="fa fa-trash"></i></a>
                                         <?php } ?>
@@ -376,6 +396,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                     </div>
                 </div>
                 <?php } ?>
+                <?php if(!$nativeInvoicePreview){ ?>
                 <div role="tabpanel" class="tab-pane" id="tab_tasks">
                     <?php init_relation_tasks_table(['data-new-rel-id' => $invoice->id, 'data-new-rel-type' => 'invoice'], 'tasksFilters'); ?>
                 </div>
@@ -388,9 +409,21 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                     <?php render_datatable([_l('reminder_description'), _l('reminder_date'), _l('reminder_staff'), _l('reminder_is_notified')], 'reminders'); ?>
                     <?php $this->load->view('admin/includes/modals/reminder', ['id' => $invoice->id, 'name' => 'invoice', 'members' => $members, 'reminder_title' => _l('invoice_set_reminder_title')]); ?>
                 </div>
-                <?php if (count($invoice_recurring_invoices) > 0 || $invoice->recurring != 0) { ?>
+                <?php } ?>
+                <?php if ($nativeInvoicePreview ? count($native_invoice_recurring)>0 : (count($invoice_recurring_invoices) > 0 || $invoice->recurring != 0)) { ?>
                 <div role="tabpanel" class="tab-pane" id="tab_child_invoices">
-                    <?php if (count($invoice_recurring_invoices)) { ?>
+                    <?php if($nativeInvoicePreview){ ?>
+                    <ul class="list-group">
+                        <?php foreach($native_invoice_recurring as$series){ ?>
+                        <li class="list-group-item">
+                            <span class="tw-font-semibold"><?= e(_l('recurring_invoice')); ?> #<?= e($series['schedule_id']); ?></span>
+                            <span class="pull-right"><?= e($series['state']); ?></span><br>
+                            <span class="text-muted"><?= e(_l('next_invoice_date',_d($series['next_date']))); ?></span>
+                            <?php foreach($series['children']as$child){ ?><br><a href="<?= admin_url('invoices/list_invoices/'.$child['invoice_id']); ?>" onclick="init_invoice(<?= e($child['invoice_id']); ?>); return false;">#<?= e($child['invoice_id']); ?></a> — <?= e(_d($child['run_date'])); ?><?php } ?>
+                        </li>
+                        <?php } ?>
+                    </ul>
+                    <?php } elseif (count($invoice_recurring_invoices)) { ?>
                     <p class="tw-text-lg tw-font-medium">
                         <?= _l('invoice_add_edit_recurring_invoices_from_invoice'); ?>
                     </p>
@@ -419,6 +452,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                     <?php } ?>
                 </div>
                 <?php } ?>
+                <?php if(!$nativeInvoicePreview){ ?>
                 <div role="tabpanel" class="tab-pane ptop10" id="tab_emails_tracking">
                     <?php $this->load->view(
                         'admin/includes/emails_tracking',
@@ -426,6 +460,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                             'tracked_emails' => get_tracked_emails($invoice->id, 'invoice'), ]
                     ); ?>
                 </div>
+                <?php } ?>
                 <div role="tabpanel" class="tab-pane" id="tab_notes">
                     <?= form_open(admin_url('invoices/add_note/' . $invoice->id), ['id' => 'sales-notes', 'class' => 'invoice-notes-form']); ?>
                     <?= render_textarea('description'); ?>
@@ -437,6 +472,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                     <hr />
                     <div class="mtop20" id="sales_notes_area"></div>
                 </div>
+                <?php if(!$nativeInvoicePreview){ ?>
                 <div role="tabpanel" class="tab-pane ptop10" id="tab_activity">
                     <div class="row">
                         <div class="col-md-12">
@@ -518,15 +554,17 @@ foreach ($views_activity as $activity) { ?>
                     <hr />
                     <?php } ?>
                 </div>
+                <?php } ?>
 
-                <?php hooks()->do_action('after_admin_invoice_preview_template_tab_content_last_item', $invoice); ?>
+                <?php if(!$nativeInvoicePreview)hooks()->do_action('after_admin_invoice_preview_template_tab_content_last_item', $invoice); ?>
             </div>
         </div>
     </div>
 </div>
-<?php $this->load->view('admin/invoices/invoice_send_to_client'); ?>
+<?php if($nativeInvoicePreview && isset($native_invoice_delivery))$this->load->view('admin/invoices/invoice_send_to_client'); ?>
+<?php if(!$nativeInvoicePreview){$this->load->view('admin/invoices/invoice_send_to_client'); ?>
 <?php $this->load->view('admin/credit_notes/apply_invoice_credits'); ?>
-<?php $this->load->view('admin/credit_notes/invoice_create_credit_note_confirm'); ?>
+<?php $this->load->view('admin/credit_notes/invoice_create_credit_note_confirm');} ?>
 <script>
     init_items_sortable(true);
     init_btn_with_tooltips();
@@ -536,8 +574,8 @@ foreach ($views_activity as $activity) { ?>
     init_tabs_scrollable();
     <?php if ($record_payment) { ?>
     record_payment( <?= e($invoice->id); ?> );
-    <?php } elseif ($send_later) { ?>
+    <?php } elseif (!$nativeInvoicePreview && $send_later) { ?>
     schedule_invoice_send( <?= e($invoice->id); ?> );
     <?php } ?>
 </script>
-<?php hooks()->do_action('after_invoice_preview_template_rendered', $invoice); ?>
+<?php if(!$nativeInvoicePreview)hooks()->do_action('after_invoice_preview_template_rendered', $invoice); ?>

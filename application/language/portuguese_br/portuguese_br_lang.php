@@ -4233,3 +4233,42 @@ $lang['asaas_company_environment_invalid'] = 'Ambiente inválido';
 $lang['asaas_company_method_pix'] = 'Pix';
 $lang['asaas_company_method_boleto'] = 'Boleto';
 $lang['asaas_company_method_card'] = 'Cartão hospedado à vista';
+
+$lang['native_ticket_historical_statuses_notice'] = 'Tickets históricos com estado textual original preservado, sem conversão automática para os status configurados:';
+$lang['native_privacy_delivery_pending'] = 'Sua solicitação está registrada. As notificações por email aos administradores estão pendentes.';
+$lang['native_privacy_delivery_sent'] = 'Sua solicitação está registrada. As notificações por email aos administradores foram aceitas pelo transporte configurado.';
+$lang['native_privacy_delivery_disabled'] = 'Sua solicitação está registrada. As notificações por email estão desativadas na configuração de modelos da empresa.';
+$lang['native_privacy_delivery_review'] = 'Sua solicitação está registrada. A entrega por email precisa de revisão; uma entrega incerta não será repetida automaticamente.';
+
+$lang['native_staff_rate_not_declared'] = 'Taxa histórica não declarada';
+$lang['issuer_staff_link_existing'] = 'Vincular colaborador existente';
+$lang['issuer_staff_link_existing_help'] = 'Informe o e-mail exato de uma identidade ativa. O perfil, a senha e os acessos às outras empresas serão preservados.';
+$lang['issuer_staff_make_company_default'] = 'Definir esta empresa como padrão para o colaborador';
+$lang['issuer_staff_revoke_membership'] = 'Revogar vínculo com esta empresa';
+$lang['issuer_staff_revoke_membership_confirm'] = 'Revogar somente o vínculo e as permissões desta empresa? A identidade e o histórico serão preservados.';
+$lang['issuer_customer_share_identity'] = 'Compartilhar identidade do cliente';
+$lang['issuer_customer_share_identity_help'] = 'O destino recebe somente nome e documento fiscal. Contatos, anexos e histórico financeiro continuam privados da empresa proprietária.';
+$lang['issuer_customer_share_existing_target'] = 'Empresa %s (vínculo existente; desmarque para revogar)';
+$lang['issuer_customer_share_no_targets'] = 'Nenhuma outra empresa autorizada está disponível para inclusão.';
+$lang['issuer_contact_invoice_access'] = 'Acesso dos contatos às faturas no portal';
+$lang['issuer_contact_invoice_access_help'] = 'A permissão vale somente para as faturas desta empresa e exige um contato ativo.';
+$lang['issuer_contact_invoice_grant'] = 'Permitir acesso a faturas';
+$lang['issuer_contact_invoice_revoke'] = 'Revogar acesso a faturas';
+
+$lang['company_project_status_active'] = 'Ativo';
+
+$lang['company_ticket_status_open'] = 'Aberto';
+
+$lang['company_ticket_status_resolved'] = 'Resolvido';
+
+$lang['company_ticket_status_closed'] = 'Fechado';
+
+$lang['back_to_list'] = 'Voltar à lista';
+
+$lang['project_tasks'] = 'Tarefas';
+
+$lang['project_gantt'] = 'Cronograma';
+
+$lang['search'] = 'Pesquisar';
+
+$lang['ticket_dt_date_created'] = 'Data de criação';

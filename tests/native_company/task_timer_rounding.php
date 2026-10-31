@@ -1,0 +1,6 @@
+<?php
+require __DIR__.'/../issuers_core_support.php';require_once APPPATH.'services/NativeCompanyTaskTimerRounding.php';
+$checks=0;foreach(['0','1','2','3']as$mode)foreach(['5','10','15','20','25','30','35','40','45']as$minutes){$step=(int)$minutes*60;foreach([0,1,intdiv($step,2)-1,intdiv($step,2),$step-1,$step,$step+1,3599,3600,86401]as$seconds){$expected=match($mode){'0'=>$seconds,'1'=>(int)(ceil($seconds/$step)*$step),'2'=>(int)(floor($seconds/$step)*$step),'3'=>(int)(round($seconds/$step)*$step)};essentialCheck(NativeCompanyTaskTimerRounding::roundSeconds($seconds,['round_off_task_timer_option'=>$mode,'round_off_task_timer_time'=>$minutes])===$expected,'shared rounding preserves original arithmetic for accepted policy');$checks++;}}
+foreach([['round_off_task_timer_option'=>'4','round_off_task_timer_time'=>'5'],['round_off_task_timer_option'=>'1','round_off_task_timer_time'=>'0']]as$options){try{NativeCompanyTaskTimerRounding::roundSeconds(1,$options);throw new RuntimeException('invalid policy accepted');}catch(DomainException $e){$checks++;}}
+try{NativeCompanyTaskTimerRounding::roundSeconds(PHP_INT_MAX,['round_off_task_timer_option'=>'1','round_off_task_timer_time'=>'45']);throw new RuntimeException('overflow accepted');}catch(DomainException $e){$checks++;}
+echo "Shared task timer rounding: {$checks} real PHP checks; no billing mutation.\n";

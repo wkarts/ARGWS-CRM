@@ -1,15 +1,40 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $nativeStaff=!empty($native_staff_manage);init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="row">
             <div class="col-md-12">
-                <?php if (staff_can('create',  'staff')) { ?>
+                <?php if ($nativeStaff?$native_staff_can_create:staff_can('create',  'staff')) { ?>
                 <div class="tw-mb-2">
                     <a href="<?php echo admin_url('staff/member'); ?>" class="btn btn-primary">
                         <i class="fa-regular fa-plus tw-mr-1"></i>
                         <?php echo _l('new_staff'); ?>
                     </a>
+                </div>
+                <?php } ?>
+                <?php if ($nativeStaff && !empty($native_staff_can_link)) { ?>
+                <div class="panel_s tw-mb-4">
+                    <div class="panel-body">
+                        <details id="native-staff-link-identity">
+                            <summary class="tw-font-semibold"><?= e(_l('issuer_staff_link_existing')); ?></summary>
+                            <p class="text-muted tw-mt-2"><?= e(_l('issuer_staff_link_existing_help')); ?></p>
+                            <?= form_open(admin_url('staff/member'), ['class'=>'tw-mt-3','id'=>'native-staff-link']); ?>
+                            <?= form_hidden('native_staff_operation','link'); ?>
+                            <?= form_hidden('request_key',$native_staff_link_request_key); ?>
+                            <?= render_input('existing_email','staff_add_edit_email','','email',['required'=>true,'autocomplete'=>'off']); ?>
+                            <div class="row">
+                            <?php foreach($native_staff_link_catalog as $feature=>$definition){$allowed=$native_staff_link_assignable[$feature]??[];if(!$allowed)continue; ?>
+                                <div class="col-md-4"><fieldset><legend class="tw-text-sm tw-font-semibold"><?= e($definition['name']); ?></legend>
+                                <?php foreach($definition['capabilities'] as $capability=>$label){if(!in_array($capability,$allowed,true))continue;$inputId='native-link-'.preg_replace('/[^a-z0-9_-]/i','-',$feature.'-'.$capability); ?>
+                                    <div class="checkbox checkbox-primary"><input id="<?= e($inputId); ?>" type="checkbox" name="permissions[<?= e($feature); ?>][]" value="<?= e($capability); ?>"><label for="<?= e($inputId); ?>"><?= e($label); ?></label></div>
+                                <?php } ?></fieldset></div>
+                            <?php } ?>
+                            </div>
+                            <div class="checkbox checkbox-primary"><input id="native-link-default" type="checkbox" name="make_default" value="1"><label for="native-link-default"><?= e(_l('issuer_staff_make_company_default')); ?></label></div>
+                            <button type="submit" class="btn btn-primary"><?= e(_l('issuer_staff_link_existing')); ?></button>
+                            <?= form_close(); ?>
+                        </details>
+                    </div>
                 </div>
                 <?php } ?>
                 <div class="panel_s">
@@ -22,7 +47,7 @@
                             _l('staff_dt_last_Login'),
                             _l('staff_dt_active'),
                         ];
-                        $custom_fields = get_custom_fields('staff', ['show_on_table' => 1]);
+                        $custom_fields = $nativeStaff?$native_staff_table_fields:get_custom_fields('staff', ['show_on_table' => 1]);
                         foreach ($custom_fields as $field) {
                             array_push($table_data, [
                                 'name'     => $field['name'],
@@ -37,7 +62,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="delete_staff" tabindex="-1" role="dialog">
+<?php if(!$nativeStaff){ ?><div class="modal fade" id="delete_staff" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <?php echo form_open(admin_url('staff/delete', ['delete_staff_form'])); ?>
         <div class="modal-content">
@@ -62,7 +87,7 @@
         </div><!-- /.modal-content -->
         <?php echo form_close(); ?>
     </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+</div><!-- /.modal --><?php } ?>
 <?php init_tail(); ?>
 <script>
 $(function() {

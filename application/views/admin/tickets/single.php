@@ -1,4 +1,212 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (isset($native_ticket_page)) { ?>
+<?php init_head(); ?>
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="tw-flex tw-items-start tw-justify-between tw-gap-4">
+                            <div>
+                                <h3 class="tw-font-bold tw-mt-0"><?php echo e('#'.$ticket->ticketid.' - '.$ticket->subject); ?></h3>
+                                <span class="label" style="color:<?php echo e($ticket->statuscolor); ?>;border:1px solid <?php echo e($ticket->statuscolor); ?>">
+                                    <?php echo e($ticket->status_name); ?>
+                                </span>
+                            </div>
+                            <a class="btn btn-default" href="<?php echo admin_url('tickets'); ?>"><?php echo _l('back_to_list'); ?></a>
+                        </div>
+                        <?php if (($native_support_authorship['origin']??null)!==null) { ?>
+                        <p>Aberto pelo contato: <?php echo e($native_support_authorship['origin']['author_name']); ?></p>
+                        <?php if ((int)$ticket->assigned===0) { ?><p>Aguardando atribuição de responsável</p><?php } ?>
+                        <?php } ?>
+                        <?php if ($ticket->merged_ticket_id !== null) { ?>
+                        <div class="alert alert-info tw-mt-4">
+                            <?php echo e(_l('ticket_merged_notice')); ?>:
+                            <a href="<?php echo admin_url('tickets/ticket/'.$ticket->merged_ticket_id); ?>"><?php echo e($ticket->merged_ticket_id); ?></a>
+                        </div>
+                        <?php } ?>
+                        <?php if (count($merged_tickets) > 0) { ?>
+                        <div class="alert alert-info tw-mt-4">
+                            <strong><?php echo e(_l('ticket_merged_tickets_header', count($merged_tickets))); ?></strong>
+                            <ul class="tw-mb-0">
+                                <?php foreach ($merged_tickets as $merged) { ?>
+                                <li><a href="<?php echo admin_url('tickets/ticket/'.$merged['ticketid']); ?>"><?php echo e('#'.$merged['ticketid'].' - '.$merged['subject']); ?></a></li>
+                                <?php } ?>
+                            </ul>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+
+                <?php if (is_array($portal_controls)) { ?>
+                <div class="panel_s" id="operation-portal-publication">
+                    <div class="panel-body">
+                        <h4 class="tw-font-semibold tw-mt-0">Portal do cliente</h4>
+                        <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização. Para anexos enviados por um contato, publicar amplia aos demais contatos autorizados. Para retirar todo acesso no portal, oculte o anexo.</p>
+                        <?php if (!$portal_controls['private_client']) { ?><div class="alert alert-warning">O cadastro não pertence a esta empresa.</div><?php } ?>
+                        <?php if ($portal_controls['can_contact_edit']) { foreach ($portal_controls['permissions'] as $contact => $permission) { ?>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
+                        <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('native_csrf',$company_tickets_csrf); echo form_hidden('company_tickets_csrf',$company_tickets_csrf); echo form_hidden('action','portal_permission'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('contact_id',$contact); echo form_hidden('contact_revision',$permission['revision']); ?>
+                        <label><input type="checkbox" name="allowed" value="1" <?php echo $permission['allowed']?'checked':''; ?>> <?php echo e($permission['name']); ?></label>
+                        <button class="btn btn-default btn-sm" type="submit">Salvar acesso</button><?php echo form_close(); ?>
+                        <?php } } ?>
+                        <?php if ($portal_controls['can_publish'] && $portal_controls['private_client'] && $portal_controls['eligible']) { ?>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
+                        <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('native_csrf',$company_tickets_csrf); echo form_hidden('company_tickets_csrf',$company_tickets_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','record'); ?>
+                        <label><input type="checkbox" name="visible" value="1" <?php echo $portal_controls['visible']?'checked':''; ?>> Disponibilizar chamado no portal</label>
+                        <?php ?>
+                        <button class="btn btn-default" type="submit">Salvar publicação do chamado</button><?php echo form_close(); ?>
+                        <?php foreach ($portal_controls['files'] as $file) { ?>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
+                        <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('native_csrf',$company_tickets_csrf); echo form_hidden('company_tickets_csrf',$company_tickets_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','file'); echo form_hidden('file_key',$file['file_key']); ?>
+                        <label><input type="checkbox" name="visible" value="1" <?php echo $file['visible']?'checked':''; ?>> Disponibilizar anexo <?php echo e($file['filename']); ?></label>
+                        <?php ?>
+                        <button class="btn btn-default btn-sm" type="submit">Salvar publicação do anexo</button><?php echo form_close(); ?>
+                        <?php } ?>
+                        <?php foreach ($portal_controls['replies'] as $reply) { ?>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
+                        <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('company_tickets_csrf',$company_tickets_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','reply'); echo form_hidden('reply_id',$reply['id']); ?>
+                        <label><input type="checkbox" name="visible" value="1" <?php echo $reply['visible']?'checked':''; ?>> Disponibilizar resposta #<?php echo e($reply['id']); ?> · <?php echo e($reply['created_at']); ?></label>
+                        <button class="btn btn-default btn-sm" type="submit">Salvar publicação da resposta</button><?php echo form_close(); ?>
+                        <?php } ?>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
+
+                <div class="panel_s" id="ticket-private-attachments"><div class="panel-body">
+                    <h4 class="tw-font-semibold tw-mt-0"><?php echo _l('ticket_add_attachments'); ?></h4>
+                    <?php if ($native_ticket_presentation['can_attach']) { ?>
+                    <?php echo form_open_multipart(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
+                    <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('native_ticket_command','upload_files'); echo form_hidden('revision',$ticket->revision_token); echo form_hidden('request_nonce',bin2hex(random_bytes(32))); ?>
+                    <label for="operation-file">Arquivo privado</label><input class="form-control" id="operation-file" type="file" name="operation_file" accept=".pdf,.png,.jpg,.jpeg" required>
+                    <p class="help-block">PDF até 2 MB ou imagem até 512 KB, normalizada. A publicação no portal é uma ação separada.</p>
+                    <button class="btn btn-default" type="submit">Anexar arquivo privado</button><?php echo form_close(); ?>
+                    <?php } ?>
+                    <ul>
+                    <?php $allAttachments=$ticket->attachments; foreach($ticket_replies as $reply) $allAttachments=array_merge($allAttachments,$reply['attachments']); foreach($allAttachments as $attachment) { ?>
+                    <li><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                    <?php if ($native_ticket_presentation['can_delete_attachment']) { ?>
+                    <?php echo form_open(admin_url($attachment['delete_url'])); ?>
+                    <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('revision',$attachment['revision']); echo form_hidden('parent_revision',$ticket->revision_token); echo form_hidden('request_nonce',bin2hex(random_bytes(32))); echo form_hidden('return_to_ticket','1'); ?>
+                    <button class="btn btn-default btn-sm" type="submit">Ocultar anexo e preservar histórico</button><?php echo form_close(); ?>
+                    <?php } ?></li><?php } ?>
+                    </ul>
+                </div></div>
+
+                <?php if ($native_ticket_presentation['can_reply']) { ?>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 class="tw-font-semibold tw-mt-0"><?php echo _l('ticket_single_add_reply'); ?></h4>
+                        <?php echo form_open_multipart(admin_url('tickets/ticket/'.$ticket->ticketid), ['id'=>'ticket-reply','autocomplete'=>'off','data-native-ticket'=>'1']); ?>
+                        <?php echo form_hidden('_company_context', $native_ticket_page['context_token']); ?>
+                        <?php echo form_hidden('_native_company_csrf', $native_ticket_page['csrf_token']); ?>
+                        <?php echo form_hidden('ticketid', $ticket->ticketid); echo form_hidden('no_editor','1'); ?>
+                        <?php echo form_hidden('revision', $ticket->revision_token); ?>
+                        <?php echo form_hidden('request_nonce', $native_ticket_page['request_nonce']); ?>
+                        <div class="form-group">
+                            <label for="native-ticket-message"><?php echo _l('ticket_single_add_reply'); ?></label>
+                            <textarea id="native-ticket-message" class="form-control" name="message" rows="8" required maxlength="60000"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="native-ticket-status"><?php echo _l('ticket_dt_status'); ?></label>
+                            <select id="native-ticket-status" class="selectpicker" name="status" data-width="100%">
+                                <option value=""></option>
+                                <?php foreach ($statuses as $status) { ?>
+                                <option value="<?php echo e($status['native_id']); ?>"<?php echo $status['native_id']===$ticket->ticketstatusid?' selected':''; ?>><?php echo e($status['name']); ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="native-ticket-files"><?php echo _l('ticket_add_attachments'); ?></label>
+                            <input id="native-ticket-files" type="file" class="form-control" name="attachments[]" accept="application/pdf,image/png,image/jpeg" multiple>
+                            <p class="help-block">PDF, PNG ou JPG; até 2 MB por arquivo.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><?php echo _l('ticket_single_add_reply'); ?></button>
+                        <?php echo form_close(); ?>
+                    </div>
+                </div>
+
+                <?php } ?>
+                <h4 class="tw-font-bold"><?php echo _l('ticket_request_history'); ?></h4>
+                <div class="panel_s tw-mt-5">
+                    <div class="panel-body tw-bg-info-50/30 ticket-thread">
+                        <div class="tw-flex tw-justify-between tw-gap-3 tw-mb-4">
+                            <strong><?php echo e($ticket->opened_by); ?></strong>
+                            <span><?php echo e(_l('ticket_posted', $ticket->date_label)); ?></span>
+                        </div>
+                        <div class="tc-content"><?php echo NativeCompanyTicketThreadPresentation::message($ticket->message, $ticket->message_format); ?></div>
+                        <?php foreach ($ticket->attachments as $attachment) { ?>
+                        <hr><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php foreach ($ticket_replies as $reply) { ?>
+                <div class="panel_s">
+                    <div class="panel-body ticket-thread">
+                        <div class="tw-flex tw-justify-between tw-gap-3 tw-mb-4">
+                            <strong><?php echo e($reply['submitter']); ?></strong>
+                            <span><?php echo e(_l('ticket_posted', $reply['date_label'])); ?></span>
+                        </div>
+                        <div class="tc-content"><?php echo NativeCompanyTicketThreadPresentation::message($reply['message'], $reply['message_format']); ?></div>
+                        <?php foreach ($reply['attachments'] as $attachment) { ?>
+                        <hr><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
+            </div>
+            <div class="col-md-4">
+                <?php if ($native_ticket_settings !== null) { ?>
+                <div class="panel_s" id="ticket-status-actions"><div class="panel-body">
+                    <h4 class="tw-font-bold tw-mt-0"><?php echo _l('ticket_dt_status'); ?></h4>
+                    <?php foreach ($statuses as $status) { if ($status['native_id'] === $ticket->ticketstatusid) continue; ?>
+                    <?php echo form_open(admin_url('tickets/change_status_ajax/'.$ticket->ticketid.'/'.$status['native_id']), ['class'=>'tw-inline-block tw-mb-2','data-ticket-status'=>$status['code']]); ?>
+                    <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('revision',$ticket->revision_token); echo form_hidden('request_nonce',bin2hex(random_bytes(32))); echo form_hidden('return_to_ticket','1'); ?>
+                    <button type="submit" class="btn btn-default btn-sm"><?php echo e($status['name']); ?></button>
+                    <?php echo form_close(); } ?>
+                </div></div>
+                <div class="panel_s"><div class="panel-body">
+                    <h4 class="tw-font-bold tw-mt-0"><?php echo _l('ticket_single_settings'); ?></h4>
+                    <?php echo form_open(admin_url('tickets/update_single_ticket_settings'),['id'=>'ticket-settings-form']); ?>
+                    <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('ticketid',$ticket->ticketid); echo form_hidden('revision',$ticket->revision_token); echo form_hidden('request_nonce',bin2hex(random_bytes(32))); echo form_hidden('return_to_ticket','1'); ?>
+                    <?php $this->load->view('admin/tickets/partials/ticket-settings',$native_ticket_settings); ?>
+                    <button type="submit" class="btn btn-primary"><?php echo _l('save'); ?></button>
+                    <?php echo form_close(); ?>
+                </div></div>
+                <?php } ?>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 class="tw-font-bold tw-mt-0"><?php echo _l('clients_single_ticket_information_heading'); ?></h4>
+                        <dl>
+                            <dt><?php echo _l('ticket_dt_subject'); ?></dt><dd><?php echo e($ticket->subject); ?></dd>
+                            <dt><?php echo _l('ticket_dt_status'); ?></dt><dd><?php echo e($ticket->status_name); ?></dd>
+                            <dt><?php echo _l('ticket_settings_priority'); ?></dt><dd><?php echo e($ticket->catalog['priority']['name'] ?? ''); ?></dd>
+                            <?php if (isset($ticket->catalog['service'])) { ?><dt><?php echo _l('service'); ?></dt><dd><?php echo e($ticket->catalog['service']['name']); ?></dd><?php } ?>
+                            <dt><?php echo _l('ticket_dt_date_created'); ?></dt><dd><?php echo e($ticket->date_label); ?></dd>
+                            <?php if ($ticket->ticket_email) { ?><dt><?php echo _l('ticket_settings_to'); ?></dt><dd><a href="mailto:<?php echo e($ticket->ticket_email); ?>"><?php echo e($ticket->ticket_email); ?></a></dd><?php } ?>
+                        </dl>
+                        <?php if ($native_ticket_presentation['can_mark_read']) { ?>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid), ['id'=>'native-ticket-mark-read','class'=>'tw-mt-4']); ?>
+                        <?php echo form_hidden('_company_context', $native_ticket_page['context_token']); ?>
+                        <?php echo form_hidden('_native_company_csrf', $native_ticket_page['csrf_token']); ?>
+                        <?php echo form_hidden('native_ticket_command', 'mark_read'); ?>
+                        <?php echo form_hidden('revision', $ticket->revision_token); ?>
+                        <?php echo form_hidden('request_nonce', bin2hex(random_bytes(32))); ?>
+                        <button type="submit" class="btn btn-default btn-sm"><?php echo _l('mark_as_read'); ?></button>
+                        <?php echo form_close(); ?>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php init_tail(); ?>
+</body>
+</html>
+<?php return; } ?>
 <?php init_head(); ?>
 <?php set_ticket_open($ticket->adminread, $ticket->ticketid); ?>
 <div id="wrapper">
@@ -366,7 +574,7 @@
                     $.get(admin_url +
                         'tickets/check_staff_replying/<?= e($ticket->ticketid); ?>',
                         function(result) {
-                            var data = JSON.parse(result)
+                            var data = typeof result === 'string' ? JSON.parse(result) : result;
                             if (data.is_other_staff_replying === true || data
                                 .is_other_staff_replying === 'true') {
                                 $('.staff_replying_notice').html('<p>' + data.message +
@@ -380,15 +588,11 @@
                     firstTypeCheckPerformed = true;
                 }
 
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>/<?= get_staff_user_id()?>'
-                );
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '<?= isset($native_ticket_presentation)?e($native_ticket_presentation['actor']):get_staff_user_id()?>');
             });
 
-            $(document).on('pagehide, beforeunload', function() {
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>'
-                );
+            $(document).on('pagehide beforeunload', function() {
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '');
             })
 
             $(document).on('visibilitychange', function() {
@@ -396,9 +600,7 @@
                         .trim() !=
                         ''))
                     return;
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>'
-                );
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '');
             })
         }
     });

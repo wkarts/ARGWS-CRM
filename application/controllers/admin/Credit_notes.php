@@ -7,18 +7,31 @@ class Credit_notes extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            return;
+        }
         $this->load->model('credit_notes_model');
     }
 
     /* Get all credit ntoes in case user go on index page */
     public function index($id = '')
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::handle($this);
+            return;
+        }
         $this->list_credit_notes($id);
     }
 
     /* List all credit ntoes datatables */
     public function list_credit_notes($id = '')
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::handle($this);
+            return;
+        }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {
             access_denied('credit_notes');
         }

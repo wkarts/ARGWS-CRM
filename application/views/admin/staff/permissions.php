@@ -9,11 +9,18 @@
         </thead>
         <tbody>
             <?php
+            $nativePermissions = isset($native_staff_permission_catalog);
             if (isset($member)) {
-                $is_admin = is_admin($member->staffid);
+                $is_admin = $nativePermissions ? !empty($native_staff_target_master) : is_admin($member->staffid);
             }
-
-                foreach (get_available_staff_permissions($funcData) as $feature => $permission) { ?>
+            $native_staff_permissions = $native_staff_permissions ?? [];
+            $member = $member ?? null; $role = $role ?? null;
+            $permissionHas = static function ($capability, $feature) use ($nativePermissions, $native_staff_permissions, $member, $role) {
+                if ($nativePermissions) return in_array($capability, $native_staff_permissions[$feature] ?? [], true);
+                return (isset($member) && staff_can($capability, $feature, $member->staffid))
+                    || (isset($role) && has_role_permission($role->roleid, $capability, $feature));
+            };
+                foreach (($nativePermissions ? $native_staff_permission_catalog : get_available_staff_permissions($funcData)) as $feature => $permission) { ?>
             <tr data-name="<?= e($feature); ?>">
                 <td>
                     <b><?= e($permission['name']); ?></b>
@@ -33,18 +40,15 @@
                        ($capability == 'view_own' || $capability == 'view'
                           && array_key_exists('view_own', $permission['capabilities']) && array_key_exists('view', $permission['capabilities']))
                         && (
-                            (isset($member)
-                         && staff_can(($capability == 'view' ? 'view_own' : 'view'), $feature, $member->staffid))
-                        || (isset($role)
-                         && has_role_permission($role->roleid, ($capability == 'view' ? 'view_own' : 'view'), $feature))
+                            $permissionHas(($capability == 'view' ? 'view_own' : 'view'), $feature)
                         )
                    )
                         ) {
                             $disabled = ' disabled ';
-                        } elseif ((isset($member) && staff_can($capability, $feature, $member->staffid))
-                    || isset($role) && has_role_permission($role->roleid, $capability, $feature)) {
+                        } elseif ($permissionHas($capability, $feature)) {
                             $checked = ' checked ';
                         } ?>
+                    <?php if ($nativePermissions && !in_array($capability, $native_staff_assignable[$feature] ?? [], true) && !$permissionHas($capability, $feature)) { $disabled = ' disabled '; } ?>
                     <div class="tw-ml-2">
                         <div class="checkbox last:tw-mb-0">
                             <input

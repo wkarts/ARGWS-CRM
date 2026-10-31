@@ -1,4 +1,11 @@
 <?php
+require_once APPPATH.'services/InvoiceStatusPresentation.php';
+$nativeStats=isset($native_invoice_statistics);
+if($nativeStats){
+    require_once APPPATH.'services/NativeCompanyInvoiceStats.php';
+    $native_invoice_statistics=NativeCompanyInvoiceStats::fromCounts($native_invoice_statistics['counts']);
+    $total_invoices=$native_invoice_statistics['total'];
+}else{
 $where_all           = '';
 $has_permission_view = staff_can('view', 'invoices');
 
@@ -17,15 +24,20 @@ if (endsWith($where_all, ' AND')) {
 }
 
 $total_invoices = total_rows(db_prefix() . 'invoices', $where_all);
+}
 ?>
 <div class="quick-top-stats tw-mb-6">
     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-5 tw-mb-0 tw-gap-2">
         <?php
    foreach ($invoices_statuses as $status) {
-       if ($status == Invoices_model::STATUS_CANCELLED) {
+       if ($status == InvoiceStatusPresentation::CANCELLED) {
            continue;
        }
 
+       if($nativeStats){
+           if(!array_key_exists($status,$native_invoice_statistics['counts']))throw new DomainException('native_company_invoice_statistics_invalid');
+           $total_by_status=$native_invoice_statistics['counts'][$status];
+       }else{
        $where = ['status' => $status];
 
        if (isset($project)) {
@@ -36,6 +48,7 @@ $total_invoices = total_rows(db_prefix() . 'invoices', $where_all);
            $where['addedfrom'] = get_staff_user_id();
        }
        $total_by_status = total_rows(db_prefix() . 'invoices', $where);
+       }
        $percent         = ($total_invoices > 0 ? number_format(($total_by_status * 100) / $total_invoices, 2) : 0); ?>
 
         <button type="button"

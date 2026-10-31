@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_project_view)){ ?><div class="panel_s"><div class="panel-body"><?php require __DIR__.'/native_discussions.php'; ?></div></div><?php return; } ?>
 <?php if (! isset($discussion)) { ?>
 <a href="#" onclick="new_discussion();return false;" class="btn btn-primary mbot25">
     <i class="fa-regular fa-plus tw-mr-1"></i>

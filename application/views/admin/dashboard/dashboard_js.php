@@ -1,9 +1,16 @@
+<?php if(!empty($company_dashboard_selection_required))return; ?>
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <script>
 var weekly_payments_statistics;
 var monthly_payments_statistics;
 var user_dashboard_visibility = <?php echo $user_dashboard_visibility; ?>  || [];
 $(function() {
+<?php if(isset($company_dashboard)){ ?>
+    $('body').on('click','a[href="<?php echo admin_url('staff/reset_dashboard'); ?>"]',function(event){
+        event.preventDefault();$.post(this.href,{}).done(function(){window.location.reload();}).fail(function(){alert_float('danger','Não foi possível restaurar as preferências.');});
+    });
+<?php } ?>
+
     $("[data-container]").sortable({
         connectWith: "[data-container]",
         helper: 'clone',

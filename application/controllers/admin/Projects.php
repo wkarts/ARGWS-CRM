@@ -5,19 +5,60 @@ use app\services\projects\Gantt;
 use app\services\projects\HoursOverviewChart;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
+require_once APPPATH.'services/CompanyOperationalPortalAdmin.php';
+require_once APPPATH.'services/NativeCompanyResourceId.php';
+require_once APPPATH.'services/NativeCompanyProjectOriginalHttp.php';
+require_once APPPATH.'services/NativeProjectTabs.php';
+require_once APPPATH.'services/NativeCompanyProjectPins.php';
 
 class Projects extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+    use \NativeCompanyProjectOriginalHttp;
+
+    public function extras() { $this->nativeProjectExtras(); }
+    public function portal_rules() { $this->nativeProjectPortalRules(); }
+    public function billing_rates() { $this->nativeProjectBillingRates(); }
+    public function fixed_billing() { $this->nativeProjectFixedBilling(); }
+    public function copies() { $this->nativeProjectCopies(); }
+    public function time_billing() { $this->nativeProjectTimeBilling(); }
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('projects_model');
-        $this->load->model('currencies_model');
+        if(!$this->nativeProjects()){
+            $this->load->model('projects_model');
+            $this->load->model('currencies_model');
+        }
         $this->load->helper('date');
+    }
+
+    private function nativeProjects():bool
+    {return class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this);}
+
+    private function nativeProjectIndex():void
+    {
+        if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+        $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+        require_once APPPATH.'services/NativeCompanyProjectTableFactory.php';
+        require_once APPPATH.'services/NativeCompanyFilters.php';
+        try{
+            $issuer=$ctx->issuerId();$actor=$ctx->staffId();$factory=new NativeCompanyProjectTableFactory($this->db,db_prefix());$catalog=$factory->data($issuer,$actor);
+            $table=$factory->make($issuer,$actor);$saved=(new NativeCompanyFilters($this->db,db_prefix(),$issuer,$actor,$table))->listing();$table=$factory->make($issuer,$actor,'projects',$saved);
+            $acl=new IssuerResourceAccess($this->db,db_prefix());
+            $data=['title'=>_l('projects'),'table'=>$table,'statuses'=>$catalog['summary']['statuses'],'native_project_summary'=>$catalog['summary'],
+                'native_project_permissions'=>['create'=>$acl->can($issuer,$actor,'projects','create'),'edit'=>$acl->can($issuer,$actor,'projects','edit'),'delete'=>$acl->can($issuer,$actor,'projects','delete')],
+                'native_project_custom_fields'=>array_values(array_filter($catalog['customDefinitions'],static fn($d)=>(int)$d['show_on_table']===1)),
+                'task_statuses'=>NativeCompanyWorkStatusCatalog::owned('task','_l')];
+            $html=$this->load->view('admin/projects/manage',$data,true);
+            if($factory->data($issuer,$actor)!==$catalog||!$acl->can($issuer,$actor,'projects','view'))throw new DomainException('native_project_snapshot_changed');
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_output($html);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os projetos e permissões desta empresa.',403);}
     }
 
     public function index()
     {
+        if($this->nativeProjects()){$this->nativeProjectIndex();return;}
         close_setup_menu();
         $data['statuses'] = $this->projects_model->get_project_statuses();
         $data['title']    = _l('projects');
@@ -27,6 +68,21 @@ class Projects extends AdminController
 
     public function table($clientid = '')
     {
+        if($this->nativeProjects()){
+            $this->output->set_header('Cache-Control: no-store');
+            try{
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyProjectPage.php';require_once APPPATH.'services/NativeCompanyProjectRows.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+                $reader=new NativeCompanyProjectPage($this->db,db_prefix());$today=gmdate('Y-m-d');$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$input,$clientid,$today);
+                $result=(new NativeCompanyProjectRows($this->db,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page,$clientid);
+                if($reader->read($ctx->issuerId(),$ctx->staffId(),$input,$clientid,$today)!==$page)throw new DomainException('native_project_snapshot_changed');
+                $this->output->set_content_type('application/json')->set_output(json_encode($result,JSON_THROW_ON_ERROR));
+            }catch(DomainException$e){show_error('Lista de projetos indisponível ou solicitação inválida nesta empresa.',str_contains($e->getMessage(),'invalid')?422:403);}
+            catch(Throwable$e){show_error('Não foi possível confirmar a lista de projetos.',503);}
+            return;
+        }
         App_table::find('projects')->output([
             'clientid' => $clientid,
         ]);
@@ -34,11 +90,22 @@ class Projects extends AdminController
 
     public function staff_projects()
     {
+        if($this->nativeProjects()){
+            $this->output->set_header('Cache-Control: no-store');
+            require_once APPPATH.'services/NativeCompanyStaffProjects.php';
+            try{
+                $data=NativeCompanyStaffProjects::table($this);
+                $this->output->set_content_type('application/json')->set_output(json_encode($data,JSON_THROW_ON_ERROR));
+            }catch(DomainException $e){show_error('Projetos do colaborador indisponíveis nesta empresa.',str_contains($e->getMessage(),'invalid')?422:403);}
+            catch(Throwable $e){show_error('Não foi possível confirmar os projetos do colaborador.',503);}
+            return;
+        }
         $this->app->get_table_data('staff_projects');
     }
 
     public function expenses($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','expenses',[$id]);return;}
         $this->load->model('expenses_model');
         $this->load->model('payment_modes_model');
         $data['payment_modes'] = $this->payment_modes_model->get('', [], true);
@@ -51,6 +118,7 @@ class Projects extends AdminController
 
     public function add_expense()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','add_expense',[]);return;}
         if ($this->input->post()) {
             $this->load->model('expenses_model');
             $id = $this->expenses_model->add($this->input->post());
@@ -71,8 +139,66 @@ class Projects extends AdminController
         }
     }
 
+    private function nativeProjectForm($id):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');require_once APPPATH.'services/NativeCompanyProjectForm.php';$adapter=new NativeCompanyProjectForm($this->db,db_prefix());
+            if(strtoupper($this->input->method(true))==='POST'){
+                CompanyRequestScope::assertNativeMutation($this);$input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(isset($input['description']))$input['description']=html_purify($input['description']);$saved=$adapter->save($ctx->issuerId(),$ctx->staffId(),$id,$input);set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('project')));redirect(admin_url('projects/view/'.$saved),'location',303);return;
+            }
+            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+            if($this->input->get('via_estimate_id'))throw new DomainException('native_project_action_not_composed');$today=date('Y-m-d');$customer=$this->input->get('customer_id');$data=$adapter->read($ctx->issuerId(),$ctx->staffId(),$id,$customer,$today);$snapshot=$data;
+            $data['native_project_form']['context_token']=$ctx->token();$data['native_project_form']['csrf_token']=CompanyRequestScope::nativeCsrfToken($this);$data['native_project_form']['request_key']=bin2hex(random_bytes(32));
+            $html=$this->load->view('admin/projects/project',$data,true);if(json_encode($adapter->read($ctx->issuerId(),$ctx->staffId(),$id,$customer,$today),JSON_THROW_ON_ERROR)!==json_encode($snapshot,JSON_THROW_ON_ERROR))throw new DomainException('native_project_snapshot_changed');$this->output->set_output($html);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os dados, a ação ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
+    }
+
+    private function nativeProjectPortalCsrf():string{$token=$this->session->userdata('company_projects_csrf');if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)){$token=bin2hex(random_bytes(32));$this->session->set_userdata('company_projects_csrf',$token);}return $token;}
+    private function nativeProjectView($id,?string $selectedGroup=null):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            $method=strtoupper($this->input->method(true));
+            if($method==='POST'){
+                if(in_array($this->input->post('action',false),NativeCompanyProjectRuleCommands::ROUTES['view'],true)){$this->nativeProjectRuleAction('view',$id);return;}
+                CompanyRequestScope::assertNativeMutation($this);
+                $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+                $token=$this->input->post('company_projects_csrf',false);if(!is_string($token)||!hash_equals($this->nativeProjectPortalCsrf(),$token))throw new DomainException('company_portal_csrf_invalid');
+                $ref=NativeCompanyResourceId::decode('project',$id);if($ref['source_kind']!=='company_project')throw new DomainException('company_portal_operation_unavailable');
+                $action=$this->input->post('action',false);$revision=$this->input->post('revision',false);$key=$this->input->post('request_key',false);if(!is_string($action)||!is_string($revision)||!is_string($key)||!CompanyOperationalPortalAdmin::handle($this,$ctx->issuerId(),$ctx->staffId(),'projects',$action,$ref['source_id'],$revision,$key))throw new DomainException('company_operation_invalid_input');
+                CompanyRequestScope::invalidateCaches($this);redirect(CompanyRequestScope::adminUrl($this,'projects/view/'.$id),'location',303);return;
+            }
+            if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
+            $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+            $acl=new IssuerResourceAccess($this->db,db_prefix());
+            $visibility=['project_tickets'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'tickets','view'),'project_contracts'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'contracts','view'),'project_invoices'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'invoices','view'),'project_estimates'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'estimates','view'),'project_expenses'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'expenses','view'),'project_credit_notes'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'credit_notes','view'),'project_subscriptions'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'subscriptions','view'),'project_proposals'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'proposals','view'),'sales'=>false];
+            $visibility['sales']=in_array(true,[$visibility['project_invoices'],$visibility['project_estimates'],$visibility['project_expenses'],$visibility['project_credit_notes'],$visibility['project_subscriptions'],$visibility['project_proposals']],true);
+            $nativeTabs=NativeProjectTabs::definitions('_l',$visibility);$allowedGroups=array_keys($nativeTabs);foreach($nativeTabs as$tab)foreach($tab['children']??[] as$child)$allowedGroups[]=$child['slug'];
+            $group=$selectedGroup??(string)($this->input->get('group')?:'project_overview');if($group==='sales')$group=$nativeTabs['sales']['children'][0]['slug']??'project_overview';if(!in_array($group,$allowedGroups,true))throw new DomainException('native_project_group_not_composed');
+            $period=(string)($this->input->get('overview_chart')?:'this_week');
+            require_once APPPATH.'services/NativeCompanyProjectDetail.php';$detail=new NativeCompanyProjectDetail($this->db,db_prefix());
+            $overview=$detail->overview($ctx->issuerId(),$ctx->staffId(),$id,$period,'_l');$files=$detail->files($ctx->issuerId(),$ctx->staffId(),$id);
+            $facts=$overview['facts'];$canEdit=$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','edit');
+            $staff=$canEdit?(new CompanyProjects($this->db,db_prefix()))->staffOptions($ctx->issuerId(),$ctx->staffId()):[];
+            $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];$pin=(new NativeCompanyProjectPins($this->db,db_prefix()))->state($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);
+            $portalControls=null;$portalRevision=null;$portalCsrf=null;if(($facts['reference']['source_kind']??null)==='company_project'){$portalRow=(new CompanyProjects($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);$portalControls=CompanyOperationalPortalAdmin::controls($this,$ctx->issuerId(),$ctx->staffId(),'projects',$portalRow);$portalRevision=(int)$portalRow['revision'];$portalCsrf=$this->nativeProjectPortalCsrf();}$data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,'portal_controls'=>$portalControls,'portal_revision'=>$portalRevision,'company_projects_csrf'=>$portalCsrf,'native_project_tabs'=>$nativeTabs,'native_project_pin'=>$pin,
+                'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'can_create_task'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','view')&&$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','create'),'canonical_id'=>$facts['reference']['canonical_id']]];
+            $clock=time();$work=$this->nativeProjectWorkData($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id'],$group,$clock);$data+=$work;$data['actor']=$ctx->staffId();$data['company_project_rules_csrf']=$this->nativeProjectRulesCsrf();
+            // The admin shell is prepared once by the request scope. Rebuilding it
+            // here repeats the same issuer checks and can observe a different
+            // snapshot after the project facts have already been sealed.
+            $html=$this->load->view('admin/projects/view',$data,true);
+            if(!$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','view')||$detail->read($ctx->issuerId(),$ctx->staffId(),$id)!==$facts)throw new DomainException('native_project_snapshot_changed');
+            if($this->nativeProjectWorkData($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id'],$group,$clock)!==$work)throw new DomainException('native_project_snapshot_changed');$this->output->set_output($html);
+        }catch(DomainException$e){$reason=$e->getMessage();$status=str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'csrf')||str_contains($reason,'denied')||str_contains($reason,'access')?403:422);show_error('Não foi possível confirmar o projeto, seus arquivos ou suas permissões.', $status);}
+        catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
+    }
+
     public function project($id = '')
     {
+        if($this->nativeProjects()){$this->nativeProjectForm($id);return;}
         if (staff_cant('edit', 'projects') && staff_cant('create', 'projects')) {
             access_denied('Projects');
         }
@@ -137,6 +263,7 @@ class Projects extends AdminController
 
     public function gantt()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_gantt');return;}
         $data['title'] = _l('project_gant');
 
         $selected_statuses = [];
@@ -187,6 +314,7 @@ class Projects extends AdminController
 
     public function view($id)
     {
+        if($this->nativeProjects()) {$this->nativeProjectView($id);return;}
         if (staff_can('view', 'projects') || $this->projects_model->is_member($id)) {
             close_setup_menu();
             $project = $this->projects_model->get($id);
@@ -403,6 +531,7 @@ class Projects extends AdminController
 
     public function mark_as()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','mark_as',[]);return;}
         $success = false;
         $message = '';
         if ($this->input->is_ajax_request()) {
@@ -425,6 +554,7 @@ class Projects extends AdminController
 
     public function file($id, $project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','file',[$id,$project_id]);return;}
         $data['discussion_user_profile_image_url'] = staff_profile_image_url(get_staff_user_id());
         $data['current_user_is_admin']             = is_admin();
 
@@ -441,6 +571,7 @@ class Projects extends AdminController
 
     public function update_file_data()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','update_file_data',[]);return;}
         if ($this->input->post()) {
             $this->projects_model->update_file_data($this->input->post());
         }
@@ -448,6 +579,7 @@ class Projects extends AdminController
 
     public function add_external_file()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','add_external_file',[]);return;}
         if ($this->input->post()) {
             $data                        = [];
             $data['project_id']          = $this->input->post('project_id');
@@ -461,6 +593,7 @@ class Projects extends AdminController
 
     public function download_all_files($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','download_all_files',[$id]);return;}
         if ($this->projects_model->is_member($id) || staff_can('view', 'projects')) {
             $files = $this->projects_model->get_files($id);
             if (count($files) == 0) {
@@ -484,6 +617,7 @@ class Projects extends AdminController
 
     public function export_project_data($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','export_project_data',[$id]);return;}
         if (staff_can('create', 'projects')) {
             app_pdf('project-data', LIBSPATH . 'pdf/Project_data_pdf', $id);
         }
@@ -491,6 +625,7 @@ class Projects extends AdminController
 
     public function update_task_milestone()
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('update_task_milestone');return;}
         if ($this->input->post()) {
             $this->projects_model->update_task_milestone($this->input->post());
         }
@@ -498,6 +633,7 @@ class Projects extends AdminController
 
     public function update_milestones_order()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','update_milestones_order',[]);return;}
         if ($post_data = $this->input->post()) {
             $this->projects_model->update_milestones_order($post_data);
         }
@@ -505,12 +641,28 @@ class Projects extends AdminController
 
     public function pin_action($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','pin_action',[$project_id]);return;}
         $this->projects_model->pin_action($project_id);
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
 
+    private function nativeProjectMembers($canonicalProject,$removeStaff=null):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_assignment_denied');
+            require_once APPPATH.'services/NativeCompanyResourceReferences.php';require_once APPPATH.'services/NativeCompanyWorkAssignments.php';
+            $ref=\NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$canonicalProject,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('native_project_legacy_writer_required');
+            $service=new \NativeCompanyWorkAssignments($this->db,db_prefix());$revision=$this->input->post('native_members_revision');if(!is_string($revision))throw new DomainException('native_assignment_invalid');
+            if($removeStaff!==null)$service->remove($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$revision,$removeStaff);
+            else{$members=$this->input->post('project_members')??[];if(!is_array($members))throw new DomainException('native_assignment_invalid');$service->replace($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$revision,$members);}
+            set_alert('success',_l('updated_successfully',_l('project_members')));redirect(admin_url('projects/view/'.$ref['canonical_id']),'location',303);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os membros, a revisão ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar a alteração dos membros do projeto.',503);}
+    }
+
     public function add_edit_members($project_id)
     {
+        if($this->nativeProjects()){$this->nativeProjectMembers($project_id);return;}
         if (staff_can('edit', 'projects')) {
             $this->projects_model->add_edit_members($this->input->post(), $project_id);
             redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
@@ -519,6 +671,7 @@ class Projects extends AdminController
 
     public function discussions($project_id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($project_id,'project_discussions');return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('project_discussions', [
@@ -530,6 +683,7 @@ class Projects extends AdminController
 
     public function discussion($id = '')
     {
+        if($this->nativeProjects()){ if(strtoupper($this->input->method(true))==='POST')$this->nativeProjectRuleAction('discussion',null,$id);else$this->nativeProjectGroupRead($this->input->get('project_id'),'project_discussions');return;}
         if ($this->input->post()) {
             $message = '';
             $success = false;
@@ -563,11 +717,13 @@ class Projects extends AdminController
 
     public function get_discussion_comments($id, $type)
     {
+        if($this->nativeProjects()){ $this->nativeProjectDiscussionComments($id,$type);return;}
         echo json_encode($this->projects_model->get_discussion_comments($id, $type));
     }
 
     public function add_discussion_comment($discussion_id, $type)
     {
+        if($this->nativeProjects()){ if($type!=='regular'){show_error('Tipo de conversa inválido.',422);return;}$this->nativeProjectRuleAction('add_discussion_comment',null,$discussion_id);return;}
         echo json_encode($this->projects_model->add_discussion_comment(
             $this->input->post(null, false),
             $discussion_id,
@@ -577,16 +733,19 @@ class Projects extends AdminController
 
     public function update_discussion_comment()
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('update_discussion_comment');return;}
         echo json_encode($this->projects_model->update_discussion_comment($this->input->post(null, false)));
     }
 
     public function delete_discussion_comment($id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('delete_discussion_comment',null,$id);return;}
         echo json_encode($this->projects_model->delete_discussion_comment($id));
     }
 
     public function delete_discussion($id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectRuleAction('delete_discussion',null,$id);return;}
         $success = false;
         if (staff_can('delete', 'projects')) {
             $success = $this->projects_model->delete_discussion($id);
@@ -605,6 +764,7 @@ class Projects extends AdminController
 
     public function change_milestone_color()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','change_milestone_color',[]);return;}
         if ($this->input->post()) {
             $this->projects_model->update_milestone_color($this->input->post());
         }
@@ -612,11 +772,24 @@ class Projects extends AdminController
 
     public function upload_file($project_id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();require_once APPPATH.'services/NativeCompanyResourceReferences.php';$ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$project_id,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('company_project_access_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['native_project_revision','native_request_key'])||!isset($input['native_project_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                $file=$_FILES['file']??null;if(!is_array($file)||is_array($file['name']??null)||!isset($file['name'],$file['tmp_name'],$file['error'])||(int)$file['error']!==UPLOAD_ERR_OK||!is_string($file['name'])||!is_string($file['tmp_name'])||(!is_uploaded_file($file['tmp_name'])&&PHP_SAPI!=='cli'))throw new DomainException('company_project_file_invalid');
+                $bytes=file_get_contents($file['tmp_name']);if(!is_string($bytes))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->uploadNative($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$input['native_project_revision'],$input['native_request_key'],$file['name'],$bytes);
+                redirect(admin_url('projects/view/'.$ref['canonical_id'].'?group=project_files'),'location',303);return;
+            }catch(DomainException$e){show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões deste projeto.',str_contains($e->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException$e){show_error('Não foi possível armazenar o arquivo do projeto.',503);return;}
+        }
         handle_project_file_uploads($project_id);
     }
 
     public function change_file_visibility($id, $visible)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','change_file_visibility',[$id,$visible]);return;}
         if ($this->input->is_ajax_request()) {
             $this->projects_model->change_file_visibility($id, $visible);
         }
@@ -624,6 +797,7 @@ class Projects extends AdminController
 
     public function change_activity_visibility($id, $visible)
     {
+        if($this->nativeProjects()){ if($visible!=='0'&&$visible!=='1'){show_error('Visibilidade inválida.',422);return;}$this->nativeProjectRuleAction('change_activity_visibility',null,$id);return;}
         if (staff_can('create', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->projects_model->change_activity_visibility($id, $visible);
@@ -633,12 +807,23 @@ class Projects extends AdminController
 
     public function remove_file($project_id, $id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();require_once APPPATH.'services/NativeCompanyResourceReferences.php';$ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$project_id,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('company_project_access_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['native_project_revision','native_request_key'])||!isset($input['native_project_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->hide($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$input['native_project_revision'],(string)$id,$input['native_request_key']);
+                redirect(admin_url('projects/view/'.$ref['canonical_id'].'?group=project_files'),'location',303);return;
+            }catch(DomainException$e){show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões deste projeto.',str_contains($e->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException$e){show_error('Não foi possível atualizar o arquivo do projeto.',503);return;}
+        }
         $this->projects_model->remove_file($id);
         redirect(admin_url('projects/view/' . $project_id . '?group=project_files'));
     }
 
     public function milestones_kanban()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_milestones');return;}
         $data['milestones_exclude_completed_tasks'] = $this->input->get('exclude_completed_tasks') && $this->input->get('exclude_completed_tasks') == 'yes';
 
         $data['project_id'] = $this->input->get('project_id');
@@ -662,6 +847,7 @@ class Projects extends AdminController
 
     public function milestones_kanban_load_more()
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($this->input->get('project_id'),'project_milestones');return;}
         $milestones_exclude_completed_tasks = $this->input->get('exclude_completed_tasks') && $this->input->get('exclude_completed_tasks') == 'yes';
 
         $status     = $this->input->get('status');
@@ -680,6 +866,7 @@ class Projects extends AdminController
 
     public function milestones($project_id)
     {
+        if($this->nativeProjects()){ $this->nativeProjectGroupRead($project_id,'project_milestones');return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('milestones', [
@@ -691,6 +878,7 @@ class Projects extends AdminController
 
     public function milestone($id = '')
     {
+        if($this->nativeProjects()){ $this->nativeProjectMilestoneAction($id);return;}
         if ($this->input->post()) {
             $message = '';
             $success = false;
@@ -723,6 +911,7 @@ class Projects extends AdminController
 
     public function delete_milestone($project_id, $id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','delete_milestone',[$project_id,$id]);return;}
         if (staff_can('delete_milestones', 'projects')) {
             if ($this->projects_model->delete_milestone($id)) {
                 set_alert('deleted', 'project_milestone');
@@ -733,6 +922,7 @@ class Projects extends AdminController
 
     public function bulk_action_files()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','bulk_action_files',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_project_files');
         $total_deleted       = 0;
         $hasPermissionDelete = staff_can('delete', 'projects');
@@ -757,6 +947,7 @@ class Projects extends AdminController
 
     public function timesheets($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','timesheets',[$project_id]);return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('timesheets', [
@@ -768,6 +959,7 @@ class Projects extends AdminController
 
     public function timesheet()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','timesheet',[]);return;}
         if ($this->input->post()) {
             if (
                 $this->input->post('timer_id')
@@ -830,6 +1022,7 @@ class Projects extends AdminController
 
     public function remove_team_member($project_id, $staff_id)
     {
+        if($this->nativeProjects()){$this->nativeProjectMembers($project_id,$staff_id);return;}
         if (staff_can('edit', 'projects')) {
             if ($this->projects_model->remove_team_member($project_id, $staff_id)) {
                 set_alert('success', _l('project_member_removed'));
@@ -841,6 +1034,7 @@ class Projects extends AdminController
 
     public function save_note($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','save_note',[$project_id]);return;}
         if ($this->input->post()) {
             $success = $this->projects_model->save_note($this->input->post(null, false), $project_id);
 
@@ -869,6 +1063,7 @@ class Projects extends AdminController
 
     public function edit_note($note_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','edit_note',[$note_id]);return;}
         if ($this->input->post()) {
             $success = $this->projects_model->update_note($this->input->post(null, false), $note_id);
             if ($success) {
@@ -887,6 +1082,7 @@ class Projects extends AdminController
 
     public function delete_note($note_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','delete_note',[$note_id]);return;}
         $note = $this->projects_model->get_staff_note($note_id, get_staff_user_id());
         if (! $note) {
             show_404();
@@ -909,6 +1105,18 @@ class Projects extends AdminController
 
     public function delete($project_id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();
+                $revision=$this->input->post('revision',false);$key=$this->input->post('request_key',false);
+                if(!is_string($revision)||!is_string($key))throw new DomainException('company_project_invalid_input');
+                require_once APPPATH.'services/CompanyProjects.php';
+                (new CompanyProjects($this->db,db_prefix()))->delete($ctx->issuerId(),$ctx->staffId(),$project_id,$revision,$key);
+                CompanyRequestScope::invalidateCaches($this);set_alert('success',_l('deleted',_l('project')));
+                redirect(CompanyRequestScope::adminUrl($this,'projects'),'location',303);return;
+            }catch(DomainException $error){show_error('Não foi possível cancelar o projeto ou confirmar sua revisão e permissões.',str_contains($error->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException $error){show_error('Não foi possível confirmar o armazenamento do projeto.',503);return;}
+        }
         if (staff_can('delete', 'projects')) {
             $project = $this->projects_model->get($project_id);
             $success = $this->projects_model->delete($project_id);
@@ -924,6 +1132,10 @@ class Projects extends AdminController
 
     public function copy($project_id)
     {
+        if($this->nativeProjects()){
+            require_once APPPATH.'services/NativeCompanyProjectCopyHttp.php';
+            NativeCompanyProjectCopyHttp::copy($this,$project_id);return;
+        }
         if (staff_can('create', 'projects')) {
             $id = $this->projects_model->copy($project_id, $this->input->post());
             if ($id) {
@@ -938,6 +1150,7 @@ class Projects extends AdminController
 
     public function mass_stop_timers($project_id, $billable = 'false')
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','mass_stop_timers',[$project_id]);return;}
         if (staff_can('create', 'invoices')) {
             $where = [
                 'billed'       => 0,
@@ -1177,6 +1390,11 @@ class Projects extends AdminController
 
     public function get_rel_project_data($id, $task_id = '')
     {
+        if($this->nativeProjects()){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_task_form_denied');require_once APPPATH.'services/NativeCompanyTaskForm.php';$out=(new NativeCompanyTaskForm($this->db,db_prefix()))->projectData($ctx->issuerId(),$ctx->staffId(),$id,$task_id);$this->output->set_header('Cache-Control: no-store');$this->output->set_header('Content-Type: application/json');$this->output->set_output(json_encode($out,JSON_THROW_ON_ERROR));}catch(DomainException $e){show_error('Projeto indisponível neste contexto.',422);}return;
+        }
+
         if ($this->input->is_ajax_request()) {
             $selected_milestone = '';
             $assigned           = [];
@@ -1215,6 +1433,7 @@ class Projects extends AdminController
 
     public function invoice_project($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','invoice_project',[$project_id]);return;}
         if (staff_can('create', 'invoices')) {
             $this->load->model('invoices_model');
             $data               = $this->input->post();
@@ -1238,6 +1457,11 @@ class Projects extends AdminController
 
     public function get_staff_names_for_mentions($projectId)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_resource_reference_denied');require_once APPPATH.'services/NativeCompanyProjectRead.php';$members=(new NativeCompanyProjectRead($this->db,db_prefix()))->mentionMembers($ctx->issuerId(),$ctx->staffId(),$projectId);$this->output->set_header('Cache-Control: no-store');$this->output->set_header('Content-Type: application/json');$this->output->set_output(json_encode($members,JSON_THROW_ON_ERROR));}catch(DomainException$e){show_error('Recurso indisponível neste contexto.',422);}return;
+        }
+
         if ($this->input->is_ajax_request()) {
             $projectId = $this->db->escape_str($projectId);
 

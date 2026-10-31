@@ -45,7 +45,7 @@ $CI->db->failTracking=false;$CI->db->version='1.0.2';try{require APP_MODULES_PAT
 $ddl=implode("\n",\BancoBrasil\ModuleSchema::statements('test_'));
 check(substr_count($ddl,'ENGINE=InnoDB')===7,'all transactional tables');
 check(!preg_match('/DROP|TRUNCATE|DELETE FROM/i',$ddl),'non destructive schema');
-check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.2.6'),'header advances to new native migration without rewriting earlier history');
+check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.3.5'),'header advances to new native migration without rewriting earlier history');
 $source114=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/114_version_114.php');
 check(str_contains($source114,'class Migration_Version_114 extends App_module_migration')&&str_contains($source114,'public function up()'),'114 is a new native NOOP preserving prior history');
 $source104=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/104_version_104.php');
@@ -63,9 +63,9 @@ check(!preg_match('/ALTER|DROP|TRUNCATE|DELETE FROM|UPDATE /i',implode('\n',$CI-
 
 $source115=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/115_version_115.php');
 check(str_contains($source115,'class Migration_Version_115 extends App_module_migration')&&str_contains($source115,'public function up()')&&str_contains($source115,'NOOP'),'115 is a new native profile NOOP preserving earlier migration history');
-check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Requires at least: 4.7.3'),'new profile runtime requires its composed native core version');
+check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Requires at least: 4.7.4'),'new profile runtime requires its composed native core version');
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleRelease.php';
-check(\BancoBrasil\ModuleRelease::VERSION==='1.2.6'&&\BancoBrasil\ModuleRelease::MIGRATION===126&&\BancoBrasil\ModuleRelease::MINIMUM_CORE==='4.7.3','strict runtime release agrees with module header and latest native migration');
+check(\BancoBrasil\ModuleRelease::VERSION==='1.3.5'&&\BancoBrasil\ModuleRelease::MIGRATION===135&&\BancoBrasil\ModuleRelease::MINIMUM_CORE==='4.7.4','strict runtime release agrees with module header and latest native migration');
 $source116=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/116_version_116.php');
 check(str_contains($source116,'class Migration_Version_116 extends App_module_migration')&&str_contains($source116,'ApiCnabContractSchema::ensure'),'116 creates an additive native contract schema without rewriting historical declarations');
 foreach([117,118,119] as $step439){
@@ -87,3 +87,30 @@ check(str_contains($source125,'class Migration_Version_125 extends App_module_mi
 $source126=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/126_version_126.php');
 check(str_contains($source126,'class Migration_Version_126 extends App_module_migration')&&str_contains($source126,'NOOP'),'126 adds cross-provider fence capability without modifying historical125');
 echo "OK {$n} Banco do Brasil native migration checks\n";
+
+$source127=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/127_version_127.php');
+check(str_contains($source127,'class Migration_Version_127 extends App_module_migration')&&str_contains($source127,'NOOP'),'127 is readonly-catalog release, preserving126 schema/data');
+
+$source128=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/128_version_128.php');
+check(str_contains($source128,'class Migration_Version_128 extends App_module_migration')&&str_contains($source128,'NOOP'),'128 preserves configuration and origins; activation is never inferred');
+
+$source129=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/129_version_129.php');
+check(str_contains($source129,'class Migration_Version_129 extends App_module_migration')&&str_contains($source129,'NOOP'),'129 uses native presentation without modifying historical migrations');
+
+$source130=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/130_version_130.php');
+check(str_contains($source130,'class Migration_Version_130 extends App_module_migration')&&str_contains($source130,'ReturnArchiveSchema::upgrade'),'130 adds private original retention without rewriting historical migrations');
+
+$source131=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/131_version_131.php');
+check(str_contains($source131,'class Migration_Version_131 extends App_module_migration')&&str_contains($source131,'NOOP')&&str_contains($source131,'SchemaValidator::assertCompatible'),'131 validates the retained ledger without changing historical migrations or data');
+
+$source132=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/132_version_132.php');
+check(str_contains($source132,'class Migration_Version_132 extends App_module_migration')&&str_contains($source132,'NOOP')&&str_contains($source132,'CheckoutSchema::ensure')&&str_contains($source132,'ApiOriginPolicy::ensure')&&str_contains($source132,'SchemaValidator::assertCompatible'),'132 validates all three real driver ledgers without modifying previous migrations');
+
+$source133=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/133_version_133.php');
+check(str_contains($source133,'class Migration_Version_133 extends App_module_migration')&&str_contains($source133,'ReturnRejectionSchema::upgrade'),'133 adds a separate rejected-upload archive, retaining every historical migration check');
+
+$source134=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/134_version_134.php');
+check(str_contains($source134,'class Migration_Version_134 extends App_module_migration')&&str_contains($source134,'NOOP')&&str_contains($source134,'SchemaValidator::assertCompatible'),'134 validates the separate ledger without rewriting133 or historical observations');
+
+$source135=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/135_version_135.php');
+check(str_contains($source135,'class Migration_Version_135 extends App_module_migration')&&str_contains($source135,'Cnab400PreparationSchema::upgrade'),'135 adds a private preparation ledger without modifying earlier migrations');

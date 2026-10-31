@@ -18,6 +18,7 @@ class Contacts extends ClientsController
     public function __construct()
     {
         parent::__construct();
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';new NativePortalContactsHttp($this);return;}
         $this->load->model('clients_model');
 
         $this->contactId = get_contact_user_id();
@@ -37,6 +38,7 @@ class Contacts extends ClientsController
      */
     public function index()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';return(new NativePortalContactsHttp($this))->index();}
         if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') {
             $this->load->model('gdpr_model');
             $data['consent_purposes'] = $this->gdpr_model->get_consent_purposes();
@@ -58,6 +60,7 @@ class Contacts extends ClientsController
      */
     public function contact($id = null)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';return(new NativePortalContactsHttp($this))->contact($id);}
         if (is_automatic_calling_codes_enabled()) {
             $clientCountryId = $this->db->select('country')
             ->where('userid', get_client_user_id())
@@ -181,6 +184,7 @@ class Contacts extends ClientsController
      */
     public function delete($customer_id, $id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';return(new NativePortalContactsHttp($this))->delete($customer_id,$id);}
         $contact = $this->clients_model->get_contact($id);
 
         if ($customer_id != get_client_user_id() || $contact->is_primary == 1) {
@@ -202,6 +206,7 @@ class Contacts extends ClientsController
      */
     public function delete_profile_image($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';return(new NativePortalContactsHttp($this))->removeImage($id);}
         $contact = $this->clients_model->get_contact($id);
 
         if ($contact->userid != get_client_user_id()) {
@@ -221,6 +226,7 @@ class Contacts extends ClientsController
      */
     public function contact_email_profile_unique($email, $id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalContactsHttp.php';return(new NativePortalContactsHttp($this))->email($email,$id);}
         return total_rows(
             db_prefix() . 'contacts',
             'id !=' . $id . ' AND email="' . get_instance()->db->escape_str($email) . '"'

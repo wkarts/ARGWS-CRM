@@ -1,24 +1,24 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?= theme_head_view(); ?>
-<?php get_template_part($navigationEnabled ? 'navigation' : ''); ?>
+<?= !empty($native_portal) ? $native_portal_template['head'] : theme_head_view(); ?>
+<?php if(!empty($native_portal)){if($navigationEnabled)$this->load->view('themes/perfex/template_parts/navigation',$this->data);}else get_template_part($navigationEnabled ? 'navigation' : ''); ?>
 <div id="wrapper">
     <div id="content">
         <div class="container">
             <div class="row">
-                <?php get_template_part('alerts'); ?>
+                <?php if(empty($native_portal))get_template_part('alerts');elseif(!empty($native_portal_identity))$this->load->view('themes/perfex/template_parts/alerts',$this->data);if(!empty($native_portal)&&!empty($native_portal_message)){ ?><div class="alert alert-info" role="status"><?= e($native_portal_message); ?></div><?php } ?>
             </div>
         </div>
         <?php if (isset($knowledge_base_search)) { ?>
         <?php get_template_part('knowledge_base/search'); ?>
         <?php } ?>
         <div class="container">
-            <?php hooks()->do_action('customers_content_container_start'); ?>
+            <?php if(empty($native_portal))hooks()->do_action('customers_content_container_start'); ?>
             <div class="row">
                 <?php
             /**
              * Don't show calendar for invoices, estimates, proposals etc.. views where no navigation is included or in kb area
              */
-            if (is_client_logged_in() && $subMenuEnabled && ! isset($knowledge_base_search)) { ?>
+            if (empty($native_portal) && is_client_logged_in() && $subMenuEnabled && ! isset($knowledge_base_search)) { ?>
                 <ul class="submenu customer-top-submenu">
                     <?php hooks()->do_action('before_customers_area_sub_menu_start'); ?>
                     <li class="customers-top-submenu-files">
@@ -51,20 +51,20 @@
                 </ul>
                 <div class="clearfix"></div>
                 <?php } ?>
-                <?= theme_template_view(); ?>
+                <?= !empty($native_portal) ? $native_portal_template['view'] : theme_template_view(); ?>
             </div>
         </div>
     </div>
 </div>
 </div>
-<?= theme_footer_view();
+<?= !empty($native_portal) ? $native_portal_template['footer'] : theme_footer_view();
 
 // Always have app_customers_footer() just before the closing </body>
-app_customers_footer();
+if(!empty($native_portal))echo NativePortalPresentation::scripts(($native_portal_options['use_recaptcha_customers_area'] ?? '0') === '1' && ($native_portal_options['recaptcha_site_key'] ?? '') !== '');else app_customers_footer();
 /**
  * Check for any alerts stored in session
  */
-app_js_alerts();
+if(empty($native_portal))app_js_alerts();
 ?>
 </body>
 

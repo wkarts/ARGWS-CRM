@@ -32,8 +32,8 @@ const results = Object.fromEntries(outcomes.map(outcome => {
 process.stdout.write(JSON.stringify(results));
 """
         cases = {
-            "company-shell-synthetic-ui": ("node tests/company_shell_browser.cjs", "ignore"),
-            "company-identity-presentation": ("node tests/company_identity_browser.cjs", "warn"),
+            "company-shell-synthetic-ui": ("node tests/native_shell_browser.cjs", "ignore"),
+            "company-identity-presentation": ("node tests/native_identity_browser.cjs", "warn"),
             "client-identity-presentation": ("node tests/companies/client_identity_browser.cjs", "error"),
             "asaas-native-settings-presentation": ("node tests/asaas_settings_tabs.browser.cjs", "error"),
             "issuer-native-browser": ("bash tests/docker_provision_smoke.sh", "ignore"),
@@ -62,6 +62,49 @@ process.stdout.write(JSON.stringify(results));
                     "cancelled": False, "": False,
                 })
                 self.assertRegex(upload, r"(?m)^          if-no-files-found: " + missing_policy + r"$")
+
+
+class PhpErrorClassificationTest(unittest.TestCase):
+    def test_exception_diagnostics_are_bounded_and_do_not_expose_values(self):
+        root = Path(__file__).resolve().parents[1]
+        secret = 'sensitive-synthetic-password-and-token'
+        diagnostic = (
+            'PHP=8.3.35 memory_limit=128M\n'
+            'ERROR --> Severity: error --> Exception: issuer_portal_mail_write_unconfirmed '
+            + secret + ' https://user.invalid/private?token=' + secret
+            + ' /app/application/services/NativeCompanySettingsController.php 82\n'
+            'ERROR --> Severity: error --> Exception: ' + secret
+            + ' /app/application/not-present-secret.php 19\n'
+            'ERROR --> Severity: Warning --> ' + secret
+            + ' /app/application/../../secret.php 1\n'
+            'non-error payload ' + secret + '\n'
+        )
+        result = subprocess.run(
+            ['python3', 'tests/ci/classify_php_error_log.py'], cwd=root,
+            input=diagnostic, text=True, capture_output=True, check=True,
+        )
+        self.assertEqual(result.stdout.splitlines(), [
+            'PHP=8.3.35 memory_limit=128M',
+            'kind=exception location=application/services/NativeCompanySettingsController.php:82 '
+            'code=issuer_portal_mail_write_unconfirmed',
+            'kind=exception location=unavailable code=unclassified',
+            'kind=php_error location=unavailable code=unclassified',
+        ])
+        self.assertNotIn(secret, result.stdout)
+        self.assertNotIn('https://', result.stdout)
+        self.assertNotIn('not-present-secret', result.stdout)
+        self.assertEqual(result.stderr, '')
+
+    def test_disposable_logging_and_classifier_are_in_existing_preflight(self):
+        root = Path(__file__).resolve().parents[1]
+        script = (root / 'tests/issuers_standalone_http_smoke.sh').read_text()
+        workflow = (root / '.github/workflows/deployment-integrity.yml').read_text()
+        self.assertIn('python3 -m unittest tests/test_issuer_browser_environment.py', workflow)
+        self.assertIn('python3 tests/ci/classify_php_error_log.py', script)
+        self.assertLess(script.index('if (APP_DB_NAME !== "argws_upgrade_ci")'),
+                        script.index('node tests/companies_portal_browser.cjs'))
+        self.assertLess(script.index('define(\\"APP_LOG_THRESHOLD\\", 1)'),
+                        script.index('node tests/companies_portal_browser.cjs'))
 
 
 class BrowserEnvironmentTest(unittest.TestCase):

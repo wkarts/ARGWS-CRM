@@ -12,8 +12,8 @@ foreach (['task_schedules','standalone_schedules'] as $domain) {
         opsBootCheck($autoload === ['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]], 'Recurring bootstrap never loads an ambient session, module or provider');
         opsBootCheck(preg_match('#^'.$pattern.'$#D', implode('/', $segments)) === 1, 'Exact recurring bearer route is admitted');
     }
-    opsBootCheck(($routes['company_operations_api/'.$domain] ?? null) === 'company_operations_api/'.$domain, 'Finite schedule list route');
-    opsBootCheck(($routes['company_operations_api/'.$domain.'/([1-9][0-9]{0,9})'] ?? null) === 'company_operations_api/'.$domain.'/$1', 'Finite schedule detail route');
+    opsBootCheck(($routes['company_operations_api/'.$domain] ?? null) === 'operations_api/'.$domain, 'Finite schedule list route');
+    opsBootCheck(($routes['company_operations_api/'.$domain.'/([1-9][0-9]{0,9})'] ?? null) === 'operations_api/'.$domain.'/$1', 'Finite schedule detail route');
     foreach (['0','01','-1','1e2','2147483648','23.json','23/extra'] as $id) {
         $segments = ['company_operations_api', $domain, ...explode('/', $id)];
         $denied = false;

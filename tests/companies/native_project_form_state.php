@@ -1,0 +1,39 @@
+<?php
+require __DIR__.'/native_project_create_fields.php';
+require_once APPPATH.'services/NativeCompanyProjectFormState.php';
+NativeCompanyProjectFormStateSchema::ensure($db,$p);
+// Actual native contacts schema, rather than a fabricated field subset.
+if(!$db->table_exists($p.'contacts')){if(!preg_match('/CREATE TABLE `tblcontacts` \(.*?\) ENGINE=InnoDB[^;]*;/s',$nativeSeed,$match))throw new RuntimeException('Native contacts schema missing');$sql=str_replace('`tblcontacts`','`'.$p.'contacts`',$match[0]);$sql=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$sql);if($db->driver()==='sqlite'){$sql=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$sql);$sql=preg_replace('/enum\([^)]*\)/','varchar(50)',$sql);}$db->query($sql);}
+// MySQL runs original index/FK migrations; SQLite exercises the exact declared table fields, not those ALTER statements.
+foreach([CompanyProjectPortalRulesSchema::class,CompanyPortalTaskWriteSchema::class,CompanyProjectMilestonesSchema::class,CompanyProjectTimesheetsSchema::class,CompanyProjectGanttSchema::class,CompanyProjectDiscussionsSchema::class,CompanyProjectContactFilesSchema::class]as$schema){if($db->driver()==='mysql'){$schema::ensure($db,$p);continue;}foreach($schema::definitions($p)as$table=>$parts)if(!$db->table_exists($p.$table)){$ddl='CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB';$ddl=preg_replace('/ CHARACTER SET [a-z0-9]+ COLLATE [a-z0-9_]+/','',$ddl);$db->query($ddl);}}
+$state=new NativeCompanyProjectFormState($db,$p);$native=['flags'=>array_fill_keys(NativeCompanyProjectFormState::FLAGS,1),'features'=>NativeCompanyProjectFormState::FEATURES,'contact_notification'=>0,'notify_contacts'=>[],'date_finished'=>null];
+$native['flags']['hide_tasks_on_main_tasks_table']=0;
+$withState=$service->createNative($a,92,$form,$config,$tk('native-full-form-state'),[92],$decorations,$native);
+$readState=fn($i,$actor,$project)=>IssuerTransaction::run($db,$p,NativeCompanyProjectFormState::tables(),fn()=>$state->readInOwnedTransaction($i,$actor,$project));
+$got=$readState($a,92,$withState);essentialCheck($got['declared']&&$got['values']===$native,'Native form flags/features keep real source values atomically with project creation');
+essentialCheck((int)$db->query('SELECT view_tasks FROM '.$p.'company_project_portal_rules WHERE issuer_id=? AND project_id=?',[$a,$withState])->row_array()['view_tasks']===1,'Form setting is persisted in the canonical portal task read source');
+essentialCheck((int)$db->query('SELECT create_tasks FROM '.$p.'company_project_write_rules WHERE issuer_id=? AND project_id=?',[$a,$withState])->row_array()['create_tasks']===1,'Form setting is persisted in the canonical contact mutation source');
+$extra=json_decode($db->query('SELECT payload_json FROM '.$p.'company_project_native_form_state WHERE issuer_id=? AND project_id=?',[$a,$withState])->row_array()['payload_json'],true,32,JSON_THROW_ON_ERROR);
+essentialCheck(array_keys($extra['flags'])===NativeCompanyProjectFormState::EXTRA_FLAGS&&!in_array('project_gantt',$extra['features'],true),'Sidecar does not duplicate canonical flags or feature authority');
+$db->query('UPDATE '.$p.'company_project_gantt_rules SET project_gantt=0,revision=revision+1 WHERE issuer_id=? AND project_id=?',[$a,$withState]);$after=$readState($a,92,$withState);
+essentialCheck(!in_array('project_gantt',$after['values']['features'],true)&&$after['revision']!==$got['revision'],'Existing granular control changes are reflected, not overwritten by stale native JSON');
+essentialThrows(fn()=>IssuerTransaction::run($db,$p,NativeCompanyProjectFormState::tables(),fn()=>$state->saveInOwnedTransaction($a,7,$withState,$got['revision'],$native)),'native_project_form_stale','Native save detects changed granular source revision');
+essentialThrows(fn()=>$readState($b,7,$withState),'native_project_access_denied','Known source ID in a different company cannot expose form configuration');
+$bad=$native;$bad['flags']['view_tasks']=0;essentialThrows(fn()=>NativeCompanyProjectFormState::normalize($bad),'native_project_form_invalid','Existing task exposure constraints are not weakened by the native form');
+$before=$db->query('SELECT * FROM '.$p.'company_projects ORDER BY id')->result_array();$db->failOn='INSERT INTO '.$p.'company_project_native_form_state';
+essentialThrows(fn()=>$service->createNative($a,92,$form,$config,$tk('native-state-write-failure'),[92],$decorations,$native),'issuer_storage_failed','Failed last form-state write rolls back all earlier canonical rules and project');$db->failOn=null;
+essentialCheck($db->query('SELECT * FROM '.$p.'company_projects ORDER BY id')->result_array()===$before,'No project survives incomplete form composition');
+echo 'Native project form canonical sources: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";
+$canonical=NativeCompanyResourceId::encode('company_project',$withState);$memberSnapshot=$assignments->read($a,7,'project',$withState);$tagSnapshot=$tags->read($a,7,'project',$canonical);
+$related=['members'=>[7,92],'members_revision'=>$memberSnapshot['revision'],'tags'=>['Native form changed tag'],'tags_revision'=>$tagSnapshot['revision'],'custom_fields'=>[$fieldId=>'Updated through original project form'],'form_state'=>$native,'form_state_revision'=>$after['revision']];
+$source=$service->get($a,7,$withState);$updateForm=array_replace($form,['name'=>'All original project fields updated atomically']);
+$db->failOn='UPDATE '.$p.'company_project_native_form_state';essentialThrows(fn()=>$service->updateNative($a,7,$withState,1,$updateForm,1,$config,$tk('native-full-update-failure'),$related),'issuer_storage_failed','Last native configuration UPDATE failure rolls back source, metadata, members, tags and fields');$db->failOn=null;
+essentialCheck($service->get($a,7,$withState)===$source&&$assignments->read($a,7,'project',$withState)===$memberSnapshot&&$tags->read($a,7,'project',$canonical)===$tagSnapshot,'No partial native form update survives final-field failure');
+$service->updateNative($a,7,$withState,1,$updateForm,1,$config,$tk('native-full-update'),$related);
+essentialCheck($service->get($a,7,$withState)['name']===$updateForm['name']&&array_column($tags->read($a,7,'project',$canonical)['tags'],'name')===$related['tags']&&$fields->values($a,7,'projects',$canonical)[$fieldId]===$related['custom_fields'][$fieldId],'Native save updates actual project, tags and custom values together');
+essentialCheck(array_map('intval',array_column($assignments->read($a,7,'project',$withState)['members'],'staffid'))===[7,92]&&$readState($a,7,$withState)['values']===$native,'Same save writes selected members and every existing native flag source');
+$contactRecord=['userid'=>$client,'firstname'=>'Synthetic','lastname'=>'Contact','email'=>'synthetic@example.test','phonenumber'=>'','datecreated'=>'2026-10-25 00:00:00','active'=>1];$db->insert($p.'contacts',$contactRecord);$contact=(int)$db->insert_id();
+$notified=array_replace($native,['contact_notification'=>2,'notify_contacts'=>[$contact]]);$projectContact=$service->createNative($a,92,$form,$config,$tk('native-specific-contact'),[],$decorations,$notified);
+essentialCheck($readState($a,92,$projectContact)['values']['notify_contacts']===[$contact],'Specific contact preference preserves exact authorized customer relation');
+$db->query('UPDATE '.$p.'contacts SET active=0 WHERE id=?',[$contact]);essentialThrows(fn()=>$service->createNative($a,92,$form,$config,$tk('native-revoked-contact'),[],$decorations,$notified),'native_project_contact_denied','Inactive notification contact is rejected before any project commits');
+echo 'Native project complete core form composition: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";

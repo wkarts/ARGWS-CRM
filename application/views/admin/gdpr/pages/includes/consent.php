@@ -2,6 +2,10 @@
 <div class="modal fade" id="consentModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <?= form_open('', ['id' => 'consentForm']); ?>
+    <?php if(!empty($native_company_consent)){ ?>
+    <input type="hidden" name="_native_company_csrf" value="<?= e($native_consent_csrf); ?>">
+    <input type="hidden" name="native_consent_revision" value="<?= e(isset($purpose)?$purpose->revision:''); ?>">
+    <?php } ?>
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

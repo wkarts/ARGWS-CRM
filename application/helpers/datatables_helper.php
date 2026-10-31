@@ -387,32 +387,34 @@ function render_datatable($headings = [], $class = '', $additional_classes = [''
  *
  * @return array
  */
-function get_datatables_language_array()
+function get_datatables_language_array(?callable $translate = null)
 {
+    $scoped = $translate !== null;
+    $translate = $translate ?? '_l';
     $lang = [
-        'emptyTable'        => preg_replace('/{(\\d+)}/', _l('dt_entries'), _l('dt_empty_table')),
-        'info'              => preg_replace('/{(\\d+)}/', _l('dt_entries'), _l('dt_info')),
-        'infoEmpty'         => preg_replace('/{(\\d+)}/', _l('dt_entries'), _l('dt_info_empty')),
-        'infoFiltered'      => preg_replace('/{(\\d+)}/', _l('dt_entries'), _l('dt_info_filtered')),
+        'emptyTable'        => preg_replace('/{(\\d+)}/', $translate('dt_entries'), $translate('dt_empty_table')),
+        'info'              => preg_replace('/{(\\d+)}/', $translate('dt_entries'), $translate('dt_info')),
+        'infoEmpty'         => preg_replace('/{(\\d+)}/', $translate('dt_entries'), $translate('dt_info_empty')),
+        'infoFiltered'      => preg_replace('/{(\\d+)}/', $translate('dt_entries'), $translate('dt_info_filtered')),
         'lengthMenu'        => '_MENU_',
-        'loadingRecords'    => _l('dt_loading_records'),
+        'loadingRecords'    => $translate('dt_loading_records'),
         'processing'        => '<div class="dt-loader"></div>',
         'search'            => '<div class="input-group"><span class="input-group-addon"><span class="fa fa-search"></span></span>',
-        'searchPlaceholder' => _l('dt_search'),
-        'zeroRecords'       => _l('dt_zero_records'),
+        'searchPlaceholder' => $translate('dt_search'),
+        'zeroRecords'       => $translate('dt_zero_records'),
         'paginate'          => [
-            'first'    => _l('dt_paginate_first'),
-            'last'     => _l('dt_paginate_last'),
-            'next'     => _l('dt_paginate_next'),
-            'previous' => _l('dt_paginate_previous'),
+            'first'    => $translate('dt_paginate_first'),
+            'last'     => $translate('dt_paginate_last'),
+            'next'     => $translate('dt_paginate_next'),
+            'previous' => $translate('dt_paginate_previous'),
         ],
         'aria' => [
-            'sortAscending'  => _l('dt_sort_ascending'),
-            'sortDescending' => _l('dt_sort_descending'),
+            'sortAscending'  => $translate('dt_sort_ascending'),
+            'sortDescending' => $translate('dt_sort_descending'),
         ],
     ];
 
-    return hooks()->apply_filters('datatables_language_array', $lang);
+    return $scoped ? $lang : hooks()->apply_filters('datatables_language_array', $lang);
 }
 
 /**
@@ -443,5 +445,11 @@ function prepare_dt_filter($filter)
  */
 function get_table_last_order($tableID)
 {
+    $ci = &get_instance();
+    if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($ci)) {
+        require_once APPPATH.'services/NativeCompanyTableOrder.php';
+        $context = CompanyRequestScope::context();
+        return htmlentities((new NativeCompanyTableOrder($ci->db, db_prefix(), $context->issuerId(), $context->staffId()))->read($tableID), ENT_QUOTES, 'UTF-8');
+    }
     return htmlentities(get_staff_meta(get_staff_user_id(), $tableID . '-table-last-order'));
 }

@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/../SalesNumberPresentation.php';
 
 require_once __DIR__ . '/IssuerPolicy.php';
 require_once __DIR__.'/IssuerTransaction.php';
@@ -17,10 +18,10 @@ final class InvoiceIssuerDocuments
     private string $tables;
     private int $actor;
     private $authorize;
-    private ?CompanyPortalInvoices $portalSource;private ?array $portalSession;
+    private CompanyPortalInvoices|NativeCompanyPublicInvoice|null $portalSource;private ?array $portalSession;
 
     /** Authorization is mandatory; the production adapter must also enforce the rollout gate. */
-    public function __construct($db, string $prefix, $actor, callable $authorize,?CompanyPortalInvoices $portalSource=null,?array $portalSession=null)
+    public function __construct($db, string $prefix, $actor, callable $authorize,CompanyPortalInvoices|NativeCompanyPublicInvoice|null $portalSource=null,?array $portalSession=null)
     {
         if (!preg_match('/^[A-Za-z0-9_]+$/D', $prefix)) {
             throw new InvalidArgumentException('Invalid table prefix');
@@ -28,7 +29,7 @@ final class InvoiceIssuerDocuments
         $this->db = $db;
         $this->prefix = $prefix;
         $this->tables = $prefix . 'issuers_';
-        $this->actor = IssuerPolicy::id($actor);
+        $this->actor = $portalSource instanceof NativeCompanyPublicInvoice && $actor === 0 ? 0 : IssuerPolicy::id($actor);
         $this->authorize = $authorize;
         if(($portalSource===null)!==($portalSession===null))throw new InvalidArgumentException('issuer_document_portal_context_required');$this->portalSource=$portalSource;$this->portalSession=$portalSession;
     }
@@ -127,6 +128,10 @@ final class InvoiceIssuerDocuments
 
     private function requireAccess(int $issuer, string $capability): void
     {
+        if ($this->portalSource instanceof NativeCompanyPublicInvoice) {
+            if (!in_array($capability,['view_invoices','render_invoices'],true))throw new DomainException('issuer_access_denied');
+            $this->portalSource->assertIdentity($issuer,$this->portalSource->invoiceId(),$this->db,$this->prefix);
+        }
         if (($this->authorize)($issuer, $this->actor, $capability) !== true) {
             throw new DomainException('issuer_access_denied');
         }
@@ -178,7 +183,7 @@ final class InvoiceIssuerDocuments
         if (!is_array($profile)) { throw new DomainException('issuer_document_profile_required'); }
         $limits = ['address'=>500, 'city'=>100, 'state'=>100, 'postcode'=>32, 'country_code'=>2, 'phone'=>50, 'email'=>191, 'prefix'=>50, 'terms'=>10000];
         $keys = array_merge(array_keys($limits), ['padding', 'logo_inline']);
-        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), array_merge($keys,['signature_inline','pdf_preferences']))) {
+        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), array_merge($keys,['signature_inline','pdf_preferences','number_format','number_date']))) {
             throw new DomainException('issuer_document_invalid_profile');
         }
         $identity = [
@@ -190,10 +195,17 @@ final class InvoiceIssuerDocuments
         }
         if (!preg_match('/^[A-Z]{2}$/D', $identity['country_code'])
             || ($identity['email'] !== '' && !filter_var($identity['email'], FILTER_VALIDATE_EMAIL))
-            || !is_int($profile['padding']) || $profile['padding'] < 1 || $profile['padding'] > 20) {
+            || !is_int($profile['padding']) || $profile['padding'] < (isset($profile['number_format'])?0:1) || $profile['padding'] > (isset($profile['number_format'])?99:20)) {
             throw new DomainException('issuer_document_invalid_profile');
         }
         $identity['padding'] = $profile['padding'];
+        if(array_key_exists('number_format',$profile)||array_key_exists('number_date',$profile)){
+            if(!in_array($profile['number_format']??null,[1,2,3,4],true)||!is_string($profile['number_date']??null))throw new DomainException('issuer_document_invalid_profile');
+            $date=DateTimeImmutable::createFromFormat('!Y-m-d',$profile['number_date']);
+            if(!$date||$date->format('Y-m-d')!==$profile['number_date'])throw new DomainException('issuer_document_invalid_profile');
+            $identity['number_format']=$profile['number_format'];$identity['number_date']=$profile['number_date'];
+        }
+
         $identity['logo_inline'] = self::logo($profile['logo_inline']);
         if(array_key_exists('signature_inline',$profile)){$identity['signature_inline']=self::logo($profile['signature_inline']);}
         if(array_key_exists('pdf_preferences',$profile)){
@@ -285,13 +297,21 @@ final class InvoiceIssuerDocuments
         CompanyInvoicePresentation::specification($identity,'invoices');
         $snapshot['series'] = self::series($snapshot['series']);
         $snapshot['number'] = self::number($snapshot['number']);
-        $expected = $identity['prefix'] . $snapshot['series'] . '-' . str_pad($snapshot['number'], $identity['padding'], '0', STR_PAD_LEFT);
+        $expected = self::formatted($identity,$snapshot['series'],$snapshot['number']);
         if ($snapshot['prefix'] !== $identity['prefix'] || $snapshot['formatted_number'] !== $expected) {
             throw new DomainException('issuer_document_corrupt');
         }
         $snapshot['identity'] = $identity;
         $snapshot['recipient'] = self::recipient($recipient);
         return $snapshot;
+    }
+
+    private static function formatted(array $identity,string $series,string $number):string
+    {
+        // Existing snapshots retain the original series format byte-for-byte.
+        return isset($identity['number_format'])
+            ?SalesNumberPresentation::format($number,$identity['number_format'],$identity['prefix'],$identity['number_date'],$identity['padding'])
+            :$identity['prefix'].$series.'-'.str_pad($number,$identity['padding'],'0',STR_PAD_LEFT);
     }
 
     /** A retry returns the original snapshot and does not consume another number. */
@@ -339,7 +359,7 @@ final class InvoiceIssuerDocuments
             $sequence = $this->one("SELECT next_number FROM {$this->tables}sequences WHERE issuer_id=? AND series=? FOR UPDATE", [$issuer, $series]);
             $number = self::number($sequence['next_number'] ?? '1');
             $next = self::increment($number);
-            $formatted = $identity['prefix'] . $series . '-' . str_pad($number, $identity['padding'], '0', STR_PAD_LEFT);
+            $formatted = self::formatted($identity,$series,$number);
             $created = date('Y-m-d H:i:s');
             $json = json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $recipientJson = json_encode($recipient, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -366,12 +386,14 @@ final class InvoiceIssuerDocuments
     /** Internal DTO source. Explicit render capability; identifiers only, never caller-supplied invoice data. */
     public function readForPdf($invoice,$issuer):array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
         return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))),fn():array=>$this->readForPdfInOwned($invoice,$issuer));
     }
     /** Same canonical native reader, only inside the exact core-owned transaction. */
     public function readForPdfInOwned($invoice,$issuer):array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);IssuerTransaction::assertOwned($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))));$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
             // Serialize permission changes while constructing the authorized DTO, as allocation does.
             if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
@@ -379,7 +401,7 @@ final class InvoiceIssuerDocuments
             }
             $registry = $this->one("SELECT id,active FROM {$this->tables}registry WHERE id=? FOR UPDATE", [$issuer]);
             if (!$registry || (int) $registry['active'] !== 1) { throw new DomainException('issuer_unavailable'); }
-            $record = $this->one("SELECT id,issuer_id,clientid,date,duedate,currency,subtotal,total_tax,total,adjustment,discount_total,status,clientnote,
+            $record = $this->one("SELECT id,issuer_id,clientid,hash,date,duedate,currency,subtotal,total_tax,total,adjustment,discount_total,status,clientnote,terms,show_quantity_as,
                 billing_street,billing_city,billing_state,billing_zip,billing_country,shipping_street,shipping_city,shipping_state,shipping_zip,shipping_country,include_shipping,show_shipping_on_invoice
                 FROM {$this->prefix}invoices WHERE id=? FOR UPDATE", [$invoice]);
             if (!$record || !isset($record['issuer_id']) || IssuerPolicy::id($record['issuer_id']) !== $issuer) {
@@ -401,12 +423,17 @@ final class InvoiceIssuerDocuments
             $this->requireAccess($issuer, 'view_invoices');
             $balance=new CompanyInvoiceBalance($this->db,$this->prefix);$position=$this->portalSource?$balance->portalInOwned($this->portalSource,$this->portalSession,$issuer,$invoice):$balance->inOwned($issuer,$this->actor,$invoice);
             $this->requireAccess($issuer, 'render_invoices');$this->requireAccess($issuer, 'view_invoices');
-            return compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
+            $source=compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
+            $layout=CompanyInvoicePresentation::layout($snapshot['identity'],'invoices');
+            if($layout['show_transactions']){require_once __DIR__.'/../CompanyInvoicePaymentPresentation.php';$source['transactions']=CompanyInvoicePaymentPresentation::captureInOwned($this->db,$this->prefix,$issuer,$invoice,$position);}
+            if($layout['show_pay_link']&&in_array((int)$record['status'],[1,3,4],true)&&preg_match('/^[a-f0-9]{32}$/D',(string)$record['hash']))$source['portal_path']='invoice/'.$invoice.'/'.$record['hash'].'?issuer_id='.$issuer;
+            $this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');return $source;
     }
 
     /** Read-only. Missing/mismatched snapshots never fall back to global identity or number. */
     public function get($invoice, $issuer): array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice = IssuerPolicy::id($invoice);
         $issuer = IssuerPolicy::id($issuer);
         $this->requireAccess($issuer, 'view_invoices');

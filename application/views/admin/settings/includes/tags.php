@@ -1,4 +1,17 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
+if(isset($native_settings_tags)){ ?>
+<ul class="list-unstyled">
+<?php foreach($native_settings_tags as$tag){ ?>
+<li class="settings-tag-wrapper tw-mb-4">
+<p><strong><?= e($tag['name']); ?></strong> <span class="badge"><?= (int)$tag['count']; ?></span></p>
+<?php if($tag['can_edit']){echo form_open(admin_url('settings?group=tags'),['class'=>'tw-inline-block']);echo form_hidden('_company_context',CompanyRequestScope::token());echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('id',$tag['id']);echo form_hidden('revision',$tag['expected']);echo form_hidden('request_key',bin2hex(random_bytes(32))); ?>
+<label class="sr-only" for="tag-<?= e($tag['id']); ?>"><?= _l('name'); ?></label><input id="tag-<?= e($tag['id']); ?>" name="name" value="<?= e($tag['name']); ?>" maxlength="100" required><button class="btn btn-default" type="submit"><?= _l('save'); ?></button>
+<?php echo form_close();} ?>
+<?php if($tag['can_delete']){echo form_open(admin_url('settings/delete_tag/'.$tag['id']),['class'=>'tw-inline-block']);echo form_hidden('_company_context',CompanyRequestScope::token());echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('revision',$tag['expected']);echo form_hidden('request_key',bin2hex(random_bytes(32))); ?>
+<button class="btn btn-danger" type="submit"><?= _l('delete'); ?></button><?php echo form_close();} ?>
+</li><?php } if(!$native_settings_tags){ ?><li><?= _l('no_tags_used'); ?></li><?php } ?>
+</ul>
+<?php return; }
 $tags      = get_tags();
 $totalTags = count($tags);
 ?>

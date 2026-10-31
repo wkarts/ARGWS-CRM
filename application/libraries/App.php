@@ -212,16 +212,14 @@ class App
             if (is_staff_logged_in()) {
                 // The request may have entered before migrations made company scope
                 // available. Re-resolve from persisted ACLs, never reuse that stale scope
-                // or a submitted return URL. Only the primary has a native dashboard.
+                // or a submitted return URL. Selection recovery stays inside the native dashboard.
                 if (!class_exists('CompanyContext', false)) {
                     require_once APPPATH . 'services/CompanyContext.php';
                 }
-                $destination = 'company_context';
+                $destination = '';
                 try {
                     $context = new CompanyContext($this->ci->db, db_prefix(), $this->ci->session, get_staff_user_id());
-                    if ($context->resolve(false, true) !== null && $context->isPrimary()) {
-                        $destination = '';
-                    }
+                    $context->resolve(false, true);
                 } catch (DomainException $error) {
                     // Revoked/malformed selections need explicit recovery, not an
                     // automatic switch to another company after a database upgrade.
@@ -300,12 +298,14 @@ class App
      */
     public function get_available_languages()
     {
-        return ['portuguese_br'];
+        require_once APPPATH.'services/NativeAvailableLanguages.php';
+        return NativeAvailableLanguages::all();
     }
 
     public function get_all_languages()
     {
-        return ['portuguese_br'];
+        require_once APPPATH.'services/NativeAvailableLanguages.php';
+        return NativeAvailableLanguages::all();
     }
 
     public function get_table_path($table, $my_prefixed = true)
@@ -624,36 +624,8 @@ class App
          *
          * @var array
          */
-        $this->tables_with_currency = [
-            [
-                'table' => db_prefix() . 'invoices',
-                'field' => 'currency',
-            ],
-            [
-                'table' => db_prefix() . 'expenses',
-                'field' => 'currency',
-            ],
-            [
-                'table' => db_prefix() . 'proposals',
-                'field' => 'currency',
-            ],
-            [
-                'table' => db_prefix() . 'estimates',
-                'field' => 'currency',
-            ],
-            [
-                'table' => db_prefix() . 'clients',
-                'field' => 'default_currency',
-            ],
-            [
-                'table' => db_prefix() . 'creditnotes',
-                'field' => 'currency',
-            ],
-            [
-                'table' => db_prefix() . 'subscriptions',
-                'field' => 'currency',
-            ],
-        ];
+        require_once APPPATH.'services/NativeCurrencyReferenceCatalog.php';
+        $this->tables_with_currency = NativeCurrencyReferenceCatalog::tables(db_prefix());
     }
 
     /**

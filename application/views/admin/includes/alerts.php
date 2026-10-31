@@ -1,16 +1,23 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $_announcements = get_announcements_for_user();
-if (sizeof($_announcements) > 0 && isset($dashboard) && is_staff_member()) { ?>
+<?php
+$nativeCompanyDashboard=class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor(get_instance());
+$_announcements=$nativeCompanyDashboard?(is_array($company_dashboard_announcements??null)?$company_dashboard_announcements:[]):get_announcements_for_user();
+$showAnnouncements=$nativeCompanyDashboard||is_staff_member();
+$canEditAnnouncements=$nativeCompanyDashboard?!empty($company_dashboard_can_edit_announcements):is_admin();
+if (sizeof($_announcements) > 0 && isset($dashboard) && $showAnnouncements) { ?>
 <div class="col-lg-12 tw-mt-1.5">
     <div>
         <?php foreach ($_announcements as $__announcement) { ?>
         <div class="alert alert-info alert-dismissible announcement tc-content tw-mb-3" role="alert">
-            <a href="<?= admin_url('misc/dismiss_announcement/' . $__announcement['announcementid']); ?>"
-                class="alert-link pull-right" aria-label="Close">
-                <i class="fa-solid fa-xmark"></i>
-            </a>
-            <?php if (is_admin()) { ?>
-            <a href="<?= admin_url('announcements/announcement/' . $__announcement['announcementid']); ?>"
+            <?php if($nativeCompanyDashboard){ ?>
+            <?= form_open(CompanyRequestScope::adminUrl(get_instance(),'misc/dismiss_announcement/'.rawurlencode((string)$__announcement['announcementid'])),['class'=>'tw-inline']); ?>
+                <button type="submit" class="btn btn-link alert-link pull-right" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            <?= form_close(); ?>
+            <?php }else{ ?>
+            <a href="<?= admin_url('misc/dismiss_announcement/' . $__announcement['announcementid']); ?>" class="alert-link pull-right" aria-label="Close"><i class="fa-solid fa-xmark"></i></a>
+            <?php } ?>
+            <?php if ($canEditAnnouncements) { ?>
+            <a href="<?= $nativeCompanyDashboard?CompanyRequestScope::adminUrl(get_instance(),'announcements/announcement/'.rawurlencode((string)$__announcement['announcementid'])):admin_url('announcements/announcement/' . $__announcement['announcementid']); ?>"
                 class="alert-link pull-right tw-mr-3 -tw-mt-px">
                 <i class="fa-regular fa-pen-to-square"></i>
             </a>
@@ -41,4 +48,4 @@ if (sizeof($_announcements) > 0 && isset($dashboard) && is_staff_member()) { ?>
     </div>
 </div>
 <?php } ?>
-<?php hooks()->do_action('before_start_render_content'); ?>
+<?php if(!$nativeCompanyDashboard){hooks()->do_action('before_start_render_content');} ?>

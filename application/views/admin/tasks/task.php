@@ -1,5 +1,23 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php
+$nativeTaskForm = $native_task_form ?? null;
+if ($nativeTaskForm !== null) {
+    require_once APPPATH . 'services/TaskPriorityPresentation.php';
+    foreach (['options','permissions','counts','selected_relation','tags_input','start_date_label','due_date_label','finished_at_label','can_client_view','project_task_rate','fields'] as $nativeKey) {
+        if (!array_key_exists($nativeKey, $nativeTaskForm)) { throw new RuntimeException('native_task_form_projection_incomplete'); }
+    }
+    foreach (['view','create','edit','delete'] as $capability) { if (!isset($nativeTaskForm['permissions'][$capability]) || !is_bool($nativeTaskForm['permissions'][$capability])) { throw new RuntimeException('native_task_form_projection_incomplete'); } }
+    foreach (['assignees','followers','checklist','attachments'] as $countKey) { if (!isset($nativeTaskForm['counts'][$countKey]) || !is_int($nativeTaskForm['counts'][$countKey]) || $nativeTaskForm['counts'][$countKey] < 0) { throw new RuntimeException('native_task_form_projection_incomplete'); } }
+}
+$taskFormOption = static function ($name) use ($nativeTaskForm) {
+    if ($nativeTaskForm === null) { return get_option($name); }
+    if (!array_key_exists($name, $nativeTaskForm['options'])) { throw new RuntimeException('native_task_form_option_missing'); }
+    return $nativeTaskForm['options'][$name];
+};
+$taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 'tasks') : $nativeTaskForm['permissions'][$cap];
+?>
 <?php echo form_open_multipart(admin_url('tasks/task' . ($id ? '/' . $id : '')), ['id' => 'task-form']); ?>
+<?php if ($nativeTaskForm !== null) { foreach ($nativeTaskForm['fields'] as $field => $value) { echo form_hidden($field, $value); } } ?>
 <div class="modal fade<?php if (isset($task)) {
     echo ' edit';
 } ?>" id="_task_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" <?php if ($this->input->get('opened_from_lead_id')) {
@@ -15,6 +33,11 @@
                 </h4>
             </div>
             <div class="modal-body">
+                <?php if (!empty($nativeTaskForm['undeclared_fields'])) { ?>
+                <div class="alert alert-info" role="status">Esta tarefa histórica ainda não possui os campos destacados declarados. Informe os valores reais; a data inicial e os indicadores não serão deduzidos do histórico.</div>
+                <div class="checkbox checkbox-primary"><input type="checkbox" id="native_task_declaration_confirmed" name="native_declaration_confirmed" value="1" required><label for="native_task_declaration_confirmed">Confirmo explicitamente os valores que estou declarando para esta tarefa.</label></div>
+                <?php } ?>
+
                 <div class="row">
                     <div class="col-md-12">
                         <?php
@@ -32,26 +55,26 @@
                         <div class="pull-right mbot10 task-single-menu task-menu-options">
                             <div class="content-menu hide">
                                 <ul>
-                                    <?php if (staff_can('create',  'tasks')) { ?>
+                                    <?php if ($taskFormCan('create')) { ?>
                                     <?php
                            $copy_template = '';
-                           if (total_rows(db_prefix() . 'task_assigned', ['taskid' => $task->id]) > 0) {
+                           if (($nativeTaskForm !== null ? $nativeTaskForm['counts']['assignees'] : total_rows(db_prefix() . 'task_assigned', ['taskid' => $task->id])) > 0) {
                                $copy_template .= "<div class='checkbox checkbox-primary'><input type='checkbox' name='copy_task_assignees' id='copy_task_assignees' checked><label for='copy_task_assignees'>" . _l('task_single_assignees') . '</label></div>';
                            }
-                           if (total_rows(db_prefix() . 'task_followers', ['taskid' => $task->id]) > 0) {
+                           if (($nativeTaskForm !== null ? $nativeTaskForm['counts']['followers'] : total_rows(db_prefix() . 'task_followers', ['taskid' => $task->id])) > 0) {
                                $copy_template .= "<div class='checkbox checkbox-primary'><input type='checkbox' name='copy_task_followers' id='copy_task_followers' checked><label for='copy_task_followers'>" . _l('task_single_followers') . '</label></div>';
                            }
-                           if (total_rows(db_prefix() . 'task_checklist_items', ['taskid' => $task->id]) > 0) {
+                           if (($nativeTaskForm !== null ? $nativeTaskForm['counts']['checklist'] : total_rows(db_prefix() . 'task_checklist_items', ['taskid' => $task->id])) > 0) {
                                $copy_template .= "<div class='checkbox checkbox-primary'><input type='checkbox' name='copy_task_checklist_items' id='copy_task_checklist_items' checked><label for='copy_task_checklist_items'>" . _l('task_checklist_items') . '</label></div>';
                            }
-                           if (total_rows(db_prefix() . 'files', ['rel_id' => $task->id, 'rel_type' => 'task']) > 0) {
+                           if (($nativeTaskForm !== null ? $nativeTaskForm['counts']['attachments'] : total_rows(db_prefix() . 'files', ['rel_id' => $task->id, 'rel_type' => 'task'])) > 0) {
                                $copy_template .= "<div class='checkbox checkbox-primary'><input type='checkbox' name='copy_task_attachments' id='copy_task_attachments'><label for='copy_task_attachments'>" . _l('task_view_attachments') . '</label></div>';
                            }
 
                            $copy_template .= '<p>' . _l('task_status') . '</p>';
-                           $task_copy_statuses = hooks()->apply_filters('task_copy_statuses', $task_statuses);
+                           $task_copy_statuses = ($nativeTaskForm !== null ? $task_statuses : hooks()->apply_filters('task_copy_statuses', $task_statuses));
                            foreach ($task_copy_statuses as $copy_status) {
-                               $copy_template .= "<div class='radio radio-primary'><input type='radio' value='" . $copy_status['id'] . "' name='copy_task_status' id='copy_task_status_" . $copy_status['id'] . "'" . ($copy_status['id'] == hooks()->apply_filters('copy_task_default_status', 1) ? ' checked' : '') . "><label for='copy_task_status_" . $copy_status['id'] . "'>" . $copy_status['name'] . '</label></div>';
+                               $copy_template .= "<div class='radio radio-primary'><input type='radio' value='" . $copy_status['id'] . "' name='copy_task_status' id='copy_task_status_" . $copy_status['id'] . "'" . ($copy_status['id'] == ($nativeTaskForm !== null ? $nativeTaskForm['options']['default_task_status'] : hooks()->apply_filters('copy_task_default_status', 1)) ? ' checked' : '') . "><label for='copy_task_status_" . $copy_status['id'] . "'>" . $copy_status['name'] . '</label></div>';
                            }
 
                            $copy_template .= "<div class='text-center'>";
@@ -64,7 +87,7 @@
                                             data-html="true"><?php echo _l('task_copy'); ?></span></a>
                                     </li>
                                     <?php } ?>
-                                    <?php if (staff_can('delete',  'tasks')) { ?>
+                                    <?php if ($taskFormCan('delete')) { ?>
                                     <li>
                                         <a href="<?php echo admin_url('tasks/delete_task/' . $task->id); ?>"
                                             class="_delete task-delete">
@@ -74,7 +97,7 @@
                                     <?php } ?>
                                 </ul>
                             </div>
-                            <?php if (staff_can('delete',  'tasks') || staff_can('create',  'tasks')) { ?>
+                            <?php if ($taskFormCan('delete') || $taskFormCan('create')) { ?>
                             <a href="#" onclick="return false;" class="trigger manual-popover mright5">
                                 <i class="fa-regular fa-circle fa-sm"></i>
                                 <i class="fa-regular fa-circle fa-sm"></i>
@@ -93,12 +116,12 @@
                                 title="<?php echo _l('task_public_help'); ?>"><?php echo _l('task_public'); ?></label>
                         </div>
                         <div class="checkbox checkbox-primary checkbox-inline task-add-edit-billable tw-pt-2">
-                            <input type="checkbox" id="task_is_billable" name="billable" <?php if ((isset($task) && $task->billable == 1) || (!isset($task) && get_option('task_biillable_checked_on_creation') == 1)) {
+                            <input type="checkbox" id="task_is_billable" name="billable" <?php if ((isset($task) && $task->billable == 1) || (!isset($task) && $taskFormOption('task_biillable_checked_on_creation') == 1)) {
                                echo ' checked';
                            }?>>
                             <label for="task_is_billable"><?php echo _l('task_billable'); ?></label>
                         </div>
-                        <div class="task-visible-to-customer tw-pt-2 checkbox checkbox-inline checkbox-primary<?php if ((isset($task) && $task->rel_type != 'project') || !isset($task) || (isset($task) && $task->rel_type == 'project' && total_rows(db_prefix() . 'project_settings', ['project_id' => $task->rel_id, 'name' => 'view_tasks', 'value' => 0]) > 0)) {
+                        <div class="task-visible-to-customer tw-pt-2 checkbox checkbox-inline checkbox-primary<?php if ((isset($task) && $task->rel_type != 'project') || !isset($task) || (isset($task) && $task->rel_type == 'project' && ($nativeTaskForm !== null ? !$nativeTaskForm['can_client_view'] : total_rows(db_prefix() . 'project_settings', ['project_id' => $task->rel_id, 'name' => 'view_tasks', 'value' => 0]) > 0))) {
                                echo ' hide';
                            } ?>">
                             <input type="checkbox" id="task_visible_to_client" name="visible_to_client" <?php if (isset($task)) {
@@ -123,7 +146,7 @@
                                                 class="control-label"><?php echo _l('add_task_attachments'); ?></label>
                                             <div class="input-group">
                                                 <input type="file"
-                                                    extension="<?php echo str_replace('.', '', get_option('allowed_files')); ?>"
+                                                    extension="<?php echo str_replace('.', '', $taskFormOption('allowed_files')); ?>"
                                                     filesize="<?php echo file_upload_max_size(); ?>"
                                                     class="form-control" name="attachments[0]">
                                                 <span class="input-group-btn">
@@ -144,7 +167,7 @@
                         <hr class="-tw-mx-3.5" />
                         <?php $value = (isset($task) ? $task->name : ''); ?>
                         <?php echo render_input('name', 'task_add_edit_subject', $value); ?>
-                        <div class="task-hours<?php if (isset($task) && $task->rel_type == 'project' && total_rows(db_prefix() . 'projects', ['id' => $task->rel_id, 'billing_type' => 3]) == 0) {
+                        <div class="task-hours<?php if (isset($task) && $task->rel_type == 'project' && ($nativeTaskForm !== null ? $nativeTaskForm['project_task_rate'] === false : total_rows(db_prefix() . 'projects', ['id' => $task->rel_id, 'billing_type' => 3]) == 0)) {
                             echo ' hide';
                           } ?>">
                             <?php $value = (isset($task) ? $task->hourly_rate : 0); ?>
@@ -169,7 +192,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <?php if (isset($task)) {
-                      $value = _d($task->startdate);
+                      $value = ($nativeTaskForm !== null ? $nativeTaskForm['start_date_label'] : _d($task->startdate));
                   } elseif (isset($start_date)) {
                       $value = $start_date;
                   } else {
@@ -183,7 +206,7 @@
                                 <?php echo render_date_input('startdate', 'task_add_edit_start_date', $value, $date_attrs); ?>
                             </div>
                             <div class="col-md-6">
-                                <?php $value = (isset($task) ? _d($task->duedate) : ''); ?>
+                                <?php $value = (isset($task) ? ($nativeTaskForm !== null ? $nativeTaskForm['due_date_label'] : _d($task->duedate)) : ''); ?>
                                 <?php echo render_date_input('duedate', 'task_add_edit_due_date', $value, $project_end_date_attrs); ?>
                             </div>
                             <div class="col-md-6">
@@ -192,12 +215,12 @@
                                         class="control-label"><?php echo _l('task_add_edit_priority'); ?></label>
                                     <select name="priority" class="selectpicker" id="priority" data-width="100%"
                                         data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
-                                        <?php foreach (get_tasks_priorities() as $priority) { ?>
-                                        <option value="<?php echo e($priority['id']); ?>" <?php if (isset($task) && $task->priority == $priority['id'] || !isset($task) && get_option('default_task_priority') == $priority['id']) {
+                                        <?php foreach (($nativeTaskForm !== null ? TaskPriorityPresentation::definitions('_l') : get_tasks_priorities()) as $priority) { ?>
+                                        <option value="<?php echo e($priority['id']); ?>" <?php if (isset($task) && $task->priority == $priority['id'] || !isset($task) && $taskFormOption('default_task_priority') == $priority['id']) {
                             echo ' selected';
                         } ?>><?php echo e($priority['name']); ?></option>
                                         <?php } ?>
-                                        <?php hooks()->do_action('task_priorities_select', (isset($task) ? $task : 0)); ?>
+                                        <?php if ($nativeTaskForm === null) { hooks()->do_action('task_priorities_select', (isset($task) ? $task : 0)); } ?>
                                     </select>
                                 </div>
                             </div>
@@ -362,7 +385,7 @@
                                             <?php echo _l('proposal'); ?>
                                         </option>
                                         <?php
-                                hooks()->do_action('task_modal_rel_type_select', ['task' => (isset($task) ? $task : 0), 'rel_type' => $rel_type]);
+                                if ($nativeTaskForm === null) { hooks()->do_action('task_modal_rel_type_select', ['task' => (isset($task) ? $task : 0), 'rel_type' => $rel_type]); }
                             ?>
                                     </select>
                                 </div>
@@ -375,9 +398,8 @@
                                             data-live-search="true"
                                             data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                             <?php if ($rel_id != '' && $rel_type != '') {
-                                $rel_data = get_relation_data($rel_type, $rel_id);
-                                $rel_val  = get_relation_values($rel_data, $rel_type);
-                                echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                if ($nativeTaskForm !== null) { $rel_val = $nativeTaskForm['selected_relation']; } else { $rel_data = get_relation_data($rel_type, $rel_id); $rel_val = get_relation_values($rel_data, $rel_type); }
+                                echo '<option value="' . e($rel_val['id']) . '" selected>' . ($nativeTaskForm !== null ? e($rel_val['name']) : $rel_val['name']) . '</option>';
                             } ?>
                                         </select>
                                     </div>
@@ -393,7 +415,7 @@
                                         data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>"
                                         multiple data-live-search="true">
                                         <?php foreach ($members as $member) { ?>
-                                        <option value="<?php echo e($member['staffid']); ?>" <?= (get_option('new_task_auto_assign_current_member') == '1') && get_staff_user_id() == $member['staffid'] ? 'selected' : ''; ?>>
+                                        <option value="<?php echo e($member['staffid']); ?>" <?= ($taskFormOption('new_task_auto_assign_current_member') == '1') && get_staff_user_id() == $member['staffid'] ? 'selected' : ''; ?>>
                                             <?php echo e($member['firstname'] . ' ' . $member['lastname']); ?>
                                         </option>
                                         <?php } ?>
@@ -402,7 +424,7 @@
                             </div>
                             <div class="col-md-6">
                                 <?php
-                     $follower = (get_option('new_task_auto_follower_current_member') == '1') ? [get_staff_user_id()] : '';
+                     $follower = ($taskFormOption('new_task_auto_follower_current_member') == '1') ? [get_staff_user_id()] : '';
                      echo render_select('followers[]', $members, ['staffid', ['firstname', 'lastname']], 'task_single_followers', $follower, ['multiple' => true], [], '', '', false);
                      ?>
                             </div>
@@ -410,10 +432,10 @@
                         <?php } ?>
 
                         <?php
-                  if (isset($task)
-                     && $task->status == Tasks_model::STATUS_COMPLETE
-                     && (staff_can('create', 'tasks') || staff_can('edit', 'tasks'))) {
-                      echo render_datetime_input('datefinished', 'task_finished', _dt($task->datefinished));
+                  if ((isset($task) && $task->status == ($nativeTaskForm !== null ? 5 : Tasks_model::STATUS_COMPLETE)
+                     || (!isset($task) && $nativeTaskForm !== null && $nativeTaskForm['options']['default_task_status'] === 5))
+                     && ($taskFormCan('create') || $taskFormCan('edit'))) {
+                      echo render_datetime_input('datefinished', 'task_finished', ($nativeTaskForm !== null ? $nativeTaskForm['finished_at_label'] : _dt($task->datefinished)));
                   }
                ?>
                         <div class="form-group checklist-templates-wrapper<?php if (count($checklistTemplates) == 0 || isset($task)) {
@@ -426,7 +448,7 @@
                                 data-width="100%" data-live-search="true" data-actions-box="true">
                                 <option value="" class="hide"></option>
                                 <?php foreach ($checklistTemplates as $chkTemplate) { ?>
-                                <option value="<?php echo e($chkTemplate['id']); ?>">
+                                <option value="<?php echo e($chkTemplate['id']); ?>"<?php if(isset($chkTemplate['revision'])) { ?> data-template-revision="<?= e($chkTemplate['revision']); ?>"<?php } ?>>
                                     <?php echo e($chkTemplate['description']); ?>
                                 </option>
                                 <?php } ?>
@@ -437,7 +459,7 @@
                                 <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                                     <?php echo _l('tags'); ?></label>
                                 <input type="text" class="tagsinput" id="tags" name="tags"
-                                    value="<?php echo(isset($task) ? prep_tags_input(get_tags_in($task->id, 'task')) : ''); ?>"
+                                    value="<?php echo(isset($task) ? ($nativeTaskForm !== null ? $nativeTaskForm['tags_input'] : prep_tags_input(get_tags_in($task->id, 'task'))) : ''); ?>"
                                     data-role="tagsinput">
                             </div>
                         </div>
@@ -459,6 +481,10 @@
     </div>
     <?php echo form_close(); ?>
     <script>
+    <?php if (!empty($nativeTaskForm['undeclared_fields'])) { ?>
+    native_task_form_declaration($('#task-form'), <?= json_encode($nativeTaskForm['undeclared_fields'], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>);
+    <?php } ?>
+
     var _rel_id = $('#rel_id'),
         _rel_type = $('#rel_type'),
         _rel_id_wrapper = $('#rel_id_wrapper'),
@@ -468,7 +494,7 @@
     var _milestone_selected_data;
     _milestone_selected_data = undefined;
 
-    <?php if (get_option('new_task_auto_assign_current_member') == '1') { ?>
+    <?php if ($taskFormOption('new_task_auto_assign_current_member') == '1') { ?>
     _current_member = "<?php echo get_staff_user_id(); ?>";
     <?php } ?>
     $(function() {
@@ -528,9 +554,14 @@
         $('body').on('change', '#rel_id', function() {
             if ($(this).val() != '') {
                 if (_rel_type.val() == 'project') {
-                    $.get(admin_url + 'projects/get_rel_project_data/' + $(this).val() + '/' + taskid,
+                    $.get(admin_url + 'projects/get_rel_project_data/' + $(this).val() + '/' + <?= json_encode((string)$id,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>,
                         function(project) {
                             $("select[name='milestone']").html(project.milestones);
+                            <?php if ($nativeTaskForm) { ?>
+                            var milestoneProof = $('#task-form input[name="native_milestone_revision"]');
+                            if (!milestoneProof.length) milestoneProof = $('<input>', {type:'hidden', name:'native_milestone_revision'}).appendTo('#task-form');
+                            milestoneProof.val(project.native_milestone_revision);
+                            <?php } ?>
                             if (typeof(_milestone_selected_data) != 'undefined') {
                                 $("select[name='milestone']").val(_milestone_selected_data.id);
                                 $('input[name="duedate"]').val(_milestone_selected_data.due_date)
@@ -542,7 +573,7 @@
                                 $("#assignees").val(_current_member);
                             }
                             $("#assignees").selectpicker('refresh')
-                            if (project.billing_type == 3) {
+                            if (project.billing_type == 3<?php if ($nativeTaskForm) { ?> || project.billing_type === null<?php } ?>) {
                                 $('.task-hours').addClass('project-task-hours');
                             } else {
                                 $('.task-hours').removeClass('project-task-hours');
@@ -582,6 +613,7 @@
 
         _rel_type.on('changed.bs.select', function(e, clickedIndex, isSelected, previousValue) {
             if (previousValue == 'project') {
+                <?php if ($nativeTaskForm) { ?>$('#task-form input[name="native_milestone_revision"]').remove();$('select[name="milestone"]').val('').selectpicker('refresh');<?php } ?>
                 $("#assignees").html(_allAssigneeSelect);
                 if (typeof(_current_member) != 'undefined') {
                     $("#assignees").val(_current_member);

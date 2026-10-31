@@ -1,0 +1,9 @@
+<?php
+require __DIR__.'/native_file_message.php';
+require_once APPPATH.'services/NativeCompanyInvoiceFiles.php';
+if($db->driver()==='mysql')CompanyInvoiceAttachmentSchema::ensure($db,$p);else $db->query("CREATE TABLE {$p}company_invoice_attachments(file_key varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,actor_id int NOT NULL,invoice_id int NOT NULL,filename varchar(191) NOT NULL,mime varchar(40) NOT NULL,content_hash varchar(64) NOT NULL,byte_size int unsigned NOT NULL,content blob NOT NULL,portal_visible tinyint NOT NULL,active tinyint NOT NULL,created_at datetime NOT NULL)");NativeCompanyInvoiceFileSchema::ensure($db,$p);unset($db->data_cache['table_names']);
+$adapter=new NativeCompanyInvoiceFiles($db,$p);$file=$adapter->upload($a,7,$invoice,hash('sha256','mail-invoice-real'),'invoice.pdf',$bytes);$start=$GLOBALS['essentialChecks'];
+$q=$service->queue($a,7,'invoice',(int)$file['id'],1,hash('sha256','invoice-send-request'),'recipient@example.invalid','Invoice attachment','Exact private file',$decrypt);$mail=$load($q);$headers=unserialize($mail->headers,['allowed_classes'=>false]);$service->state($mail,$headers);essentialCheck($headers[NativeCompanyFileMessage::HEADER]['source']==='invoice'&&$headers[NativeCompanyFileMessage::HEADER]['content']===$file['content_hash'],'file queue binds actual invoice attachment adapter and hash');
+essentialThrows(fn()=>$service->queue($b,7,'invoice',(int)$file['id'],1,hash('sha256','invoice-send-foreign'),'recipient@example.invalid','Invoice attachment','Private file',$decrypt),'native_invoice_file_denied','foreign issuer cannot queue invoice file');
+$adapter->visibility($a,7,(int)$file['id'],1,true);essentialThrows(fn()=>$service->state($mail,$headers),'native_invoice_file_conflict','invoice file revision change invalidates pending mail');
+echo 'Native invoice file message: '.($GLOBALS['essentialChecks']-$start).' checks passed.'.PHP_EOL;

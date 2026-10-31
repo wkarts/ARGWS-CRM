@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyLeadsApi.php';
 
-/** Mounted only in the native finite Company_operations_api controller after scope preparation. */
+/** Mounted only in the native finite Operations_api controller after scope preparation. */
 trait CompanyLeadsHttpApi
 {
     private function leadResource(string $endpoint,$id='',$file=''):void

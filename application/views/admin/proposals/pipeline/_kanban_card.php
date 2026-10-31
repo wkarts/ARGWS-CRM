@@ -10,10 +10,10 @@
                         data-toggle="tooltip"
                         data-title="<?= e($proposal['subject']); ?>"
                         class="tw-text-neutral-700 hover:tw-text-neutral-900 active:tw-text-neutral-900"
-                        onclick="proposal_pipeline_open(<?= e($proposal['id']); ?>); return false;">
-                        <?= e(format_proposal_number($proposal['id'])); ?>
+                        <?php if(empty($native_sales_card)){ ?>onclick="proposal_pipeline_open(<?= e($proposal['id']); ?>); return false;"<?php } ?>>
+                        <?= e(!empty($native_sales_card)?$proposal['formatted_number']:format_proposal_number($proposal['id'])); ?>
                     </a>
-                    <?php if (staff_can('edit', 'estimates')) { ?>
+                    <?php if (!empty($native_sales_card)?$native_sales_can_edit:staff_can('edit', 'proposals')) { ?>
                     <a href="<?= admin_url('proposals/proposal/' . $proposal['id']); ?>"
                         target="_blank" class="pull-right">
                         <small>
@@ -38,7 +38,7 @@
                             <span class="tw-text-neutral-500">
                                 <?= _l('proposal_total'); ?>:
                             </span>
-                            <?= e(app_format_money($proposal['total'], get_currency($proposal['currency']))); ?>
+                            <?= e(!empty($native_sales_card)?$proposal['currency_name'].' '.$proposal['total']:app_format_money($proposal['total'], get_currency($proposal['currency']))); ?>
                         </p>
                         <?php } ?>
                         <p class="tw-mb-0 tw-text-sm tw-text-neutral-700">
@@ -56,7 +56,7 @@
                         </p>
                         <?php } ?>
                     </div>
-                    <div class="tw-shrink-0 text-right">
+                    <?php if(empty($native_sales_card)){ ?><div class="tw-shrink-0 text-right">
                         <small>
                             <i class="fa-regular fa-comments" aria-hidden="true"></i>
                             <?= _l('proposal_comments'); ?>:
@@ -64,9 +64,9 @@
                                 'proposalid' => $proposal['id'],
                             ]); ?>
                         </small>
-                    </div>
+                    </div><?php } ?>
                 </div>
-                <?php $tags = get_tags_in($proposal['id'], 'proposal'); ?>
+                <?php $tags = !empty($native_sales_card)?$native_sales_tags:get_tags_in($proposal['id'], 'proposal'); ?>
                 <?php if (count($tags) > 0) { ?>
                 <div class="kanban-tags tw-text-sm tw-inline-flex">
                     <?= render_tags($tags); ?>

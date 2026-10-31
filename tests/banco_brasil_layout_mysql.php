@@ -23,11 +23,15 @@ check((string)(new App_module_migration('banco_brasil'))->to_latest()==='102','n
 check($pdo->query('SELECT installed_version FROM bb_upgrade_modules')->fetchColumn()==='1.0.2','native tracking102');
 $after=$pdo->query('SELECT * FROM bb_upgrade_bb_return_files WHERE id=1')->fetch(PDO::FETCH_ASSOC);
 check($after['layout_binding_id']===null&&$after['provenance_json']===null,'legacy not automatically bound');unset($after['layout_binding_id'],$after['provenance_json']);check($after===$legacy,'all original history fields unchanged');
+require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/ReturnArchiveSchema.php';
+\BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_upgrade_');
+\BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_upgrade_'); // Additive replay.
 check(count($store->recentReturns(1))===1&&$store->layoutBindings(1)===[],'old history readable without profile');
 rejects(fn()=>$store->importReturn($c,9,$wire400,0),'new import refuses missing explicit profile');
 $binding400=$store->registerLayout($c,9,\BancoBrasil\LayoutCatalog::CNAB400);
 check($store->registerLayout($c,9,\BancoBrasil\LayoutCatalog::CNAB400)===$binding400,'profile idempotent real database');
 $r=$store->importReturn($c,9,$wire400,$binding400);check(!$r['duplicate']&&$r['events']===1,'400 imported transactionally');
+check($pdo->query('SELECT content FROM bb_upgrade_bb_return_originals WHERE return_file_id='.(int)$r['id'])->fetchColumn()===$wire400,'400 original retained without reinterpretation or reformatting');
 check($store->importReturn($c,9,$wire400,$binding400)['duplicate'],'400 file unique');
 $store->importReturn($c,9,bb400Mutate($wire400,0,101,'0000002'),$binding400);
 check((int)$pdo->query('SELECT COUNT(*) FROM bb_upgrade_bb_return_events')->fetchColumn()===1,'400 event dedup');

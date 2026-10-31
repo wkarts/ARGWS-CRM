@@ -59,6 +59,14 @@ essentialCheck(count($http)===0,'configuring profile/credentials never authentic
 $apiInput=$input;$apiInput['date']=(new DateTimeImmutable('now',new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');$apiInput['due_date']=(new DateTimeImmutable($apiInput['date']))->modify('+30 days')->format('Y-m-d');
 $address=['payer_address'=>'Synthetic street','payer_district'=>'Centro','payer_zip'=>'04000000','payer_city'=>'Salvador','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
 $invoice=$s->create($a,7,$apiInput,str_repeat('2',63).'1');$originId=$api->issue($a,7,$profile,$invoice,$address,str_repeat('1',64));
+$channels=new \BancoBrasil\ChannelPreferences($db,$p);$state=$channels->setEnabled($a,7,'api',false,$channels->page($a,7)['revision']);
+essentialCheck(!$state['api']&&$state['cnab'],'API disabled independently while CNAB remains enabled');
+$beforeDisabled=count($http);
+essentialCheck($api->issue($a,7,$profile,$invoice,$address,str_repeat('1',64))===$originId&&count($http)===$beforeDisabled,'disabled API keeps confirmed historical replay without HTTP');
+$blockedApi=$s->create($a,7,$apiInput,hash('sha256','disabled-api-invoice'));
+essentialThrows(fn()=>$api->issue($a,7,$profile,$blockedApi,$address,hash('sha256','disabled-api-request')),'bb_channel_disabled','disabled API cannot reserve new obligation or contact provider');
+essentialCheck(count($http)===$beforeDisabled&&(int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$blockedApi])->row()->n===0,'disabled API makes zero calls and writes zero origins');
+$channels->setEnabled($a,7,'api',true,$state['revision']);
 $issued=$db->query("SELECT * FROM {$p}bb_origins WHERE id=?",[$originId])->row_array();
 essentialCheck($issued['remote_id']==='00012345670000000103'&&$issued['state']==='api_registered','API continues shared counter and validates registration number/account/barcode');
 $last=end($http);$json=\BancoBrasil\ApiClient::decodeExact($last['body']);essentialCheck($json['pagador']['numeroInscricao']==='11144477735'&&$json['valorOriginal']==='105.53'&&str_contains($last['body'],'"valorOriginal":105.53'),'payer comes from immutable invoice and JSON money is exact numeric lexeme');

@@ -191,6 +191,35 @@ $(function () {
   // Add are you sure on all delete links (onclick is not handler here)
   $("body").on("click", "._delete", function (e) {
     if (confirm_delete()) {
+      var revision = $(this).attr("data-native-revision");
+      if (typeof revision !== "undefined") {
+        e.preventDefault();
+        if (!window.NativeCompanyTransport || !/^[a-f0-9]{64}$/.test(revision)) throw new Error("native_revision_required");
+        var returnTo = $(this).attr("data-native-return");
+        var nativeData = {revision: revision};
+        var parentRevision = $(this).attr("data-native-parent-revision");
+        if (typeof parentRevision !== "undefined") {
+          if (!/^[a-f0-9]{64}$/.test(parentRevision)) throw new Error("native_parent_revision_required");
+          nativeData.parent_revision = parentRevision;
+        }
+        var replyRevision = $(this).attr("data-native-reply-revision");
+        if (typeof replyRevision !== "undefined") {
+          if (!/^[a-f0-9]{64}$/.test(replyRevision)) throw new Error("native_reply_revision_required");
+          nativeData.reply_revision = replyRevision;
+        }
+        var requestNonce = $(this).attr("data-native-request-nonce");
+        if (typeof requestNonce !== "undefined") {
+          if (!/^[a-f0-9]{64}$/.test(requestNonce)) throw new Error("native_nonce_required");
+          nativeData.request_nonce = requestNonce;
+        }
+        NativeCompanyTransport.request($(this).attr("href"), "POST", nativeData, {dataType: "json"})
+          .done(function (response) {
+            if (!response || response.success !== true) throw new Error("native_mutation_unconfirmed");
+            if (returnTo) NativeCompanyTransport.navigate(returnTo);
+            else window.location.reload();
+          });
+        return false;
+      }
       return true;
     }
     return false;
@@ -616,18 +645,7 @@ function get_url_param(param) {
 }
 
 // Is mobile checker javascript
-function is_mobile() {
-  if (typeof app != "undefined" && typeof app.is_mobile != "undefined") {
-    return app.is_mobile;
-  }
-
-  try {
-    document.createEvent("TouchEvent");
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+function is_mobile() { return NativeDevice.isMobile(); }
 
 function onGoogleApiLoad() {
   var pickers = $(".gpicker");

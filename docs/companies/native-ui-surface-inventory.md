@@ -2,10 +2,8 @@
 
 ## Escopo e natureza da evidência
 
-Baseline de código: `5ebcd8da`. Inventário **estático**, não captura de tela nem
-prova de execução PHP, permissão, responsividade, carregamento de assets ou visual.
-São 98 views e 54 controllers/endpoints; nenhum valor de configuração, token,
-certificado ou dado de produção foi consultado.
+Inventário atualizado em 2026-10-26 a partir da árvore do PR #52. É **estático**, não captura de tela nem prova de execução PHP, permissão, responsividade, carregamento de assets ou visual.
+São 87 views ativas e 46 controllers/endpoints ativos; nenhum valor de configuração, token, certificado ou dado de produção foi consultado. Dois fragments substituídos pelas rotas oficiais permanecem apenas como tombstones inertes por causa da sincronização do workspace (`admin/companies/leads_fields.php` e `admin/settings/company_scoped.php`) e são recusados pelo inventário caso voltem a declarar classe, ação, dispatch ou markup. Os controllers e páginas `Company_clients`/`Company_leads` foram removidos fisicamente.
 
 O manifesto `tests/fixtures/company_ui_surfaces.json` registra caminho, contrato,
 justificativa, proprietários literais, métodos públicos e contagem de marcação
@@ -23,12 +21,16 @@ Classes ausentes no PHP não provam defeito se o shell normaliza o controle.
 Componentes head/tail não têm contagem congelada: são auditados aqui, mas sua
 implementação evolui sob os testes específicos de fidelidade do shell.
 
+## Convergência de navegação
+
+O shell empresarial agora aponta para os controladores oficiais do CRM nas áreas de Vendas, Despesas, Projetos, Suporte e Relatórios: `admin/invoices`, `admin/expenses`, `admin/projects`, `admin/tickets` e `admin/reports`. Calendário e configurações usam `admin/utilities/calendar` e `admin/settings`. Os aliases `company_*` continuam isolados apenas nas operações especializadas que ainda não possuem adapter nativo equivalente; eles não são destinos do menu principal.
+
 ## Contratos e gaps
 
-- 52 páginas internas: par `admin/companies/layout_head.php` / `layout_tail.php`.
+- 46 páginas internas: par `admin/companies/layout_head.php` / `layout_tail.php`.
   O shell usa assets públicos nativos; não deve chamar `init_head` e hidratar
   menus/hooks globais num contexto empresarial isolado.
-- 2 páginas legadas (`issuers/manage`, `issuers/master_resolution`): par nativo
+- 1 página legada (`issuers/manage`): par nativo
   `init_head` / `init_tail`, com contexto/autorização a verificar no runtime.
 - 40 fragments: herdaram layout da página proprietária; adicionar shell próprio
   geraria duplicação. Seus proprietários estão no manifesto.
@@ -36,7 +38,7 @@ implementação evolui sob os testes específicos de fidelidade do shell.
   não deve duplicar sidebar/header. Exige teste próprio de modal, fechamento e foco.
 - **Gap explícito:** `admin/issuers/certificate_link.php` não tem chamador literal
   localizado em application/modules. Não atestar renderização/uso; investigar antes
-  de reativar/remover. A rota ativa `company_certificates` usa `certificates.php`.
+  de reativar/remover. A configuração de certificados usa o grupo oficial `admin/settings?group=certificates`; não existe controller ou view paralela de certificados.
 - Asaas: duas tabelas sem classe em `companies/asaas.php`, uma em
   `companies/asaas_refunds.php`; dependem da normalização genérica do shell.
   Não adicionar DataTables nem alterar linhas, IDs, forms, ACL ou dados.
@@ -51,13 +53,13 @@ implementação evolui sob os testes específicos de fidelidade do shell.
 
 | Família | Representantes reais | Desktop/mobile e invariantes |
 |---|---|---|
-| Contexto/empresas | company_context, issuers, onboarding | 1280×900 e 390×900; header/sidebar/logo/avatar, seleção explícita, modal, cancelar/voltar/reabrir/foco |
+| Seleção/empresas | company_selection, issuers, onboarding | 1280×900 e 390×900; header/sidebar/logo/avatar, seleção explícita, modal, cancelar/voltar/reabrir/foco |
 | Configuração sensível | Google/Microsoft OAuth, certificados, API tokens | botões/controles nativos, segredos mascarados; nenhum connect/revoke/upload automático; ACL view/edit |
 | Financeiro | Asaas, despesas, faturas/rascunhos, créditos | tabelas responsivas, validação campos, POST ownership/CSRF, sem API financeira real |
 | Projetos/tarefas | projects, standalone_tasks, project_portal_rules | includes condicionais, tabulação, datas/selects/checkboxes e estados vazios/cheios |
 | Pessoas/serviços | clients, leads, staff, hr, tickets | formulários e grid, botões destrutivos, dados sintéticos; sem envio de e-mail |
 | Operações especializadas | purchases, calendar, reports, imports, billing | overflow, tabelas largas, scroll local e controles já estilizados preservados |
-| Páginas legadas | master_resolution, issuers/manage | shell nativo, permissões e retorno; nunca consumir autorização real |
+| Página legada | issuers/manage | shell nativo, permissões e retorno; nunca consumir autorização real |
 | Bridge/provisionamento | rotas JSON/protocolo | content-type/schema/auth/idempotência em fixtures; screenshot não se aplica |
 
 Cobertura de **todas** as views PHP deve ser ampliada por fixtures de renderização:
@@ -86,20 +88,12 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/asaas.php` | company-shell | 2/18/12/4/0 |
 | `admin/companies/asaas_preferences.php` | partial | 0/0/0/0/0 |
 | `admin/companies/asaas_refunds.php` | partial | 1/5/6/0/1 |
-| `admin/companies/assets.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/billing_invoice_current.php` | partial | 0/0/0/0/0 |
-| `admin/companies/calendar.php` | company-shell | 0/0/4/5/0 |
-| `admin/companies/certificates.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/client_identity_fields.php` | partial | 0/0/0/0/0 |
-| `admin/companies/client_imports.php` | company-shell | 0/2/0/0/0 |
-| `admin/companies/clients.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/connect_api.php` | company-shell | 0/14/0/0/0 |
-| `admin/companies/context.php` | company-shell | 0/0/0/0/0 |
-| `admin/companies/contract_discussion.php` | partial | 0/2/0/0/1 |
-| `admin/companies/contracts.php` | company-shell | 0/7/0/0/0 |
-| `admin/companies/contracts_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/credit_movement_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/credits.php` | company-shell | 0/9/0/0/0 |
+| `admin/companies/efi.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/expense_billing.php` | partial | 0/3/2/1/0 |
 | `admin/companies/expense_copies.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/expense_fields.php` | partial | 0/0/0/0/0 |
@@ -111,19 +105,16 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/hr_records.php` | partial | 0/4/0/0/0 |
 | `admin/companies/identity_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/identity_input.php` | partial | 0/0/0/0/0 |
+| `admin/companies/identity_modal.php` | modal-document | 0/0/0/0/0 |
 | `admin/companies/imports.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/invoice_adjustment_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/invoice_copies.php` | company-shell | 0/1/0/0/0 |
 | `admin/companies/invoice_drafts.php` | company-shell | 0/5/0/0/0 |
 | `admin/companies/invoice_drafts_editor_script.php` | partial | 0/0/0/0/0 |
 | `admin/companies/invoice_item_fields.php` | partial | 0/0/0/0/0 |
-| `admin/companies/invoice_recurring.php` | company-shell | 0/3/3/3/0 |
 | `admin/companies/invoices.php` | company-shell | 0/0/4/0/0 |
 | `admin/companies/layout_head.php` | shell-part | 0/0/0/0/0 |
 | `admin/companies/layout_tail.php` | shell-part | 0/0/0/0/0 |
-| `admin/companies/leads.php` | company-shell | 0/0/2/1/0 |
-| `admin/companies/leads_fields.php` | partial | 0/0/0/0/0 |
-| `admin/companies/ledger.php` | company-shell | 0/1/0/0/0 |
 | `admin/companies/microsoft_mail_oauth.php` | company-shell | 0/5/0/0/0 |
 | `admin/companies/onboarding.php` | modal-document | 0/0/0/0/0 |
 | `admin/companies/operation_files.php` | partial | 0/2/0/0/0 |
@@ -150,9 +141,7 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/purchases_workspace.php` | partial | 0/11/5/0/0 |
 | `admin/companies/pusher.php` | company-shell | 0/7/0/0/0 |
 | `admin/companies/recurring.php` | company-shell | 0/3/0/0/0 |
-| `admin/companies/registry.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/registry_grid.php` | partial | 0/0/0/0/0 |
-| `admin/companies/reports.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/sales.php` | company-shell | 0/5/0/0/0 |
 | `admin/companies/sales_extras.php` | partial | 0/3/0/0/0 |
 | `admin/companies/sales_form_fields.php` | partial | 0/1/0/0/0 |
@@ -175,10 +164,11 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/includes/company_selector.php` | partial | 0/1/0/0/0 |
 | `admin/issuers/certificate_link.php` | unresolved-fragment | 0/0/0/0/0 |
 | `admin/issuers/manage.php` | native-shell | 0/0/0/0/0 |
-| `admin/issuers/master_resolution.php` | native-shell | 0/0/0/0/0 |
 | `admin/issuers/staff_access.php` | partial | 0/0/0/0/0 |
-| `admin/settings/company_scoped.php` | company-shell | 0/0/0/0/0 |
 | `admin/settings/includes/company.php` | partial | 0/0/0/0/0 |
+| `admin/settings/includes/company_identity_fields.php` | partial | 0/0/0/0/0 |
+| `admin/settings/presentation_layout.php` | partial | 0/0/0/0/0 |
+| `modules/pige_bridge/views/settings.php` | native-shell | 0/0/0/0/0 |
 
 ## Controllers: dispatch literal e rotas públicas
 
@@ -186,19 +176,13 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 
 | Controller | Views literais | Métodos públicos |
 |---|---|---|
-| `application/controllers/Argws_provisioning.php` | Sem view literal; endpoint não visual | `complete_installation`, `apply_migrations`, `authorize_company_master` |
+| `application/controllers/Argws_provisioning.php` | Sem view literal; endpoint não visual | `complete_installation`, `apply_migrations`, `authorize_company_master`, `original_administrator` |
 | `application/controllers/admin/Company_ai.php` | `admin/companies/ai` | `index` |
 | `application/controllers/admin/Company_api_tokens.php` | `admin/companies/api_tokens` | `index` |
 | `application/controllers/admin/Company_asaas.php` | `admin/companies/asaas` | `__construct`, `index` |
-| `application/controllers/admin/Company_assets.php` | `admin/companies/assets` | `index` |
-| `application/controllers/admin/Company_calendar.php` | `admin/companies/calendar` | `index` |
-| `application/controllers/admin/Company_certificates.php` | `admin/companies/certificates` | `index` |
-| `application/controllers/admin/Company_client_imports.php` | `admin/companies/client_imports` | `index` |
-| `application/controllers/admin/Company_clients.php` | `admin/companies/clients` | `index`, `lookup` |
 | `application/controllers/admin/Company_connect_api.php` | `admin/companies/connect_api` | `index` |
-| `application/controllers/admin/Company_context.php` | `admin/companies/context` | `__construct`, `index`, `select` |
-| `application/controllers/admin/Company_contracts.php` | `admin/companies/contracts` | `index` |
 | `application/controllers/admin/Company_credits.php` | `admin/companies/credits` | `index` |
+| `application/controllers/admin/Company_efi.php` | `admin/companies/efi` | `index` |
 | `application/controllers/admin/Company_expense_copies.php` | `admin/companies/expense_copies` | `index` |
 | `application/controllers/admin/Company_expenses.php` | `admin/companies/expenses` | `index` |
 | `application/controllers/admin/Company_google_mail_oauth.php` | `admin/companies/google_mail_oauth` | `index` |
@@ -206,10 +190,7 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_imports.php` | `admin/companies/imports` | `index` |
 | `application/controllers/admin/Company_invoice_copies.php` | `admin/companies/invoice_copies` | `index` |
 | `application/controllers/admin/Company_invoice_drafts.php` | `admin/companies/invoice_drafts` | `index` |
-| `application/controllers/admin/Company_invoice_recurring.php` | `admin/companies/invoice_recurring` | `index` |
 | `application/controllers/admin/Company_invoices.php` | `admin/companies/invoices` | `index` |
-| `application/controllers/admin/Company_leads.php` | `admin/companies/leads` | `index`, `file`, `export` |
-| `application/controllers/admin/Company_master.php` | `admin/issuers/master_resolution` | `index` |
 | `application/controllers/admin/Company_microsoft_mail_oauth.php` | `admin/companies/microsoft_mail_oauth` | `index` |
 | `application/controllers/admin/Company_onboarding.php` | `admin/companies/onboarding` | `index` |
 | `application/controllers/admin/Company_post_refund.php` | `admin/companies/post_refund` | `index` |
@@ -223,8 +204,8 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_purchases.php` | `admin/companies/purchases` | `index` |
 | `application/controllers/admin/Company_pusher.php` | `admin/companies/pusher` | `index` |
 | `application/controllers/admin/Company_recurring.php` | `admin/companies/recurring` | `index` |
-| `application/controllers/admin/Company_reports.php` | `admin/companies/ledger`, `admin/companies/reports` | `index` |
 | `application/controllers/admin/Company_sales.php` | `admin/companies/sales` | `index` |
+| `application/controllers/admin/Company_selection.php` | Sem view literal; endpoint não visual | `__construct`, `select` |
 | `application/controllers/admin/Company_staff.php` | `admin/companies/staff` | `index` |
 | `application/controllers/admin/Company_standalone_billing.php` | `admin/companies/standalone_billing` | `index` |
 | `application/controllers/admin/Company_standalone_tasks.php` | `admin/companies/standalone_tasks` | `index` |
@@ -236,10 +217,11 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_tickets.php` | `admin/companies/tickets` | `index` |
 | `application/controllers/admin/Company_time_batches.php` | `admin/companies/time_batches` | `index` |
 | `application/controllers/admin/Company_time_billing.php` | `admin/companies/time_billing` | `index` |
-| `application/controllers/admin/Issuers.php` | `admin/companies/registry`, `admin/issuers/manage` | `__construct`, `index`, `save`, `lookup` |
+| `application/controllers/admin/Issuers.php` | `admin/companies/identity_modal`, `admin/issuers/manage` | `__construct`, `index`, `save`, `lookup` |
 | `application/controllers/admin/Smtp_oauth_google.php` | Sem view literal; endpoint não visual | `token` |
 | `application/controllers/admin/Smtp_oauth_microsoft.php` | Sem view literal; endpoint não visual | `token` |
-| `modules/pige_bridge/controllers/Bridge.php` | Sem view literal; endpoint não visual | `requests` |
+| `modules/pige_bridge/controllers/Bridge.php` | Sem view literal; endpoint não visual | `requests`, `diagnostics`, `invoices`, `invoice_status`, `charges`, `charge_status`, `charge_sync`, `charge_instruments`, `charge_reconcile` |
+| `modules/pige_bridge/controllers/Settings.php` | `pige_bridge/settings` | `__construct`, `index`, `save`, `mapping`, `external` |
 
 ## Incremento 4.7.3 — navegação e editor existente
 
@@ -313,12 +295,12 @@ contrato estático/inventário e sintaxe JS passaram localmente.
 ## Envelope compartilhado de Settings — 102 views / 55 controllers
 
 A descoberta agora inclui `admin/settings/presentation*.php`, não apenas
-`company_scoped.php` e `includes/company*.php`. Um teste negativo cria nomes
+`includes/company*.php`. Um teste negativo cria nomes
 sintéticos `presentation_layout.php` e `presentation_future.php` e exige ambos
 no censo: novos componentes não podem ficar silenciosamente fora do manifesto.
 
 `admin/settings/presentation_layout.php` é `partial`, com owners reais
-`admin/settings/all.php` e `admin/settings/company_scoped.php`. Seus controles
+`admin/settings/all.php`. Seus controles
 literais table/button/input/select/textarea são 0/0/0/0/0: os formulários continuam
 pertencendo aos parents. A contagem efetiva após inclusão é **102 views e 55
 controllers**. Esses números são cobertura estática, não prova visual ou PHP.

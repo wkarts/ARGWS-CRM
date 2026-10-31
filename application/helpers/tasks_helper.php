@@ -40,30 +40,8 @@ function format_task_status($status, $text = false, $clean = false)
  */
 function get_tasks_priorities()
 {
-    return hooks()->apply_filters('tasks_priorities', [
-        [
-            'id'    => 1,
-            'name'  => _l('task_priority_low'),
-            'color' => '#777',
-
-        ],
-        [
-            'id'    => 2,
-            'name'  => _l('task_priority_medium'),
-            'color' => '#03a9f4',
-
-        ],
-        [
-            'id'    => 3,
-            'name'  => _l('task_priority_high'),
-            'color' => '#ff6f00',
-        ],
-        [
-            'id'    => 4,
-            'name'  => _l('task_priority_urgent'),
-            'color' => '#fc2d42',
-        ],
-    ]);
+    require_once APPPATH . 'services/TaskPriorityPresentation.php';
+    return hooks()->apply_filters('tasks_priorities', TaskPriorityPresentation::definitions('_l'));
 }
 
 /**
@@ -159,36 +137,11 @@ function task_priority_color($id)
  */
 function format_members_by_ids_and_names($ids, $names, $size = 'md')
 {
-    if (!$ids) {
-        return '';
-    }
-
-    $exportAssignees = '';
-    $outputAssignees = '<div class="tw-flex -tw-space-x-1">';
-
-    $assignees   = explode(',', $names);
-    $assigneeIds = explode(',', $ids);
-    foreach ($assignees as $key => $assigned) {
-        $assignee_id = $assigneeIds[$key];
-        $assignee_id = trim($assignee_id);
-        if ($assigned != '') {
-            $outputAssignees .= '<a href="' . admin_url('profile/' . $assignee_id) . '">' .
-                staff_profile_image($assignee_id, [
-                    ($size == 'md' ? 'tw-h-7 tw-w-7' : 'tw-h-5 tw-w-5') . ' tw-inline-block tw-rounded-full tw-ring-2 tw-ring-white',
-                ], 'small', [
-                    'data-toggle' => 'tooltip',
-                    'data-title'  => e($assigned),
-                ]) . '</a>';
-            $exportAssignees .= e($assigned) . ', ';
-        }
-    }
-
-    if ($exportAssignees != '') {
-        $outputAssignees .= '<span class="hide">' . mb_substr($exportAssignees, 0, -2) . '</span>';
-    }
-    $outputAssignees .= '</div>';
-
-    return $outputAssignees;
+    if (!$ids) return '';
+    require_once APPPATH.'services/TaskMembersPresentation.php';
+    $members=[];$assigneeIds=explode(',',$ids);
+    foreach(explode(',',$names)as$key=>$name)$members[]=['id'=>trim($assigneeIds[$key]),'name'=>$name];
+    return TaskMembersPresentation::render($members,$size,'admin_url','staff_profile_image','e');
 }
 
 /**
@@ -273,6 +226,22 @@ function tasks_rel_name_select_query()
  */
 function init_relation_tasks_table($table_attributes = [], $filtersWrapperId = 'vueApp', $filtersDetached = false)
 {
+    $CI = &get_instance();
+    $native = class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($CI);
+    if ($native) {
+        $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');
+        require_once APPPATH.'services/NativeCompanyRelatedTaskTableFactory.php';require_once APPPATH.'services/NativeCompanyFilters.php';require_once APPPATH.'services/NativeCompanyCustomFields.php';
+        $relationType=$table_attributes['data-new-rel-type']??null;if(!in_array($relationType,['ticket','project','invoice'],true))throw new DomainException('native_task_relation_writer_required');
+        $parent=NativeCompanyResourceReferences::resolve($CI->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$relationType,$table_attributes['data-new-rel-id']??null,'view');
+        $allowedSources=match($relationType){'ticket'=>['company_ticket'],'project'=>['company_project'],'invoice'=>['invoice','company_invoice_draft']};if(!in_array($parent['source_kind'],$allowedSources,true))throw new DomainException('native_task_legacy_relation_projection_required');
+        // The project variant renders bulk, overview and Kanban controls whose
+        // native adapters have not yet been composed. Fail before any HTML.
+        if($relationType==='project')throw new DomainException('native_task_project_controls_incomplete');
+        $factory=new NativeCompanyRelatedTaskTableFactory($CI->db,db_prefix());$catalog=$factory->make($ctx->issuerId(),$ctx->staffId());
+        $saved=(new NativeCompanyFilters($CI->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$catalog))->listing();
+        $nativeTable=$factory->make($ctx->issuerId(),$ctx->staffId(),'related_tasks',$saved);
+        $nativeFields=(new NativeCompanyCustomFields($CI->db,db_prefix()))->definitions($ctx->issuerId(),$ctx->staffId(),'tasks',['active'=>1,'show_on_table'=>1]);
+    }
     $table_data = [
         _l('the_number_sign'),
         [
@@ -310,7 +279,7 @@ function init_relation_tasks_table($table_attributes = [], $filtersWrapperId = '
         'th_attrs' => ['class' => ($table_attributes['data-new-rel-type'] !== 'project' ? 'not_visible' : '')],
     ]);
 
-    $custom_fields = get_custom_fields('tasks', [
+    $custom_fields = $native ? $nativeFields : get_custom_fields('tasks', [
         'show_on_table' => 1,
     ]);
 
@@ -321,14 +290,14 @@ function init_relation_tasks_table($table_attributes = [], $filtersWrapperId = '
        ]);
     }
 
-    $table_data = hooks()->apply_filters('tasks_related_table_columns', $table_data);
+    if (!$native) $table_data = hooks()->apply_filters('tasks_related_table_columns', $table_data);
 
     $name = 'rel-tasks';
     if ($table_attributes['data-new-rel-type'] == 'lead') {
         $name = 'rel-tasks-leads';
     }
 
-    $tasks_table = App_table::find('related_tasks');
+    $tasks_table = $native ? $nativeTable : App_table::find('related_tasks');
 
     $table      = '';
     $CI         = &get_instance();
@@ -340,7 +309,7 @@ function init_relation_tasks_table($table_attributes = [], $filtersWrapperId = '
         'detached'=>$filtersDetached,
     ]);
 
-    if (staff_can('create',  'tasks')) {
+    if ($native ? (new IssuerResourceAccess($CI->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),'tasks','create') : staff_can('create', 'tasks')) {
         $disabled   = '';
         $table_name = addslashes($table_name);
         if ($table_attributes['data-new-rel-type'] == 'customer' && is_numeric($table_attributes['data-new-rel-id'])) {

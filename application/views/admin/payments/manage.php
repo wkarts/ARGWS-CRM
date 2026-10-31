@@ -4,6 +4,7 @@
     <div class="content">
         <div class="panel_s">
             <div class="panel-body">
+                <?php if(isset($native_payments)&&staff_can('create','payments')){ ?><p><a href="#" onclick="add_batch_payment();return false;" class="btn btn-primary"><?= _l('add_batch_payments'); ?></a></p><?php } ?>
                 <div class="panel-table-full">
                     <?php $this->load->view('admin/payments/table_html'); ?>
                 </div>

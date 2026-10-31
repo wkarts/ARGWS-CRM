@@ -7,12 +7,129 @@ class Dashboard extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('dashboard_model');
+        if (!$this->companyDashboard()) { $this->load->model('dashboard_model'); }
+    }
+
+    private function companyDashboard(): bool
+    {
+        return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
+    }
+
+    /** Turn only well-known PHP engine errors into safe diagnostic tokens. */
+    private static function companyDashboardErrorCode(Throwable $error): string
+    {
+        $message = $error->getMessage();
+        if ($message === 'company_dashboard_snapshot_view_invalid') { return 'snapshot_view_invalid'; }
+        if (preg_match('/^Call to undefined function ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*)\\(\\)$/D', $message, $match)) {
+            return 'undefined_function_' . str_replace('\\', '_', $match[1]);
+        }
+        if (preg_match('/^Call to undefined method ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*::[A-Za-z_][A-Za-z0-9_]*)\\(\\)$/D', $message, $match)) {
+            return 'undefined_method_' . str_replace(['\\', '::'], '_', $match[1]);
+        }
+        if (preg_match('/^Cannot use object of type ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*) as array$/D', $message, $match)) {
+            return 'object_as_array_' . str_replace('\\', '_', $match[1]);
+        }
+        if (preg_match('/^Cannot access offset of type (?:array|bool|float|int|object|resource|string) on (?:array|bool|float|int|object|resource|string|null)$/D', $message)) {
+            return 'offset_type_invalid';
+        }
+        if (preg_match('/^Unsupported operand types(?:: (?:array|bool|float|int|object|resource|string|null) [^ ]+ (?:array|bool|float|int|object|resource|string|null))?$/D', $message)) {
+            return 'operand_types_invalid';
+        }
+        return 'unclassified';
+    }
+
+    private function renderCompanyDashboard(): void
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_error('Contexto de empresa indisponível.', 503); return; }
+        if (!in_array($this->input->method(true), ['GET','HEAD'], true)) { show_error('Método não permitido.',405); return; }
+        require_once APPPATH.'services/CompanyDashboardPresenter.php';
+        $ctx=CompanyRequestScope::context();
+        if ($ctx->issuerId()===null) {
+            $this->output->set_header('Cache-Control: no-store');
+            $this->load->view('admin/dashboard/dashboard',['company_dashboard_selection_required'=>true,'company_dashboard_announcements'=>[],'company_dashboard_can_edit_announcements'=>false,'title'=>NativeCompanyAdminPresentation::label('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true]); return;
+        }
+        $presenter=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+        $stage = 'snapshot';
+        try {
+            $snapshot=$presenter->snapshot();
+            require_once APPPATH.'services/AdminDatabaseUpgrade.php';$upgradeVersion=AdminDatabaseUpgrade::contextVersion($this);
+            $upgradeSuccess=AdminDatabaseUpgrade::peekContextSuccess($this,$upgradeVersion);
+            $stage = 'view_composition';
+            $viewData = $snapshot['view'] ?? null;
+            if (!is_array($viewData)) { throw new UnexpectedValueException('company_dashboard_snapshot_view_invalid'); }
+            $ticketPresentation = null;
+            $ticketStructure = null;
+            if (!empty($snapshot['permissions']['tickets'])) {
+                require_once APPPATH.'services/NativeCompanyTicketIndexPresentation.php';
+                $ticketPresentation = new NativeCompanyTicketIndexPresentation($this->db, db_prefix());
+                $ticketIndex = $ticketPresentation->read($ctx->issuerId(), $ctx->staffId());
+                $ticketStructure = $ticketIndex['native_ticket_index']['structure'];
+                $viewData['native_dashboard_ticket_structure'] = $ticketStructure;
+            }
+            require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
+            $auxiliary=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$this);
+            $announcementAlerts=$auxiliary->dashboardAnnouncements();
+            $canEditAnnouncements=$auxiliary->allowed('announcements','edit');
+            if (!empty($snapshot['permissions']['calendar'])) {
+                require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
+                $calendarData=NativeCompanyCalendarEndpoints::page($this);
+                unset($calendarData['title']);
+                $viewData=array_replace($viewData,$calendarData);
+            }
+            $title = NativeCompanyAdminPresentation::label('dashboard_string');
+            $snapshot['view'] = $viewData;
+            $data=$viewData+['company_dashboard'=>$snapshot,'company_dashboard_announcements'=>$announcementAlerts,'company_dashboard_can_edit_announcements'=>$canEditAnnouncements,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
+            // The original dashboard widgets use this official pure presentation helper.
+            // Their native data still comes only from the sealed company snapshot above.
+            $this->load->helper(['func','widgets','invoices','estimates','proposals','sales','settings','fields','template','email_templates','custom_fields','tickets']);
+            $stage = 'template_render';
+            $html=$this->load->view('admin/dashboard/dashboard',$data,true);
+            $stage = 'snapshot_confirmation';
+            if ($ticketPresentation !== null
+                && $ticketPresentation->read($ctx->issuerId(), $ctx->staffId())['native_ticket_index']['structure'] !== $ticketStructure) {
+                throw new DomainException('company_dashboard_stale');
+            }
+            $presenter->confirm();
+            if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,$upgradeVersion))throw new DomainException('company_dashboard_stale');
+            $this->output->set_header('Cache-Control: no-store');
+            $this->output->set_output($html);
+        } catch (DomainException $e) {
+            $reason = $e->getMessage();
+            $diagnostic = preg_match('/^[a-z][a-z0-9_]{0,99}$/D', $reason) ? $reason : 'unclassified';
+            $safeMessage = 'Native company dashboard denied [' . $diagnostic . '].';
+            error_log($safeMessage);
+            log_message('error', $safeMessage);
+            show_error('Não foi possível confirmar os dados e permissões desta empresa. Recarregue a página.', $e->getMessage()==='company_dashboard_stale'?409:403);
+        } catch (Throwable $error) {
+            $diagnostic = self::companyDashboardErrorCode($error);
+            $sourceFile = basename((string) $error->getFile());
+            if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
+            $errorClass = get_class($error);
+            if (!preg_match('/^[A-Za-z0-9_\\\\]{1,128}$/D', $errorClass)) { $errorClass = 'Throwable'; }
+            $safeMessage = 'Native company dashboard failed [' . $stage . ':' . $diagnostic . ']: ' . $errorClass
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine() . '.';
+            error_log($safeMessage);
+            log_message('error', $safeMessage);
+            show_error('Não foi possível abrir o painel desta empresa. Recarregue a página.', 500);
+        }
+    }
+
+    private function companyPaymentChart($currency,string $period):void
+    {
+        $ctx=CompanyRequestScope::context();
+        if(!CompanyRequestScope::nativeFor($this)||$ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+        if(!$this->input->is_ajax_request()||$this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+        require_once APPPATH.'services/CompanyDashboardPayments.php';
+        try {
+            $data=(new CompanyDashboardPayments($this->db,db_prefix()))->read($ctx->issuerId(),$ctx->staffId(),$currency,$period);
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_content_type('application/json');$this->output->set_output(json_encode($data,JSON_THROW_ON_ERROR));
+        } catch(DomainException $error){show_error('Não foi possível confirmar os recebimentos desta empresa.',403);}
     }
 
     // This is admin dashboard view
     public function index()
     {
+        if ($this->companyDashboard()) { $this->renderCompanyDashboard(); return; }
         // AdminController has already enforced current company membership and the
         // primary-only native dashboard boundary before consuming upgrade feedback.
         if ($this->input->method(true) === 'GET' && !$this->input->is_ajax_request()
@@ -99,6 +216,7 @@ class Dashboard extends AdminController
     // Chart weekly payments statistics on home page / ajax
     public function weekly_payments_statistics($currency)
     {
+        if ($this->companyDashboard()) { $this->companyPaymentChart($currency, 'weekly'); return; }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->dashboard_model->get_weekly_payments_statistics($currency));
 
@@ -109,6 +227,7 @@ class Dashboard extends AdminController
     // Chart monthly payments statistics on home page / ajax
     public function monthly_payments_statistics($currency)
     {
+        if ($this->companyDashboard()) { $this->companyPaymentChart($currency, 'monthly'); return; }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->dashboard_model->get_monthly_payments_statistics($currency));
 
@@ -118,6 +237,15 @@ class Dashboard extends AdminController
 
     public function ticket_widget($type)
     {
+        if ($this->companyDashboard()) {
+            $ctx=CompanyRequestScope::context();
+            if(!CompanyRequestScope::nativeFor($this)||$ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+            if(!$this->input->is_ajax_request()||$this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            require_once APPPATH.'services/CompanyDashboardPresenter.php';
+            $reader=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+            try {$data=['tickets_report'=>$reader->ticketReport((string)$type)];$html=$this->load->view('admin/dashboard/widgets/tickets_report_table',$data,true);$reader->confirm();$this->output->set_header('Cache-Control: no-store');$this->output->set_output($html);}
+            catch(DomainException $error){show_error('Não foi possível confirmar o relatório desta empresa.',403);}return;
+        }
         $data['tickets_report'] = (new app\services\TicketsReportByStaff())->filterBy($type);
         $this->load->view('admin/dashboard/widgets/tickets_report_table', $data);
     }

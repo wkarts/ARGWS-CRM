@@ -13,14 +13,14 @@ final class CompanyOperationsApiScope
         $uri=$server['REQUEST_URI']??null;$script=$server['SCRIPT_NAME']??null;
         if(!is_string($uri)||!is_string($script)||preg_match('/[\x00-\x1f\x7f]/',$uri)||basename($script)!=='index.php')return false;
         $path=parse_url($uri,PHP_URL_PATH);if(!is_string($path))return false;$path=preg_replace('#/+#','/',rawurldecode($path));$base=rtrim(str_replace('\\','/',dirname($script)),'/.');
-        foreach([$base.'/company_operations_api',$base.'/index.php/company_operations_api'] as $prefix)if(strcasecmp($path,$prefix)===0||strncasecmp($path,$prefix.'/',strlen($prefix)+1)===0)return true;return false;
+        foreach([$base.'/company_operations_api',$base.'/index.php/company_operations_api',$base.'/operations_api',$base.'/index.php/operations_api'] as $prefix)if(strcasecmp($path,$prefix)===0||strncasecmp($path,$prefix.'/',strlen($prefix)+1)===0)return true;return false;
     }
     public static function prepare($ci):bool
     {
-        self::$active=false;self::$requested=false;if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()||strtolower((string)$ci->router->fetch_class())!=='company_operations_api')return false;
+        self::$active=false;self::$requested=false;if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()||!in_array(strtolower((string)$ci->router->fetch_class()),['operations_api','company_operations_api'],true))return false;
         self::$requested=true;$regular=['hr_structure','hr_employees','hr_profiles','hr_records','hr_contracts','hr_courses','hr_assignments','hr_accesses','hr_files','hr_reports','hr_imports','hr_articles','hr_documents','projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules','leads','lead_stages','lead_sources','lead_inbox'];$files=['project_files','task_files','contract_files','ticket_files','lead_files'];$extras=['project_copies','project_milestones','task_dependencies','project_follow','task_follow'];$collections=['lead_assignees','lead_exports'];$method=strtolower((string)$ci->router->fetch_method());if(!in_array($method,array_merge($regular,$files,$extras,$collections,['lead_imports']),true)||!isset($ci->uri)||!method_exists($ci->uri,'segment'))return false;
         $segments=[];for($i=1;$i<=6;$i++){$v=$ci->uri->segment($i);if($v===null||$v===false||$v==='')break;$segments[]=(string)$v;}
-        if(($segments[0]??null)!=='company_operations_api'||($segments[1]??null)!==$method)return false;
+        if(!in_array(($segments[0]??null),['operations_api','company_operations_api'],true)||($segments[1]??null)!==$method)return false;
         if(in_array($method,$collections,true)){if(count($segments)!==2)return false;self::$active=true;return true;}
         if($method==='lead_imports'){if(!in_array(count($segments),[2,3],true)||(isset($segments[2])&&!preg_match('/^[a-f0-9]{32}$/D',$segments[2])))return false;self::$active=true;return true;}
         if(in_array($method,$regular,true)){if(!in_array(count($segments),[2,3],true))return false;}

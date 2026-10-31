@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $isNativeSettings=!empty($native_settings)&&class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor(get_instance()); init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <?php if ($this->session->flashdata('debug')) { ?>
@@ -15,7 +15,7 @@ foreach($sections as $sectionId=>$section) {
         $children[]=['id'=>$child['id'],'name'=>$child['name'],'url'=>admin_url('settings?group='.$child['id']),
             'icon'=>$child['icon']??'fa-regular fa-circle-question','badge'=>$child['badge']??[]];
     }
-    if($sectionId==='general') {
+    if($sectionId==='general' && !$isNativeSettings) {
         $children[]=['id'=>'update','name'=>_l('settings_update'),'url'=>admin_url('settings?group=update'),'icon'=>'fa-solid fa-hammer'];
         if(is_admin()) {
             $children[]=['id'=>'argws_platform','name'=>'Plataforma','url'=>admin_url('settings?group=argws_platform'),'icon'=>'fa-solid fa-sliders'];
@@ -33,15 +33,19 @@ $formAttributes = [
     'class' => isset($group['update_url']) ? 'custom-update-url' : '',
 ];
 
-echo form_open_multipart($actionUrl, $formAttributes);
+$individualTagForms=$isNativeSettings&&$group['id']==='tags';
+if(!$individualTagForms)echo form_open_multipart($actionUrl, $formAttributes);
+if($isNativeSettings&&!$individualTagForms){echo form_hidden('native_settings_revision',$native_settings_revision);echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('_company_context',CompanyRequestScope::token());}
 ?>
                         <div class="panel_s">
                             <div class="panel-body">
-                                <?php hooks()->do_action('before_settings_group_view', $group); ?>
+                                <fieldset <?= $isNativeSettings && !$native_settings_can_edit ? 'disabled' : ''; ?>>
+                                <?php if(!$isNativeSettings)hooks()->do_action('before_settings_group_view', $group); ?>
                                 <?php $this->load->view($group['view']) ?>
-                                <?php hooks()->do_action('after_settings_group_view', $group); ?>
+                                <?php if(!$isNativeSettings)hooks()->do_action('after_settings_group_view', $group); ?>
+                                </fieldset>
                             </div>
-                            <?php if (($group['without_submit_button'] ?? false) !== true) { ?>
+                            <?php if (($group['without_submit_button'] ?? false) !== true && (!$isNativeSettings || $native_settings_can_edit)) { ?>
                             <div class="panel-footer text-right">
                                 <button type="submit" class="btn btn-primary">
                                     <?= _l('settings_save'); ?>
@@ -49,7 +53,7 @@ echo form_open_multipart($actionUrl, $formAttributes);
                             </div>
                             <?php } ?>
                         </div>
-                        <?= form_close(); ?>
+                        <?= $individualTagForms?'':form_close(); ?>
 <?php
 $settingsPresentation=['title'=>_l('settings'),'heading'=>$group['name'],'active'=>$group['id'],'sections'=>$settingsNavigation,'content'=>ob_get_clean()];
 require __DIR__.'/presentation_layout.php';
@@ -227,7 +231,7 @@ unset($settingsPresentation,$settingsNavigation);
         }
     });
 </script>
-<?php hooks()->do_action('settings_group_end', $group); ?>
+<?php if(!$isNativeSettings)hooks()->do_action('settings_group_end', $group); ?>
 </body>
 
 </html>

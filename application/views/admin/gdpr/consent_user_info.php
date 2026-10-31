@@ -42,6 +42,11 @@ foreach ($purposes as $purpose) { ?>
                 id="purposeActionForm-<?= e($purpose['id']); ?>">
                 <hr />
                 <?= form_open(admin_url($form_url), ['class' => 'consent-form']); ?>
+                <?php if(!empty($native_company_consent)){ ?>
+                <input type="hidden" name="_native_company_csrf" value="<?= e($native_consent_csrf); ?>">
+                <input type="hidden" name="native_consent_revision" value="<?= e($native_consent_revision); ?>">
+                <input type="hidden" name="purpose_revision" value="<?= e($purpose['revision']); ?>">
+                <?php } ?>
                 <input type="hidden" name="action"
                     value="<?= ! empty($purpose['consent_given']) ? 'opt-out' : 'opt-in'; ?>">
                 <input type="hidden" name="purpose_id"

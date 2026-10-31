@@ -1,16 +1,18 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (!empty($native_customers)) { $native_contact_image_url=isset($contact)&&str_starts_with((string)$contact->profile_image,'native:')?admin_url('clients/contact_profile_image/'.$customer_id.'/'.$contactid):base_url('assets/images/user-placeholder.jpg'); } ?>
 <!-- Modal Contact -->
 <div class="modal fade" id="contact" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <?= form_open(admin_url('clients/form_contact/' . $customer_id . ($contactid ? '/' . $contactid : '')), ['id' => 'contact-form', 'autocomplete' => 'off']); ?>
+            <?php if (!empty($native_customers)) { echo form_hidden('native_customer_id',$customer_id).form_hidden('native_contact_revision',$native_contact_revision).form_hidden('native_contact_fields_revision',$native_contact_fields_revision).form_hidden('_native_company_csrf',$company_clients_csrf); } ?>
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
                 <div class="tw-flex">
                     <div class="tw-mr-4 tw-flex-shrink-0 tw-relative">
                         <?php if (isset($contact)) { ?>
-                        <img src="<?= e(contact_profile_image_url($contact->id, 'small')); ?>"
+                        <img src="<?= e(!empty($native_customers)?$native_contact_image_url:contact_profile_image_url($contact->id, 'small')); ?>"
                             id="contact-img" class="client-profile-image-small">
                         <?php if (! empty($contact->profile_image)) { ?>
                         <a href="#"
@@ -25,7 +27,7 @@
                             <?= e($title); ?>
                         </h4>
                         <p class="tw-mb-0">
-                            <?= e(get_company_name($customer_id, true)); ?>
+                            <?= e(!empty($native_customers)?$native_contact_company:get_company_name($customer_id, true)); ?>
                         </p>
                     </div>
                 </div>
@@ -87,7 +89,7 @@
                             </select>
                         </div>
                         <?php $rel_id = (isset($contact) ? $contact->id : false); ?>
-                        <?= render_custom_fields('contacts', $rel_id); ?>
+                        <?= render_custom_fields('contacts', $rel_id, [], !empty($native_customers)&&!isset($contact)?['native_purpose'=>'create','native_client_id'=>$customer_id]:[]); ?>
 
 
                         <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
@@ -129,12 +131,12 @@
                         <hr />
                         <div class="checkbox">
                             <input type="checkbox" name="is_primary" id="contact_primary"
-                                <?= ((! isset($contact) && total_rows(db_prefix() . 'contacts', ['is_primary' => 1, 'userid' => $customer_id]) == 0) || (isset($contact) && $contact->is_primary == 1)) ? 'checked' : ''; ?><?= ((isset($contact) && total_rows(db_prefix() . 'contacts', ['is_primary' => 1, 'userid' => $customer_id]) == 1 && $contact->is_primary == 1)) ? ' disabled' : ''; ?>>
+                                <?= ((! isset($contact) && (!empty($native_customers)?$native_contact_primary_count:total_rows(db_prefix() . 'contacts', ['is_primary' => 1, 'userid' => $customer_id])) == 0) || (isset($contact) && $contact->is_primary == 1)) ? 'checked' : ''; ?><?= ((isset($contact) && (!empty($native_customers)?$native_contact_primary_count:total_rows(db_prefix() . 'contacts', ['is_primary' => 1, 'userid' => $customer_id])) == 1 && $contact->is_primary == 1)) ? ' disabled' : ''; ?>>
                             <label for="contact_primary">
                                 <?= _l('contact_primary'); ?>
                             </label>
                         </div>
-                        <?php if (! isset($contact) && is_email_template_active('new-client-created')) { ?>
+                        <?php if (! isset($contact) && (!empty($native_customers)?$native_contact_welcome_active:is_email_template_active('new-client-created'))) { ?>
                         <div class="checkbox">
                             <input type="checkbox" name="donotsendwelcomeemail" id="donotsendwelcomeemail">
                             <label for="donotsendwelcomeemail">
@@ -142,7 +144,7 @@
                             </label>
                         </div>
                         <?php } ?>
-                        <?php if (is_email_template_active('contact-set-password')) { ?>
+                        <?php if ((!empty($native_customers)?$native_contact_setup_active:is_email_template_active('contact-set-password'))) { ?>
                         <div class="checkbox">
                             <input type="checkbox" name="send_set_password_email" id="send_set_password_email">
                             <label for="send_set_password_email">
@@ -159,7 +161,7 @@
                         </p>
                         <?php $default_contact_permissions = []; ?>
                         <?php if (! isset($contact)) {
-                            $default_contact_permissions = @unserialize(get_option('default_contact_permissions'));
+                            $default_contact_permissions = !empty($native_customers)?$native_contact_defaults:@unserialize(get_option('default_contact_permissions'));
                         }?>
                         <?php foreach ($customer_permissions as $permission) { ?>
                         <div class="col-md-6 row">
@@ -172,7 +174,7 @@
                                         <input type="checkbox"
                                             id="<?= e($permission['id']); ?>"
                                             class="onoffswitch-checkbox"
-                                            <?= (isset($contact) && has_contact_permission($permission['short_name'], $contact->id) || is_array($default_contact_permissions) && in_array($permission['id'], $default_contact_permissions)) ? 'checked' : ''; ?>
+                                            <?= (isset($contact) && (!empty($native_customers)?in_array($permission['id'],$native_contact_permissions,true):has_contact_permission($permission['short_name'], $contact->id)) || is_array($default_contact_permissions) && in_array($permission['id'], $default_contact_permissions)) ? 'checked' : ''; ?>
                                         value="<?= e($permission['id']); ?>"
                                         name="permissions[]">
                                         <label class="onoffswitch-label"
@@ -185,7 +187,7 @@
                         <?php } ?>
                         <hr />
                         <p class="bold">
-                            <?= _l('email_notifications'); ?><?php if (is_sms_trigger_active()) {
+                            <?= _l('email_notifications'); ?><?php if (empty($native_customers) && is_sms_trigger_active()) {
                                 echo '/SMS';
                             } ?>
                         </p>
@@ -308,7 +310,7 @@
                         </div>
                     </div>
                 </div>
-                <?php hooks()->do_action('after_contact_modal_content_loaded'); ?>
+                <?php if (empty($native_customers)) hooks()->do_action('after_contact_modal_content_loaded'); ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"

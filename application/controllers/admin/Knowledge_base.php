@@ -7,12 +7,19 @@ class Knowledge_base extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('knowledge_base_model');
+        if (!CompanyRequestScope::nativeFor($this)) { $this->load->model('knowledge_base_model'); }
+    }
+
+    private function nativeKnowledge(): NativeCompanyKnowledgeController
+    {
+        require_once APPPATH.'services/NativeCompanyKnowledgeController.php';
+        return new NativeCompanyKnowledgeController($this);
     }
 
     /* List all knowledgebase articles */
     public function index()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->index(); return; }
         if (staff_cant('view', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -28,6 +35,7 @@ class Knowledge_base extends AdminController
     /* Add new article or edit existing*/
     public function article($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->article($id); return; }
         if (staff_cant('view', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -72,6 +80,7 @@ class Knowledge_base extends AdminController
 
     public function view($slug)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->view($slug); return; }
         if (staff_cant('view', 'knowledge_base')) {
             access_denied('View Knowledge Base Article');
         }
@@ -91,6 +100,7 @@ class Knowledge_base extends AdminController
 
     public function add_kb_answer()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->feedback(); return; }
         // This is for did you find this answer useful
         if (($this->input->post() && $this->input->is_ajax_request())) {
             echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post('articleid'), $this->input->post('answer')));
@@ -101,6 +111,7 @@ class Knowledge_base extends AdminController
     /* Change article active or inactive */
     public function change_article_status($id, $status)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->status(true,$id,$status); return; }
         if (staff_can('edit',  'knowledge_base')) {
             if ($this->input->is_ajax_request()) {
                 $this->knowledge_base_model->change_article_status($id, $status);
@@ -110,6 +121,7 @@ class Knowledge_base extends AdminController
 
     public function update_kan_ban()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->reorder(true); return; }
         if (staff_can('edit',  'knowledge_base')) {
             if ($this->input->post()) {
                 $success = $this->knowledge_base_model->update_kan_ban($this->input->post());
@@ -128,6 +140,7 @@ class Knowledge_base extends AdminController
 
     public function change_group_color()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->color(); return; }
         if (staff_can('edit',  'knowledge_base')) {
             if ($this->input->post()) {
                 $this->knowledge_base_model->change_group_color($this->input->post());
@@ -138,6 +151,7 @@ class Knowledge_base extends AdminController
     /* Delete article from database */
     public function delete_article($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->delete(true,$id); return; }
         if (staff_cant('delete', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -156,6 +170,7 @@ class Knowledge_base extends AdminController
     /* View all article groups */
     public function manage_groups()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->manageGroups(); return; }
         if (staff_cant('view', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -167,6 +182,7 @@ class Knowledge_base extends AdminController
     /* Add or edit existing article group */
     public function group($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->group(); return; }
         if (staff_cant('view', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -209,6 +225,7 @@ class Knowledge_base extends AdminController
     /* Change group active or inactive */
     public function change_group_status($id, $status)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->status(false,$id,$status); return; }
         if (staff_can('edit',  'knowledge_base')) {
             if ($this->input->is_ajax_request()) {
                 $this->knowledge_base_model->change_group_status($id, $status);
@@ -218,6 +235,7 @@ class Knowledge_base extends AdminController
 
     public function update_groups_order()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->reorder(false); return; }
         if (staff_can('edit',  'knowledge_base')) {
             if ($this->input->post()) {
                 $this->knowledge_base_model->update_groups_order();
@@ -228,6 +246,7 @@ class Knowledge_base extends AdminController
     /* Delete article group */
     public function delete_group($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->delete(false,$id); return; }
         if (staff_cant('delete', 'knowledge_base')) {
             access_denied('knowledge_base');
         }
@@ -247,6 +266,7 @@ class Knowledge_base extends AdminController
 
     public function get_article_by_id_ajax($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeKnowledge()->getArticle($id); return; }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->knowledge_base_model->get($id));
         }

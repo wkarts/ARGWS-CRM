@@ -7,6 +7,7 @@
                 <?= e($title); ?>
             </h4>
             <?= form_open_multipart($this->uri->uri_string(), ['id' => 'staff_profile_table', 'autocomplete' => 'off']); ?>
+            <?php if (isset($native_staff_self_revision)) { echo form_hidden('native_staff_self_revision', $native_staff_self_revision); } ?>
 
             <div class="panel_s">
                 <div class="panel-body">
@@ -25,7 +26,7 @@
                             </div>
                             <div class="col-md-3 text-right">
                                 <a
-                                    href="<?= admin_url('staff/remove_staff_profile_image'); ?>"><i
+                                    href="<?= admin_url('staff/remove_staff_profile_image'); ?>" <?php if(isset($native_staff_self_revision)){ ?> data-native-avatar-revision="<?= e($native_staff_self_revision); ?>" onclick="return native_remove_staff_avatar(this);" <?php } ?>><i
                                         class="fa fa-remove"></i></a>
                             </div>
                         </div>
@@ -66,7 +67,7 @@
                             <option value="">
                                 <?= _l('system_default_string'); ?>
                             </option>
-                            <?php foreach ($this->app->get_available_languages() as $availableLanguage) {
+                            <?php foreach (($native_staff_languages ?? $this->app->get_available_languages()) as $availableLanguage) {
                                 $selected = '';
                                 if (isset($member)) {
                                     if ($member->default_language == $availableLanguage) {
@@ -138,7 +139,7 @@
                     </div>
                     <?php } ?>
                 </div>
-            <?php if (function_exists('issuers_render_staff_access')) { issuers_render_staff_access(get_staff_user_id(), true); } ?>
+            <?php if (empty($native_staff_self) && function_exists('issuers_render_staff_access')) { issuers_render_staff_access(get_staff_user_id(), true); } ?>
                 <div class="panel-footer text-right">
                     <button type="submit" class="btn btn-primary">
                         <?= _l('submit'); ?>
@@ -152,6 +153,7 @@
             </h4>
 
             <?= form_open('admin/staff/change_password_profile', ['id' => 'staff_password_change_form']); ?>
+            <?php if (isset($native_staff_self_revision)) { echo form_hidden('native_staff_self_revision', $native_staff_self_revision); } ?>
 
             <div class="panel_s">
                 <div class="panel-body">
@@ -196,6 +198,7 @@
             </h4>
 
             <?= form_open('admin/staff/update_two_factor', ['id' => 'two_factor_auth_form']); ?>
+            <?php if (isset($native_staff_self_revision)) { echo form_hidden('native_staff_self_revision', $native_staff_self_revision); echo render_input('two_factor_oldpassword', 'staff_old_password', '', 'password', ['autocomplete'=>'current-password','required'=>true]); } ?>
             <div class="panel_s">
                 <div class="panel-body">
                     <div class="radio radio-primary">
@@ -205,7 +208,7 @@
                         <label class="custom-control-label"
                             for="two_factor_auth_disabled"><?= _l('two_factor_authentication_disabed'); ?></label>
                     </div>
-                    <?php if (is_email_template_active('two-factor-authentication')) { ?>
+                    <?php if (isset($native_staff_email_factor_available) ? $native_staff_email_factor_available : is_email_template_active('two-factor-authentication')) { ?>
                     <div class="radio radio-primary">
                         <input type="radio" id="two_factor_auth_enabled" name="two_factor_auth" value="email"
                             class="custom-control-input"
@@ -248,6 +251,17 @@
     </div>
     <?php init_tail(); ?>
     <script>
+    <?php if(isset($native_staff_self_revision)){ ?>
+    function native_remove_staff_avatar(element) {
+        if (!window.NativeCompanyTransport || !window.NativeCompanyTransport.request) return false;
+        var revision = element.getAttribute('data-native-avatar-revision');
+        if (!/^[a-f0-9]{64}$/.test(revision || '')) return false;
+        window.NativeCompanyTransport.request('staff/remove_staff_profile_image', 'POST', {revision: revision})
+            .done(function(response) { if (typeof response === 'string') { try { response = JSON.parse(response); } catch (_) { return; } }
+                if (response && response.success === true) window.location.reload(); });
+        return false;
+    }
+    <?php } ?>
         $(function() {
             var qr_loaded = 0;
             var is_g2fa_enabled =
@@ -272,11 +286,18 @@
                     }
 
                     if (qr_loaded == 0) {
+                        <?php if(isset($native_staff_self_revision)){ ?>
+                        if (!window.NativeCompanyTransport) return;
+                        window.NativeCompanyTransport.request('authentication/get_qr','POST',{}).done(function(response) {
+                            $('#qr_image').html(response); qr_loaded=1; $('#qr_image').show();
+                        });
+                        <?php } else { ?>
                         $('#qr_image').load(admin_url + 'authentication/get_qr', {}, function(response,
                             status) {
                             qr_loaded = 1;
                             $('#qr_image').show();
                         });
+                        <?php } ?>
                     } else {
                         $('#qr_image').show();
                     }

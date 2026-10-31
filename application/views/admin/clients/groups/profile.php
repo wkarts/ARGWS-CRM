@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $native_customers=$native_customers??false; ?>
 
 <?php if (isset($client)) { ?>
 <h4 class="customer-profile-group-heading">
@@ -6,9 +6,20 @@
 </h4>
 <?php } ?>
 
+<?php if($native_customers && !$native_customer_owned){ ?>
+<p class="alert alert-info">Identidade compartilhada. Os dados privados e a edição pertencem à empresa responsável.</p>
+<?= render_input('company','client_company',$client->company,'text',['readonly'=>true]); ?>
+<?= render_input('vat','client_vat_number',$client->vat,'text',['readonly'=>true]); ?>
+<?php return; } ?>
 <div class="row">
-    <?= form_open($this->uri->uri_string(), ['class' => 'client-form', 'autocomplete' => 'off']); ?>
+    <?= form_open($native_customers ? ($native_customer_action ?? $this->uri->uri_string()) : $this->uri->uri_string(), ['class' => 'client-form', 'autocomplete' => 'off']); ?>
     <div class="additional"></div>
+    <?php if($native_customers){ ?>
+    <input type="hidden" name="_company_context" value="<?= e(CompanyRequestScope::token()); ?>">
+    <input type="hidden" name="request_key" value="<?= e($native_customer_request_key); ?>">
+    <input type="hidden" name="revision" value="<?= e($native_customer_revision??''); ?>">
+    <input type="hidden" name="native_customer_fields_revision" value="<?= e($native_customer_fields_revision); ?>">
+    <?php } ?>
     <div class="col-md-12">
         <div class="horizontal-scrollable-tabs panel-full-width-tabs">
             <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
@@ -23,12 +34,12 @@
                     </li>
                     <?php
                   $customer_custom_fields = false;
-if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active' => 1]) > 0) {
+if ($native_customers ? !empty($native_customer_custom_fields) : total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active' => 1]) > 0) {
     $customer_custom_fields = true; ?>
                     <li role="presentation"
                         class="<?= $this->input->get('tab') == 'custom_fields' ? 'active' : ''; ?>">
                         <a href="#custom_fields" aria-controls="custom_fields" role="tab" data-toggle="tab">
-                            <?= hooks()->apply_filters('customer_profile_tab_custom_fields_text', _l('custom_fields')); ?>
+                            <?= $native_customers ? _l('custom_fields') : hooks()->apply_filters('customer_profile_tab_custom_fields_text', _l('custom_fields')); ?>
                         </a>
                     </li>
                     <?php } ?>
@@ -38,8 +49,8 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                             <?= _l('billing_shipping'); ?>
                         </a>
                     </li>
-                    <?php hooks()->do_action('after_customer_billing_and_shipping_tab', $client ?? false); ?>
-                    <?php if (isset($client)) { ?>
+                    <?php if(!$native_customers) hooks()->do_action('after_customer_billing_and_shipping_tab', $client ?? false); ?>
+                    <?php if (isset($client) && (!$native_customers || ($native_customer_admin_manage??false))) { ?>
                     <li role="presentation">
                         <a href="#customer_admins" aria-controls="customer_admins" role="tab" data-toggle="tab">
                             <?= _l('customer_admins'); ?>
@@ -49,13 +60,13 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                             <?php } ?>
                         </a>
                     </li>
-                    <?php hooks()->do_action('after_customer_admins_tab', $client); ?>
+                    <?php if(!$native_customers) hooks()->do_action('after_customer_admins_tab', $client); ?>
                     <?php } ?>
                 </ul>
             </div>
         </div>
         <div class="tab-content mtop15">
-            <?php hooks()->do_action('after_custom_profile_tab_content', $client ?? false); ?>
+            <?php if(!$native_customers) hooks()->do_action('after_custom_profile_tab_content', $client ?? false); ?>
             <?php if ($customer_custom_fields) { ?>
             <div role="tabpanel"
                 class="tab-pane<?= $this->input->get('tab') == 'custom_fields' ? ' active' : ''; ?>"
@@ -63,7 +74,7 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                 <div class="row">
                     <div class="col-md-8">
                         <?php $rel_id = (isset($client) ? $client->userid : false); ?>
-                        <?= render_custom_fields('customers', $rel_id); ?>
+                        <?= render_custom_fields('customers', $rel_id, [], $native_customers && !$rel_id ? ['native_purpose'=>'create'] : []); ?>
                     </div>
                 </div>
             </div>
@@ -72,7 +83,7 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                 class="tab-pane<?= ! $this->input->get('tab') ? ' active' : ''; ?>"
                 id="contact_info">
                 <div class="row">
-                    <div class="col-md-12<?= isset($client) && (! is_empty_customer_company($client->userid) && total_rows(db_prefix() . 'contacts', ['userid' => $client->userid, 'is_primary' => 1]) > 0) ? '' : ' hide'; ?>"
+                    <div class="col-md-12<?= !$native_customers && isset($client) && (! is_empty_customer_company($client->userid) && total_rows(db_prefix() . 'contacts', ['userid' => $client->userid, 'is_primary' => 1]) > 0) ? '' : ' hide'; ?>"
                         id="client-show-primary-contact-wrapper">
                         <div class="checkbox checkbox-info mbot20 no-mtop">
                             <input type="checkbox" name="show_primary_contact"
@@ -84,34 +95,35 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                     </div>
                     <div
                         class="col-md-<?= ! isset($client) ? 12 : 8; ?>">
-                        <?php hooks()->do_action('before_customer_profile_company_field', $client ?? null); ?>
+                        <?php if(!$native_customers) hooks()->do_action('before_customer_profile_company_field', $client ?? null); ?>
                         <?php $value = (isset($client) ? $client->company : ''); ?>
                         <?php $attrs = (isset($client) ? [] : ['autofocus' => true]); ?>
                         <?= render_input('company', 'client_company', $value, 'text', $attrs); ?>
                         <div id="company_exists_info" class="hide"></div>
-                        <?php hooks()->do_action('after_customer_profile_company_field', $client ?? null); ?>
-                        <?php if (get_option('company_requires_vat_number_field') == 1 || (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context())) {
+                        <?php if(!$native_customers) hooks()->do_action('after_customer_profile_company_field', $client ?? null); ?>
+                        <?php if ($native_customers || get_option('company_requires_vat_number_field') == 1 || (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context())) {
                             $value = (isset($client) ? $client->vat : '');
                             echo render_input('vat', 'client_vat_number', $value);
                         } ?>
                         <?php
                         require_once APPPATH.'services/CompanyClientProfile.php';
-                        $clientProfileAllowed=false;
-                        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context()&&CompanyRequestScope::context()->isPrimary()&&CompanyClientProfileSchema::ready($this->db,db_prefix())){
+                        $clientProfileAllowed=$native_customers&&$native_customer_owned;
+                        if(!$native_customers&&class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context()&&CompanyRequestScope::context()->isPrimary()&&CompanyClientProfileSchema::ready($this->db,db_prefix())){
                             $profileContext=CompanyRequestScope::context();$privateProfile=new CompanyClientProfile($this->db,db_prefix());
                             $clientProfileAllowed=isset($client)?($privateProfile->allowed($profileContext->issuerId(),$profileContext->staffId(),(int)$client->userid,'view')&&$privateProfile->allowed($profileContext->issuerId(),$profileContext->staffId(),(int)$client->userid,'edit')):(new IssuerResourceAccess($this->db,db_prefix()))->can($profileContext->issuerId(),$profileContext->staffId(),'customers','create');
                         }
                         if($clientProfileAllowed){
                             $clientMode='legacy';$clientPrefix='brazil';$clientData=isset($client)?(array)$client:[];$clientProfile=[];
-                            if(isset($client)){try{$clientProfile=(new CompanyClientProfile($this->db,db_prefix()))->read(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),(int)$client->userid);}catch(DomainException $error){$clientProfile=[];}}
-                            $company_clients_csrf=$this->session->userdata('company_clients_csrf');if(!is_string($company_clients_csrf)||strlen($company_clients_csrf)!==64){$company_clients_csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_clients_csrf',$company_clients_csrf);}
-                            require APPPATH.'views/admin/companies/client_identity_fields.php';
+                            if($native_customers){$clientProfile=$native_customer_profile;}elseif(isset($client)){try{$clientProfile=(new CompanyClientProfile($this->db,db_prefix()))->read(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),(int)$client->userid);}catch(DomainException $error){$clientProfile=[];}}
+                            $clientLookupUrl=$native_customers?CompanyRequestScope::adminUrl($this,'clients/lookup'):null;
+                            if(!$native_customers){$company_clients_csrf=CompanyRequestScope::nativeCsrfToken($this);}
+                            require APPPATH.'views/admin/clients/native_identity_fields.php';
                         }
                         ?>
-                        <?php hooks()->do_action('before_customer_profile_phone_field', $client ?? null); ?>
+                        <?php if(!$native_customers) hooks()->do_action('before_customer_profile_phone_field', $client ?? null); ?>
                         <?php $value = (isset($client) ? $client->phonenumber : ''); ?>
                         <?= render_input('phonenumber', 'client_phonenumber', $value); ?>
-                        <?php hooks()->do_action('after_customer_profile_company_phone', $client ?? null); ?>
+                        <?php if(!$native_customers) hooks()->do_action('after_customer_profile_company_phone', $client ?? null); ?>
                         <?php if ((isset($client) && empty($client->website)) || ! isset($client)) {
                             $value = (isset($client) ? $client->website : '');
                             echo render_input('website', 'client_website', $value);
@@ -138,7 +150,7 @@ if (isset($customer_groups)) {
         array_push($selected, $group['groupid']);
     }
 }
-if (is_admin() || get_option('staff_members_create_inline_customer_groups') == '1') {
+if (!$native_customers && (is_admin() || get_option('staff_members_create_inline_customer_groups') == '1')) {
     echo render_select_with_input_group('groups_in[]', $groups, ['id', 'name'], 'customer_groups', $selected, '<div class="input-group-btn"><a href="#" class="btn btn-default" data-toggle="modal" data-target="#customer_group_modal"><i class="fa fa-plus"></i></a></div>', ['multiple' => true, 'data-actions-box' => true], [], '', '', false);
 } else {
     echo render_select('groups_in[]', $groups, ['id', 'name'], 'customer_groups', $selected, ['multiple' => true, 'data-actions-box' => true], [], '', '', false);
@@ -146,14 +158,14 @@ if (is_admin() || get_option('staff_members_create_inline_customer_groups') == '
 ?>
                         <div class="row">
                             <div
-                                class="col-md-<?= ! is_language_disabled() ? 6 : 12; ?>">
+                                class="col-md-<?= ($native_customers || ! is_language_disabled()) ? 6 : 12; ?>">
                                 <i class="fa-regular fa-circle-question pull-left tw-mt-0.5 tw-mr-1"
                                     data-toggle="tooltip"
                                     data-title="<?= _l('customer_currency_change_notice'); ?>"></i>
                                 <?php
 $s_attrs  = ['data-none-selected-text' => _l('system_default_string')];
 $selected = '';
-if (isset($client) && client_have_transactions($client->userid)) {
+if (!$native_customers && isset($client) && client_have_transactions($client->userid)) {
     $s_attrs['disabled'] = true;
 }
 
@@ -168,7 +180,7 @@ foreach ($currencies as $currency) {
 echo render_select('default_currency', $currencies, ['id', 'name', 'symbol'], 'invoice_add_edit_currency', $selected, $s_attrs);
 ?>
                             </div>
-                            <?php if (! is_language_disabled()) { ?>
+                            <?php if (($native_customers || ! is_language_disabled())) { ?>
                             <div class="col-md-6">
                                 <div class="form-group select-placeholder">
                                     <label for="default_language"
@@ -180,7 +192,7 @@ echo render_select('default_currency', $currencies, ['id', 'name', 'symbol'], 'i
                                         <option value="">
                                             <?= _l('system_default_string'); ?>
                                         </option>
-                                        <?php foreach ($this->app->get_available_languages() as $availableLanguage) {
+                                        <?php foreach (($native_customers ? $native_customer_languages : $this->app->get_available_languages()) as $availableLanguage) {
                                             $selected = '';
                                             if (isset($client)) {
                                                 if ($client->default_language == $availableLanguage) {
@@ -209,17 +221,17 @@ echo render_select('default_currency', $currencies, ['id', 'name', 'symbol'], 'i
                         <?= render_input('state', 'client_state', $value); ?>
                         <?php $value = (isset($client) ? $client->zip : ''); ?>
                         <?= render_input('zip', 'client_postal_code', $value); ?>
-                        <?php $countries = get_all_countries();
-$customer_default_country                = get_option('customer_default_country');
+                        <?php $countries = $native_customers ? $countries : get_all_countries();
+$customer_default_country                = ($native_customers ? $native_customer_default_country : get_option('customer_default_country'));
 $selected                                = (isset($client) ? $client->country : $customer_default_country);
 echo render_select('country', $countries, ['country_id', ['short_name']], 'clients_country', $selected, ['data-none-selected-text' => _l('dropdown_non_selected_tex')]);
 ?>
                     </div>
                 </div>
             </div>
-            <?php if (isset($client)) { ?>
+            <?php if (isset($client) && (!$native_customers || ($native_customer_admin_manage??false))) { ?>
             <div role="tabpanel" class="tab-pane" id="customer_admins">
-                <?php if (staff_can('create', 'customers') || staff_can('edit', 'customers')) { ?>
+                <?php if ($native_customers ? ($native_customer_admin_manage??false) : (staff_can('create', 'customers') || staff_can('edit', 'customers'))) { ?>
                 <a href="#" data-toggle="modal" data-target="#customer_admins_assign"
                     class="btn btn-primary mbot30"><?= _l('assign_admin'); ?></a>
                 <?php } ?>
@@ -230,7 +242,7 @@ echo render_select('country', $countries, ['country_id', ['short_name']], 'clien
                             </th>
                             <th><?= _l('customer_admin_date_assigned'); ?>
                             </th>
-                            <?php if (staff_can('create', 'customers') || staff_can('edit', 'customers')) { ?>
+                            <?php if ($native_customers ? ($native_customer_admin_manage??false) : (staff_can('create', 'customers') || staff_can('edit', 'customers'))) { ?>
                             <th class="options">
                                 <?= _l('options'); ?>
                             </th>
@@ -241,21 +253,21 @@ echo render_select('country', $countries, ['country_id', ['short_name']], 'clien
                         <?php foreach ($customer_admins as $c_admin) { ?>
                         <tr>
                             <td><a
-                                    href="<?= admin_url('profile/' . $c_admin['staff_id']); ?>">
-                                    <?= staff_profile_image($c_admin['staff_id'], [
+                                    href="<?= $native_customers ? '#' : admin_url('profile/' . $c_admin['staff_id']); ?>">
+                                    <?= $native_customers ? '<img class="staff-profile-image-small mright5" src="'.e(base_url('assets/images/user-placeholder.jpg')).'" alt="">' : staff_profile_image($c_admin['staff_id'], [
                                         'staff-profile-image-small',
                                         'mright5',
                                     ]);
-                            echo e(get_staff_full_name($c_admin['staff_id'])); ?></a>
+                            echo e($native_customers ? trim($c_admin['firstname'].' '.$c_admin['lastname']) : get_staff_full_name($c_admin['staff_id'])); ?></a>
                             </td>
                             <td
                                 data-order="<?= e($c_admin['date_assigned']); ?>">
                                 <?= e(_dt($c_admin['date_assigned'])); ?>
                             </td>
-                            <?php if (staff_can('create', 'customers') || staff_can('edit', 'customers')) { ?>
+                            <?php if ($native_customers ? ($native_customer_admin_manage??false) : (staff_can('create', 'customers') || staff_can('edit', 'customers'))) { ?>
                             <td>
                                 <a href="<?= admin_url('clients/delete_customer_admin/' . $client->userid . '/' . $c_admin['staff_id']); ?>"
-                                    class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
+                                    <?= $native_customers ? 'data-native-admin-remove="1" data-revision="'.e($native_customer_admin_revision).'"' : '' ?> class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 <?= $native_customers ? '' : '_delete' ?>">
                                     <i class="fa-regular fa-trash-can fa-lg"></i>
                                 </a>
                             </td>
@@ -317,7 +329,7 @@ echo render_select('country', $countries, ['country_id', ['short_name']], 'clien
                                 <?php $selected = (isset($client) ? $client->shipping_country : ''); ?>
                                 <?= render_select('shipping_country', $countries, ['country_id', ['short_name']], 'shipping_country', $selected, ['data-none-selected-text' => _l('dropdown_non_selected_tex')]); ?>
                             </div>
-                            <?php if (isset($client)
+                            <?php if (!$native_customers && isset($client)
                         && (total_rows(db_prefix() . 'invoices', ['clientid' => $client->userid]) > 0 || total_rows(db_prefix() . 'estimates', ['clientid' => $client->userid]) > 0 || total_rows(db_prefix() . 'creditnotes', ['clientid' => $client->userid]) > 0)) { ?>
                             <div class="col-md-12">
                                 <div
@@ -349,11 +361,28 @@ echo render_select('country', $countries, ['country_id', ['short_name']], 'clien
     </div>
     <?= form_close(); ?>
 </div>
-<?php if (isset($client)) { ?>
-<?php if (staff_can('create', 'customers') || staff_can('edit', 'customers')) { ?>
+<?php if($native_customers&&isset($client)&&$native_customer_owned&&!empty($native_customer_capabilities['share'])){ ?>
+<div class="panel_s tw-mt-4" id="native-customer-sharing"><div class="panel-body">
+    <h4 class="tw-font-semibold tw-text-base"><?= e(_l('issuer_customer_share_identity')); ?></h4>
+    <p class="text-muted"><?= e(_l('issuer_customer_share_identity_help')); ?></p>
+    <?= form_open(admin_url('clients/share_identity/'.$client->userid)); ?>
+    <?= form_hidden('_native_company_csrf',$company_clients_csrf); ?>
+    <?= form_hidden('revision',$native_customer_revision); ?>
+    <?php $known=[];foreach($native_customer_sharing_options as$option){$known[]=(int)$option['id'];$inputId='native-customer-share-'.(int)$option['id']; ?>
+    <div class="checkbox checkbox-primary"><input id="<?= e($inputId); ?>" type="checkbox" name="targets[]" value="<?= (int)$option['id']; ?>" <?= in_array((int)$option['id'],$native_customer_sharing_targets,true)?'checked':''; ?>><label for="<?= e($inputId); ?>"><?= e($option['legal_name']); ?></label></div>
+    <?php }foreach(array_diff($native_customer_sharing_targets,$known)as$target){$inputId='native-customer-share-'.(int)$target; ?>
+    <div class="checkbox checkbox-primary"><input id="<?= e($inputId); ?>" type="checkbox" name="targets[]" value="<?= (int)$target; ?>" checked><label for="<?= e($inputId); ?>"><?= e(_l('issuer_customer_share_existing_target',(int)$target)); ?></label></div>
+    <?php } ?>
+    <?php if(!$native_customer_sharing_options&&!$native_customer_sharing_targets){ ?><p><?= e(_l('issuer_customer_share_no_targets')); ?></p><?php } ?>
+    <button type="submit" class="btn btn-default"><?= e(_l('submit')); ?></button><?= form_close(); ?>
+</div></div>
+<?php } ?>
+<?php if (isset($client) && (!$native_customers || ($native_customer_admin_manage??false))) { ?>
+<?php if ($native_customers ? ($native_customer_admin_manage??false) : (staff_can('create', 'customers') || staff_can('edit', 'customers'))) { ?>
 <div class="modal fade" id="customer_admins_assign" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('clients/assign_admins/' . $client->userid)); ?>
+        <?php if($native_customers){ ?><input type="hidden" name="revision" value="<?= e($native_customer_admin_revision); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($company_clients_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

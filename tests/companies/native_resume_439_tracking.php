@@ -44,8 +44,17 @@ $shippedMarker=(int)($shippedParts[1].$shippedParts[2].$shippedParts[3]);
 resume439Check(($config['migration_version']??null)===$shippedMarker&&$shippedMarker>=439,'shipped configuration exactly matches canonical source and supports historical439');
 $config['migration_version']=439; // Explicit historical boundary, using the real production executor.
 
-$db->query('CREATE TABLE `'.$p.'migrations` (version bigint NOT NULL) ENGINE=InnoDB');
-$db->insert($p.'migrations', ['version'=>436]);
+// native_436 already owns this disposable table. essentialFixture deliberately
+// starts its minimal pre-priority schema at447; CREATE TABLE here used to fail
+// silently in the test adapter and INSERT added a second marker behind447.
+// App correctly refused447 ->439 before ever reaching the injected437 fault.
+// Establish the explicit historical test boundary with one verified row; do not
+// change the production downgrade guard or substitute a migration implementation.
+$inheritedMarkers=$db->query('SELECT version FROM `'.$p.'migrations`')->result_array();
+resume439Check(count($inheritedMarkers)===1&&(int)$inheritedMarkers[0]['version']===447,'historical runner receives the single documented minimal fixture marker447');
+resume439Check($db->query('UPDATE `'.$p.'migrations` SET version=436 WHERE version=447')!==false,'historical disposable marker436 written');
+$historicalMarkers=$db->query('SELECT version FROM `'.$p.'migrations`')->result_array();
+resume439Check(count($historicalMarkers)===1&&(int)$historicalMarkers[0]['version']===436,'one exact436 marker precedes the actual437–439 executor');
 $GLOBALS['resume439Hooks'] = new class { public array $trace = []; public function do_action($name, ...$args) { $this->trace[] = $name; } };
 $ci = (object)['db'=>$db]; $GLOBALS['resume439CI'] = $ci;
 $ci->config = new class($config) { public function __construct(private array $values) {} public function item($name) { return $this->values[$name] ?? null; } };

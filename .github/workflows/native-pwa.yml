@@ -40,6 +40,7 @@ jobs:
           PWA_BROWSER_ARTIFACTS: /tmp/native-pwa-fixture
         run: |
           php -l tests/native_pwa_router.php
+          node tests/native_pwa_navigation.browser.cjs
           node tests/native_pwa.browser.cjs
       - name: Capturas sintéticas PWA e diagnósticos sem valores
         if: always()

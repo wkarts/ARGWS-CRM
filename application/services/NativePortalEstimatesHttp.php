@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/NativePortalIdentity.php';require_once __DIR__.'/NativePortalPresentation.php';require_once __DIR__.'/CompanyPortalSales.php';require_once __DIR__.'/NativePortalLegacyEstimates.php';
+
+/** Canonical Clients::estimates route backed by contact-scoped published and principal historical records. */
+final class NativePortalEstimatesHttp
+{
+ public function __construct(private$ci){}
+ public function index($status=''):void{
+  if(!PortalRequestScope::sealedFor($this->ci)||!in_array($this->ci->input->method(true),['GET','HEAD'],true))throw new DomainException('company_portal_sales_unavailable');$issuer=PortalRequestScope::issuerId();$secret=$this->ci->config->item('encryption_key');$identities=new NativePortalIdentity($this->ci->db,db_prefix(),$secret);$identity=$identities->current($this->ci->session,$issuer);if(!$identity){redirect(NativePortalPresentation::url('authentication/login'),'location',303);return;}
+  if($status!==''&&(!is_string($status)&&!is_int($status)||!preg_match('/^[1-5]$/D',(string)$status)))throw new DomainException('company_portal_sales_unavailable');$portal=new CompanyPortal($this->ci->db,db_prefix(),$secret);$source=new CompanyPortalSales($this->ci->db,db_prefix(),$portal);$owned=$source->page($identity['binding'],$issuer,'estimates');if($owned===null){redirect(NativePortalPresentation::url('clients'),'location',303);return;}$rows=[];
+  foreach($owned as$row){$mapped=match($row['state']){'open'=>(isset($row['due_date'])&&$row['due_date']<date('Y-m-d')?5:2),'declined'=>3,'accepted','converted'=>4,default=>throw new DomainException('company_portal_sales_unavailable')};if($status!==''&&(int)$status!==$mapped)continue;$rows[]=['id'=>(int)$row['id'],'number'=>$row['formatted_number'],'date'=>$row['date'],'expirydate'=>$row['due_date'],'total'=>(string)$row['total'],'status'=>$mapped,'hash'=>$row['link_hash'],'lineage'=>'owned'];}
+  $client=$identity['binding']['client_id'];$primary=(new IssuerResourceAccess($this->ci->db,db_prefix()))->primaryId()===$issuer;$owners=IssuerStorage::query($this->ci->db,'SELECT client_id FROM '.db_prefix().'issuers_clients WHERE client_id=?',[$client])->result_array();if($primary&&!$owners){$legacy=new NativePortalLegacyEstimates($this->ci->db,db_prefix(),$portal);foreach($legacy->page($identity['binding'],$issuer)as$row){if($status!==''&&(int)$status!==(int)$row['status'])continue;$rows[]=['id'=>(int)$row['id'],'number'=>$row['formatted_number'],'date'=>$row['date'],'expirydate'=>$row['expirydate'],'total'=>(string)$row['total'],'status'=>(int)$row['status'],'hash'=>$row['hash'],'lineage'=>'legacy'];}}
+  $verified=IssuerStorage::query($this->ci->db,'SELECT email_verified_at FROM '.db_prefix().'contacts WHERE id=? AND userid=?',[$identity['binding']['contact_id'],$client])->result_array();if($identities->current($this->ci->session,$issuer)!==$identity||count($verified)!==1||$verified[0]['email_verified_at']===null)throw new DomainException('company_portal_sales_unavailable');usort($rows,static fn($a,$b)=>[$b['date'],$b['id'],$b['lineage']]<=>[$a['date'],$a['id'],$a['lineage']]);$this->ci->data(['title'=>_l('clients_my_estimates'),'native_portal_estimates'=>$rows]);$this->ci->view('estimates');$this->ci->layout();
+ }
+}

@@ -13,7 +13,8 @@
                     <div class="col-md-12">
                         <?php echo render_input('send_file_subject', 'send_file_subject'); ?>
                         <?php echo render_input('send_file_email', 'send_file_email'); ?>
-                        <?php echo render_textarea('send_file_message', 'send_file_message', get_option('email_signature')); ?>
+                        <?php echo render_textarea('send_file_message', 'send_file_message', !empty($native_customers)?$native_file_signature:get_option('email_signature')); ?>
+                        <?php if(!empty($native_customers)){echo form_hidden('_native_company_csrf',$company_clients_csrf);echo form_hidden('native_file_source','customer');echo form_hidden('native_file_id','');echo form_hidden('native_file_revision','');echo form_hidden('request_key','');} ?>
                         <?php echo form_hidden('file_path', ''); ?>
                         <?php echo form_hidden('filetype', ''); ?>
                         <?php echo form_hidden('file_name', ''); ?>

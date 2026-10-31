@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $native_customers=$native_customers??false; ?>
 <div class="modal fade" id="customer_file_share_file_with"
     data-total-contacts="<?= count($contacts); ?>" tabindex="-1"
     role="dialog">
@@ -13,7 +13,7 @@
             </div>
             <div class="modal-body">
                 <?= form_hidden('file_id'); ?>
-                <?= render_select('share_contacts_id[]', $contacts, ['id', ['firstname', 'lastname']], 'customer_contacts', [get_primary_contact_user_id($client->userid)], ['multiple' => true, 'data-actions-box' => true], [], '', '', false); ?>
+                <?= render_select('share_contacts_id[]', $contacts, ['id', ['firstname', 'lastname']], 'customer_contacts', [$native_customers?$native_file_primary_contact:get_primary_contact_user_id($client->userid)], ['multiple' => true, 'data-actions-box' => true], [], '', '', false); ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"
@@ -31,9 +31,11 @@
     <?= _l('customer_files_info_message'); ?>
 </p>
 <?php if (isset($client)) { ?>
+<?php if(!$native_customers||$native_file_edit){ ?>
 <?= form_open_multipart(admin_url('clients/upload_attachment/' . $client->userid), ['class' => 'dropzone', 'id' => 'client-attachments-upload']); ?>
 <input type="file" name="file" multiple />
 <?= form_close(); ?>
+<?php } ?>
 <div class="tw-flex tw-justify-end tw-items-center tw-space-x-2 mtop15">
     <button class="gpicker" data-on-pick="customerGoogleDriveSave">
         <i class="fa-brands fa-google" aria-hidden="true"></i>
@@ -67,17 +69,17 @@
 
                 <?php $attachment_url = isset($_att['external']) && ! empty($_att['external']) ?
                     $_att['external_link'] :
-                    $_att['download_url'] ?? '#';
+                    ($native_customers?site_url($_att['download_url']):($_att['download_url'] ?? '#'));
                     ?>
                 <tr
-                    id="tr_file_<?= e($_att['id']); ?>">
+                    id="tr_file_<?= e($_att['id']); ?>" <?php if($native_customers){ ?>data-native-file-revision="<?= e($_att['revision']); ?>"<?php } ?>>
                     <td>
                         <?php
                     $is_image    = false;
                     $img_url     = '';
                     $lightBoxUrl = '';
 
-                    if (empty($_att['external'])) {
+                    if($native_customers){$is_image=empty($_att['external'])&&$_att['mime']==='image/png';$img_url=$is_image?$attachment_url.'?inline=1':'';$lightBoxUrl=$img_url;}elseif (empty($_att['external'])) {
                         $is_image    = is_image($path);
                         $img_url     = site_url('download/preview_image?path=' . protected_file_url_by_path($path, true) . '&type=' . $_att['filetype']);
                         $lightBoxUrl = site_url('download/preview_image?path=' . protected_file_url_by_path($path) . '&type=' . $_att['filetype']);
@@ -92,7 +94,7 @@
                         echo '<div class="preview_image">';
                     }
                     ?>
-                        <a href="<?= $is_image ? ($lightBoxUrl ?: $img_url) : $attachment_url; ?>"
+                        <a href="<?= e($is_image ? ($lightBoxUrl ?: $img_url) : $attachment_url); ?>"
                             <?= $is_image ? 'data-lightbox="customer-profile"' : ''; ?>
                             class="display-block mbot5">
                             <?php if ($is_image) { ?>
@@ -117,11 +119,11 @@
                             data-title="<?= _l('customer_attachments_show_notice'); ?>"
                             <?php } ?>>
                             <input type="checkbox"
-                                <?= $type != 'customer' ? 'disabled' : ''; ?>
+                                <?= $type != 'customer'||($native_customers&&!$native_file_edit) ? 'disabled' : ''; ?>
                             id="<?= e($_att['id']); ?>"
                             data-id="<?= e($_att['id']); ?>"
                             class="onoffswitch-checkbox customer_file"
-                            data-switch-url="<?= admin_url(); ?>misc/toggle_file_visibility"
+                            <?php if(!$native_customers){ ?>data-switch-url="<?= admin_url(); ?>misc/toggle_file_visibility"<?php } ?>
                             <?= isset($_att['visible_to_customer']) && $_att['visible_to_customer'] == 1 ? 'checked' : ''; ?>>
                             <label class="onoffswitch-label"
                                 for="<?= e($_att['id']); ?>"></label>
@@ -132,11 +134,11 @@
                                 $file_visibility_message = _l('file_share_visibility_notice');
                             }
 
-                            echo '<span class="text-warning' . (empty($file_visibility_message) || total_rows(db_prefix() . 'contacts', ['userid' => $client->userid]) == 0 ? ' hide' : '') . '">' . $file_visibility_message . '</span>';
+                            echo '<span class="text-warning' . (empty($file_visibility_message) || ($native_customers?count($contacts):total_rows(db_prefix() . 'contacts', ['userid' => $client->userid])) == 0 ? ' hide' : '') . '">' . $file_visibility_message . '</span>';
 
                             if ($_att['total_shares'] > 0 && ! empty($_att['shared_with'])) {
-                                $names = array_map(function ($file_share) {
-                                    return e(get_contact_full_name($file_share['contact_id']));
+                                $names = array_map(function ($file_share) use ($native_customers) {
+                                    return e($native_customers?trim($file_share['firstname'].' '.$file_share['lastname']):get_contact_full_name($file_share['contact_id']));
                                 }, $_att['shared_with']);
 
                                 $contacts_selected = implode(',', array_column($_att['shared_with'], 'contact_id'));
@@ -158,17 +160,17 @@
                             <a href="#" data-toggle="modal"
                                 data-file-name="<?= e($_att['file_name']); ?>"
                                 data-filetype="<?= e($_att['filetype']); ?>"
-                                data-path="<?= e($path); ?>"
+                                data-path="<?= e($path); ?>" <?php if($native_customers){ ?>data-native-file-id="<?= e($_att['id']); ?>" data-native-file-revision="<?= e($_att['revision']); ?>" data-native-file-source="customer"<?php } ?>
                                 data-target="#send_file"
                                 class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 tw-mt-1">
                                 <i class="fa-regular fa-envelope fa-lg"></i>
                             </a>
                             <?php } elseif (isset($_att['external']) && ! empty($_att['external'])) {
-                                echo '<a href="' . $_att['external_link'] . '" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700" target="_blank">' . ($_att['external'] == 'dropbox' ? '<i class="fa fa-dropbox fa-lg"></i>' : '<i class="fa-brands fa-google fa-lg"></i>') . '</a>';
+                                echo '<a href="' . e($_att['external_link']) . '" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700" target="_blank">' . ($_att['external'] == 'dropbox' ? '<i class="fa fa-dropbox fa-lg"></i>' : '<i class="fa-brands fa-google fa-lg"></i>') . '</a>';
                             } ?>
-                            <?php if ($type == 'customer') { ?>
+                            <?php if ($type == 'customer'&&(!$native_customers||$native_file_delete)) { ?>
                             <a href="<?= admin_url('clients/delete_attachment/' . $_att['rel_id'] . '/' . $_att['id']); ?>"
-                                class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
+                                class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 <?= $native_customers?'native-customer-file-delete':'_delete'; ?>">
                                 <i class="fa-regular fa-trash-can fa-lg"></i>
                             </a>
                             <?php } ?>

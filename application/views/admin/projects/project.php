@@ -3,6 +3,7 @@
 <div id="wrapper">
     <div class="content">
         <?= form_open($this->uri->uri_string(), ['id' => 'project_form']); ?>
+        <?php if(isset($native_project_form)){echo form_hidden('_company_context',$native_project_form['context_token']);echo form_hidden('_native_company_csrf',$native_project_form['csrf_token']);echo form_hidden('native_request_key',$native_project_form['request_key']);if($native_project_form['source']){echo form_hidden('native_project_revision',$native_project_form['source']['revision']);echo form_hidden('native_metadata_revision',$native_project_form['related']['metadata']['revision']??0);echo form_hidden('native_members_revision',$native_project_form['related']['members']['revision']);echo form_hidden('native_tags_revision',$native_project_form['related']['tags']['revision']);echo form_hidden('native_form_state_revision',$native_project_form['related']['state']['revision']);}} ?>
 
         <div class="tw-max-w-4xl tw-mx-auto">
             <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700">
@@ -36,7 +37,7 @@
                         $disable_type_edit = '';
 if (isset($project)) {
     if ($project->billing_type != 1) {
-        if (total_rows(db_prefix() . 'tasks', ['rel_id' => $project->id, 'rel_type' => 'project', 'billable' => 1, 'billed' => 1]) > 0) {
+        if (isset($native_project_form) ? $native_project_form['billing_locked'] : total_rows(db_prefix() . 'tasks', ['rel_id' => $project->id, 'rel_type' => 'project', 'billable' => 1, 'billed' => 1]) > 0) {
             $disable_type_edit = 'disabled';
         }
     }
@@ -55,8 +56,7 @@ if ($selected == '') {
     $selected = ($customer_id ?? '');
 }
 if ($selected != '') {
-    $rel_data = get_relation_data('customer', $selected);
-    $rel_val  = get_relation_values($rel_data, 'customer');
+    if(isset($native_project_form)){$rel_val=$native_project_form['selected_customer'];if(!$rel_val||(string)$rel_val['id']!==(string)$selected)throw new RuntimeException('native_project_customer_unconfirmed');$rel_val=['id'=>e($rel_val['id']),'name'=>e($rel_val['name'])];}else{$rel_data=get_relation_data('customer',$selected);$rel_val=get_relation_values($rel_data,'customer');}
     echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
 } ?>
                                 </select>
@@ -72,7 +72,7 @@ if ($selected != '') {
                             </div>
                             <?php
                     if (isset($project) && $project->progress_from_tasks == 1) {
-                        $value = $this->projects_model->calc_progress_by_tasks($project->id);
+                        $value = isset($native_project_form)?$native_project_form['progress']:$this->projects_model->calc_progress_by_tasks($project->id);
                     } elseif (isset($project) && $project->progress_from_tasks == 0) {
                         $value = $project->progress;
                     } else {
@@ -126,7 +126,7 @@ if ($selected != '') {
                                             <?php foreach ($statuses as $status) { ?>
                                             <option
                                                 value="<?= e($status['id']); ?>"
-                                                <?php if (! isset($project) && $status['id'] == 2 || (isset($project) && $project->status == $status['id'])) {
+                                                <?php if (! isset($project) && $status['id'] == ($native_project_form['default_status']??2) || (isset($project) && $project->status == $status['id'])) {
                                                     echo 'selected';
                                                 } ?>><?= e($status['name']); ?>
                                             </option>
@@ -135,10 +135,10 @@ if ($selected != '') {
                                     </div>
                                 </div>
                             </div>
-                            <?php if (isset($project) && project_has_recurring_tasks($project->id)) { ?>
+                            <?php if (isset($project) && (isset($native_project_form)?$native_project_form['has_recurring_tasks']:project_has_recurring_tasks($project->id))) { ?>
                             <div class="alert alert-warning recurring-tasks-notice hide"></div>
                             <?php } ?>
-                            <?php if (is_email_template_active('project-finished-to-customer')) { ?>
+                            <?php if ((isset($native_project_form)?$native_project_form['email_template_active']:is_email_template_active('project-finished-to-customer'))) { ?>
                             <div class="form-group project_marked_as_finished hide">
                                 <div class="checkbox checkbox-primary">
                                     <input type="checkbox" name="project_marked_as_finished_email_to_contacts"
@@ -223,22 +223,22 @@ echo render_select('project_members[]', $staff, ['staffid', ['firstname', 'lastn
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <?php $value = (isset($project) ? _d($project->start_date) : _d(date('Y-m-d'))); ?>
+                                    <?php $value = (isset($native_project_form)?$native_project_form['start_date']:(isset($project) ? _d($project->start_date) : _d(date('Y-m-d')))); ?>
                                     <?= render_date_input('start_date', 'project_start_date', $value); ?>
                                 </div>
                                 <div class="col-md-6">
-                                    <?php $value = (isset($project) ? _d($project->deadline) : ''); ?>
+                                    <?php $value = (isset($native_project_form)?$native_project_form['deadline']:(isset($project) ? _d($project->deadline) : '')); ?>
                                     <?= render_date_input('deadline', 'project_deadline', $value); ?>
                                 </div>
                             </div>
-                            <?php if (isset($project) && $project->date_finished != null && $project->status == 4) { ?>
-                            <?= render_datetime_input('date_finished', 'project_completed_date', _dt($project->date_finished)); ?>
+                            <?php if (isset($project) && $project->date_finished != null && $project->status == (isset($native_project_form)?NativeCompanyWorkStatusCatalog::id('project','completed'):4)) { ?>
+                            <?= render_datetime_input('date_finished', 'project_completed_date', (isset($native_project_form)?$native_project_form['date_finished']:_dt($project->date_finished))); ?>
                             <?php } ?>
                             <div class="form-group">
                                 <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                                     <?= _l('tags'); ?></label>
                                 <input type="text" class="tagsinput" id="tags" name="tags"
-                                    value="<?= isset($project) ? prep_tags_input(get_tags_in($project->id, 'project')) : ''; ?>"
+                                    value="<?= isset($native_project_form)?e($native_project_form['tags']):(isset($project) ? prep_tags_input(get_tags_in($project->id, 'project')) : ''); ?>"
                                     data-role="tagsinput">
                             </div>
                             <?php $rel_id_custom_field = (isset($project) ? $project->id : false); ?>
@@ -288,7 +288,7 @@ if (isset($project)) {
                             <?php } ?>
                             <hr class="hr-panel-separator" />
 
-                            <?php if (is_email_template_active('assigned-to-project')) { ?>
+                            <?php if (isset($native_project_form)?$native_project_form['assigned_email_template_active']:is_email_template_active('assigned-to-project')) { ?>
                             <div class="checkbox checkbox-primary tw-mb-0">
                                 <input type="checkbox" name="send_created_email" id="send_created_email">
                                 <label
@@ -340,8 +340,7 @@ foreach ($options as $option) { ?>
                                                 [];
 ?>
                                         <?php foreach ($notify_contact_ids as $contact_id) { ?>
-                                        <?php $rel_data = get_relation_data('contact', $contact_id); ?>
-                                        <?php $rel_val  = get_relation_values($rel_data, 'contact'); ?>
+                                        <?php if(isset($native_project_form)){$raw=$native_project_form['selected_contacts'][(string)$contact_id]??throw new RuntimeException('native_project_contact_unconfirmed');$rel_val=['id'=>e($raw['id']),'name'=>e($raw['name'])];}else{$rel_data=get_relation_data('contact',$contact_id);$rel_val=get_relation_values($rel_data,'contact');} ?>
                                         <option
                                             value="<?= $rel_val['id']; ?>"
                                             selected>
@@ -392,7 +391,7 @@ foreach ($options as $option) { ?>
                                         id="<?= e($setting); ?>"
                                         multiple="true" class="selectpicker" id="available_features" data-width="100%"
                                         data-actions-box="true" data-hide-disabled="true">
-                                        <?php foreach (get_project_tabs_admin() as $tab) {
+                                        <?php foreach ((isset($native_project_form)?$native_project_form['tabs']:get_project_tabs_admin()) as $tab) {
                                             $selected = '';
                                             if (isset($tab['collapse'])) { ?>
                                         <optgroup
@@ -484,6 +483,7 @@ foreach ($options as $option) { ?>
     var original_project_status = '<?= e($project->status); ?>';
     <?php } ?>
 
+    var project_status_finished = <?= json_encode(isset($native_project_form)?NativeCompanyWorkStatusCatalog::id('project','completed'):4); ?>, project_status_cancelled = <?= json_encode(isset($native_project_form)?NativeCompanyWorkStatusCatalog::id('project','cancelled'):5); ?>, project_status_hold = <?= json_encode(isset($native_project_form)?NativeCompanyWorkStatusCatalog::id('project','on_hold'):3); ?>;
     $(function() {
 
         $contacts_select = $('#notify_contacts'),
@@ -569,7 +569,7 @@ foreach ($options as $option) { ?>
                     mark_all_tasks_completed.removeClass('hide');
                     notify_project_members_status_change.removeClass('hide');
 
-                    if (status == 4 || status == 5 || status == 3) {
+                    if (status == project_status_finished || status == project_status_cancelled || status == project_status_hold) {
                         $('.recurring-tasks-notice').removeClass('hide');
                         var notice =
                             "<?= _l('project_changing_status_recurring_tasks_notice'); ?>";
@@ -592,7 +592,7 @@ foreach ($options as $option) { ?>
                 }
             }
 
-            if (status == 4) {
+            if (status == project_status_finished) {
                 $('.project_marked_as_finished').removeClass('hide');
             } else {
                 $('.project_marked_as_finished').addClass('hide');

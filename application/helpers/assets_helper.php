@@ -65,13 +65,32 @@ function _init_admin_assets()
     add_dropbox_js_assets();
     add_google_api_js_assets();
 
-    $CI->app_scripts->add('common-js', 'assets/builds/common.js');
+    $CI->app_scripts->add('native-admin-reminders', 'assets/js/native-admin-reminders.js', 'admin', ['common-js','jquery-validation-js']);
+    $CI->app_scripts->add('native-admin-tables', 'assets/js/native-admin-tables.js', 'admin', ['common-js','datatables-js','native-admin-navigation']);
+    $CI->app_scripts->add('native-admin-ticket-table', 'assets/js/native-admin-ticket-table.js', 'admin', ['native-admin-tables']);
+    $CI->app_scripts->add('native-admin-staff', 'assets/js/native-admin-staff.js', 'admin', ['native-admin-tables']);
+    $CI->app_scripts->add('native-admin-switch', 'assets/js/native-admin-switch.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-imap', 'assets/js/native-admin-imap.js', 'admin', ['common-js','bootstrap-select-js']);
+    $CI->app_scripts->add('native-admin-todos', 'assets/js/native-admin-todos.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-notes', 'assets/js/native-admin-notes.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-item-order', 'assets/js/native-admin-item-order.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-calendar', 'assets/js/native-admin-calendar.js', 'admin', ['common-js','jquery-validation-js']);
+    $CI->app_scripts->add('native-admin-files', 'assets/js/native-admin-files.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-runtime', 'assets/js/native-admin-runtime.js', 'admin', ['vendor-js']);
+    $CI->app_scripts->add('native-admin-navigation', 'assets/js/native-admin-navigation.js', 'admin', ['vendor-js']);
+    $CI->app_scripts->add('native-admin-search', 'assets/js/native-admin-search.js', 'admin', ['vendor-js']);
+    $CI->app_scripts->add('native-admin-notifications', 'assets/js/native-admin-notifications.js', 'admin', ['vendor-js']);
+    $CI->app_scripts->add('common-js', 'assets/builds/common.js', 'admin', ['native-admin-navigation']);
+    $CI->app_scripts->add('native-ui-tools-js', 'assets/js/native-ui-tools.js', 'admin', ['common-js']);
+    $CI->app_scripts->add('native-admin-sales-form', 'assets/js/native-admin-sales-form.js', 'admin', ['common-js','native-ui-tools-js','jquery-validation-js']);
+    $CI->app_scripts->add('native-tasks-js', 'assets/js/native-tasks.js', 'admin', ['common-js','native-ui-tools-js']);
 
     $CI->app_scripts->add(
         'app-js',
         base_url($CI->app_scripts->core_file('assets/js', 'main.js')) . '?v=' . $CI->app_css->core_version(),
         'admin',
-        ['vendor-js', 'datatables-js', 'bootstrap-select-js', 'tinymce-js', 'jquery-migrate-js', 'jquery-validation-js', 'moment-js', 'common-js']
+        ['native-admin-ticket-table', 'native-admin-staff', 'native-admin-sales-form', 'native-admin-calendar', 'native-admin-item-order', 'native-admin-files', 'native-admin-imap', 'native-admin-switch', 'native-admin-tables', 'native-admin-reminders', 'native-admin-todos', 'native-admin-notes', 'native-admin-runtime', 'native-admin-navigation', 'native-admin-search', 'native-admin-notifications', 'vendor-js', 'datatables-js', 'bootstrap-select-js', 'tinymce-js', 'jquery-migrate-js', 'jquery-validation-js', 'moment-js', 'common-js', 'native-tasks-js']
+
     );
 
     $CI->app_scripts->add('app-v3', 'assets/builds/app.js');
@@ -127,24 +146,21 @@ function add_favicon_link_asset($group = 'admin')
 {
     $favIcon = get_option('favicon');
     $faviconPath = $favIcon != '' ? 'uploads/company/' . $favIcon : 'assets/images/argws/favicon.png';
-    get_instance()->app_css->add('favicon', [
-        'path'       => $faviconPath,
-        'version'    => false,
-        'attributes' => [
-            'rel'  => 'icon',
-            'type' => false,
-        ],
-    ], $group);
-    get_instance()->app_css->add('favicon-apple-touch-icon', [
-        'path'       => $faviconPath,
-        'version'    => false,
-        'attributes' => [
-            'rel'  => 'apple-touch-icon',
-            'type' => false,
-        ],
-    ], $group);
+    $add = static function ($name, $path, $rel = 'icon', $type = false, $sizes = false) use ($group) {
+        $attributes = ['rel' => $rel, 'type' => $type];
+        if ($sizes !== false) $attributes['sizes'] = $sizes;
+        get_instance()->app_css->add($name, ['path' => $path, 'version' => false, 'attributes' => $attributes], $group);
+    };
+    $add('favicon', $faviconPath);
+    if ($favIcon === '') {
+        $add('favicon-16', 'assets/images/argws/favicon-16.png', 'icon', 'image/png', '16x16');
+        $add('favicon-32', 'assets/images/argws/favicon-32.png', 'icon', 'image/png', '32x32');
+        $add('favicon-ico', 'assets/images/argws/favicon.ico', 'icon', 'image/x-icon');
+        $add('favicon-apple-touch-icon', 'assets/pwa/apple-touch-icon-180.png', 'apple-touch-icon', false, '180x180');
+    } else {
+        $add('favicon-apple-touch-icon', $faviconPath, 'apple-touch-icon');
+    }
 }
-
 function add_jquery_validation_js_assets($group = 'admin')
 {
     $CI          = &get_instance();

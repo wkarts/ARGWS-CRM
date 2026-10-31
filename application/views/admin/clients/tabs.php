@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $tabs = filter_client_visible_tabs($customer_tabs, $client->userid); ?>
+<?php $tabs = !empty($native_customers) ? $customer_tabs : filter_client_visible_tabs($customer_tabs, $client->userid); ?>
+<?php $native_source_suffix = !empty($native_customers) && $this->input->get('source', false) === 'company' ? '&source=company' : ''; ?>
 
 <select class="tw-block md:tw-hidden form-control" onchange="redirectToTab(this)">
   <?php foreach ($tabs as $key => $tab) { ?>
@@ -19,7 +20,7 @@
     <?php foreach ($tabs as $key => $tab) { ?>
     <?php $current = (! $this->input->get('group') && $key === 'profile') || $this->input->get('group') === $key; ?>
     <li class="customer_tab_<?= e($key); ?>">
-      <a href="<?= admin_url('clients/client/' . $client->userid . '?group=' . $key); ?>"
+      <a href="<?= admin_url('clients/client/' . $client->userid . '?group=' . $key . $native_source_suffix); ?>"
         data-group="<?= e($key); ?>"
         class="tw-group tw-flex tw-items-center tw-gap-x-3 tw-rounded-md tw-p-2 tw-font-medium <?= $current ? 'tw-bg-neutral-50 tw-text-primary-600' : 'tw-text-neutral-800 hover:tw-bg-neutral-50 hover:tw-text-primary-600'; ?>">
 
@@ -53,7 +54,7 @@
     if (key) {
       const clientId = <?= json_encode($client->userid); ?> ;
       window.location.href =
-        `<?= admin_url('clients/client/'); ?>${clientId}?group=${key}`;
+        `<?= admin_url('clients/client/'); ?>${clientId}?group=${key}<?= $native_source_suffix; ?>`;
     }
   }
 </script>

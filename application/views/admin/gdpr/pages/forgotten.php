@@ -72,6 +72,7 @@
                         data-order="<?= e($request['status']); ?>">
                         <select class="selectpicker removalStatus" name="status"
                             data-id="<?= e($request['id']); ?>"
+                            <?php if(!empty($native_company_gdpr)){ ?>data-revision="<?= e($request['revision']); ?>" data-current-status="<?= e($request['status']); ?>"<?php } ?>
                             width="100%">
                             <option value="pending" <?php if ($request['status'] == 'pending') {
                                 echo ' selected';

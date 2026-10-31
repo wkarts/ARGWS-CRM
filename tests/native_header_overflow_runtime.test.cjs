@@ -5,6 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 test('native header job consumes validated immutable tools without install delays or credentials',()=>{
  const workflow=fs.readFileSync(path.join(__dirname,'../.github/workflows/native-header-layout.yml'),'utf8');
+ const focused=fs.readFileSync(path.join(__dirname,'../.github/workflows/native-company-experience.yml'),'utf8');
  const native=fs.readFileSync(path.join(__dirname,'../.github/workflows/company-native-ui.yml'),'utf8');
  const image=/image: (ghcr\.io\/wkarts\/argws-crm-ci-php@sha256:[a-f0-9]{64})/;
  assert.ok(workflow.match(image));
@@ -16,4 +17,5 @@ test('native header job consumes validated immutable tools without install delay
  assert.match(workflow,/node tests\/native_header_overflow\.browser\.cjs/);
  assert.match(workflow,/if: always\(\)/);
  assert.match(workflow,/path: \/tmp\/native-header-layout-evidence/);
+ assert.doesNotMatch(focused,/node --test tests\/native_header_overflow\.test\.cjs/,'header contract has one workflow owner');
 });

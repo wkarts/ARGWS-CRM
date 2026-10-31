@@ -19,17 +19,17 @@ class RegistryShardsTest(unittest.TestCase):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
         commands = runner.load_commands()
-        self.assertEqual(len(commands), 473)
+        self.assertEqual(len(commands), 472)
         self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
         self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
-                         '1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835')
+                         'ce9d16a30581ef32234d4696afc1f3d98d6d17d86a0290d80d9e98e9a7b3e7cd')
         self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
-                         'c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413')
+                         'a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
         shards = [runner.select_commands(commands, i) for i in range(1, 5)]
-        self.assertEqual([len(shard) for shard in shards], [119,118,118,118])
+        self.assertEqual([len(shard) for shard in shards], [118,118,118,118])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -81,9 +81,9 @@ class RegistryShardsTest(unittest.TestCase):
                 ['php', 'tests/efi/intent_contract.php'],
                 ['php', 'tests/efi_adoption_http.php'],
                 ['php', 'tests/efi_checkout_preflight.php'],
-                ['php', 'tests/efi/company_accounts_contract.php'],
-                ['php', 'tests/efi/company_controller_contract.php'],
-                ['php', 'tests/efi/company_proof_contract.php'],
+                ['php', 'tests/efi/native_accounts_contract.php'],
+                ['php', 'tests/efi/native_controller_contract.php'],
+                ['php', 'tests/efi/native_proof_contract.php'],
                 ['php', 'tests/issuers_controller.php'],
                 ['php', 'tests/issuers_admin_upgrade_gate.php'],
                 ['php', 'tests/issuers_integration_view.php'],
@@ -114,10 +114,21 @@ class RegistryShardsTest(unittest.TestCase):
                         if line.strip().startswith('php tests/')]
         self.assertEqual(all_external, external, 'no duplicated or moved external invocations')
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
-        self.assertEqual(len(manifest_php), 471)
+        self.assertEqual(len(manifest_php), 470)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 500)
-        self.assertEqual(len(set(map(tuple, combined))), 500)
+        self.assertEqual(len(combined), 499)
+        self.assertEqual(len(set(map(tuple, combined))), 499)
+
+    def test_operational_inventory_runs_once_for_the_matrix(self):
+        source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
+        step = source.split('      - name: Validar inventário operacional uma vez\n')[1].split('      - ')[0]
+        self.assertEqual(re.findall(r'^        if: (.+)$', step, re.M), ["matrix.shard == 1 && matrix.php == '8.1'"])
+        self.assertEqual(step.count('php scripts/company-surface-inventory.php --check'), 1)
+        self.assertEqual(step.count('php scripts/company-surface-inventory.php --full'), 1)
+        syntax = source.split('      - name: Validar sintaxe e controles HTTP\n')[1].split('      - ')[0]
+        self.assertNotIn('company-surface-inventory.php', syntax)
+        upload = source.split('          name: company-operational-surfaces\n')[0].rsplit('      - uses: actions/upload-artifact@v4\n', 1)[1]
+        self.assertIn("if: matrix.shard == 1 && matrix.php == '8.1'", upload)
 
     def test_isolated_module_audit_precedes_long_registry_suite(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -173,12 +184,19 @@ class RegistryShardsTest(unittest.TestCase):
         expected = json.loads(runner.PLAN.read_text())
         self.assertEqual(planner.build_plan(runner.load_commands(), baseline), expected)
         commands = runner.load_commands()
-        old = planner.build_measured_plan(commands[1:], baseline)
-        self.assertEqual(expected['assignments'][1:], old['assignments'], 'all 472 historical placements unchanged')
-        self.assertEqual(expected['assignments'][0], 1, 'unmeasured count tie goes to shard1')
+        historical = planner.historical_measured_commands(commands, expected['unmeasured'], baseline)
+        old = planner.build_measured_plan(historical, baseline)
+        retired = baseline['retired'][0]
+        retained_assignments = [assignment for index, assignment in enumerate(old['assignments']) if index != retired['index']]
+        self.assertEqual(expected['assignments'][1:], retained_assignments, 'all retained historical placements unchanged')
+        self.assertEqual(old['assignments'][retired['index']], 2, 'retired command occupied shard2')
+        self.assertEqual(expected['assignments'][0], 2, 'unmeasured command fills retired shard capacity')
+        self.assertEqual(expected['retired'], baseline['retired'])
         self.assertEqual(hashlib.sha256((json.dumps(old, indent=2)+'\n').encode()).hexdigest(),
-                         '1a4f54a480af305d6828192a52378796487d387c4fc0890ee9935c56c4411b92')
+                         '16503a60a61942303257d72386271696d7c05a46c67aef4385041acac521ec6b')
         self.assertEqual([len(t) for t in baseline['milliseconds'].values()], [472,472], 'no invented timing')
+        self.assertEqual(retired['argv'], ['php', 'tests/settings/calendar_controller.php'])
+        self.assertNotIn(retired['argv'], commands)
         for invalid in [[], expected['unmeasured'] * 2, [{'argv':['php','tests/not_measured.php']}]]:
             with self.assertRaises(ValueError):
                 planner.build_plan(commands, baseline, unmeasured=invalid)

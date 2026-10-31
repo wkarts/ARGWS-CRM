@@ -17,7 +17,7 @@ final class Issuer_invoice_pdf extends TCPDF
         parent::__construct($format['orientation'],'mm',$format['format'],true,'UTF-8',false,false);
         $this->tcpdflink = false;
         $this->setPrintHeader(false);
-        $this->setPrintFooter(true);
+        $this->setPrintFooter(CompanyInvoicePresentation::layout($document->data()['identity'],'invoices')['show_page_number']);
         $this->setMargins(15,15,15);
         $this->setAutoPageBreak(true,15);
         $typography=CompanyInvoicePresentation::typography($document->data()['identity'],'invoices');

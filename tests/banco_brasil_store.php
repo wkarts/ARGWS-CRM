@@ -9,7 +9,7 @@ class BbResult {
 }
 class BbDb {
  protected $_trans_depth=0;public $conn_id=null;public $tables=[];public $lastId=0;private $where=[];private $snapshot=[];
- public $db_debug=true;public $save_queries=true;public $failTable='';public $failCommit=false;public $engine='InnoDB';public $autocommit='1';public $completion='0';public $rawTransaction=false;public $rollbacks=0;public $commits=0;
+ public $db_debug=true;public $save_queries=true;public $failTable='';public $ignoreTable='';public $failCommit=false;public $engine='InnoDB';public $autocommit='1';public $completion='0';public $rawTransaction=false;public $rollbacks=0;public $commits=0;
  function where($k,$v){$this->where[$k]=$v;return $this;}function select($v){return $this;}function order_by(...$a){return $this;}function limit($n){return $this;}
  function get($table){$w=$this->where;$this->where=[];return new BbResult(array_values(array_filter($this->tables[$table]??[],fn($r)=>!array_diff_assoc($w,$r))));}
  function query($sql,$bind=[]){
@@ -20,7 +20,7 @@ class BbDb {
   if(str_contains($sql,'WHERE id=? AND issuer_id=?'))return $this->where('id',$bind[0])->where('issuer_id',$bind[1])->get('t_bb_connections');
   throw new RuntimeException('unexpected SQL');
  }
- function insert($table,$row){if($this->failTable===$table)return false;$row['id']=count($this->tables[$table]??[])+1;$this->lastId=$row['id'];$this->tables[$table][]=$row;return true;}
+ function insert($table,$row){if($this->failTable===$table)return false;if($this->ignoreTable===$table)return true;$row['id']=count($this->tables[$table]??[])+1;$this->lastId=$row['id'];$this->tables[$table][]=$row;return true;}
  function insert_id(){return $this->lastId;}function trans_begin(){$this->snapshot=$this->tables;$this->_trans_depth=1;return true;}
  function trans_status(){return true;}function trans_commit(){if($this->failCommit)return false;$this->_trans_depth=0;$this->commits++;return true;}
  function trans_rollback(){$this->tables=$this->snapshot;$this->_trans_depth=0;$this->rollbacks++;return true;}
@@ -45,12 +45,20 @@ check(!isset($db->tables['t_bb_return_files']),'stale profile creates no return 
 $import=$store->importReturn($c,9,$r2,$binding);check($import['financial_effect']==='not_applied'&&$import['events']===1,'observations only');
 check(count($db->tables['t_bb_return_events'])===1&&count($db->tables['t_bb_return_files'])===1,'file and event durable');
 check(!isset($db->tables['t_invoices'])&&!isset($db->tables['t_invoicepaymentrecords']),'no accounting side effect');
-check(!str_contains(json_encode($db->tables),$r2),'raw return not stored');
+check($db->tables['t_bb_return_originals'][0]['content']===$r2&&$db->tables['t_bb_return_originals'][0]['content_hash']===hash('sha256',$r2),'exact original retained privately in same import transaction');
 $again=$store->importReturn($c,9,$r2,$binding);check($again['duplicate']===true&&count($db->tables['t_bb_return_files'])===1,'same file dedup');
 $store->importReturn($c,9,mutateReturn($r2,0,158,'000002'),$binding);check(count($db->tables['t_bb_return_files'])===2&&count($db->tables['t_bb_return_events'])===1,'same event repackaged dedup');
 check(count($db->tables['t_bb_return_file_events'])===2,'each file keeps provenance for deduplicated event');
 check($db->tables['t_bb_return_file_events'][1]['return_event_id']===1&&$db->tables['t_bb_return_file_events'][1]['return_file_id']===2&&$db->tables['t_bb_return_file_events'][1]['lot_number']===1&&$db->tables['t_bb_return_file_events'][1]['record_sequence']===1,'file event and position retained');
 $before=$db->tables;
+$archive=new \BancoBrasil\ReturnOriginalArchive($db,'t_');$firstFile=$db->tables['t_bb_return_files'][0];
+check($archive->read($firstFile)['content']===$r2,'original bytes include exact CRLF and every original field');
+$corrupt=$db->tables['t_bb_return_originals'][0]['content'];$db->tables['t_bb_return_originals'][0]['content']='corrupt';
+rejects(fn()=>$archive->read($firstFile),'corrupt original bytes cannot be downloaded or replayed');$db->tables=$before;
+$db->tables['t_bb_return_originals'][]=$db->tables['t_bb_return_originals'][0];rejects(fn()=>$archive->read($firstFile),'duplicate storage rows fail closed');$db->tables=$before;
+foreach(['failTable','ignoreTable']as$failure){$db->$failure='t_bb_return_originals';rejects(fn()=>$store->importReturn($c,9,mutateReturn($r2,0,158,'000008'),$binding),'original retention '.$failure.' aborts import');check($db->tables===$before,'no file or observation after failed original write');$db->$failure='';}
+check(!array_key_exists('content',$store->recentReturns(1)[0]),'review queue never includes original payload');
+
 foreach([108,123] as $position){rejects(fn()=>$store->importReturn($c,9,mutateReturn($r2,3,$position,'000000000000001'),$binding),'conflicting financial extras not ignored');check($db->tables===$before,'extras conflict rolls back');}
 $db->failTable='t_bb_return_file_events';rejects(fn()=>$store->importReturn($c,9,mutateReturn($r2,0,158,'000007'),$binding),'provenance write required');check($db->tables===$before,'provenance failure rolls back');$db->failTable='';
 $conflict=mutateReturn(mutateReturn($r2,0,158,'000003'),2,82,'000000000020001');
@@ -62,3 +70,10 @@ check(!isset($store->recentEvents(1)[0]['observation_json']),'UI projection not 
 foreach(['engine'=>'MyISAM','autocommit'=>'0','completion'=>'1','rawTransaction'=>true] as $key=>$value){$d=new BbDb();$d->$key=$value;rejects(fn()=>Transaction::run($d,'t_',['bb_audit'],fn()=>true),'own transaction guard '.$key);check($d->rollbacks===0,'no alien rollback '.$key);}
 $d=new BbDb();$d->outer();rejects(fn()=>Transaction::run($d,'t_',['bb_audit'],fn()=>true),'CI nested transaction refused');check($d->rollbacks===0,'nested transaction untouched');
 echo "OK {$n} Banco do Brasil store/transaction checks\n";
+
+$failure=\BancoBrasil\ReturnValidationFailure::from(new UnexpectedValueException('bb_return_account_mismatch'));
+check($failure->getMessage()==='bb_return_account_mismatch','known parser reason retains its closed identifier');
+$unknownFailure=\BancoBrasil\ReturnValidationFailure::from(new UnexpectedValueException('synthetic untrusted payload'));
+check($unknownFailure->getMessage()==='bb_return_validation_unclassified','unrecognized parser text never enters persisted diagnostics or responses');
+check(!str_contains(json_encode(\BancoBrasil\ReturnValidationFailure::labels()),'synthetic untrusted payload'),'diagnostic labels contain no exception payload');
+foreach(array_keys(\BancoBrasil\ReturnValidationFailure::labels())as$code)check(strlen($code)<=64&&preg_match('/^bb[a-z0-9_]+$/D',$code)===1,'all persisted reason codes fit the strict closed contract');

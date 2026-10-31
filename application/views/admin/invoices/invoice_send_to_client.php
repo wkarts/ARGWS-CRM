@@ -13,6 +13,16 @@
                 </h4>
             </div>
             <div class="modal-body">
+                <?php if(isset($native_invoice_delivery)){ ?>
+                <?= form_hidden('_native_invoice_revision',$native_invoice_preview_data['revision']); ?>
+                <?= form_hidden('request_key',$native_invoice_delivery_key); ?>
+                <?= render_select('sent_to[]',$native_invoice_delivery['recipients'],['id','email'],'invoice_estimate_sent_to_email'); ?>
+                <p>A notificação usa o modelo e o remetente desta empresa. O contato acessa a fatura pelo portal privado.</p>
+                <p>O registro na fila não confirma a entrega do e-mail.</p>
+                <div aria-label="Estado das notificações">
+                    <?php foreach($native_invoice_delivery['history'] as $notification){ ?><p><?= e($notification['created_at']); ?> — <?= e($notification['status']==='pending'?'Na fila':$notification['status']); ?></p><?php } ?>
+                </div>
+                <?php }else{ ?>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
@@ -92,6 +102,7 @@ echo render_select('sent_to[]', $contacts, ['id', 'email', 'firstname,lastname']
                     </div>
                 </div>
                 <?php } ?>
+                <?php } ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"
@@ -118,7 +129,9 @@ echo render_select('sent_to[]', $contacts, ['id', 'email', 'firstname,lastname']
 
         $('#invoice_send_to_client_modal form').submit(function() {
 
-            if ($('#attach_statement').prop('checked') === false) {
+            // The scoped recipient form does not offer a statement attachment.
+            // Parse a period only when the original checkbox exists and is checked.
+            if ($('#attach_statement').prop('checked') !== true) {
                 return true;
             }
 

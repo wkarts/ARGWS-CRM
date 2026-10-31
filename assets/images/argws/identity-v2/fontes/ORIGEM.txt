@@ -1,0 +1,6 @@
+Inter variável original, sem modificações: Google Fonts, ofl/inter/Inter[opsz,wght].ttf.
+Fonte: https://github.com/google/fonts/tree/main/ofl/inter
+Download: 30/10/2026.
+Licença: SIL Open Font License, arquivo OFL-Inter.txt incluído.
+Lettering nos SVGs convertido em curvas usando Inter 800, optical size 24; slogan Inter 500.
+O arquivo de fonte variável está incluído para futuras composições; SVGs de marca não dependem de instalação da fonte.

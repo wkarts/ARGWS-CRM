@@ -27,7 +27,7 @@ $fixtureFlags = array_slice($argv, 1);
 if (array_diff($fixtureFlags, ['--full-shell', '--long-name', '--mobile-user', '--selector-only', '--selected-two', '--company-google', '--company-microsoft', '--company-efi'])) {
     throw new InvalidArgumentException('Unknown native-header fixture flag');
 }
-define('NATIVE_HEADER_FIXTURE_COMPANY', in_array('--company-google', $fixtureFlags, true) ? 'google_mail_oauth' : (in_array('--company-microsoft', $fixtureFlags, true) ? 'microsoft_mail_oauth' : (in_array('--company-efi', $fixtureFlags, true) ? 'efi' : '')));
+define('NATIVE_HEADER_FIXTURE_COMPANY', in_array('--company-google', $fixtureFlags, true) ? 'native_google_mail_oauth' : (in_array('--company-microsoft', $fixtureFlags, true) ? 'native_microsoft_mail_oauth' : (in_array('--company-efi', $fixtureFlags, true) ? 'native_efi' : '')));
 define('NATIVE_HEADER_FIXTURE_FULL_SHELL', in_array('--full-shell', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_LONG_NAME', in_array('--long-name', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_MOBILE_USER', in_array('--mobile-user', $fixtureFlags, true));
@@ -98,7 +98,11 @@ function form_open(string $url, array $attributes = []): string
 {
     $html = '<form action="' . e((NATIVE_HEADER_FIXTURE_SELECTOR_ONLY || NATIVE_HEADER_FIXTURE_COMPANY) ? $url : '#') . '" method="post"';
     foreach ($attributes as $key => $value) { $html .= ' ' . e($key) . '="' . e($value) . '"'; }
-    return $html . '>';
+    $html .= '>';
+    if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY && str_contains($url,'/issuers/select')) {
+        $html .= '<input type="hidden" name="_company_context" value="' . e(CompanyRequestScope::token()) . '">';
+    }
+    return $html;
 }
 function form_open_multipart(string $url,array $attributes=[]):string { return form_open($url,['enctype'=>'multipart/form-data']+$attributes); }
 function form_close(): string { return '</form>'; }
@@ -142,7 +146,7 @@ function collect(array $items)
 /** Presentation context only: does not exercise the authenticated ACL service. */
 final class CompanyRequestScope
 {
-    public static function token(): ?string { return null; }
+    public static function token(): ?string { return 'synthetic-company-context'; }
     public static function context()
     {
         return new class {
@@ -157,7 +161,10 @@ final class CompanyRequestScope
             public function csrf(): string { return 'synthetic-fixture-only'; }
         };
     }
-    public static function adminUrl($application, string $path = ''): string { return NATIVE_HEADER_FIXTURE_COMPANY ? '/admin/' . $path : admin_url($path); }
+    // The browser fixture is served below /sub/admin/. Keep its captured
+    // transport destination a real same-origin URL; admin_url() intentionally
+    // returns a fragment placeholder for other presentation-only assertions.
+    public static function adminUrl($application, string $path = ''): string { return '/sub/admin/' . ltrim($path, '/'); }
 }
 
 final class CompanySettingsRuntime { public static function active(): bool { return true; } public static function canResource($feature, $cap = 'view'): bool { return !in_array($feature, ['pusher', 'connect-api-connector', 'calendar'], true); } public static function can($cap): bool { return true; } }
@@ -175,7 +182,7 @@ final class NativeHeaderFixtureApplication
     public function __construct()
     {
         $this->db = new NativeHeaderFixtureDatabase();
-        $this->router = new class { public function fetch_class(): string { return 'company_' . NATIVE_HEADER_FIXTURE_COMPANY; } };
+        $this->router = new class { public function fetch_class(): string { return NATIVE_HEADER_FIXTURE_COMPANY ? 'settings' : 'dashboard'; } };
         $this->app = new class {
             public function get_quick_actions_links(): array { return []; }
             public function get_available_languages(): array { return []; }
@@ -202,10 +209,10 @@ final class NativeHeaderFixtureApplication
             {
                 if (!in_array($view, [
                     'admin/includes/header',
-                    'admin/companies/google_mail_oauth',
-                    'admin/companies/microsoft_mail_oauth',
-                    'admin/companies/efi',
-                    'admin/includes/company_selector',
+                    'admin/settings/native_google_mail_oauth',
+                    'admin/settings/native_microsoft_mail_oauth',
+                    'admin/settings/native_efi',
+                    'admin/includes/selector',
                     'admin/includes/notifications',
                     'admin/tasks/started_timers',
                     'admin/includes/setup_menu',
@@ -235,9 +242,9 @@ final class NativeHeaderFixtureApplication
 
 $fixtureApplication = new NativeHeaderFixtureApplication();
 if (NATIVE_HEADER_FIXTURE_COMPANY) {
-    if(NATIVE_HEADER_FIXTURE_COMPANY==='efi')set_error_handler(static function($level,$message,$file,$line){throw new ErrorException($message,0,$level,$file,$line);});
+    if(NATIVE_HEADER_FIXTURE_COMPANY==='native_efi')set_error_handler(static function($level,$message,$file,$line){throw new ErrorException($message,0,$level,$file,$line);});
     ob_start();
-    $fixtureApplication->load->view('admin/companies/' . NATIVE_HEADER_FIXTURE_COMPANY, [
+    $fixtureApplication->load->view('admin/settings/' . NATIVE_HEADER_FIXTURE_COMPANY, [
         'profiles'=>[['id'=>1,'environment'=>'sandbox','revision'=>str_repeat('a',64),'enabled'=>1]], 'choices'=>[['id'=>1,'environment'=>'sandbox','revision'=>str_repeat('a',64),'enabled'=>1]],
         'activity'=>['origins'=>[['id'=>1,'invoice_id'=>42,'environment'=>'sandbox','kind'=>'pix','state'=>'bound','proof'=>['id'=>2,'state'=>'received_observed'],'receipt'=>null]]], 'instrument'=>['pix_copy_paste'=>'000201'.str_repeat('1',120)], 'can_configure'=>true,'can_issue'=>true,'can_settle'=>true,'saved'=>null,
         'csrf' => 'synthetic-form-csrf', 'can_edit' => true, 'error' => '', 'result' => '',
@@ -252,7 +259,7 @@ if (NATIVE_HEADER_FIXTURE_COMPANY) {
     exit;
 }
 if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) {
-    $fixtureApplication->load->view('admin/includes/company_selector');
+    $fixtureApplication->load->view('admin/includes/selector');
     exit;
 }
 $fixtureApplication->load->view('admin/includes/header');

@@ -7,23 +7,24 @@
             aria-hidden="true">&times;</span></button>
         <h4 class="modal-title"><?= e($event->title); ?></h4>
       </div>
-      <?= form_open('admin/utilities/calendar', ['id' => 'calendar-event-form']); ?>
+      <?= form_open('admin/utilities/calendar', ['id' => 'calendar-event-edit-form']); ?>
       <div class="modal-body">
         <div class="row">
           <div class="col-md-12">
-            <?php if ($event->userid != get_staff_user_id()) { ?>
+            <?php if ($event->userid != (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id())) { ?>
             <div class="alert alert-info">
-              <?= _l('event_created_by', '<a href="' . admin_url('profile/' . $event->userid) . '" target="_blank" class="alert-link">' . e(get_staff_full_name($event->userid))) . '</a>'; ?>
+              <?= !empty($native_calendar) ? _l('event_created_by', e($native_calendar_author)) : _l('event_created_by', '<a href="' . admin_url('profile/' . $event->userid) . '" target="_blank" class="alert-link">' . e(get_staff_full_name($event->userid))) . '</a>'; ?>
             </div>
             <?php } ?>
-            <?php if ($event->userid == get_staff_user_id() || is_admin()) { ?>
+            <?php if ($event->userid == (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id()) || (!empty($native_calendar) ? $native_calendar_can_edit : is_admin())) { ?>
             <?= form_hidden('eventid', $event->eventid); ?>
+            <?php if(!empty($native_calendar))echo form_hidden('revision',$native_calendar_revision); ?>
             <?= render_input('title', 'utility_calendar_new_event_placeholder', $event->title); ?>
             <?= render_textarea('description', 'event_description', $event->description, ['rows' => 5]); ?>
             <?= render_datetime_input('start', 'utility_calendar_new_event_start_date', _dt($event->start), ['data-step' => 30]); ?>
             <div class="clearfix mtop15"></div>
             <?= render_datetime_input('end', 'utility_calendar_new_event_end_date', _dt($event->end), ['data-step' => 30]); ?>
-            <?php if (is_email_template_active('event-notification-to-staff')) { ?>
+            <?php if ((!empty($native_calendar) ? $native_calendar_email_active : is_email_template_active('event-notification-to-staff'))) { ?>
             <div class="form-group">
               <div class="row">
                 <div class="col-md-12">
@@ -64,7 +65,7 @@
             </p>
             <?php
                                $event_colors = '';
-                $favourite_colors            = get_system_favourite_colors();
+                $favourite_colors            = get_system_favourite_colors(empty($native_calendar));
                 $i                           = 0;
 
                 foreach ($favourite_colors as $color) {
@@ -91,9 +92,11 @@
                 for="event_public"><?= _l('utility_calendar_new_event_make_public'); ?></label>
             </div>
             <?php } else { ?>
+            <?php if(!empty($native_calendar)){require_once APPPATH.'services/StaffAvatarPresentation.php';echo StaffAvatarPresentation::render((object)$native_calendar_author_data,$event->userid,['staff-profile-xs-image'],'small',[],'base_url','file_exists');echo ' '.e($native_calendar_author);}else{ ?>
             <a
               href="<?= admin_url('profile/' . $event->userid); ?>"><?= staff_profile_image($event->userid, ['staff-profile-xs-image']); ?>
-              <?= e(get_staff_full_name($event->userid)); ?></a>
+              <?= e((!empty($native_calendar) ? $native_calendar_author : get_staff_full_name($event->userid))); ?></a>
+            <?php } ?>
             <hr />
             <h5 class="bold">
               <?= _l('event_description'); ?>
@@ -116,7 +119,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default"
           data-dismiss="modal"><?= _l('close'); ?></button>
-        <?php if ($event->userid == get_staff_user_id() || is_admin()) { ?>
+        <?php if ($event->userid == (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id()) || (!empty($native_calendar) ? $native_calendar_can_edit : is_admin())) { ?>
         <button type="button" class="btn btn-danger"
           onclick="delete_event(<?= e($event->eventid); ?>); return false"><?= _l('delete_event'); ?></button>
         <button type="submit"

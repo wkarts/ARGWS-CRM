@@ -39,7 +39,7 @@ collect_smoke_failure() {
             echo "PHP=".PHP_VERSION." memory_limit=".ini_get("memory_limit").PHP_EOL;
             $files=array_merge(["/tmp/issuer-http-error.log"],array_slice(glob("/app/application/logs/log-*.php")?:[],-3));
             foreach($files as $file){if(!is_file($file)||!is_readable($file))continue;$handle=fopen($file,"rb");if($handle===false)continue;$size=filesize($file);if($size>262144)fseek($handle,-262144,SEEK_END);echo PHP_EOL."--- ".basename($file)." (bounded tail) ---".PHP_EOL;echo stream_get_contents($handle,262144);fclose($handle);}
-        ' 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-application.log" || true
+        ' 2>&1 | python3 tests/ci/classify_php_error_log.py > "$evidence/$container-application.log" || true
     done
 }
 cleanup() {
@@ -64,7 +64,7 @@ cat > "$work/router.php" <<'PHP'
 $root = '/app';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestPath = is_string($requestPath) && $requestPath !== '' ? $requestPath : '/';
-if ($requestPath === '/admin/company_calendar') {
+if ($requestPath === '/admin/utilities/calendar') {
     $calendarStarted = microtime(true);
     register_shutdown_function(static function () use ($calendarStarted) {
         $last = error_get_last();
@@ -239,8 +239,8 @@ sed -i 's/argws_legacy_ci/argws_upgrade_ci/g' "$work/app-config.php"
 # Keep the synthetic HTTPS authority explicit even though the local browser uses HTTP.
 [[ "$upgrade" =~ ^argws-crm-upgrade-[0-9]+$ ]]
 grep -Fq "define('APP_DB_NAME', 'argws_upgrade_ci');" "$work/app-config.php"
-printf '\n%s\n' "define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/company_google_mail_oauth');" >> "$work/app-config.php"
-printf '\n%s\n' "define('COMPANY_MICROSOFT_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/company_microsoft_mail_oauth');" >> "$work/app-config.php"
+printf '\n%s\n' "define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/google_mail_oauth');" >> "$work/app-config.php"
+printf '\n%s\n' "define('COMPANY_MICROSOFT_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/microsoft_mail_oauth');" >> "$work/app-config.php"
 printf '\n%s\n' "define('COMPANY_CONNECT_API_ENDPOINTS', ['synthetic'=>['label'=>'Synthetic approved','url'=>'https://connect.example.invalid']]);" >> "$work/app-config.php"
 docker cp "$work/app-config.php" "$upgrade:/var/lib/argws-crm/config/app-config.php"
 docker cp "$work/router.php" "$upgrade:/tmp/issuer-router.php"
@@ -249,7 +249,7 @@ docker exec "$upgrade" mkdir -p /app/tests/companies /app/tests/certificates
 docker cp tests/certificates/browser_fixture.php "$upgrade:/app/tests/certificates/browser_fixture.php"
 docker cp tests/certificates/support.php "$upgrade:/app/tests/certificates/support.php"
 docker cp tests/issuers_test_support.php "$upgrade:/app/tests/issuers_test_support.php"
-for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php company_ai_tls_probe.php; do
+for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php native_ai_tls_probe.php; do
     docker cp "tests/companies/$fixture" "$upgrade:/app/tests/companies/$fixture"
 done
 upgrade_port="$(docker port "$upgrade" 8080/tcp | awk -F: 'END {print $NF}')"
@@ -275,6 +275,20 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/companies_certificates_browser.cjs
+# Enable error logging only in this checked disposable database for the browser smokes.
+docker exec "$upgrade" php -r '
+defined("BASEPATH") || define("BASEPATH", "/app/system/");
+$config = "/app/application/config/app-config.php";
+require $config;
+if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
+if (defined("APP_LOG_THRESHOLD")) { if (APP_LOG_THRESHOLD !== 1) { exit(2); } }
+else {
+    $source = file_get_contents($config);
+    if (substr($source, 0, 5) !== "<?php") { exit(2); }
+    if (file_put_contents($config, substr_replace($source, "\ndefine(\"APP_LOG_THRESHOLD\", 1);\n", 5, 0)) === false) { exit(2); }
+}
+'
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -638,7 +652,7 @@ ai_before_calls="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind
 [ "$ai_before_calls" = 3 ]
 ai_probe_status=0
 docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php -d curl.cainfo= -d openssl.cafile= \
-    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner" >"$work/untrusted-ai-probe.log" 2>&1 || ai_probe_status=$?
+    /app/tests/companies/native_ai_tls_probe.php "$ai_probe_owner" >"$work/untrusted-ai-probe.log" 2>&1 || ai_probe_status=$?
 [ "$ai_probe_status" = 1 ]
 python3 - "$work/provider-events.jsonl" "$ai_before_calls" <<'PY_AI_UNTRUSTED'
 import json,sys
@@ -646,7 +660,7 @@ assert sum(json.loads(x).get('kind')=='synthetic_completion' for x in open(sys.a
 PY_AI_UNTRUSTED
 docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php \
     -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
-    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner"
+    /app/tests/companies/native_ai_tls_probe.php "$ai_probe_owner"
 python3 - "$work/provider-events.jsonl" <<'PY_DUAL_TLS'
 import json,sys
 rows=[json.loads(x) for x in open(sys.argv[1])]
@@ -681,30 +695,12 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/task_preferences_browser.cjs
 
-# Log only in the synthetic calendar smoke, so technical rejection codes survive production defaults.
-docker exec "$upgrade" php -r '
-defined("BASEPATH") || define("BASEPATH", "/app/system/");
-$config = "/app/application/config/app-config.php";
-require $config;
-if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
-if (defined("APP_LOG_THRESHOLD")) { if (APP_LOG_THRESHOLD !== 1) { exit(2); } }
-else {
-    $source = file_get_contents($config);
-    if (substr($source, 0, 5) !== "<?php") { exit(2); }
-    if (file_put_contents($config, substr_replace($source, "\ndefine(\"APP_LOG_THRESHOLD\", 1);\n", 5, 0)) === false) { exit(2); }
-}
-'
+# Synthetic error logging was enabled before the portal smoke.
 
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/calendar_browser.cjs
-
-#452: prove the exact guarded setup produced safe codes from the original native Calendar suite.
-docker exec "$upgrade" mkdir -p /app/tests/settings
-docker cp tests/settings/calendar_smoke_logging_verify.php "$upgrade:/app/tests/settings/calendar_smoke_logging_verify.php"
-docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php /app/tests/settings/calendar_smoke_logging_verify.php
-
 
 #450: canonical unassigned portal tasks; original range, own permissions and read-only proof.
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \

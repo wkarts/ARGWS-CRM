@@ -4,19 +4,22 @@
     <div class="row">
         <?php
          $initial_column = 'col-lg-3';
-         if (!is_staff_member() && ((staff_cant('view', 'invoices') && staff_cant('view_own', 'invoices') && (get_option('allow_staff_view_invoices_assigned') == 0
+         if (isset($company_dashboard)) { $initial_column='col-lg-3'; }
+         elseif (!is_staff_member() && ((staff_cant('view', 'invoices') && staff_cant('view_own', 'invoices') && (get_option('allow_staff_view_invoices_assigned') == 0
            || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()))))) {
              $initial_column = 'col-lg-6';
          } elseif (!is_staff_member() || (staff_cant('view', 'invoices') && staff_cant('view_own', 'invoices') && (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()) || (get_option('allow_staff_view_invoices_assigned') == 0 && (staff_cant('view', 'invoices') && staff_cant('view_own', 'invoices'))))) {
              $initial_column = 'col-lg-4';
          }
       ?>
-        <?php if (staff_can('view',  'invoices') || staff_can('view_own',  'invoices') || (get_option('allow_staff_view_invoices_assigned') == '1' && staff_has_assigned_invoices())) { ?>
+        <?php if (isset($company_dashboard) ? $company_dashboard['widgets']['invoices']['status']==='available' : (staff_can('view', 'invoices') || staff_can('view_own', 'invoices') || (get_option('allow_staff_view_invoices_assigned') == '1' && staff_has_assigned_invoices()))) { ?>
         <div class="quick-stats-invoices col-xs-12 col-md-6 col-sm-6 <?php echo e($initial_column); ?> tw-mb-2 sm:tw-mb-0">
             <div class="top_stats_wrapper">
                 <?php
+                  if(isset($company_dashboard)) { $counts=$company_dashboard['widgets']['invoices']['data']; $total_invoices=array_sum($counts)-$counts[5]-$counts[6]; $total_invoices_awaiting_payment=$total_invoices-$counts[2]; } else {
                   $total_invoices                          = total_rows(db_prefix() . 'invoices', 'status NOT IN (5,6)' . (staff_cant('view', 'invoices') ? ' AND ' . get_invoices_where_sql_for_staff(get_staff_user_id()) : ''));
                   $total_invoices_awaiting_payment         = total_rows(db_prefix() . 'invoices', 'status NOT IN (2,5,6)' . (staff_cant('view', 'invoices') ? ' AND ' . get_invoices_where_sql_for_staff(get_staff_user_id()) : ''));
+                  }
                   $percent_total_invoices_awaiting_payment = $total_invoices > 0 ? (($total_invoices_awaiting_payment * 100) / $total_invoices) : 0;
                   $percent_total_invoices_awaiting_payment = number_format($percent_total_invoices_awaiting_payment > 0 && $percent_total_invoices_awaiting_payment < 1 ? ceil($percent_total_invoices_awaiting_payment) : $percent_total_invoices_awaiting_payment, 2)
                   ?>
@@ -47,10 +50,11 @@
             </div>
         </div>
         <?php } ?>
-        <?php if (is_staff_member()) { ?>
+        <?php if (isset($company_dashboard) ? $company_dashboard['widgets']['leads']['status']==='available' : is_staff_member()) { ?>
         <div class="quick-stats-leads col-xs-12 col-md-6 col-sm-6 <?php echo e($initial_column); ?> tw-mb-2 sm:tw-mb-0">
             <div class="top_stats_wrapper">
                 <?php
+                  if(isset($company_dashboard)) { $counts=$company_dashboard['widgets']['leads']['data'];$total_leads=$counts['total'];$total_leads_converted=$counts['converted']; } else {
                   $where = '';
                   if (!is_admin()) {
                       $where .= '(addedfrom = ' . get_staff_user_id() . ' OR assigned = ' . get_staff_user_id() . ')';
@@ -63,6 +67,7 @@
                       $where .= ' AND status =1';
                   }
                   $total_leads_converted         = total_rows(db_prefix() . 'leads', $where);
+                  }
                   $percent_total_leads_converted = ($total_leads > 0 ? number_format(($total_leads_converted * 100) / $total_leads, 2) : 0);
                   ?>
                 <div class="tw-text-neutral-800 mtop5 tw-flex tw-items-center tw-justify-between">
@@ -92,9 +97,11 @@
             </div>
         </div>
         <?php } ?>
+        <?php if(!isset($company_dashboard) || $company_dashboard['widgets']['projects']['status']==='available') { ?>
         <div class="quick-stats-projects col-xs-12 col-md-6 col-sm-6 <?php echo e($initial_column); ?> tw-mb-2 sm:tw-mb-0">
             <div class="top_stats_wrapper">
                 <?php
+                  if(isset($company_dashboard)) { $counts=$company_dashboard['widgets']['projects']['data'];$project_status=['name'=>_l('project_status_2'),'color'=>'#2563eb'];$total_projects=array_sum($counts);$total_projects_in_progress=($counts['in_progress']??0)+($counts['legacy_2']??0); } else {
                   $_where         = '';
                   $project_status = get_project_status_by_id(2);
                   if (staff_cant('view', 'projects')) {
@@ -103,6 +110,7 @@
                   $total_projects               = total_rows(db_prefix() . 'projects', $_where);
                   $where                        = ($_where == '' ? '' : $_where . ' AND ') . 'status = 2';
                   $total_projects_in_progress   = total_rows(db_prefix() . 'projects', $where);
+                  }
                   $percent_in_progress_projects = ($total_projects > 0 ? number_format(($total_projects_in_progress * 100) / $total_projects, 2) : 0);
                   ?>
                 <div class="tw-text-neutral-800 mtop5 tw-flex tw-items-center tw-justify-between">
@@ -132,9 +140,11 @@
                 </div>
             </div>
         </div>
+        <?php } if(!isset($company_dashboard) || $company_dashboard['widgets']['tasks']['status']==='available') { ?>
         <div class="quick-stats-tasks col-xs-12 col-md-6 col-sm-6 <?php echo e($initial_column); ?>">
             <div class="top_stats_wrapper">
                 <?php
+                  if(isset($company_dashboard)) { $counts=$company_dashboard['widgets']['tasks']['data'];$total_tasks=$counts['total'];$total_not_finished_tasks=$counts['unfinished']; } else {
                   $_where = '';
                   if (staff_cant('view', 'tasks')) {
                       $_where = db_prefix() . 'tasks.id IN (SELECT taskid FROM ' . db_prefix() . 'task_assigned WHERE staffid = ' . get_staff_user_id() . ')';
@@ -142,6 +152,7 @@
                   $total_tasks                = total_rows(db_prefix() . 'tasks', $_where);
                   $where                      = ($_where == '' ? '' : $_where . ' AND ') . 'status != ' . Tasks_model::STATUS_COMPLETE;
                   $total_not_finished_tasks   = total_rows(db_prefix() . 'tasks', $where);
+                  }
                   $percent_not_finished_tasks = ($total_tasks > 0 ? number_format(($total_not_finished_tasks * 100) / $total_tasks, 2) : 0);
                   ?>
                 <div class="tw-text-neutral-800 mtop5 tw-flex tw-items-center tw-justify-between">
@@ -167,5 +178,6 @@
                 </div>
             </div>
         </div>
+        <?php } ?>
     </div>
 </div>

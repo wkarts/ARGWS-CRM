@@ -8,6 +8,18 @@ class App_items_table extends App_items_table_template
 {
     public function __construct($transaction, $type, $for = 'html', $admin_preview = false)
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor(get_instance())
+            && !isset($transaction->native_items_presentation)) {
+            throw new DomainException('native_invoice_items_projection_required');
+        }
+        if (isset($transaction->native_items_presentation)) {
+            require_once APPPATH . 'services/NativeCompanyInvoiceItemsPresentation.php';
+            if ($type !== 'invoice' || !($transaction->native_items_presentation instanceof NativeCompanyInvoiceItemsPresentation)) {
+                throw new DomainException('native_invoice_items_projection_mismatch');
+            }
+            $transaction->native_items_presentation->assertTransaction($transaction);
+            $this->native_items_presentation = $transaction->native_items_presentation;
+        }
         // Required
         $this->type          = strtolower($type);
         $this->admin_preview = $admin_preview;
@@ -85,7 +97,7 @@ class App_items_table extends App_items_table_template
              * Item long description
              */
             if (! empty($item['long_description'])) {
-                $itemHTML .= '<span style="color:#424242;">' . process_text_content_for_display($this->period_merge_field($item['long_description'])) . '</span>';
+                $itemHTML .= '<span style="color:#424242;">' . ($this->native_items_presentation ? nl2br(e($item['long_description'])) : process_text_content_for_display($this->period_merge_field($item['long_description']))) . '</span>';
             }
 
             $itemHTML .= '</td>';
@@ -94,7 +106,7 @@ class App_items_table extends App_items_table_template
              * Item custom fields
              */
             foreach ($customFieldsItems as $custom_field) {
-                $itemHTML .= '<td align="left" width="' . $regularItemWidth . '%">' . get_custom_field_value($item['id'], $custom_field['id'], 'items') . '</td>';
+                $itemHTML .= '<td align="left" width="' . $regularItemWidth . '%">' . ($this->native_items_presentation ? e($this->native_items_presentation->value((int)$item['id'], $custom_field['id'])) : get_custom_field_value($item['id'], $custom_field['id'], 'items')) . '</td>';
             }
 
             /**
@@ -116,7 +128,7 @@ class App_items_table extends App_items_table_template
              *
              * @var string
              */
-            $rate = hooks()->apply_filters(
+            $rate = $this->presentation_filter(
                 'item_preview_rate',
                 app_format_money($item['rate'], $this->transaction->currency_name, $this->exclude_currency()),
                 ['item' => $item, 'transaction' => $this->transaction]
@@ -135,9 +147,9 @@ class App_items_table extends App_items_table_template
              * Possible action hook user to include tax in item total amount calculated with the quantiy
              * eq Rate * QTY + TAXES APPLIED
              */
-            $item_amount_with_quantity = hooks()->apply_filters(
+            $item_amount_with_quantity = $this->presentation_filter(
                 'item_preview_amount_with_currency',
-                app_format_money(($item['qty'] * $item['rate']), $this->transaction->currency_name, $this->exclude_currency()),
+                app_format_money(($this->native_items_presentation ? $this->native_items_presentation->amount((int)$item['id']) : ($item['qty'] * $item['rate'])), $this->transaction->currency_name, $this->exclude_currency()),
                 $item,
                 $this->transaction,
                 $this->exclude_currency()
@@ -174,7 +186,7 @@ class App_items_table extends App_items_table_template
         $customFieldsItems = $this->get_custom_fields_for_table();
 
         foreach ($customFieldsItems as $cf) {
-            $html .= '<th class="custom_field" align="left">' . $cf['name'] . '</th>';
+            $html .= '<th class="custom_field" align="left">' . ($this->native_items_presentation ? e($cf['name']) : $cf['name']) . '</th>';
         }
 
         $html .= '<th align="right">' . $this->qty_heading() . '</th>';
@@ -205,7 +217,7 @@ class App_items_table extends App_items_table_template
         $tblhtml .= '<th width="' . $descriptionItemWidth . '%" align="left">' . $this->item_heading() . '</th>';
 
         foreach ($customFieldsItems as $cf) {
-            $tblhtml .= '<th width="' . $regularItemWidth . '%" align="left">' . $cf['name'] . '</th>';
+            $tblhtml .= '<th width="' . $regularItemWidth . '%" align="left">' . ($this->native_items_presentation ? e($cf['name']) : $cf['name']) . '</th>';
         }
 
         $tblhtml .= '<th width="' . $regularItemWidth . '%" align="right">' . $this->qty_heading() . '</th>';
@@ -230,7 +242,7 @@ class App_items_table extends App_items_table_template
      */
     protected function period_merge_field($text)
     {
-        if ($this->type != 'invoice') {
+        if ($this->native_items_presentation || $this->type != 'invoice') {
             return $text;
         }
 
@@ -262,7 +274,7 @@ class App_items_table extends App_items_table_template
 
     protected function get_description_item_width()
     {
-        $item_width = hooks()->apply_filters('item_description_td_width', 38);
+        $item_width = $this->presentation_filter('item_description_td_width', 38);
 
         // If show item taxes is disabled in PDF we should increase the item width table heading
         return $this->show_tax_per_item() == 0 ? $item_width + 15 : $item_width;

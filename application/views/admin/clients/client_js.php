@@ -7,11 +7,35 @@
 <script>
 Dropzone.options.clientAttachmentsUpload = false;
 var customer_id = $('input[name="userid"]').val();
+var customer_tab_active = get_url_param('tab');
+<?php if(!empty($native_customers)){ ?>
+// The embedded administrators table is a browsing control, not profile data.
+// Keep pagination usable without submitting its generated select to the strict writer.
+function nativeCustomerAdminTableControls() {
+    $('#customer_admins .dataTables_length select').removeAttr('name');
+}
+$('#customer_admins table').on('init.dt draw.dt', nativeCustomerAdminTableControls);
+<?php } ?>
 $(function() {
+    <?php if(!empty($native_customers)){ ?>
+    nativeCustomerAdminTableControls();
+    <?php } ?>
+    $(document).on('click', '[data-native-admin-remove]', function(event) {
+        event.preventDefault();
+        var form=$('<form>', {method:'POST', action:$(this).attr('href')});
+        form.append($('<input>', {type:'hidden', name:'revision', value:$(this).attr('data-revision')}));
+        form.append($('<input>', {type:'hidden', name:'_native_company_csrf', value:$('input[name="_native_company_csrf"]').first().val()}));
+        if(typeof csrfData !== 'undefined') form.append($('<input>', {type:'hidden', name:csrfData.token_name, value:csrfData.hash}));
+        form.appendTo(document.body).trigger('submit');
+    });
+
 
     if ($('#client-attachments-upload').length > 0) {
         new Dropzone('#client-attachments-upload', appCreateDropzoneOptions({
             paramName: "file",
+            <?php if(!empty($native_customers)){ ?>
+            sending: function(file,xhr,data){if(!file.nativeRequestKey){var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);file.nativeRequestKey=Array.from(bytes).map(function(v){return v.toString(16).padStart(2,'0');}).join('');}data.append('request_key',file.nativeRequestKey);data.append('_native_company_csrf',<?= json_encode($company_clients_csrf); ?>);},
+            <?php } ?>
             accept: function(file, done) {
                 done();
             },
@@ -25,11 +49,11 @@ $(function() {
     }
 
     // Save button not hidden if passed from url ?tab= we need to re-click again
-    if (tab_active) {
-        $('body').find('.nav-tabs [href="#' + tab_active + '"]').click();
+    if (customer_tab_active) {
+        $('body').find('.nav-tabs [href="#' + customer_tab_active + '"]').click();
     }
 
-    if(tab_active === 'customer_admins') {
+    if(customer_tab_active === 'customer_admins') {
         $('#profile-save-section').addClass('hide');
     }
 
@@ -66,6 +90,34 @@ $(function() {
         contact(customer_id);
     }
 
+    <?php if(!empty($native_customers)){ ?>
+    $('body').on('submit','.native-customer-activate',function(event){
+        event.preventDefault();var form=$(this),button=form.find('button[type="submit"]');
+        if(form.data('nativeBusy'))return false;form.data('nativeBusy',true);button.prop('disabled',true);
+        $.post(form.attr('action'),form.serialize()).done(function(result){
+            if(typeof result==='string'){try{result=JSON.parse(result);}catch(error){result=null;}}
+            if(result&&result.success===true)window.location.reload();
+            else alert_float('danger',<?= json_encode(_l('access_denied')); ?>);
+        }).fail(function(){alert_float('danger',<?= json_encode(_l('access_denied')); ?>);})
+          .always(function(){form.data('nativeBusy',false);button.prop('disabled',false);});
+        return false;
+    });
+    $('#send_file').on('show.bs.modal',function(event){var el=$(event.relatedTarget),modal=$(this),bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);modal.find('[name="native_file_id"]').val(el.attr('data-native-file-id'));modal.find('[name="native_file_revision"]').val(el.attr('data-native-file-revision'));modal.find('[name="request_key"]').val(Array.from(bytes).map(function(v){return v.toString(16).padStart(2,'0');}).join(''));});
+    // Native file submission returns a durable queue receipt, not a delivery claim.
+    $('#send_file form').on('submit.nativeFileQueue',function(event){
+        event.preventDefault();var form=$(this),button=form.find('button[type="submit"]');
+        if(form.data('nativeFileBusy'))return false;form.data('nativeFileBusy',true);button.prop('disabled',true);
+        $.post(form.attr('action'),form.serialize()).done(function(result){
+            if(typeof result==='string'){try{result=JSON.parse(result);}catch(error){result=null;}}
+            if(result&&result.success===true&&result.queued===true&&Number.isSafeInteger(result.queue_id)&&result.queue_id>0){
+                alert_float('success','Arquivo adicionado à fila de envio.');$('#send_file').modal('hide');
+            }else alert_float('danger','Não foi possível confirmar a fila de envio.');
+        }).fail(function(){alert_float('danger','Não foi possível confirmar a fila de envio.');})
+          .always(function(){form.data('nativeFileBusy',false);button.prop('disabled',false);});
+        return false;
+    });
+    $('body').on('click','.native-customer-file-delete',function(event){event.preventDefault();var el=$(this);$.post(el.attr('href'),{revision:el.closest('tr').attr('data-native-file-revision'),_native_company_csrf:<?= json_encode($company_clients_csrf); ?>}).done(function(){window.location.reload();}).fail(function(){alert_float('danger',<?= json_encode(_l('access_denied')); ?>);});});
+    <?php } ?>
     $('body').on('change', '.onoffswitch input.customer_file', function(event, state) {
         var invoker = $(this);
         var checked_visibility = invoker.prop('checked');
@@ -105,8 +157,13 @@ $(function() {
     /* Customer profile tickets table */
     $('.table-tickets-single').find('#th-submitter').removeClass('toggleable');
 
+    <?php if(!empty($native_customers)){ ?>
+    initDataTable('.table-tickets-single', admin_url + 'tickets/index', undefined,
+        undefined, {userid:'input[name="userid"]'}, [$('table thead .ticket_created_column').index(), 'desc']);
+    <?php }else{ ?>
     initDataTable('.table-tickets-single', admin_url + 'tickets/index/false/' + customer_id, undefined,
         undefined, 'undefined', [$('table thead .ticket_created_column').index(), 'desc']);
+    <?php } ?>
 
     /* Customer profile contracts table */
     initDataTable('.table-contracts-single-client', admin_url + 'contracts/table/' + customer_id, undefined,
@@ -114,13 +171,13 @@ $(function() {
 
     /* Custome profile contacts table */
     var contactsNotSortable = [];
-    <?php if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') { ?>
+    <?php if (!empty($native_customers)?!empty($native_contact_consent_enabled):(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1')) { ?>
     contactsNotSortable.push($('#th-consent').index());
     <?php } ?>
     _table_api = initDataTable('.table-contacts', admin_url + 'clients/contacts/' + customer_id,
         contactsNotSortable, contactsNotSortable);
     if (_table_api) {
-        <?php if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') { ?>
+        <?php if (!empty($native_customers)?!empty($native_contact_consent_enabled):(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1')) { ?>
         _table_api.on('draw', function() {
             var tableData = $('.table-contacts').find('tbody tr');
             $.each(tableData, function() {
@@ -179,10 +236,10 @@ $(function() {
     /* Custome profile projects table */
     initDataTable('.table-projects-single-client', admin_url + 'projects/table/' + customer_id, undefined,
         undefined, 'undefined',
-        <?php echo hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>);
+        <?php echo !empty($native_customers)?json_encode([5,'asc']):hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>);
 
     var vRules = {};
-    if (app.options.company_is_required == 1) {
+    if (<?= !empty($native_customers)?json_encode($native_customer_company_required??'1'): 'app.options.company_is_required'; ?> == 1) {
         vRules = {
             company: 'required',
         }
@@ -205,7 +262,7 @@ $(function() {
                 })
                 .done(function(response) {
                     if (response) {
-                        response = JSON.parse(response);
+                        if(typeof response === 'string') response = JSON.parse(response);
                         if (response.exists == true) {
                             $companyExistsDiv.removeClass('hide');
                             $companyExistsDiv.html('<div class="alert alert-info">' + response
@@ -249,6 +306,19 @@ $(function() {
 });
 
 function delete_contact_profile_image(contact_id) {
+    <?php if (!empty($native_customers)) { ?>
+    $.post(admin_url+'clients/delete_contact_profile_image/'+contact_id,{
+        client_id:$('#contact input[name="native_customer_id"]').val(),
+        revision:$('#contact input[name="native_contact_revision"]').val(),
+        _native_company_csrf:$('#contact input[name="_native_company_csrf"]').val()
+    }).done(function(response){
+        if(typeof response==='string')response=JSON.parse(response);
+        $('#contact input[name="native_contact_revision"]').val(response.revision);
+        $('#contact-profile-image').removeClass('hide');$('#contact-remove-img').addClass('hide');
+        $('#contact-img').attr('src',<?= json_encode(base_url('assets/images/user-placeholder.jpg')); ?>);
+    }).fail(function(error){alert_float('danger',(error.responseJSON||{}).message||'Não foi possível alterar este contato.');});
+    return;
+    <?php } ?>
     requestGet('clients/delete_contact_profile_image/' + contact_id).done(function() {
         $('body').find('#contact-profile-image').removeClass('hide');
         $('body').find('#contact-remove-img').addClass('hide');
@@ -262,6 +332,10 @@ function customerGoogleDriveSave(pickData) {
 }
 
 function saveCustomerProfileExternalFile(files, externalType) {
+    <?php if(!empty($native_customers)){ ?>
+    var requests=files.map(function(file){if(!file.nativeRequestKey){var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);file.nativeRequestKey=Array.from(bytes).map(function(v){return v.toString(16).padStart(2,'0');}).join('');}return $.post(admin_url+'clients/add_external_attachment',{files:[file],clientid:customer_id,external:externalType,request_key:file.nativeRequestKey,_native_company_csrf:<?= json_encode($company_clients_csrf); ?>});});$.when.apply($,requests).done(function(){window.location.reload();}).fail(function(){alert_float('danger',<?= json_encode(_l('access_denied')); ?>);});return;
+    <?php } ?>
+
     $.post(admin_url + 'clients/add_external_attachment', {
         files: files,
         clientid: customer_id,
@@ -289,19 +363,23 @@ function validate_contact_form() {
             }
         },
         email: {
-            <?php if (hooks()->apply_filters('contact_email_required', 'true') === 'true') { ?>
+            <?php if (!empty($native_customers) || hooks()->apply_filters('contact_email_required', 'true') === 'true') { ?>
             required: true,
             <?php } ?>
             email: true,
             // Use this hook only if the contacts are not logging into the customers area and you are not using support tickets piping.
-            <?php if (hooks()->apply_filters('contact_email_unique', 'true') === 'true') { ?>
+            <?php if (!empty($native_customers) || hooks()->apply_filters('contact_email_unique', 'true') === 'true') { ?>
             remote: {
-                url: admin_url + "misc/contact_email_exists",
+                url: admin_url + <?= json_encode(!empty($native_customers)?'clients/contact_email_exists':'misc/contact_email_exists'); ?>,
                 type: 'post',
                 data: {
                     email: function() {
                         return $('#contact input[name="email"]').val();
                     },
+                    <?php if (!empty($native_customers)) { ?>
+                    client_id: function() { return $('#contact input[name="native_customer_id"]').val(); },
+                    _native_company_csrf: function() { return $('#contact input[name="_native_company_csrf"]').val(); },
+                    <?php } ?>
                     userid: function() {
                         return $('body').find('input[name="contactid"]').val();
                     }
@@ -333,7 +411,7 @@ function contactFormHandler(form) {
         processData: false,
         url: formURL
     }).done(function(response) {
-        response = JSON.parse(response);
+        if(typeof response === 'string') response = JSON.parse(response);
         if (response.success) {
             alert_float('success', response.message);
             if (typeof(response.is_individual) != 'undefined' && response.is_individual) {
@@ -392,6 +470,17 @@ function contact(client_id, contact_id) {
     });
 }
 
+<?php if(!empty($native_customers)){ ?>
+// Same native modal action, made available without loading the global main.js.
+function view_contact_consent(id) {
+    requestGet('clients/consents/' + id).done(function(response) {
+        $('#consent_data').html(response);
+        initDataTableInline($('#consentHistoryTable'));
+        $('#consentModal').modal('show');
+    });
+}
+<?php } ?>
+
 
 function update_all_proposal_emails_linked_to_contact(contact_id) {
     var data = {};
@@ -399,7 +488,7 @@ function update_all_proposal_emails_linked_to_contact(contact_id) {
     data.original_email = $('body').find('#contact_update_proposals_emails').data('original-email');
     $.post(admin_url + 'clients/update_all_proposal_emails_linked_to_customer/' + contact_id, data).done(function(
         response) {
-        response = JSON.parse(response);
+        if(typeof response === 'string') response = JSON.parse(response);
         if (response.success) {
             alert_float('success', response.message);
         }
@@ -424,6 +513,7 @@ function do_share_file_contacts(edit_contacts, file_id) {
     var file_id = $('input[name="file_id"]').val();
     $.post(admin_url + 'clients/update_file_share_visibility', {
         file_id: file_id,
+        <?php if(!empty($native_customers)){ ?>revision:$('#tr_file_'+file_id).attr('data-native-file-revision'),visible:$('#tr_file_'+file_id+' input.customer_file').prop('checked')?'1':'0',_native_company_csrf:<?= json_encode($company_clients_csrf); ?>,<?php } ?>
         share_contacts_id: contacts_shared_ids_selected,
         customer_id: $('input[name="userid"]').val()
     }).done(function() {
@@ -435,6 +525,7 @@ function save_longitude_and_latitude(clientid) {
     var data = {};
     data.latitude = $('#latitude').val();
     data.longitude = $('#longitude').val();
+    <?php if(!empty($native_customers)){ ?>data._native_company_csrf=<?= json_encode($company_clients_csrf); ?>;data.native_coordinates_revision=<?= json_encode($native_map_revision??''); ?>;<?php } ?>
     $.post(admin_url + 'clients/save_longitude_and_latitude/' + clientid, data).done(function(response) {
         if (response == 'success') {
             alert_float('success', "<?php echo e(_l('updated_successfully', _l('client'))); ?>");
@@ -450,6 +541,7 @@ function save_longitude_and_latitude(clientid) {
 function fetch_lat_long_from_google_cprofile() {
     var data = {};
     data.address = $('#long_lat_wrapper').data('address');
+    <?php if(!empty($native_customers)){ ?>data._native_company_csrf=<?= json_encode($company_clients_csrf); ?>;<?php } ?>
     data.city = $('#long_lat_wrapper').data('city');
     data.country = $('#long_lat_wrapper').data('country');
     $('#gmaps-search-icon').removeClass('fa-google').addClass('fa-spinner fa-spin');
@@ -469,3 +561,23 @@ function fetch_lat_long_from_google_cprofile() {
     });
 }
 </script>
+<?php if(!empty($native_customers)){ ?>
+<script>
+$(document).on('click','.native-contact-delete',function(event){
+    event.preventDefault();var link=$(this);if(!confirm(<?= json_encode(_l('confirm_action_prompt')); ?>))return;
+    $.post(link.attr('href'),{revision:link.attr('data-native-revision'),_native_company_csrf:<?= json_encode($company_clients_csrf); ?>})
+      .done(function(){['.table-contacts','.table-all-contacts'].forEach(function(selector){if($.fn.DataTable.isDataTable(selector))$(selector).DataTable().ajax.reload(null,false);});})
+      .fail(function(){alert_float('danger',<?= json_encode(_l('problem_deleting')); ?>);});
+});
+$(document).on('change','.native-contact-status',function(){
+    var control=$(this), desired=control.prop('checked'), contactId=control.attr('data-native-contact');
+    control.prop('disabled',true);
+    $.post(admin_url+'clients/change_contact_status/'+contactId+'/'+(desired?'1':'0'),{
+        client_id:control.attr('data-native-client'),revision:control.attr('data-native-revision'),
+        _native_company_csrf:<?= json_encode($company_clients_csrf); ?>
+    }).done(function(result){if(typeof result==='string')result=JSON.parse(result);if(!result.success)control.prop('checked',!desired);})
+      .fail(function(){control.prop('checked',!desired);})
+      .always(function(){['.table-contacts','.table-all-contacts'].forEach(function(selector){if($.fn.DataTable.isDataTable(selector))$(selector).DataTable().ajax.reload(null,false);});});
+});
+</script>
+<?php } ?>

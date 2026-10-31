@@ -1,6 +1,6 @@
 <?php
 /** A successful INSERT with a changed audit is not a confirmed settings change. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/../support/TestPdo.php';require __DIR__.'/native_settings.php';
 $auditStart=$GLOBALS['essentialChecks'];$observe=getenv('SETTINGS_FENCE_OBSERVE_BASELINE')==='1';
 function settingsAuditSnapshot($db,string $p):array
 {
@@ -15,7 +15,7 @@ foreach([
         $db->query('SET @settings_audit_hit=0');
         $db->query("CREATE TRIGGER {$p}settings_audit BEFORE INSERT ON {$p}issuers_audit FOR EACH ROW BEGIN IF NEW.event='$event' THEN SET @settings_audit_hit=COALESCE(@settings_audit_hit,0)+1; SET NEW.event='company_audit_substituted'; END IF; END");
     }else{
-        $GLOBALS['settingsAuditHit']=0;$db->pdo->sqliteCreateFunction('settings_audit_hit',static function(){return ++$GLOBALS['settingsAuditHit'];},0);
+        $GLOBALS['settingsAuditHit']=0;TestPdo::registerSqliteFunction($db->pdo,'settings_audit_hit',static function(){return ++$GLOBALS['settingsAuditHit'];},0);
         $db->query("CREATE TRIGGER {$p}settings_audit AFTER INSERT ON {$p}issuers_audit WHEN NEW.event='$event' BEGIN SELECT settings_audit_hit(); UPDATE {$p}issuers_audit SET event='company_audit_substituted' WHERE id=NEW.id; END");
     }
     $error=null;try{$operation();}catch(Throwable $e){$error=$e->getMessage();}

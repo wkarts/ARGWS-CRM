@@ -12,7 +12,7 @@
          </div>
          <div class="modal-body">
 
-            <?php if (staff_can('delete', 'tasks')) { ?>
+            <?php if (isset($native_task_index) ? $native_task_index['permissions']['delete'] : staff_can('delete', 'tasks')) { ?>
             <div class="checkbox checkbox-danger">
                <input type="checkbox" name="mass_delete" id="mass_delete">
                <label
@@ -36,7 +36,7 @@
                      <?php } ?>
                   </select>
                </div>
-               <?php if (staff_can('edit', 'tasks')) { ?>
+               <?php if (isset($native_task_index) ? $native_task_index['permissions']['edit'] : staff_can('edit', 'tasks')) { ?>
 
                <div class="form-group">
                   <label for="task_bulk_priority"
@@ -59,7 +59,7 @@
                   </select>
                </div>
                <?= '<i class="fa-regular fa-circle-question" data-toggle="tooltip" data-title="' . _l('tasks_bull_actions_assign_notice') . '"></i>';
-                   $staff_bulk_assigned = $this->staff_model->get('', ['active' => 1]);
+                   $staff_bulk_assigned = isset($native_task_index) ? $native_task_index['bulk_staff'] : $this->staff_model->get('', ['active' => 1]);
                    echo render_select('task_bulk_assignees', $staff_bulk_assigned, ['staffid', ['firstname', 'lastname']], 'task_assigned', '', ['multiple' => true]);
                    if (isset($project)) {
                        echo render_select('task_bulk_milestone', $this->projects_model->get_milestones($project->id), [

@@ -1,4 +1,14 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_portal_open_ticket)){ $action=NativePortalPresentation::url('clients/open_ticket'); ?>
+<section id="native-portal-open-ticket"><h4 class="tw-mt-0 tw-mb-3 tw-font-semibold tw-text-lg"><?= e(_l('clients_ticket_open_subject')); ?></h4>
+<?= form_open($action,['id'=>'open-new-ticket-form']); ?>
+<input type="hidden" name="_native_portal_csrf" value="<?= e($native_portal_csrf); ?>"><input type="hidden" name="request_key" value="<?= e($native_portal_ticket_request); ?>">
+<div class="panel_s"><div class="panel-body"><div class="form-group"><label for="subject"><?= e(_l('customer_ticket_subject')); ?></label><input id="subject" class="form-control" name="subject" maxlength="191" required></div>
+<div class="form-group"><label for="message"><?= e(_l('clients_ticket_open_body')); ?></label><textarea id="message" class="form-control" name="message" maxlength="12000" rows="8" required></textarea></div>
+<div class="form-group"><label for="priority"><?= e(_l('clients_ticket_single_priority')); ?></label><select id="priority" class="form-control" name="priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option></select></div></div>
+<div class="panel-footer text-right"><button class="btn btn-primary" type="submit"><?= e(_l('submit')); ?></button></div></div><?= form_close(); ?>
+</section>
+<?php return; } ?>
 <h4 class="tw-mt-0 tw-mb-3 tw-font-semibold tw-text-lg section-heading section-heading-open-ticket">
     <?= _l('clients_ticket_open_subject'); ?>
 </h4>

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyPdfTypography.php';
+require_once __DIR__.'/CompanyPdfLayout.php';
 
 /** Exact native sales PDF formats, without global options, hooks, file names or custom dimensions. */
 final class CompanyDocumentPdf
@@ -27,13 +28,18 @@ final class CompanyDocumentPdf
     public static function specification(array $context): array
     {
         $prefs=$context['sales_preferences']??null;
-        $choice=is_array($prefs)&&in_array($prefs['format']??null,[2,3],true) ? self::validate($prefs['pdf']??null) : 'A4-PORTRAIT';
+        $choice=is_array($prefs)&&in_array($prefs['format']??null,[2,3,4,5],true) ? self::validate($prefs['pdf']??null) : 'A4-PORTRAIT';
         return self::choiceSpecification($choice);
     }
     public static function typography(array $context):array
     {
         $prefs=$context['sales_preferences']??null;
-        return is_array($prefs)&&($prefs['format']??null)===3?CompanyPdfTypography::validate($prefs['typography']??null):CompanyPdfTypography::historical('estimates');
+        return is_array($prefs)&&in_array($prefs['format']??null,[3,5],true)?CompanyPdfTypography::validate($prefs['typography']??null):CompanyPdfTypography::historical('estimates');
+    }
+    public static function layout(array $context,string $kind):array
+    {
+        $prefs=$context['sales_preferences']??null;
+        return is_array($prefs)&&array_key_exists('layout',$prefs)?CompanyPdfLayout::validate($prefs['layout']):CompanyPdfLayout::historical($kind);
     }
     public static function choiceSpecification(string $choice):array
     {

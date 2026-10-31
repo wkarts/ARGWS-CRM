@@ -1,0 +1,140 @@
+name: Native company experience focused
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+  push:
+    branches: [main, develop]
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-company-experience-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused:
+    # The existing matrix checks must also gate the separate Node job.
+    needs: node-contracts
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      # Keep both supported runtimes running to completion on the same SHA so
+      # a failure in one matrix leg does not erase the other runtime's evidence.
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_native_module_audit
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      NATIVE_COMPANY_EVIDENCE: /tmp/native-company-focused
+      NATIVE_COMPANY_SCREENSHOT_DIR: /tmp/native-company-focused/screenshots
+    steps:
+      - name: Require successful Node contracts
+        env:
+          NODE_RESULT: ${{ needs.node-contracts.result }}
+        run: |
+          if [ "$NODE_RESULT" != success ]; then
+            echo "Node contracts did not succeed: $NODE_RESULT" >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify pinned CI runtime
+        env:
+          EXPECTED_PHP: ${{ matrix.php }}
+        run: argws-ci-smoke
+      - name: Test Node contracts that execute PHP with PHP 8.5
+        if: matrix.php == '8.5'
+        run: |
+          node --test tests/companies/native_file_message_ui.test.cjs
+          node --test tests/native_company/invoice_calculation_differential.test.cjs
+      - name: Test actual MySQL additive migration and schema metadata
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_native_module_audit;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: python3 scripts/ci/run-native-company-focused.py mysql
+      - name: Test actual PHP services and controllers using disposable SQLite
+        run: python3 scripts/ci/run-native-company-focused.py sqlite
+      - name: Render actual native templates in Chromium
+        run: python3 scripts/ci/run-native-company-focused.py browser
+      - uses: actions/setup-node@v4
+        if: matrix.php == '8.1'
+        with:
+          node-version: 22.23.4
+      - name: Verify reproducible compiled native assets
+        if: matrix.php == '8.1'
+        working-directory: ${{ github.workspace }}
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          PATH="$PWD/node_modules/.bin:$PATH" ./node_modules/.bin/mix --production
+      - name: Verify compiled assets against the checked out repository
+        if: matrix.php == '8.1'
+        working-directory: ${{ github.workspace }}
+        run: |
+          printf 'working directory: %s\nGitHub workspace: %s\n' "$PWD" "${GITHUB_WORKSPACE:-unset}"
+          ls -ld .git
+          safe_directory="${GITHUB_WORKSPACE:-$PWD}"
+          git -c safe.directory="$safe_directory" rev-parse --show-toplevel
+          git -c safe.directory="$safe_directory" diff --exit-code -- assets/builds assets/js/main.min.js assets/js/native-tasks.min.js assets/js/native-ui-tools.min.js assets/js/tickets.min.js mix-manifest.json
+      - name: Preserve focused receipts and synthetic screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-company-focused-php-${{ matrix.php }}
+          path: /tmp/native-company-focused
+          if-no-files-found: warn
+          retention-days: 3
+  node-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+    env:
+      NATIVE_COMPANY_EVIDENCE: /tmp/native-company-node
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify pinned CI runtime
+        env:
+          EXPECTED_PHP: '8.1'
+        run: argws-ci-smoke
+      - name: Validate focused manifest and action census once
+        # This preflight is independent of the functional PHP matrix. UI,
+        # boundary and operational inventories have their own workflow owners;
+        # the action census belongs here so no inventory is run twice per SHA.
+        run: |
+          mkdir -p "$NATIVE_COMPANY_EVIDENCE"
+          python3 tests/ci/test_native_company_focused.py
+          for phase in sqlite node mysql browser; do python3 scripts/ci/run-native-company-focused.py "$phase" --check; done
+          php scripts/native-experience-inventory.php > "$NATIVE_COMPANY_EVIDENCE/native-experience-action-census.json"
+          diff -u --label a/docs/companies/native-experience-action-census.json --label b/generated/native-experience-action-census.json docs/companies/native-experience-action-census.json "$NATIVE_COMPANY_EVIDENCE/native-experience-action-census.json"
+      - name: Test shared native UI contracts without browser
+        run: python3 scripts/ci/run-native-company-focused.py node
+      - name: Preserve Node contract receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-company-focused-node
+          path: /tmp/native-company-node
+          if-no-files-found: warn
+          retention-days: 3

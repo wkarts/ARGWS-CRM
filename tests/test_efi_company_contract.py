@@ -29,18 +29,28 @@ class EfiCompanyContracts(unittest.TestCase):
   self.assertIn('CompanySchema::ensure($this->db, db_prefix(), true)',migration)
   self.assertNotIn('CREATE TABLE',(ROOT/'modules/gerencianet_gateway/migrations/515_version_515.php').read_text())
  def test_ui_scope_and_no_secret_echo(self):
-  controller=(ROOT/'application/controllers/admin/Company_efi.php').read_text()
-  view=(ROOT/'application/views/admin/companies/efi.php').read_text()
+  controller=(ROOT/'application/controllers/admin/Settings.php').read_text()
+  service=(ROOT/'application/services/NativeCompanySpecializedOperations.php').read_text()
+  view=(ROOT/'application/views/admin/settings/native_efi.php').read_text()
+  self.assertIn('nativeSettingsEfi',controller)
+  self.assertIn('public function efi()',controller)
   for marker in ['CompanyRequestScope::sealedFor','CompanySettingsRuntime::issuerId','hash_equals($csrf','CompanyCheckout','instruments','Cache-Control: no-store']:
-   self.assertIn(marker,controller)
-  self.assertIn("'company_efi'",(ROOT/'application/services/CompanyRequestScope.php').read_text())
-  self.assertIn("views/admin/companies/layout_head.php",view)
-  self.assertIn("views/admin/companies/layout_tail.php",view)
+   self.assertIn(marker,service)
+  self.assertIn("'settings/efi'",view)
+  self.assertIn("native_company_layout_head.php",view)
+  self.assertIn("native_company_layout_tail.php",view)
   self.assertNotIn('init_head(',view)
   self.assertNotIn("$profile['credentials_cipher']",view)
   self.assertNotIn("$profile['certificate_cipher']",view)
   self.assertIn('rel="noopener noreferrer"',view)
  def test_reverse_origin_fences(self):
   for file in ['application/services/CompanyInvoices.php','application/services/CompanyCreditWriter.php','application/services/InvoicePaymentWriter.php','modules/asaas/libraries/Asaas/CompanyService.php','modules/banco_brasil/libraries/BancoBrasil/ApiService.php','modules/banco_brasil/libraries/BancoBrasil/Origination.php']:
-   self.assertIn('efi_company_origins',(ROOT/file).read_text(),file)
+   source=(ROOT/file).read_text()
+   if file=='application/services/CompanyInvoices.php':
+    self.assertIn("require_once __DIR__.'/CompanyInvoiceProviderTables.php'",source)
+    self.assertGreaterEqual(source.count('CompanyInvoiceProviderTables::current('),4)
+    self.assertIn('efi_company_origins',(ROOT/'application/services/CompanyInvoiceProviderTables.php').read_text())
+    self.assertIn('company_invoice_provider_review_required',source)
+   else:
+    self.assertIn('efi_company_origins',source,file)
 if __name__=='__main__':unittest.main()

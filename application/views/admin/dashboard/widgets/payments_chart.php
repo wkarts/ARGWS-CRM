@@ -1,13 +1,13 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('home_payment_records'); ?>">
-    <?php if (staff_can('view',  'payments') || staff_can('view_own',  'invoices')) { ?>
+    <?php if (isset($company_dashboard) ? ($company_dashboard['permissions']['payments'] && $company_dashboard['permissions']['invoices']) : (staff_can('view', 'payments') || staff_can('view_own', 'invoices'))) { ?>
     <div class="row" id="payments">
         <div class="col-md-12">
             <div class="panel_s">
                 <div class="panel-body padding-10">
                     <div class="widget-dragger"></div>
 
-                    <div class="tw-flex tw-justify-between tw-items-center tw-p-1.5">
+                    <div class="tw-flex tw-flex-wrap tw-gap-2 tw-justify-between tw-items-center tw-p-1.5">
                         <p class="tw-font-semibold tw-flex tw-items-center tw-mb-0 tw-space-x-1.5 rtl:tw-space-x-reverse">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="tw-w-6 tw-h-6 tw-text-neutral-500">
@@ -20,9 +20,9 @@
                             </span>
                         </p>
                         <div
-                            class="tw-divide-x tw-divide-solid tw-divide-neutral-300 tw-space-x-2 tw-flex tw-items-center">
+                            class="tw-divide-x tw-divide-solid tw-divide-neutral-300 tw-space-x-2 tw-flex tw-flex-wrap tw-gap-2 tw-max-w-full tw-items-center">
 
-                            <?php if (is_using_multiple_currencies()) { ?>
+                            <?php if (isset($company_dashboard) ? count($currencies)>1 : is_using_multiple_currencies()) { ?>
                             <select class="selectpicker tw-pr-2" name="currency"
                                 data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                 <?php foreach ($currencies as $currency) {
@@ -37,7 +37,7 @@
 } ?>
                             </select>
                             <?php } ?>
-                            <?php if (staff_can('view',  'reports')) { ?>
+                            <?php if (isset($company_dashboard) ? $company_dashboard['permissions']['reports'] : staff_can('view', 'reports')) { ?>
                             <a href="<?php echo admin_url('reports/sales'); ?>" class="tw-pl-2">
                                 <?php echo _l('home_stats_full_report'); ?>
                             </a>

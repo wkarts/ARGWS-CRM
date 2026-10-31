@@ -15,6 +15,7 @@
                     <div class="col-md-12">
                         <?php echo render_input('name', 'customer_group_name'); ?>
                         <?php echo form_hidden('id'); ?>
+                        <?php if(!empty($native_customers))echo form_hidden('revision'); ?>
                     </div>
                 </div>
             </div>
@@ -38,10 +39,12 @@
         $('#customer_group_modal .add-title').removeClass('hide');
         $('#customer_group_modal .edit-title').addClass('hide');
         $('#customer_group_modal input[name="id"]').val('');
+        $('#customer_group_modal input[name="revision"]').val('');
         $('#customer_group_modal input[name="name"]').val('');
         // is from the edit button
         if (typeof(group_id) !== 'undefined') {
             $('#customer_group_modal input[name="id"]').val(group_id);
+            $('#customer_group_modal input[name="revision"]').val(invoker.data('revision') || '');
             $('#customer_group_modal .add-title').addClass('hide');
             $('#customer_group_modal .edit-title').removeClass('hide');
             $('#customer_group_modal input[name="name"]').val($(invoker).parents('tr').find('td').eq(0).text());
@@ -52,14 +55,14 @@
         var data = $(form).serialize();
         var url = form.action;
         $.post(url, data).done(function(response) {
-            response = JSON.parse(response);
+            if(typeof response === 'string') response = JSON.parse(response);
             if (response.success == true) {
                 if($.fn.DataTable.isDataTable('.table-customer-groups')){
                     $('.table-customer-groups').DataTable().ajax.reload();
                 }
                 if($('body').hasClass('dynamic-create-groups') && typeof(response.id) != 'undefined') {
                     var groups = $('select[name="groups_in[]"]');
-                    groups.prepend('<option value="'+response.id+'">'+response.name+'</option>');
+                    groups.prepend($('<option>').val(response.id).text(response.name));
                     groups.selectpicker('refresh');
                 }
                 alert_float('success', response.message);

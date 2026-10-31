@@ -2,10 +2,10 @@ name: Banco do Brasil module
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   push:
     branches: [main]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -41,11 +41,14 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+          extensions: pdo_sqlite, mbstring
+      - run: php tests/companies/bb_channel_preferences.php
       - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/banco_brasil_checkout_legacy_guard.php
       - run: php tests/banco_brasil_admin.php
       - run: php tests/banco_brasil_cnab240.php
-      - run: php tests/banco_brasil_cnab400.php
+      # Includes the existing parser suite plus invoice comparison; no duplicate run.
+      - run: php tests/banco_brasil_cnab400_invoice_comparison.php
       - run: php tests/banco_brasil_store.php
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
@@ -78,23 +81,24 @@ jobs:
           extensions: gd, pdo_mysql, mysqli, curl, mbstring, bcmath
           coverage: none
       - run: |
+          set -x # Trace test entrypoints only; no credential values or banking payloads.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
-          php tests/banco_brasil_api_monthly_interest_mysql.php
           php tests/banco_brasil_api_fixed_discount.php
-          php tests/banco_brasil_api_fixed_discount_mysql.php
           php tests/banco_brasil_api_fixed_discount_concurrency.php
           php tests/banco_brasil_api_percentage_discount.php
-          php tests/banco_brasil_api_percentage_discount_mysql.php
           php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
           php tests/banco_brasil_api16_components_data.php
-          php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
-          php tests/banco_brasil_api16_components_portal_mysql.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
           php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
@@ -130,7 +134,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php
@@ -179,8 +182,12 @@ jobs:
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: synthetic-ci-password
         run: |
+          set -x # Preserve the exact test at a failure/cancellation.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/issuers_core.php
           php tests/companies/clients.php
@@ -194,9 +201,9 @@ jobs:
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
           php tests/banco_brasil_api16_components_data.php
-          php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
-          php tests/banco_brasil_api16_components_portal_mysql.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
           php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
@@ -208,12 +215,9 @@ jobs:
           php tests/banco_brasil_api16_mutation_fence_concurrency.php
           php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
-          php tests/banco_brasil_api_monthly_interest_mysql.php
           php tests/banco_brasil_api_fixed_discount.php
-          php tests/banco_brasil_api_fixed_discount_mysql.php
           php tests/banco_brasil_api_fixed_discount_concurrency.php
           php tests/banco_brasil_api_percentage_discount.php
-          php tests/banco_brasil_api_percentage_discount_mysql.php
           php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php
@@ -243,7 +247,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php

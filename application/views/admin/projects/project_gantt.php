@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_project_view)){ ?><div class="panel_s"><div class="panel-body"><h4>Cronograma do projeto</h4><table class="table"><thead><tr><th>Tarefa</th><th>Início armazenado</th><th>Prazo armazenado</th></tr></thead><tbody><?php foreach($native_project_tasks as$item){ ?><tr><td><a href="<?= e($url('?task='.$item['source_id'])); ?>"><?= e($item['row']['name']); ?></a> <a href="<?= admin_url('tasks/task/'.$item['id']); ?>">Editar datas</a></td><td><?= e($item['fields']['start_date']??''); ?></td><td><?= e($item['row']['due_date']??''); ?></td></tr><?php } ?></tbody></table><?php require __DIR__.'/native_gantt_rules.php'; ?></div></div><?php return; } ?>
 <div class="row">
     <div class="col-md-12">
         <?php if (count($gantt_data) > 0) { ?>

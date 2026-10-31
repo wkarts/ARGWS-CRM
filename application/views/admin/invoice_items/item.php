@@ -14,6 +14,7 @@
             </div>
             <?= form_open('admin/invoice_items/manage', ['id' => 'invoice_item_form']); ?>
             <?= form_hidden('itemid'); ?>
+            <?php if(CompanyRequestScope::nativeFor(get_instance()))echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -25,11 +26,17 @@
                         <div class="form-group">
                             <label for="rate" class="control-label">
                                 <?= _l('invoice_item_add_edit_rate_currency', e($base_currency->name) . ' <small>(' . _l('base_currency_string') . ')</small>'); ?></label>
-                            <input type="number" id="rate" name="rate" class="form-control" value="">
+                            <input type="number" id="rate" name="rate" class="form-control" step="any" value="">
                         </div>
                         <?php
+                            $nativeItemCurrencies = null;
+                            if (CompanyRequestScope::nativeFor(get_instance())) {
+                                require_once APPPATH.'services/NativeCompanyCurrencyReference.php';
+                                $itemContext=CompanyRequestScope::context();
+                                $nativeItemCurrencies=(new NativeCompanyCurrencyReference($this->db,db_prefix(),$itemContext->issuerId(),$itemContext->staffId()))->clientCurrencyIds();
+                            }
                             foreach ($currencies as $currency) {
-                                if ($currency['isdefault'] == 0 && total_rows(db_prefix() . 'clients', ['default_currency' => $currency['id']]) > 0) { ?>
+                                if ($currency['isdefault'] == 0 && ($nativeItemCurrencies!==null ? in_array((int)$currency['id'],$nativeItemCurrencies,true) : total_rows(db_prefix() . 'clients', ['default_currency' => $currency['id']]) > 0)) { ?>
                         <div class="form-group">
                             <label
                                 for="rate_currency_<?= e($currency['id']); ?>"
@@ -38,7 +45,7 @@
                             <input type="number"
                                 id="rate_currency_<?= e($currency['id']); ?>"
                                 name="rate_currency_<?= e($currency['id']); ?>"
-                                class="form-control" value="">
+                                class="form-control" step="any" value="">
                         </div>
                         <?php }
                                 }
@@ -85,7 +92,7 @@
                             <?= render_custom_fields('items'); ?>
                         </div>
                         <?= render_select('group_id', $items_groups, ['id', 'name'], 'item_group'); ?>
-                        <?php hooks()->do_action('before_invoice_item_modal_form_close'); ?>
+                        <?php if(!CompanyRequestScope::nativeFor(get_instance()))hooks()->do_action('before_invoice_item_modal_form_close'); ?>
                     </div>
                 </div>
             </div>
@@ -94,32 +101,38 @@
                     data-dismiss="modal"><?= _l('close'); ?></button>
                 <button type="submit"
                     class="btn btn-primary"><?= _l('submit'); ?></button>
-                <?= form_close(); ?>
             </div>
+            <?= form_close(); ?>
         </div>
     </div>
 </div>
 <script>
-    // Maybe in modal? Eq convert to invoice or convert proposal to estimate/invoice
-    if (typeof(jQuery) != 'undefined') {
-        init_item_js();
-    } else {
-        window.addEventListener('load', function() {
-            var initItemsJsInterval = setInterval(function() {
-                if (typeof(jQuery) != 'undefined') {
-                    init_item_js();
-                    clearInterval(initItemsJsInterval);
-                }
+    // The view precedes footer dependencies. Bind at DOM readiness, without
+    // delaying a usable modal until window.load plus the first polling tick.
+    (function () {
+        function ready() {
+            if (typeof jQuery === 'undefined' || typeof appValidateForm !== 'function') return false;
+            init_item_js();
+            return true;
+        }
+        function initialize() {
+            if (ready()) return;
+            var interval = setInterval(function () {
+                if (ready()) clearInterval(interval);
             }, 1000);
-        });
-    }
+        }
+        if (!ready()) {
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, {once:true});
+            else initialize();
+        }
+    })();
     // Items add/edit
     function manage_invoice_items(form) {
         var data = $(form).serialize();
 
         var url = form.action;
         $.post(url, data).done(function(response) {
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
             if (response.success == true) {
                 var item_select = $('#item_select');
                 if ($("body").find('.accounting-template').length > 0) {
@@ -170,8 +183,11 @@
     }
 
     function init_item_js() {
+        var form = $('#invoice_item_form');
+        if (!form.length || form.data('invoiceItemInitialized')) return;
+        validate_item_form();
         // Add item to preview from the dropdown for invoices estimates
-        $("body").on('change', 'select[name="item_select"]', function() {
+        $("body").off('change.invoiceItem', 'select[name="item_select"]').on('change.invoiceItem', 'select[name="item_select"]', function() {
             var itemid = $(this).selectpicker('val');
             if (itemid != '') {
                 add_item_to_preview(itemid);
@@ -179,12 +195,13 @@
         });
 
         // Items modal show action
-        $("body").on('show.bs.modal', '#sales_item_modal', function(event) {
+        $("body").off('show.bs.modal.invoiceItem', '#sales_item_modal').on('show.bs.modal.invoiceItem', '#sales_item_modal', function(event) {
 
             $('.affect-warning').addClass('hide');
 
             var $itemModal = $('#sales_item_modal');
             $('input[name="itemid"]').val('');
+            $('input[name="revision"]').val('');
             $itemModal.find('input').not('input[type="hidden"]').val('');
             $itemModal.find('textarea').val('');
             $itemModal.find('select').selectpicker('val', '').selectpicker('refresh');
@@ -201,8 +218,9 @@
                 $('input[name="itemid"]').val(id);
 
                 requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
+                    $itemModal.find('input[name="revision"]').val(response.revision || '');
                     $itemModal.find('input[name="description"]').val(response.description);
-                    $itemModal.find('textarea[name="long_description"]').val(response.long_description
+                    $itemModal.find('textarea[name="long_description"]').val(typeof response.long_description_text === 'string' ? response.long_description_text : response.long_description
                         .replace(/(<|<)br\s*\/*(>|>)/g, " "));
                     $itemModal.find('input[name="rate"]').val(response.rate);
                     $itemModal.find('input[name="unit"]').val(response.unit);
@@ -229,11 +247,11 @@
             }
         });
 
-        $("body").on("hidden.bs.modal", '#sales_item_modal', function(event) {
+        $("body").off("hidden.bs.modal.invoiceItem", '#sales_item_modal').on("hidden.bs.modal.invoiceItem", '#sales_item_modal', function(event) {
             $('#item_select').selectpicker('val', '');
         });
 
-        validate_item_form();
+        form.data('invoiceItemInitialized', true);
     }
 
     function validate_item_form() {

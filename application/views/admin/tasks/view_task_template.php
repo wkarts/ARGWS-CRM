@@ -1,4 +1,176 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (isset($native_task_detail)) {
+    foreach (['detail','checklist','files','names','statuses','status','priorities','priority','timer_policy','can_track_time'] as $key) {
+        if (!array_key_exists($key, $native_task_detail)) throw new RuntimeException('native_task_detail_projection_incomplete');
+    }
+    $nativeItem=$native_task_detail['detail']['item'];$nativeRow=$nativeItem['row'];$nativeFields=$nativeItem['fields'];$nativePermissions=$native_task_detail['detail']['permissions'];$nativeCanonical=(string)$nativeItem['id'];$nativeRunning=$native_task_detail['running_timer'];$nativeCanEdit=$nativePermissions['edit'];$nativeKey=static fn()=>bin2hex(random_bytes(32));
+    $nativeOriginalHidden=static function()use($nativeCanonical,$nativeRow,$native_task_context,$native_task_csrf,$nativeKey):void{echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_fields_revision',$nativeRow['native_fields_revision']??'');echo form_hidden('native_request_key',$nativeKey());};
+?>
+<div id="native-task-detail-<?php echo e($nativeCanonical); ?>" data-native-task-detail="1"
+    data-native-task-id="<?php echo e($nativeCanonical); ?>"
+    data-task-revision="<?php echo e($nativeRow['revision']); ?>"
+    data-native-fields-revision="<?php echo e($nativeRow['native_fields_revision'] ?? ''); ?>"
+    data-policy-hash="<?php echo e($native_task_detail['timer_policy']['policy_hash']); ?>"<?php if($nativeRunning){ ?>
+    data-native-timer-id="<?php echo e($nativeRunning['id']); ?>"
+    data-timer-revision="<?php echo e($nativeRunning['revision']); ?>"
+    data-note-revision="<?php echo e($nativeRunning['note_revision']); ?>"<?php } ?>>
+    <div class="modal-header task-single-header"
+        data-task-single-id="<?php echo e($nativeCanonical); ?>"
+        data-native-task-id="<?php echo e($nativeCanonical); ?>"
+        data-status="<?php echo e($nativeFields['workflow_status']); ?>"
+        data-task-revision="<?php echo e($nativeRow['revision']); ?>"
+        data-native-fields-revision="<?php echo e($nativeRow['native_fields_revision'] ?? ''); ?>"
+        data-policy-hash="<?php echo e($native_task_detail['timer_policy']['policy_hash']); ?>"<?php if($nativeRunning){ ?>
+        data-native-timer-id="<?php echo e($nativeRunning['id']); ?>"
+        data-timer-revision="<?php echo e($nativeRunning['revision']); ?>"
+        data-note-revision="<?php echo e($nativeRunning['note_revision']); ?>"<?php } ?>>
+        <button type="button" class="close" data-dismiss="modal" aria-label="<?php echo e(_l('close')); ?>"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title tw-flex tw-items-center tw-gap-3">
+            <?php echo e($nativeRow['name']); ?>
+            <span class="label" style="color:<?php echo e($native_task_detail['status']['color']); ?>;border:1px solid <?php echo e($native_task_detail['status']['color']); ?>"><?php echo e($native_task_detail['status']['name']); ?></span>
+        </h4>
+    </div>
+    <div class="modal-body">
+        <?php if($native_task_detail['detail']['portal']['origin']??null){ ?><p>Criada pelo contato: <?php echo e($native_task_detail['detail']['portal']['origin']['author_name']); ?></p><?php } ?>
+        <input id="taskid" type="hidden" value="<?php echo e($nativeCanonical); ?>">
+        <div class="row">
+            <div class="col-md-8 task-single-col-left">
+                <div class="tw-flex tw-flex-wrap tw-gap-2 tw-mb-4">
+                    <?php if($nativeCanEdit){ ?><a class="btn btn-default" href="#" onclick="edit_task('<?php echo e($nativeCanonical); ?>');return false;"><i class="fa-regular fa-pen-to-square"></i> <?php echo _l('edit'); ?></a><?php } ?>
+                    <?php if($native_task_detail['can_track_time']){ ?>
+                    <textarea id="timesheet_note" class="form-control" rows="2" maxlength="4000" placeholder="<?php echo e(_l('note')); ?>"></textarea>
+                    <?php if($nativeRunning){ ?><button class="btn btn-danger" type="button" onclick='timer_action(this,<?php echo json_encode($nativeCanonical,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>,<?php echo json_encode((string)$nativeRunning['id'],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>);return false;'><i class="fa-regular fa-clock"></i> <?php echo _l('task_stop_timer'); ?></button>
+                    <?php }else{ ?><button class="btn btn-success" type="button" onclick='timer_action(this,<?php echo json_encode($nativeCanonical,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>);return false;'><i class="fa-regular fa-clock"></i> <?php echo _l('task_start_timer'); ?></button><?php } ?>
+                    <?php } ?>
+                </div>
+
+                <?php if(isset($native_task_copy)){ ?>
+                <details class="panel_s tw-mb-4"><summary class="panel-heading"><?= e(_l('copy_task')); ?></summary><div class="panel-body">
+                <?= form_open(admin_url('tasks/copy')); ?>
+                <?= form_hidden('_company_context',$native_task_context).form_hidden('_native_company_csrf',$native_task_csrf).form_hidden('copy_from',$nativeCanonical).form_hidden('source_revision',$native_task_copy['revision']).form_hidden('native_request_key',$nativeKey()); ?>
+                <label for="task-copy-name"><?= e(_l('task_name')); ?></label><input class="form-control" id="task-copy-name" name="name" required maxlength="191" value="<?= e($nativeRow['name']); ?>">
+                <label for="task-copy-start"><?= e(_l('task_single_start_date')); ?></label><input class="form-control" id="task-copy-start" type="date" name="start_date" required value="<?= e($nativeFields['start_date']??date('Y-m-d')); ?>">
+                <label for="task-copy-due"><?= e(_l('task_single_due_date')); ?></label><input class="form-control" id="task-copy-due" type="date" name="due_date" value="<?= e($nativeRow['due_date']??''); ?>">
+                <?php foreach(['copy_task_assignees'=>'task_single_assignees','copy_task_followers'=>'task_single_followers','copy_task_checklist_items'=>'task_checklist_items','copy_task_attachments'=>'task_view_attachments']as$field=>$label){ ?><label class="checkbox-inline"><input type="checkbox" name="<?= e($field); ?>" value="1"<?= $field==='copy_task_attachments'?'':' checked'; ?>><?= e(_l($label)); ?></label><?php } ?>
+                <label for="task-copy-status"><?= e(_l('task_status')); ?></label><select id="task-copy-status" name="copy_task_status" class="form-control"><?php foreach($native_task_detail['statuses']as$status){ ?><option value="<?= e($status['id']); ?>"><?= e($status['name']); ?></option><?php } ?></select>
+                <button type="submit" class="btn btn-primary mtop10"><?= e(_l('copy_task_confirm')); ?></button><?= form_close(); ?></div></details>
+                <?php } ?>
+
+                <?php if($nativeCanEdit){ ?>
+                <div class="row tw-mb-4">
+                    <div class="col-md-6">
+                        <?php echo form_open(admin_url('tasks/mark_as/'.$nativeFields['workflow_status'].'/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form']); ?>
+                        <?php echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_fields_revision',$nativeRow['native_fields_revision']??'');echo form_hidden('native_request_key',$nativeKey()); ?>
+                        <label for="native-task-status-<?php echo e($nativeCanonical); ?>"><?php echo _l('task_status'); ?></label>
+                        <select id="native-task-status-<?php echo e($nativeCanonical); ?>" class="form-control" data-native-action-template="<?php echo e(admin_url('tasks/mark_as/__value__/'.$nativeCanonical.'?single_task=true')); ?>">
+                            <?php foreach($native_task_detail['statuses'] as$status){ ?><option value="<?php echo e($status['id']); ?>"<?php echo (int)$status['id']===(int)$nativeFields['workflow_status']?' selected':''; ?>><?php echo e($status['name']); ?></option><?php } ?>
+                        </select>
+                        <button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('submit'); ?></button><?php echo form_close(); ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?php echo form_open(admin_url('tasks/change_priority/'.$nativeRow['priority'].'/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form']); ?>
+                        <?php echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_fields_revision',$nativeRow['native_fields_revision']??'');echo form_hidden('native_request_key',$nativeKey()); ?>
+                        <label for="native-task-priority-<?php echo e($nativeCanonical); ?>"><?php echo _l('task_single_priority'); ?></label>
+                        <select id="native-task-priority-<?php echo e($nativeCanonical); ?>" class="form-control" data-native-action-template="<?php echo e(admin_url('tasks/change_priority/__value__/'.$nativeCanonical.'?single_task=true')); ?>">
+                            <?php foreach($native_task_detail['priorities'] as$priority){ ?><option value="<?php echo e($priority['id']); ?>"<?php echo (int)$priority['id']===(int)$nativeRow['priority']?' selected':''; ?>><?php echo e($priority['name']); ?></option><?php } ?>
+                        </select>
+                        <button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('submit'); ?></button><?php echo form_close(); ?>
+                    </div>
+                </div>
+                <?php } ?>
+
+                <h4 class="tw-font-semibold"><?php echo _l('task_view_description'); ?></h4>
+                <div class="tc-content" id="task_view_description"><?php echo $nativeRow['description']===''?'<span class="text-muted">'.e(_l('task_no_description')).'</span>':nl2br(e($nativeRow['description'])); ?></div>
+                <?php if($nativeCanEdit){echo form_open(admin_url('tasks/update_task_description/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mt-3']);$nativeOriginalHidden(); ?>
+                <label for="task-description-edit"><?php echo _l('edit'); ?></label><textarea id="task-description-edit" name="description" class="form-control" rows="4" maxlength="4000"><?php echo e($nativeRow['description']); ?></textarea><button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('save'); ?></button><?php echo form_close(); } ?>
+                <?php if($nativeCanEdit&&$nativeRow['native_fields_json']!==null){echo form_open(admin_url('tasks/task_single_inline_update/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mt-3']);$nativeOriginalHidden(); ?>
+                <div class="row"><div class="col-md-6"><label><?php echo _l('task_add_edit_start_date'); ?><input class="form-control datepicker" name="startdate" value="<?php echo e($native_task_detail['date_fields']['startdate']); ?>" required></label></div><div class="col-md-6"><label><?php echo _l('task_add_edit_due_date'); ?><input class="form-control datepicker" name="duedate" value="<?php echo e($native_task_detail['date_fields']['duedate']); ?>"></label></div></div><button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('save'); ?></button><?php echo form_close(); } ?>
+                <hr>
+                <div class="tw-flex tw-justify-between tw-items-center">
+                    <h4 class="chk-heading tw-font-semibold"><?php echo _l('task_checklist_items'); ?></h4>
+                    <?php if($nativeCanEdit&&$native_task_detail['checklist']['native_task_checklist']['initialized']){ ?><button type="button" class="btn btn-default btn-sm" onclick='add_task_checklist_item(<?php echo json_encode($nativeCanonical,JSON_THROW_ON_ERROR); ?>,undefined,this);return false;'><i class="fa fa-plus"></i> <?php echo _l('add_checklist_item'); ?></button><?php } ?>
+                </div>
+                <?php if($nativeCanEdit&&!$native_task_detail['checklist']['native_task_checklist']['initialized']){ ?><button type="button" class="btn btn-primary btn-sm tw-mb-3" onclick='native_task_checklist_command($("#checklist-items"),"initialize",{}).done(function(){init_task_modal(<?php echo json_encode($nativeCanonical,JSON_THROW_ON_ERROR); ?>);});return false;'><?php echo _l('task_checklist_items'); ?></button><?php } ?>
+                <div id="checklist-items" data-native-task-id="<?php echo e($nativeCanonical); ?>" data-task-revision="<?php echo e($native_task_detail['checklist']['native_task_checklist']['task_revision']); ?>"<?php if($native_task_detail['checklist']['native_task_checklist']['revision']!==null){ ?> data-checklist-revision="<?php echo e($native_task_detail['checklist']['native_task_checklist']['revision']); ?>"<?php } ?>>
+                    <?php $this->load->view('admin/tasks/checklist_items_template',$native_task_detail['checklist']); ?>
+                </div>
+
+                <hr><h4 class="tw-font-semibold"><?php echo _l('task_comments'); ?></h4>
+                <?php if($nativeCanEdit){ ?><?php echo form_open(admin_url('tasks/add_task_comment'),['class'=>'native-task-ajax-form']); ?>
+                    <?php echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_request_key',$nativeKey()); ?>
+                    <?php echo form_hidden('no_editor','1'); ?><textarea class="form-control" name="content" rows="4" maxlength="4000" required></textarea><button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('task_add_comment'); ?></button><?php echo form_close(); ?>
+                <?php } ?>
+                <div class="tw-mt-4">
+                <?php foreach($native_task_detail['detail']['comments'] as$comment){ ?><div class="panel_s" data-comment-id="<?php echo (int)$comment['id']; ?>"><div class="panel-body"><strong><?php echo e(isset($native_task_detail['detail']['portal']['comments'][(int)$comment['id']])?'Contato: '.$native_task_detail['detail']['portal']['comments'][(int)$comment['id']]['author_name']:($native_task_detail['names'][(string)$comment['actor_id']]??_l('unknown'))); ?></strong><span class="pull-right text-muted"><?php echo e($comment['created_at']); ?></span><div class="tw-mt-3" style="white-space:pre-wrap"><?php echo e($comment['body']); ?></div>
+                <?php $commentAction=$native_task_detail['comment_actions'][(int)$comment['id']]??null;if($commentAction&&$commentAction['comment_edit']){
+                    echo form_open(admin_url('tasks/edit_comment?single_task=true'),['class'=>'native-task-ajax-form tw-mt-3']);$nativeOriginalHidden();echo form_hidden('id',$comment['id']);echo form_hidden('native_comment_revision',$commentAction['revision']);echo form_hidden('no_editor','1'); ?>
+                    <label><?php echo _l('edit'); ?><textarea class="form-control" name="content" rows="3" maxlength="4000" required><?php echo e($comment['body']); ?></textarea></label><button class="btn btn-primary btn-sm" type="submit"><?php echo _l('save'); ?></button><?php echo form_close();
+                    }if($commentAction&&$commentAction['comment_remove']){
+                    echo form_open(admin_url('tasks/remove_comment/'.(int)$comment['id'].'?single_task=true'),['class'=>'native-task-ajax-form tw-mt-2']);$nativeOriginalHidden();echo form_hidden('native_comment_revision',$commentAction['revision']); ?><button class="btn btn-danger btn-sm" type="submit"><?php echo _l('delete'); ?></button><?php echo form_close();
+                } ?></div></div><?php } ?>
+                <?php if(!$native_task_detail['detail']['comments']){ ?><p class="text-muted"><?php echo _l('task_no_comments'); ?></p><?php } ?>
+                </div>
+
+                <?php if($native_task_detail['project']!==null){ ?><hr><h4 class="tw-font-semibold"><?php echo _l('task_view_attachments'); ?></h4>
+                <?php if($nativeCanEdit){ ?><?php echo form_open_multipart(admin_url('tasks/upload_file'),['class'=>'native-task-upload-form']); ?>
+                    <?php echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$native_task_detail['files']['revision']);echo form_hidden('native_request_key',$nativeKey()); ?>
+                    <input class="form-control" type="file" name="file" required><button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('upload_file'); ?></button><?php echo form_close(); ?>
+                <?php } ?>
+                <ul class="list-unstyled tw-mt-4"><?php foreach($native_task_detail['files']['items'] as$file){ ?><li class="tw-mb-2"><a href="<?php echo site_url('download/file/taskattachment/'.$file['file_key'].'?task_id='.rawurlencode($nativeCanonical)); ?>"><?php echo e($file['filename']); ?></a> <span class="text-muted"><?php echo e($file['mime']); ?> · <?php echo e($file['byte_size']); ?> bytes</span>
+                    <?php if($nativeCanEdit){echo form_open(admin_url('tasks/remove_task_attachment/'.$file['file_key']),['class'=>'native-task-ajax-form tw-inline']);echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$native_task_detail['files']['revision']);echo form_hidden('native_request_key',$nativeKey()); ?><button class="btn btn-danger btn-xs" type="submit"><?php echo _l('delete'); ?></button><?php echo form_close(); } ?></li><?php } ?></ul><?php } ?>
+            </div>
+            <div class="col-md-4 task-single-col-right">
+                <div class="panel_s"><div class="panel-body"><h4 class="tw-font-semibold tw-mt-0"><?php echo _l('task_info'); ?></h4><dl>
+                    <dt><?php echo _l('task_status'); ?></dt><dd><?php echo e($native_task_detail['status']['name']); ?></dd>
+                    <dt><?php echo _l('task_single_priority'); ?></dt><dd><?php echo e($native_task_detail['priority']['name']); ?></dd>
+                    <dt><?php echo _l('task_single_start_date'); ?></dt><dd><?php echo e($nativeFields['start_date']??''); ?></dd>
+                    <dt><?php echo _l('task_single_due_date'); ?></dt><dd><?php echo e($nativeRow['due_date']??''); ?></dd>
+                    <?php if($native_task_detail['project']){ ?><dt><?php echo _l('project'); ?></dt><dd><a href="<?php echo admin_url('projects/view/'.$native_task_detail['project']['canonical_id']); ?>"><?php echo e($native_task_detail['project']['name']); ?></a></dd><?php } ?>
+                </dl><h5><?php echo _l('task_assigned'); ?></h5><?php if($nativeItem['assignees']===[]){ ?><p>Aguardando atribuição de responsável</p><?php } ?><ul><?php foreach($nativeItem['assignees'] as$member){ ?><li><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></li><?php } ?></ul></div></div>
+                <?php if($nativeCanEdit){ ?>
+                <div class="panel_s"><div class="panel-body">
+                <h5><?php echo _l('task_assigned'); ?></h5>
+                <?php foreach($nativeItem['assignees'] as$member){echo form_open(admin_url('tasks/remove_assignee/'.(int)$member['staffid'].'/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mb-2']);$nativeOriginalHidden();echo form_hidden('assignment_revision',$nativeItem['assignment_revision']); ?><span><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></span> <button class="btn btn-default btn-xs" type="submit"><?php echo _l('remove'); ?></button><?php echo form_close(); } ?>
+                <?php foreach(['assignees'=>'task_assigned','followers'=>'task_single_followers']as$target=>$label){echo form_open(admin_url('tasks/add_task_'.$target.'?single_task=true'),['class'=>'native-task-ajax-form tw-mb-4']);$nativeOriginalHidden();if($target==='assignees')echo form_hidden('assignment_revision',$nativeItem['assignment_revision']); ?>
+                <label><?php echo _l($label); ?><select name="staff_id" class="form-control" required><option value=""><?php echo _l('dropdown_non_selected_tex'); ?></option><?php foreach($native_task_detail['staff_options'] as$member){ ?><option value="<?php echo (int)$member['staffid']; ?>"><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></option><?php } ?></select></label><button class="btn btn-primary btn-sm" type="submit"><?php echo _l('add'); ?></button><?php echo form_close(); } ?>
+                <?php foreach($native_task_detail['staff_options'] as$member)if(in_array((int)$member['staffid'],$nativeItem['followers'],true)){echo form_open(admin_url('tasks/remove_follower/'.(int)$member['staffid'].'/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mb-2']);$nativeOriginalHidden(); ?><span><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></span> <button class="btn btn-default btn-xs" type="submit"><?php echo _l('remove'); ?></button><?php echo form_close(); } ?>
+                <?php echo form_open(admin_url('tasks/update_tags?single_task=true'),['class'=>'native-task-ajax-form tw-mt-4']);$nativeOriginalHidden();echo form_hidden('tags_revision',$nativeItem['tag_revision']); ?><label><?php echo _l('tags'); ?><input class="form-control" name="tags" value="<?php echo e(implode(', ',array_column($nativeItem['tags'],'name'))); ?>"></label><button class="btn btn-primary btn-sm" type="submit"><?php echo _l('save'); ?></button><?php echo form_close(); ?>
+                <?php if($nativeRow['native_fields_json']!==null){echo form_open(admin_url('tasks/make_public/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mt-4']);$nativeOriginalHidden();echo form_hidden('value',(int)$nativeFields['is_public']===1?'0':'1'); ?><p>A visibilidade continua limitada à empresa e às permissões do usuário.</p><button class="btn btn-default" type="submit"><?php echo (int)$nativeFields['is_public']===1?'Desmarcar tarefa pública':'Marcar tarefa pública'; ?></button><?php echo form_close(); } ?>
+                <?php if($native_task_detail['milestone_selection']!==null){$selected=$native_task_detail['selected_milestone']??0;echo form_open(admin_url('tasks/change_milestone/'.$selected.'/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form tw-mt-4']);$nativeOriginalHidden();echo form_hidden('milestone_revision',$native_task_detail['milestone_selection']['revision']); ?><label><?php echo _l('milestone'); ?><select class="form-control" data-native-action-template="<?php echo e(admin_url('tasks/change_milestone/__value__/'.$nativeCanonical.'?single_task=true')); ?>"><option value="0"><?php echo _l('none'); ?></option><?php foreach($native_task_detail['milestone_selection']['items'] as$milestone){ ?><option value="<?php echo (int)$milestone['id']; ?>"<?php echo (int)$milestone['id']===$selected?' selected':''; ?>><?php echo e($milestone['name']); ?></option><?php } ?></select></label><button class="btn btn-primary btn-sm" type="submit"><?php echo _l('save'); ?></button><?php echo form_close(); } ?>
+                </div></div><?php } ?>
+                <?php if(isset($native_task_reminders,$native_task_reminder_dates)){
+                    $reminderHidden=static function()use($nativeCanonical,$nativeRow,$native_task_context,$native_task_csrf,$nativeKey):void{echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_request_key',$nativeKey());};
+                    $reminderFields=static function(array$row,string$suffix)use($native_task_detail,$native_task_reminder_dates):void{ ?>
+                    <label for="task-reminder-description-<?= e($suffix); ?>"><?= _l('description'); ?></label><textarea class="form-control" id="task-reminder-description-<?= e($suffix); ?>" name="description" maxlength="16000" required><?= e($row['description']??''); ?></textarea>
+                    <label for="task-reminder-date-<?= e($suffix); ?>"><?= _l('date'); ?></label><input class="form-control datetimepicker" id="task-reminder-date-<?= e($suffix); ?>" name="date" value="<?= e(isset($row['date'])?$native_task_reminder_dates->display($row['date']):''); ?>" required>
+                    <label for="task-reminder-staff-<?= e($suffix); ?>"><?= _l('staff_member'); ?></label><select class="form-control" id="task-reminder-staff-<?= e($suffix); ?>" name="staff" required><?php foreach($native_task_detail['staff_options'] as$member){ ?><option value="<?= (int)$member['staffid']; ?>" <?= (int)($row['staff']??0)===(int)$member['staffid']?'selected':''; ?>><?= e(trim($member['firstname'].' '.$member['lastname'])); ?></option><?php } ?></select>
+                    <label class="checkbox-inline"><input type="checkbox" name="notify_by_email" value="1" <?= !empty($row['notify_by_email'])?'checked':''; ?>><?= _l('send_an_email'); ?></label>
+                    <?php } ?>
+                <div class="panel_s"><div class="panel-body"><h4><?= _l('reminders'); ?></h4>
+                <?php foreach($native_task_reminders as$reminder){ ?><div class="tw-mb-4" data-task-reminder-id="<?= e($reminder['id']); ?>"><p><?= e($reminder['description']); ?> · <?= e($native_task_reminder_dates->display($reminder['date'])); ?> · <?= e(trim($reminder['firstname'].' '.$reminder['lastname'])); ?></p>
+                <?php if($nativeCanEdit&&!empty($reminder['can_edit'])){if(!(int)$reminder['isnotified']){echo form_open(admin_url('tasks/edit_reminder/'.$reminder['id'].'?single_task=true'),['class'=>'native-task-ajax-form']);$reminderHidden();echo form_hidden('revision',$reminder['revision']);$reminderFields($reminder,(string)$reminder['id']); ?><button type="submit" class="btn btn-primary btn-sm mtop10"><?= _l('save'); ?></button><?= form_close(); ?><?php }echo form_open(admin_url('tasks/delete_reminder/'.$nativeCanonical.'/'.$reminder['id'].'?single_task=true'),['class'=>'native-task-ajax-form']);$reminderHidden();echo form_hidden('revision',$reminder['revision']); ?><button type="submit" class="btn btn-default btn-sm mtop10"><?= _l('delete'); ?></button><?= form_close(); ?><?php } ?></div><?php } ?>
+                <?php if($nativeCanEdit){echo form_open(admin_url('tasks/add_reminder/'.$nativeCanonical.'?single_task=true'),['class'=>'native-task-ajax-form']);$reminderHidden();$reminderFields([],'new'); ?><button type="submit" class="btn btn-primary mtop10"><?= _l('create_reminder'); ?></button><?= form_close(); ?><?php } ?></div></div>
+                <?php } ?>
+                <div class="panel_s"><div class="panel-body"><h4 class="tw-font-semibold tw-mt-0"><?= e(_l('task_view_timesheets')); ?></h4>
+                <?php $timesheetHidden=static function($timer=null,$control=null)use($native_task_context,$native_task_csrf,$nativeCanonical,$nativeRow,$native_task_detail,$nativeKey):void{echo form_hidden('_company_context',$native_task_context).form_hidden('_native_company_csrf',$native_task_csrf).form_hidden('timesheet_task_id',$nativeCanonical).form_hidden('native_revision',$nativeRow['revision']).form_hidden('native_request_key',$nativeKey()).form_hidden('timesheet_staff_id',$timer['actor_id']??$native_task_detail['timesheet_actor']);if($control)echo form_hidden('timer_id',$control['id']).form_hidden('native_timer_revision',$control['revision']);}; ?>
+                <details><summary><?= e(_l('task_log_time')); ?></summary><?= form_open(admin_url('tasks/log_time?single_task=true'),['class'=>'native-task-ajax-form']);$timesheetHidden(); ?>
+                <label><?= e(_l('timesheet_start_time')); ?><input class="form-control" type="datetime-local" step="1" name="start_time" required></label><label><?= e(_l('timesheet_end_time')); ?><input class="form-control" type="datetime-local" step="1" name="end_time" required></label><label><?= e(_l('note')); ?><textarea class="form-control" name="note" maxlength="4000"></textarea></label><button class="btn btn-primary" type="submit"><?= e(_l('save')); ?></button><?= form_close(); ?></details>
+                <ul class="list-unstyled"><?php foreach($native_task_detail['detail']['timers']as$timer){$control=$native_task_detail['timesheet_controls'][(int)$timer['id']]??null; ?><li class="tw-mb-2"><strong><?= e($native_task_detail['names'][(string)$timer['actor_id']]??_l('unknown')); ?></strong><br><?= e($timer['started_at']); ?><?php if($timer['stopped_at']){ ?> — <?= e($timer['stopped_at']); ?> · <?= e($timer['seconds']); ?>s<?php }else{ ?> · <?= e(_l('task_timer_running')); ?><?php } ?>
+                <?php if($control&&$control['edit']){ ?><details><summary><?= e(_l('edit')); ?></summary><?= form_open(admin_url('tasks/update_timesheet?single_task=true'),['class'=>'native-task-ajax-form']);$timesheetHidden($timer,$control); ?><label><?= e(_l('timesheet_start_time')); ?><input class="form-control" type="datetime-local" step="1" name="start_time" required value="<?= e(str_replace(' ','T',$timer['started_at'])); ?>"></label><label><?= e(_l('timesheet_end_time')); ?><input class="form-control" type="datetime-local" step="1" name="end_time" required value="<?= e(str_replace(' ','T',$timer['stopped_at'])); ?>"></label><label><?= e(_l('note')); ?><textarea class="form-control" name="note" maxlength="4000"><?= e($control['note']); ?></textarea></label><button class="btn btn-primary" type="submit"><?= e(_l('save')); ?></button><?= form_close(); ?></details><?php } ?>
+                <?php if($control&&$control['delete']){echo form_open(admin_url('tasks/delete_timesheet/'.$control['id'].'?single_task=true'),['class'=>'native-task-ajax-form']);$timesheetHidden($timer,$control); ?><button class="btn btn-danger btn-xs" type="submit"><?= e(_l('delete')); ?></button><?= form_close(); ?><?php } ?></li><?php } ?></ul></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function($){
+    var root=$('#native-task-detail-<?php echo e($nativeCanonical); ?>');
+    root.on('change','select[data-native-action-template]',function(){var form=$(this).closest('form');form.attr('action',$(this).attr('data-native-action-template').replace('__value__',encodeURIComponent(this.value)));});
+    root.on('submit','.native-task-ajax-form',function(event){event.preventDefault();var form=$(this),button=form.find('[type="submit"]');button.prop('disabled',true);$.ajax({url:form.attr('action'),type:'POST',data:form.serialize(),dataType:'json'}).done(function(response){if(response&&response.taskHtml)_task_append_html(response.taskHtml);else init_task_modal(<?php echo json_encode($nativeCanonical,JSON_THROW_ON_ERROR); ?>);reload_tasks_tables();}).fail(function(xhr){alert_float('danger',xhr.responseText||'<?php echo e(_l('something_went_wrong')); ?>');}).always(function(){button.prop('disabled',false);});});
+    root.on('submit','.native-task-upload-form',function(event){event.preventDefault();var form=$(this),button=form.find('[type="submit"]'),body=new FormData(this);button.prop('disabled',true);$.ajax({url:form.attr('action'),type:'POST',data:body,dataType:'json',contentType:false,processData:false}).done(function(response){if(response&&response.taskHtml)_task_append_html(response.taskHtml);}).fail(function(xhr){alert_float('danger',xhr.responseText||'<?php echo e(_l('something_went_wrong')); ?>');}).always(function(){button.prop('disabled',false);});});
+})(jQuery);
+</script>
+<?php return; } ?>
 <div class="modal-header task-single-header"
     data-task-single-id="<?= e($task->id); ?>"
     data-status="<?= e($task->status); ?>">
@@ -483,7 +655,7 @@ foreach ($task->timesheets as $timesheet) { ?>
                 <option value=""></option>
                 <?php foreach ($checklistTemplates as $chkTemplate) { ?>
                 <option
-                    value="<?= e($chkTemplate['id']); ?>">
+                    value="<?= e($chkTemplate['id']); ?>"<?php if(isset($chkTemplate['revision'])) { ?> data-template-revision="<?= e($chkTemplate['revision']); ?>"<?php } ?>>
                     <?= e($chkTemplate['description']); ?>
                 </option>
                 <?php } ?>
@@ -498,13 +670,13 @@ foreach ($task->timesheets as $timesheet) { ?>
 
         <div class="row checklist-items-wrapper">
             <div class="col-md-12 ">
-                <div id="checklist-items">
+                <div id="checklist-items"<?php if(isset($native_task_checklist)){ ?> data-native-task-id="<?= e($task->id); ?>" data-task-revision="<?= e($native_task_checklist['task_revision']); ?>" data-checklist-revision="<?= e($native_task_checklist['revision']); ?>"<?php } ?>>
                     <?php $this->load->view(
                         'admin/tasks/checklist_items_template',
                         [
                             'task_id'                 => $task->id,
                             'current_user_is_creator' => $task->current_user_is_creator,
-                            'checklists'              => $task->checklist_items, ]
+                            'checklists'              => $task->checklist_items, ] + (isset($native_task_checklist) ? ['native_task_checklist'=>$native_task_checklist] : [])
                     ); ?>
                 </div>
             </div>

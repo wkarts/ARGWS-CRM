@@ -73,14 +73,14 @@ $has_permission_create = staff_can('create', 'knowledge_base');
 foreach ($groups as $group) {
     $kanban_colors = '';
 
-    foreach (get_system_favourite_colors() as $color) {
+    foreach (get_system_favourite_colors(!isset($native_knowledge)) as $color) {
         $color_selected_class = 'cpicker-small';
         $kanban_colors .= "<div class='kanban-cpicker cpicker " . $color_selected_class . "' data-color='" . $color . "' style='background:" . $color . ';border:1px solid ' . $color . "'></div>";
     } ?>
                                     <ul class="kan-ban-col<?php if (! $has_permission_edit) {
                                         echo ' sortable-disabled';
                                     } ?>"
-                                        data-col-group-id="<?= e($group['groupid']); ?>">
+                                        data-col-group-id="<?= e($group['groupid']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($group['revision_token']); ?>"<?php } ?>>
                                         <li class="kan-ban-col-wrapper">
                                             <div class="border-right panel_s">
                                                 <?php
@@ -94,17 +94,17 @@ foreach ($groups as $group) {
                                                         <?php if ($has_permission_create || $has_permission_edit) { ?>
                                                         onclick="edit_kb_group(this,<?= e($group['groupid']); ?>);
                                                         return false;"
-                                                        data-name="<?= e($group['name']); ?>"
+                                                        data-name="<?= e($group['name']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($group['revision_token']); ?>"<?php } ?>
                                                         data-slug="<?= e($group['group_slug']); ?>"
                                                         data-color="<?= $group['color']; ?>"
-                                                        data-description="<?= clear_textarea_breaks($group['description']); ?>"
+                                                        data-description="<?= e(clear_textarea_breaks($group['description'])); ?>"
                                                         data-order="<?= e($group['group_order']); ?>"
                                                         data-active="<?= e($group['active']); ?>"
                                                         <?php } ?>>
                                                         <?= e($group['name']); ?>
                                                     </a>
                                                     <small class="tw-text-white"> -
-                                                        <?= total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></small>
+                                                        <?= isset($native_knowledge) ? $native_knowledge_counts[$group['groupid']] : total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></small>
                                                     <?php if ($has_permission_edit) { ?>
                                                     <a href="#" onclick="return false;"
                                                         class="pull-right color-white kanban-color-picker"
@@ -116,11 +116,12 @@ foreach ($groups as $group) {
                                                     <?php } ?>
                                                 </div>
                                                 <?php
+                                         if (isset($native_knowledge)) { $articles = $native_knowledge_articles[$group['groupid']]; } else {
                                          $this->db->select('*, (SELECT COUNT(*) FROM ' . db_prefix() . 'views_tracking WHERE rel_type="kb_article" AND rel_id=' . db_prefix() . 'knowledge_base.articleid) as total_views')->from(db_prefix() . 'knowledge_base')->where('articlegroup', $group['groupid'])->order_by('article_order', 'asc');
     if (! $has_permission_create && ! $has_permission_edit) {
         $this->db->where('active', 1);
     }
-    $articles = $this->db->get()->result_array(); ?>
+    $articles = $this->db->get()->result_array(); } ?>
                                                 <div class="kan-ban-content-wrapper">
                                                     <div class="kan-ban-content">
                                                         <ul class="sortable article-group groups<?php if (! $has_permission_edit) {
@@ -131,7 +132,7 @@ foreach ($groups as $group) {
                                                             <li class="<?php if ($article['active'] == 0) {
                                                                 echo 'line-throught';
                                                             } ?>"
-                                                                data-article-id="<?= e($article['articleid']); ?>">
+                                                                data-article-id="<?= e($article['articleid']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($article['revision_token']); ?>"<?php } ?>>
                                                                 <div class="panel-body">
                                                                     <?php if ($article['staff_article'] == 1) { ?>
                                                                     <a
@@ -139,7 +140,7 @@ foreach ($groups as $group) {
                                                                         <?= e($article['subject']); ?>
                                                                     </a>
                                                                     <?php } else { ?>
-                                                                    <a href="<?= site_url('knowledge-base/article/' . $article['slug']); ?>"
+                                                                    <a href="<?= isset($native_knowledge) ? NativeCompanyKnowledgePresentation::publicUrl($article['slug'], $native_knowledge_issuer) : site_url('knowledge-base/article/' . $article['slug']); ?>"
                                                                         target="_blank">
                                                                         <?= e($article['subject']); ?>
                                                                     </a>
@@ -186,7 +187,7 @@ foreach ($groups as $group) {
                                                 [],
                                                 [
                                                     'data-last-order-identifier' => 'kb-articles',
-                                                    'data-default-order'         => get_table_last_order('kb-articles'),
+                                                    'data-default-order'         => isset($native_knowledge) ? e($native_knowledge_table_order) : get_table_last_order('kb-articles'),
                                                 ]
                                             ); ?>
                                         </div>
@@ -226,16 +227,16 @@ foreach ($groups as $group) {
                 if (this === ui.item.parent()[0]) {
                     var articles = $(ui.item).parents('.article-group').find('li');
                     i = 1;
-                    var order = [];
+                    var order = [], revisions = [];
                     $.each(articles, function() {
                         i++;
-                        order.push([$(this).data('article-id'), i]);
+                        order.push([$(this).attr('data-article-id'), i]);
+                        if (window.NativeCompanyTransport) revisions.push($(this).attr('data-native-revision'));
                     });
                     setTimeout(function() {
-                        $.post(admin_url + 'knowledge_base/update_kan_ban', {
-                            order: order,
-                            groupid: $(ui.item.parent()[0]).data('group-id')
-                        });
+                        var payload = {order: order, groupid: $(ui.item.parent()[0]).attr('data-group-id')};
+                        if (window.NativeCompanyTransport) payload.revisions = revisions;
+                        $.post(admin_url + 'knowledge_base/update_kan_ban', payload).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
                     }, 100);
                 }
             }
@@ -254,26 +255,27 @@ foreach ($groups as $group) {
             item: '.kan-ban-col',
             cancel: '.sortable-disabled',
             update: function(event, ui) {
-                var order = [];
+                var order = [], revisions = [];
                 var status = $('.kan-ban-col');
                 var i = 0;
                 $.each(status, function() {
-                    order.push([$(this).data('col-group-id'), i]);
+                    order.push([$(this).attr('data-col-group-id'), i]);
+                    if (window.NativeCompanyTransport) revisions.push($(this).attr('data-native-revision'));
                     i++;
                 });
                 var data = {}
                 data.order = order;
-                $.post(admin_url + 'knowledge_base/update_groups_order', data);
+                if (window.NativeCompanyTransport) data.revisions = revisions;
+                $.post(admin_url + 'knowledge_base/update_groups_order', data).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
             }
         });
         // Status color change
         $('body').on('click', '.kb-kan-ban .cpicker', function() {
             var color = $(this).data('color');
             var group_id = $(this).parents('.panel-heading').data('group-id');
-            $.post(admin_url + 'knowledge_base/change_group_color', {
-                color: color,
-                group_id: group_id
-            });
+            var payload = {color: color, group_id: group_id};
+            if (window.NativeCompanyTransport) payload.revision = $('.kan-ban-col').filter(function () { return $(this).attr('data-col-group-id') === String(group_id); }).attr('data-native-revision');
+            $.post(admin_url + 'knowledge_base/change_group_color', payload).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
         });
         $('.toggle-articles-list').on('click', function() {
             var list_tab = $('#list_tab');

@@ -3,7 +3,6 @@ require __DIR__.'/support.php';
 require_once APPPATH.'services/issuers/IssuerCertificateLegacyImport.php';
 $previous=getenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
 $method=new ReflectionMethod(IssuerCertificateLegacyImport::class,'exchange');
-$method->setAccessible(true);
 try {
     putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
     a1check(!IssuerCertificateLegacyImport::enabled(),'compatibility default is off');
@@ -29,7 +28,7 @@ try {
         $pid=(int)file_get_contents($pidfile);
         a1check($pid>0&&!posix_kill($pid,0),'timed-out child is reaped, not orphaned');
     } finally { unlink($pidfile); }
-    $commandMethod=new ReflectionMethod(IssuerCertificateLegacyImport::class,'command'); $commandMethod->setAccessible(true);
+    $commandMethod=new ReflectionMethod(IssuerCertificateLegacyImport::class,'command');
     $command=$commandMethod->invoke(null);
     $prefix=array_slice($command,0,array_search('--',$command,true)+1);
     $bounded=array_merge($prefix,[PHP_BINARY,'-n','-r','stream_get_contents(fopen("php://fd/3","r"));stream_get_contents(STDIN);echo "ready";']);

@@ -10,7 +10,7 @@
                     <?= _l('create_new_invoice'); ?>
                 </a>
                 <?php } ?>
-                <?php if (! isset($project) && ! isset($customer)) { ?>
+                <?php if (! isset($project) && ! isset($customer) && empty($native_company_invoice_manage)) { ?>
                 <?php if (staff_can('create', 'payments')) { ?>
                 <button id="add-batch-payment" onclick="add_batch_payment()" class="btn btn-default pull-left">
                     <i class="fa-solid fa-plus tw-mr-1"></i>

@@ -1,4 +1,20 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_portal_invoices)) {
+    $invoicePage=$native_portal_invoices;$labels=[1=>'invoice_status_unpaid',2=>'invoice_status_paid',3=>'invoice_status_not_paid_completely',4=>'invoice_status_overdue',5=>'invoice_status_cancelled',6=>'invoice_status_draft'];
+?>
+<h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-heading section-heading-invoices"><?= e(_l('clients_my_invoices')); ?></h4>
+<div class="panel_s"><div class="panel-body"><div class="table-responsive">
+<table class="table dt-table table-invoices" data-order-col="1" data-order-type="desc"><thead><tr><th><?= e(_l('clients_invoice_dt_number')); ?></th><th><?= e(_l('clients_invoice_dt_date')); ?></th><th><?= e(_l('clients_invoice_dt_duedate')); ?></th><th><?= e(_l('clients_invoice_dt_amount')); ?></th><th><?= e(_l('clients_invoice_dt_status')); ?></th><th><?= e(_l('customer_profile_files')); ?></th></tr></thead><tbody>
+<?php foreach($invoicePage['items'] as $invoice) { ?>
+<tr><td data-order="<?= (int)$invoice['id']; ?>"><a class="invoice-number" href="<?= e(NativePortalPresentation::url('invoice/'.$invoice['id'].'/'.$invoice['hash'])); ?>"><?= e((string)$invoice['number']); ?></a></td>
+<td><?= e((string)$invoice['date']); ?></td><td><?= e((string)($invoice['duedate']??'')); ?></td><td><?= e((string)$invoice['currency'].' '.str_replace('.',',',(string)$invoice['total'])); ?></td><td><?= e(_l($labels[(int)$invoice['status']]??'invoice_status_unknown')); ?></td><td>
+<?php foreach($invoice['attachments'] as $attachment) { ?><a href="<?= e(NativePortalPresentation::url('download/file/sales_attachment/'.$attachment['file_key']).'&invoice_id='.(int)$invoice['id']); ?>"><?= e($attachment['filename']); ?></a><br><?php } ?>
+</td></tr>
+<?php } ?>
+</tbody></table></div>
+<?php if($invoicePage['next']!==null) { ?><a class="btn btn-default" href="<?= e(NativePortalPresentation::url('clients/invoices'.($invoicePage['status']?'/'.$invoicePage['status']:'')).'&before='.$invoicePage['next']); ?>"><?= e(_l('next')); ?></a><?php } ?>
+</div></div>
+<?php return; } ?>
 
 <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-heading section-heading-invoices">
     <?= _l('clients_my_invoices'); ?>

@@ -6,7 +6,13 @@ $fresh = scopeFixture(null, false);
 scopeCheck($fresh->app_modules->activate($moduleName) === true, 'fresh native activation succeeds');
 scopeCheck(scopeRow()->installed_version === $target && (int) scopeRow()->active === 1, 'fresh tracking and active state confirmed');
 $versionWrites = array_values(array_filter($fresh->db->writes, static fn($write) => isset($write[2]['installed_version'])));
-scopeCheck(array_column(array_column($versionWrites, 2), 'installed_version') === [$target, $baseline, $target], 'real App_modules prewrite followed by baseline and native target write');
+$nativeVersions = [$target, $baseline];
+$nativeStart = (int) str_replace('.', '', $baseline) + 1;
+$nativeEnd = (int) str_replace('.', '', $target);
+for ($step = $nativeStart; $step <= $nativeEnd; ++$step) {
+    $nativeVersions[] = wordwrap((string) $step, 1, '.', true);
+}
+scopeCheck(array_column(array_column($versionWrites, 2), 'installed_version') === $nativeVersions, 'real App_modules prewrite followed by baseline, every native step and target write');
 scopeCheck($fresh->load->forgeLoads === 1, 'native migration executor invoked');
 scopeCheck(in_array('module_activated', hooks()->trace, true), 'existing lifecycle completion hook preserved');
 scopeCheck($GLOBALS['scopeLogs'] === [], 'existing template synchronization finishes without error');

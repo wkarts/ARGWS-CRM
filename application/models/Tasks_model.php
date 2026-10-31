@@ -53,43 +53,8 @@ class Tasks_model extends App_Model
 
     public function get_statuses()
     {
-        $statuses = hooks()->apply_filters('before_get_task_statuses', [
-            [
-                'id'             => static::STATUS_NOT_STARTED,
-                'color'          => '#64748b',
-                'name'           => _l('task_status_1'),
-                'order'          => 1,
-                'filter_default' => true,
-            ],
-            [
-                'id'             => static::STATUS_IN_PROGRESS,
-                'color'          => '#3b82f6',
-                'name'           => _l('task_status_4'),
-                'order'          => 2,
-                'filter_default' => true,
-            ],
-            [
-                'id'             => static::STATUS_TESTING,
-                'color'          => '#0284c7',
-                'name'           => _l('task_status_3'),
-                'order'          => 3,
-                'filter_default' => true,
-            ],
-            [
-                'id'             => static::STATUS_AWAITING_FEEDBACK,
-                'color'          => '#84cc16',
-                'name'           => _l('task_status_2'),
-                'order'          => 4,
-                'filter_default' => true,
-            ],
-            [
-                'id'             => static::STATUS_COMPLETE,
-                'color'          => '#22c55e',
-                'name'           => _l('task_status_5'),
-                'order'          => 100,
-                'filter_default' => false,
-            ],
-        ]);
+        require_once APPPATH.'services/WorkStatusPresentation.php';
+        $statuses = hooks()->apply_filters('before_get_task_statuses', WorkStatusPresentation::tasks('_l'));
 
         usort($statuses, function ($a, $b) {
             return $a['order'] - $b['order'];

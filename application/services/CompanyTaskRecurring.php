@@ -28,7 +28,7 @@ final class CompanyTaskRecurring
     }
     public function tables():array
     {
-        return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','company_api_tokens','company_api_token_requests'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p),array_keys(CompanyTaskRecurringSchema::definitions($this->p)))));
+        return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','company_api_tokens','company_api_token_requests'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p),(new CompanyTasks($this->db,$this->p))->copyTransactionParticipants(),(new CompanyStandaloneTasks($this->db,$this->p))->copyTransactionParticipants(),array_keys(CompanyTaskRecurringSchema::definitions($this->p)))));
     }
     private function access(int $i,int $a,string $kind,string $cap):void
     {

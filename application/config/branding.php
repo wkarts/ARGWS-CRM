@@ -12,3 +12,5 @@ $config['pwa_icon_512'] = '';
 // Maskable artwork must fit its foreground inside the central 80% safe circle.
 $config['pwa_icon_maskable_512'] = '';
 $config['pwa_theme_color'] = '#2563eb';
+// Optional installation-level PWA name. Empty means company identity first.
+$config['pwa_installation_name'] = '';

@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_portal_project)&&is_array($native_portal_project)){include __DIR__.'/projects/native_project.php';return;} ?>
 <?= form_hidden('project_id', $project->id); ?>
 <div class="tw-flex tw-items-center tw-justify-between tw-mb-3">
     <div class="tw-flex tw-items-center">

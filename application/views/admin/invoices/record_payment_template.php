@@ -1,13 +1,18 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, $invoice->allowed_payment_modes); ?>
+<?php $nativePayment = isset($native_payment_form_data); if (!$nativePayment) { $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, $invoice->allowed_payment_modes); } ?>
 <?= form_open(admin_url('invoices/record_payment'), ['id' => 'record_payment_form']); ?>
 <div class="col-md-12 no-padding animated fadeIn">
     <div class="panel_s">
         <?= form_hidden('invoiceid', $invoice->id); ?>
+        <?php if ($nativePayment) { ?>
+        <?= form_hidden('_native_payment_key', $native_payment_form_data['request_key']); ?>
+        <?= form_hidden('_native_invoice_revision', $native_payment_form_data['revision']); ?>
+        <input type="hidden" name="_native_payment_mode_revision" value="">
+        <?php } ?>
         <div class="panel-heading">
             <h4 class="panel-title">
                 <?= _l('record_payment_for_invoice'); ?>
-                <?= e(format_invoice_number($invoice->id)); ?>
+                <?= e($nativePayment ? $native_payment_form_data['invoice']['number'] : format_invoice_number($invoice->id)); ?>
             </h4>
         </div>
         <div class="panel-body">
@@ -26,10 +31,10 @@ echo render_input('amount', 'record_payment_amount_received', $amount, 'number',
                             <option value=""></option>
                             <?php foreach ($payment_modes as $mode) { ?>
                             <?php
-        if (is_payment_mode_allowed_for_invoice($mode['id'], $invoice->id)) {
+        if ($nativePayment || is_payment_mode_allowed_for_invoice($mode['id'], $invoice->id)) {
             $totalAllowed++; ?>
                             <option
-                                value="<?= e($mode['id']); ?>">
+                                value="<?= e($mode['id']); ?>"<?php if ($nativePayment) { ?> data-native-mode-revision="<?= e($mode['revision']); ?>"<?php } ?>>
                                 <?= e($mode['name']); ?>
                             </option>
                             <?php
@@ -38,7 +43,7 @@ echo render_input('amount', 'record_payment_amount_received', $amount, 'number',
                         </select>
                     </div>
                     <?php
-                    if ($totalAllowed === 0) {
+                    if ($totalAllowed === 0 && !$nativePayment) {
                         ?>
                     <div class="alert alert-info">
                         Allowed payment modes not found for this invoice.<br />
@@ -52,7 +57,7 @@ echo render_input('amount', 'record_payment_amount_received', $amount, 'number',
                     } ?>
                 </div>
                 <div class="col-md-6">
-                    <?= render_input('transactionid', 'payment_transaction_id'); ?>
+                    <?= render_input('transactionid', 'payment_transaction_id', '', 'text', $nativePayment ? ['required'=>'required'] : []); ?>
                     <div class="form-gruoup">
                         <label for="note"
                             class="control-label"><?= _l('record_payment_leave_note'); ?></label>
@@ -63,8 +68,9 @@ echo render_input('amount', 'record_payment_amount_received', $amount, 'number',
                 </div>
                 <div class="col-md-12 tw-mt-3">
                     <?php
-                    $pr_template = is_email_template_active('invoice-payment-recorded');
-$sms_trigger                     = is_sms_trigger_active(SMS_TRIGGER_PAYMENT_RECORDED);
+                    $pr_template = $nativePayment ? $native_payment_email_enabled : is_email_template_active('invoice-payment-recorded');
+$sms_trigger = $nativePayment ? false : is_sms_trigger_active(SMS_TRIGGER_PAYMENT_RECORDED);
+if ($nativePayment) { ?><p class="text-muted">SMS indisponível pela política atual de provedores desta empresa.</p><?php }
 if ($pr_template || $sms_trigger) { ?>
                     <div class="checkbox checkbox-primary mtop15">
                         <input type="checkbox" name="do_not_send_email_template" id="do_not_send_email_template">
@@ -91,7 +97,7 @@ if ($pr_template || $sms_trigger) { ?>
                 </div>
             </div>
             <?php
-            hooks()->do_action('after_admin_last_record_payment_form_field', $invoice);
+            if (!$nativePayment) hooks()->do_action('after_admin_last_record_payment_form_field', $invoice);
 if ($payments) { ?>
             <div class="mtop25 inline-block full-width">
                 <h5 class="bold">
@@ -101,7 +107,7 @@ if ($payments) { ?>
             </div>
             <?php } ?>
 
-            <?php hooks()->do_action('before_admin_add_payment_form_submit', $invoice); ?>
+            <?php if (!$nativePayment) hooks()->do_action('before_admin_add_payment_form_submit', $invoice); ?>
         </div>
 
         <div class="panel-footer text-right">
@@ -125,6 +131,10 @@ if ($payments) { ?>
             paymentmode: 'required'
         });
         var $sMode = $('select[name="paymentmode"]');
+        <?php if ($nativePayment) { ?>
+        $sMode.on('change', function() { $('input[name="_native_payment_mode_revision"]').val($sMode.find('option:selected').attr('data-native-mode-revision') || ''); });
+        $sMode.trigger('change');
+        <?php } ?>
         var total_available_payment_modes = $sMode.find('option').length - 1;
         if (total_available_payment_modes == 1) {
             $sMode.selectpicker('val', $sMode.find('option').eq(1).attr('value'));

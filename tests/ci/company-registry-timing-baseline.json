@@ -1,6 +1,6 @@
 {
   "source_sha": "c7bc0bd3",
-  "manifest_sha256": "1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835",
+  "manifest_sha256": "fdd301fc98866bbecfe0cdf76e64324ff657d3171cd3863598f0b27110725b50",
   "artifacts": [
     {
       "php": "8.1",
@@ -1024,5 +1024,15 @@
       1533,
       15129
     ]
-  }
+  },
+  "retired": [
+    {
+      "index": 406,
+      "argv": [
+        "php",
+        "tests/settings/calendar_controller.php"
+      ],
+      "reason": "Parallel Company_calendar controller retired; coverage moved to official Settings and Utilities HTTP flows."
+    }
+  ]
 }

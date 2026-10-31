@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>"
     data-name="<?php echo _l('contracts_about_to_expire'); ?>">
-    <?php if (staff_can('view', 'contracts') || staff_can('view_own', 'contracts')) { ?>
+    <?php if (isset($company_dashboard) ? $company_dashboard['permissions']['contracts'] : (staff_can('view', 'contracts') || staff_can('view_own', 'contracts'))) { ?>
     <div class="panel_s contracts-expiring">
         <div class="panel-body padding-10">
             <div class="widget-dragger"></div>
@@ -45,7 +45,7 @@
                                 <?php echo '<a href="' . admin_url('contracts/contract/' . $contract['id']) . '">' . e($contract['subject']) . '</a>'; ?>
                             </td>
                             <td>
-                                <?php echo '<a href="' . admin_url('clients/client/' . $contract['client']) . '">' . e(get_company_name($contract['client'])) . '</a>'; ?>
+                                <?php echo '<a href="' . admin_url('clients/client/' . $contract['client']) . '">' . e(isset($company_dashboard) ? $contract['client_name'] : get_company_name($contract['client'])) . '</a>'; ?>
                             </td>
                             <td>
                                 <?php echo e(_d($contract['datestart'])); ?>
