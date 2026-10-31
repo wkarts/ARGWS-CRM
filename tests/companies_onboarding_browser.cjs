@@ -39,6 +39,16 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const context = await browser.newContext({ viewport: { width: 1280, height: 960 } });
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
   const page = await workspacePage(context);
+  const networkFailures = [];
+  context.on('response', response => {
+    const request=response.request();
+    if (['xhr','fetch'].includes(request.resourceType()) && response.status() >= 400)
+      networkFailures.push({path:new URL(response.url()).pathname,status:response.status(),method:request.method()});
+  });
+  context.on('requestfailed', request => {
+    if (['xhr','fetch'].includes(request.resourceType()))
+      networkFailures.push({path:new URL(request.url()).pathname,error:request.failure()?.errorText,method:request.method()});
+  });
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   try {
     await login(page, 'admin-ci@example.invalid', process.env.ISSUERS_BROWSER_PASSWORD);
@@ -208,7 +218,12 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.equal(await page.locator('table.table-invoices').count(), 1, 'invoice directory renders its official DataTable');
     assert.equal(await page.locator('#wrapper .content').count(), 1, 'invoice directory uses one official CRM content root');
     assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'invoice directory retains the selected company');
+    const staffTableResponse=page.waitForResponse(response => response.request().method()==='POST' && new URL(response.url()).pathname==='/admin/staff');
     assert.equal((await page.goto(url + '/admin/staff')).status(), 200, 'adapted original Staff route is available in the newly created company');
+    const staffTable=await staffTableResponse;
+    assert.equal(staffTable.status(),200,'official Staff DataTable completes before leaving the page');
+    assert(Array.isArray((await staffTable.json()).aaData),'Staff returns its actual DataTable protocol');
+
     assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'original Staff retains the newly selected company');
     assert.equal(await page.locator('#wrapper .content').count(), 1, 'adapted Staff uses one official CRM content root');
     assert.equal(await page.locator('[data-company-workspace]').count(), 0, 'adapted Staff contains no parallel workspace');
@@ -306,7 +321,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     sql('UPDATE tblissuers_staff SET can_view=0 WHERE staff_id=' + employee + ' AND issuer_id=' + created);
     assert.equal((await regular.request.get(url + '/admin/settings?group=company')).status(), 403, 'revocation takes effect on next request');
     await regular.close();
-    assert.deepEqual(errors, [], 'no browser script errors in new flows');
+    assert.deepEqual(errors, [], 'no browser script errors in new flows; transport evidence: '+JSON.stringify(networkFailures));
     console.log('Legacy master + native Staff + resumable company wizard: real HTTP/MySQL/browser checks passed.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error.stack || error.message); process.exitCode = 1; });

@@ -80,6 +80,9 @@ on:
       - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   migration-convention:
     runs-on: ubuntu-latest
@@ -121,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       # Preserve evidence from other shards when one runtime fails.
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         php: ['8.1', '8.5']
         shard: [1, 2, 3, 4]

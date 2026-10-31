@@ -4,12 +4,15 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   real-database-identity:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         database: ['mysql:8.0', 'mysql:8.4', 'mariadb:10.11', 'mariadb:11.4']
     container: php:8.2-cli

@@ -16,13 +16,12 @@ jobs:
   focused:
     # The existing matrix checks must also gate the separate Node job.
     needs: node-contracts
-    if: ${{ always() }}
+    if: ${{ needs.node-contracts.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
-      # Keep both supported runtimes running to completion on the same SHA so
-      # a failure in one matrix leg does not erase the other runtime's evidence.
-      fail-fast: false
+      # Abort sibling PR matrix legs on failure; rerun both on the corrective SHA.
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         include:
           - php: '8.1'

@@ -1,0 +1,15 @@
+import importlib.util,pathlib,unittest
+spec=importlib.util.spec_from_file_location('round',pathlib.Path(__file__).resolve().parents[1]/'scripts/ci/pr-validation-round.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+class RoundTests(unittest.TestCase):
+ def setUp(self):self.pr={'number':52,'head':{'sha':'new'}};self.repo='wkarts/ARGWS-CRM'
+ def run_row(self,id=1,**kw):return dict({'id':id,'event':'pull_request','head_sha':'new','status':'in_progress','head_repository':{'full_name':self.repo},'pull_requests':[{'number':52}]},**kw)
+ def plan(self,rows,failed=False):return m.cancellation_plan(rows,self.pr,self.repo,99,failed)
+ def test_old_only_before_failure(self):self.assertEqual(self.plan([self.run_row(1,head_sha='old'),self.run_row(2)]),[1])
+ def test_failure_cancels_current_and_old(self):self.assertEqual(self.plan([self.run_row(1),self.run_row(2,head_sha='old')],True),[1,2])
+ def test_other_pr_never(self):self.assertEqual(self.plan([self.run_row(pull_requests=[{'number':53}])],True),[])
+ def test_fork_never(self):self.assertEqual(self.plan([self.run_row(head_repository={'full_name':'other/fork'})],True),[])
+ def test_push_release_dispatch_never(self):
+  for event in ['push','release','workflow_dispatch','workflow_run']:self.assertEqual(self.plan([self.run_row(event=event)],True),[])
+ def test_completed_and_self_never(self):self.assertEqual(self.plan([self.run_row(99),self.run_row(status='completed')],True),[])
+ def test_missing_identity_never(self):self.assertEqual(self.plan([self.run_row(pull_requests=[])],True),[])
+if __name__=='__main__':unittest.main()
