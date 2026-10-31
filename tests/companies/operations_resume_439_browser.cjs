@@ -1,6 +1,7 @@
 'use strict';
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { createNativeProject, createNativeProjectTask, openNativeTask, toggleNativeTaskTimer } = require('../helpers/native_browser_forms.cjs');
 // Rebuilt recovery proof. Business objects and declarations are created through the CRM UI.
 // The only SQL mutation adjusts a synthetic running timer's start, avoiding a real one-hour wait.
 const assert=require('node:assert/strict');
@@ -34,10 +35,11 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   const cashBefore=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords');
   async function select(issuer){await page.goto(base+'/admin/');await selectCompanyOption(page, issuer);}
   async function makeTimer(table,task,seconds){
-   await submit(page,page.getByRole('button',{name:'Iniciar meu cronômetro',exact:true}));
+   const nativeProjectTask=table==='tblcompany_task_timers';
+   if(nativeProjectTask)await toggleNativeTaskTimer(page);else await submit(page,page.getByRole('button',{name:'Iniciar meu cronômetro',exact:true}));
    assert.equal(sql('SELECT COUNT(*) FROM '+table+' WHERE task_id='+task+' AND stopped_at IS NULL'),'1');
    sql('UPDATE '+table+' SET started_at=DATE_SUB(started_at,INTERVAL '+seconds+' SECOND) WHERE task_id='+task+' AND stopped_at IS NULL');
-   await submit(page,page.getByRole('button',{name:'Parar meu cronômetro',exact:true}));
+   if(nativeProjectTask)await toggleNativeTaskTimer(page);else await submit(page,page.getByRole('button',{name:'Parar meu cronômetro',exact:true}));
    return sql('SELECT id FROM '+table+' WHERE task_id='+task+' ORDER BY id DESC LIMIT 1');
   }
   async function cancelAndRetain(invoice,sourceUrl,table,field,source){
@@ -79,13 +81,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    assert.equal(sql('SELECT invoice_id FROM tblcompany_standalone_billing_links WHERE task_id='+standalone),wholeInvoice);
    await cancelAndRetain(wholeInvoice,standaloneUrl,'tblcompany_standalone_billing_links','task_id',standalone);
    // Project and discussion also originate through their real forms.
-   await page.goto(base+'/admin/projects');
-   await page.locator('#project-client').selectOption(client);
-   await page.locator('#project-new-name').fill('Recovery439 project '+letter+' '+stamp);
-   await page.locator('#project-new-start').fill('2026-10-19');
-   await page.locator('#project-new-due').fill('2026-11-19');
-   await submit(page,page.locator('form').filter({has:page.locator('#project-client')}).locator('button[type=submit]'));
-   const project=new URL(page.url()).searchParams.get('project');assert.match(project||'',/^[1-9]\d*$/);
+   const projectInfo=await createNativeProject(page,base,{client,name:'Recovery439 project '+letter+' '+stamp,startDate:'19/10/2026',dueDate:'19/11/2026'}),project=projectInfo.sourceId;assert.match(project||'',/^[1-9]\d*$/);
    const discussionUrl=base+'/admin/projects/portal_rules?project='+project;
    await page.goto(discussionUrl);
    await page.locator('#project-discussion-subject').fill('Private recovery thread '+letter);
@@ -107,11 +103,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    const download=await context.request.post(base+'/admin/projects/portal_rules',{form:await hidden(fileForm)});
    assert.equal(download.status(),200);assert.match(download.headers()['content-type'],/application\/pdf/);assert((await download.body()).equals(pdf));
    // A task with two independently closed timers exercises whole-timer selection and cross-project batch forms.
-   await page.goto(base+'/admin/tasks?project='+project);
-   await page.locator('#task-new-name').fill('Recovery439 selected task '+letter+' '+stamp);
-   await page.locator('#task-new-due').fill('2026-11-01');
-   await submit(page,page.locator('form').filter({has:page.locator('#task-new-name')}).locator('button[type=submit]'));
-   const task=new URL(page.url()).searchParams.get('task');assert.match(task||'',/^[1-9]\d*$/);
+   const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'01/11/2026',assignee:7});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
    const timer1=await makeTimer('tblcompany_task_timers',task,1800);
    const timer2=await makeTimer('tblcompany_task_timers',task,1800);
    await page.goto(base+'/admin/projects/time_billing?project='+project);
@@ -164,3 +156,4 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   fs.writeFileSync(output+'/operations-resume439.json',JSON.stringify(proof,null,2));console.log(JSON.stringify(proof));
  }finally{await context.close();await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1);});
+

@@ -79,6 +79,20 @@ async function createNativeProjectTask(page, baseUrl, options) {
 async function addNativeTaskChecklistItem(page, baseUrl, taskCanonical, text) {
     await page.goto(baseUrl + '/admin/tasks/list_tasks/' + taskCanonical);
     await page.locator('[data-native-task-detail]').waitFor({ state: 'visible' });
+    const initialize = page.locator('button[onclick*="native_task_checklist_command"][onclick*="initialize"]').first();
+    if (await initialize.count()) {
+        const responsePromise = page.waitForResponse((response) =>
+            response.request().method() === 'POST' && response.url().includes('/admin/tasks/checklist_command/'),
+        );
+        await initialize.click();
+        const response = await responsePromise;
+        assert.equal(response.status(), 200);
+        const payload = await response.json();
+        assert.equal(payload.success, true);
+        await page.waitForLoadState('domcontentloaded');
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.locator('[data-native-task-detail]').waitFor({ state: 'visible' });
+    }
     await page.locator('button[onclick*="add_task_checklist_item"]').click();
     const field = page.locator('textarea[name="checklist-description"]').last();
     await field.fill(text);
@@ -90,11 +104,63 @@ async function addNativeTaskChecklistItem(page, baseUrl, taskCanonical, text) {
     assert.equal(response.status(), 200);
 }
 
+async function nativeTaskCommand(page, endpoint, action, { refresh = true } = {}) {
+    const detail = page.locator('[data-native-task-detail]').first();
+    const before = await detail.getAttribute('data-task-revision');
+    const responsePromise = page.waitForResponse((response) =>
+        response.request().method() === 'POST' && response.url().includes('/admin/tasks/' + endpoint),
+    );
+    await action();
+    const response = await responsePromise;
+    assert.equal(response.status(), 200);
+    const payload = await response.json();
+    assert.equal(payload.success, true);
+    if (refresh) {
+        await page.waitForFunction((revision) =>
+            document.querySelector('[data-native-task-detail]')?.dataset.taskRevision !== revision,
+        before);
+    }
+    return payload;
+}
+
+async function openNativeTask(page, baseUrl, taskCanonical) {
+    await page.goto(baseUrl + '/admin/tasks/list_tasks/' + taskCanonical);
+    await page.locator('[data-native-task-detail]').waitFor({ state: 'visible' });
+}
+
+async function addNativeTaskComment(page, text) {
+    const form = page.locator('form[action$="/tasks/add_task_comment"]').first();
+    await form.locator('textarea[name="content"]').fill(text);
+    await nativeTaskCommand(page, 'add_task_comment', () => form.locator('button[type=submit]').click());
+}
+
+async function toggleNativeTaskTimer(page) {
+    const button = page.locator('button[onclick*="timer_action"]').first();
+    await nativeTaskCommand(page, 'timer_tracking', () => button.click());
+}
+
+async function completeNativeTaskChecklistItem(page) {
+    const checkbox = page.locator('input[name="checklist-box"]').first();
+    await nativeTaskCommand(page, 'checkbox_action/', () => checkbox.check(), { refresh: false });
+}
+
+async function markNativeTaskDone(page) {
+    const form = page.locator('form[action*="/tasks/mark_as/"]').first();
+    await form.locator('select').selectOption('5');
+    await nativeTaskCommand(page, 'mark_as/5/', () => form.locator('button[type=submit]').click());
+}
+
 module.exports = {
     PROJECT_RADIX,
     TASK_RADIX,
     createNativeProject,
     createNativeProjectTask,
     addNativeTaskChecklistItem,
+    nativeTaskCommand,
+    openNativeTask,
+    addNativeTaskComment,
+    toggleNativeTaskTimer,
+    completeNativeTaskChecklistItem,
+    markNativeTaskDone,
     submitAndNavigate,
 };

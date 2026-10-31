@@ -4,7 +4,7 @@ $company_page_title = 'Recorrência de tarefas';
 require APPPATH.'views/admin/includes/native_company_layout_head.php';
 $esc = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8');
 $url = fn($query='') => CompanyRequestScope::adminUrl($this, 'tasks/recurring?kind='.$kind.$query);
-$taskUrl = fn($id) => CompanyRequestScope::adminUrl($this, ($kind === 'project' ? 'tasks' : 'tasks/standalone').'?task='.(int)$id);
+$taskUrl = fn($id) => CompanyRequestScope::adminUrl($this, $kind === 'project' ? 'tasks/list_tasks/'.NativeCompanyResourceId::encode('company_task',(int)$id) : 'tasks/standalone?task='.(int)$id);
 $states = ['active'=>'Ativa', 'paused'=>'Pausada', 'cancelled'=>'Cancelada', 'completed'=>'Concluída'];
 $units = ['day'=>'dias', 'week'=>'semanas', 'month'=>'meses'];
 $hidden = function (string $action) use ($esc, $kind, $company_task_recurring_csrf, $request_key, $detail): void {
