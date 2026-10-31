@@ -16,3 +16,8 @@ A suíte SQLite focada completa está em execução; não se declara sucesso ant
 
 ## Compatibilidade e atualização
 Núcleo 4.8.4 com migration 484 aditiva NOOP; migrations anteriores preservadas. Nenhuma tabela, dado, driver bancário, porta, bind ou credencial foi removido/alterado. Faça backup de banco e arquivos antes da futura atualização. Não use downgrade de banco como rollback; restaure o backup compatível se necessário.
+
+## Correção após CI HTTP/MySQL/Chromium
+O cenário real de Projetos revelou que o quadro chamava o writer legado para tarefas criadas no formulário nativo. O writer corretamente recusava a mudança, deixando `todo`. O quadro agora seleciona o writer nativo quando há metadados nativos, preserva campos, revisão, dependências, checklist e bloqueios financeiros. O teste verifica a conclusão do pré-requisito antes do dependente; nenhuma asserção de negócio foi removida. Regressão SQLite dedicada cobre conclusão, metadados, dependência aberta, reabertura inválida, revisão obsoleta e outra empresa.
+
+Os seis bundles divergentes foram reconstruídos com `npm ci` e `npm run build`. O gate de assets continua exigindo igualdade com o build do repositório. A suíte PWA do SHA d9bfdc passou em navegador e PHP 8.1/8.5. O restante do CI deve ser reexecutado no novo SHA; não se declara aprovação global.

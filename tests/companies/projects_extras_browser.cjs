@@ -208,6 +208,7 @@ async function createNativeTask(page, projectCanonical, name) {
                     'button[type=submit]',
                 ),
             );
+            assert.equal(sql('SELECT status FROM tblcompany_tasks WHERE id=' + pre), 'done', 'prerequisite board move must persist');
             // The previous submit navigates to the task detail; reopen the project board.
             await page.goto(url + '/admin/projects/extras?kind=project&id=' + project);
             await page.locator('#task-board-' + dependent).selectOption('done');

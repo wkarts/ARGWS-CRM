@@ -2565,6 +2565,10 @@
     [
       "php",
       "tests/native_pr52_completion_regression.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_board_move.php"
     ]
   ],
   "node": [

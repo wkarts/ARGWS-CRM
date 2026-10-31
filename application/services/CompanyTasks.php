@@ -68,6 +68,20 @@ final class CompanyTasks extends CompanyProjectsStorage
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
         return ($this->guardedWork(function()use($issuer,$actor,$data,$fields,$related):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');if($fields!==null||$related!==null)NativeCompanyTaskFormSchema::assertValid($this->db,$this->p);$stored=$fields===null?null:$this->nativeTaskFields($issuer,$actor,$data,$fields);$this->nativeExplicitFollowers=$related!==null&&array_key_exists('followers',$related);try{$id=$this->insertCreatedInOwned($issuer,$actor,$data);}finally{$this->nativeExplicitFollowers=false;}if($stored!==null)$this->saveNativeTaskFields($issuer,$id,$stored,null);$this->nativeTaskRelated($issuer,$actor,$id,$related);$this->confirmNativeTaskRelatedFrames();$this->audit($issuer,$actor,$id,'company_task_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
+    /** Board-only status change through the existing canonical writer and its dependency fences. */
+    public function moveFromBoard($issuer,$actor,$id,$revision,string $status,string $key):int
+    {
+        $workflow=['todo'=>1,'awaiting_feedback'=>2,'testing'=>3,'in_progress'=>4,'done'=>5];
+        if(!isset($workflow[$status]))throw new DomainException('company_project_invalid_input');
+        $row=$this->get($issuer,$actor,$id);$input=[];
+        foreach(['project_id','assignee_id','name','description','due_date','checklist']as$field)$input[$field]=$row[$field];
+        $input['status']=$status;
+        if(($row['native_fields_json']??null)===null)return $this->update($issuer,$actor,$id,$revision,$input,$key);
+        $fields=json_decode($row['native_fields_json'],true,32,JSON_THROW_ON_ERROR);
+        $fields['workflow_status']=$workflow[$status];
+        $fields['date_finished']=$status==='done'?($fields['date_finished']??date('Y-m-d H:i:s')):null;
+        return $this->updateNative($issuer,$actor,$id,$revision,$row['native_fields_revision'],$input,$fields,$key);
+    }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);return $this->operation($issuer,$actor,'edit',$key,'task_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{$old=$this->row($issuer,$id);if(($old['native_fields_json']??null)!==null)throw new DomainException('native_task_form_writer_required');return $this->updateCanonicalInOwned($issuer,$actor,$id,$revision,$data);});
