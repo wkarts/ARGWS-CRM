@@ -47,7 +47,7 @@ final class NativePwaIdentity
             $hashes=[];foreach($files as $key=>$bytes)$hashes[$key]=hash('sha256',$bytes);
             $revision=hash('sha256',json_encode(['format'=>2,'name'=>$name,'name_source'=>$nameSource,'theme_color'=>$theme,'icon_source'=>$iconSource,'hashes'=>$hashes],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
             $projection=['format'=>2,'revision'=>$revision,'name'=>$name,'short_name'=>self::shortName($name),'theme_color'=>$theme,'source'=>$iconSource,'name_source'=>$nameSource,'icon_source'=>$iconSource,'files'=>[],'hashes'=>$hashes];
-            foreach(array_keys($files) as $key)$projection['files'][$key]=$key.'.png';
+            foreach(array_keys($files) as $key)$projection['files'][$key]=$key.'-'.$hashes[$key].'.png';
             self::write($files,$projection);
             return['revision'=>$revision,'source'=>$iconSource,'name'=>$name];
         }catch(Throwable $error){if(function_exists('log_message'))log_message('error','PWA identity projection was not refreshed; existing projection preserved.');return null;}
@@ -90,7 +90,7 @@ final class NativePwaIdentity
     private static function write(array $files,array $projection):void
     {
         $dir=(defined('FCPATH')?FCPATH:dirname(__DIR__,2)).self::RUNTIME;if(!is_dir($dir)&&!mkdir($dir,0750,true)&&!is_dir($dir))throw new RuntimeException('pwa_projection_directory_unavailable');
-        foreach($files as $key=>$bytes){$tmp=$dir.'/.'.$key.'.'.bin2hex(random_bytes(8)).'.tmp';if(file_put_contents($tmp,$bytes,LOCK_EX)!==strlen($bytes)||!rename($tmp,$dir.'/'.$key.'.png')){if(is_file($tmp))@unlink($tmp);throw new RuntimeException('pwa_projection_write_failed');}@chmod($dir.'/'.$key.'.png',0640);}
+        foreach($files as $key=>$bytes){$tmp=$dir.'/.'.$key.'.'.bin2hex(random_bytes(8)).'.tmp';if(file_put_contents($tmp,$bytes,LOCK_EX)!==strlen($bytes)||!rename($tmp,$dir.'/'.$projection['files'][$key])){if(is_file($tmp))@unlink($tmp);throw new RuntimeException('pwa_projection_write_failed');}@chmod($dir.'/'.$projection['files'][$key],0640);}
         $json=json_encode($projection,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)."\n";$tmp=$dir.'/.identity.'.bin2hex(random_bytes(8)).'.tmp';if(file_put_contents($tmp,$json,LOCK_EX)!==strlen($json)||!rename($tmp,$dir.'/identity.json')){if(is_file($tmp))@unlink($tmp);throw new RuntimeException('pwa_projection_manifest_failed');}@chmod($dir.'/identity.json',0640);
     }
 }

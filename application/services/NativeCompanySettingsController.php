@@ -90,7 +90,7 @@ final class NativeCompanySettingsController
             if(!(new IssuerResourceAccess($ci->db,db_prefix()))->can($issuer,$actor,'settings','edit'))throw new DomainException('native_settings_denied');
             $post=$ci->input->post(null,false);$csrf=$ci->security->get_csrf_token_name();
             if(!is_array($post)||array_diff(array_keys($post),['revision','_native_company_csrf','_company_context',$csrf])||!is_string($post['revision']??null))throw new DomainException('native_settings_invalid');
-            (new CompanyAssets($ci->db,db_prefix()))->save($issuer,$actor,$kind,null,$post['revision']);CompanyRequestScope::invalidateCaches($ci);
+            (new CompanyAssets($ci->db,db_prefix()))->save($issuer,$actor,$kind,null,$post['revision']);require_once __DIR__.'/NativePwaIdentity.php';NativePwaIdentity::publish($ci);CompanyRequestScope::invalidateCaches($ci);
             $ci->output->set_header('Cache-Control: no-store');$ci->output->set_content_type('application/json');$ci->output->set_output(json_encode(['success'=>true],JSON_THROW_ON_ERROR));
         }catch(DomainException $e){show_error('Não foi possível remover esta imagem. Recarregue e confira suas permissões.',$e->getMessage()==='company_asset_stale'?409:403);}
     }
@@ -213,7 +213,7 @@ final class NativeCompanySettingsController
                     $uploads[$fileNames[$name]]=$bytes;
                 }
                 $encrypt=null;$decrypt=null;if(in_array($group,['email','google'],true)){$ci->load->library('encryption');$encrypt=fn($v)=>$ci->encryption->encrypt($v);$decrypt=fn($v)=>$ci->encryption->decrypt($v);}
-                $forms->save($issuer,$actor,$group,$post['settings'],$custom['company']??[],$post['native_settings_revision'],$uploads,$encrypt,$decrypt);
+                $forms->save($issuer,$actor,$group,$post['settings'],$custom['company']??[],$post['native_settings_revision'],$uploads,$encrypt,$decrypt);require_once __DIR__.'/NativePwaIdentity.php';NativePwaIdentity::publish($ci);
                 CompanyRequestScope::invalidateCaches($ci);
                 set_alert('success','Definições salvas para esta empresa.');
                 redirect(admin_url('settings?group='.rawurlencode($group)),'location',303);return;

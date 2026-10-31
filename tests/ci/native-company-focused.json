@@ -2561,6 +2561,10 @@
     [
       "php",
       "tests/companies/native_task_table_legacy_filter.php"
+    ],
+    [
+      "php",
+      "tests/native_pr52_completion_regression.php"
     ]
   ],
   "node": [

@@ -12,7 +12,7 @@ const repo = path.resolve(__dirname, '..');
 const artifacts=path.resolve(process.env.PWA_BROWSER_ARTIFACTS||'artifacts/native-pwa-fixture');
 fs.mkdirSync(artifacts,{recursive:true});
 async function capture(page,name) {await page.screenshot({path:path.join(artifacts,name+'.png'),fullPage:true,mask:[page.locator('input,textarea,select')]});}
-const files = ['pwa.php','application/helpers/app_branding_helper.php','application/config/branding.php','application/views/includes/pwa.php',
+const files = ['application/helpers/pwa_helper.php','pwa.php','application/helpers/app_branding_helper.php','application/config/branding.php','application/views/includes/pwa.php',
   ...['worker.js','install.js','icon-192.png','icon-512.png','icon-maskable-512.png'].map(x=>'assets/pwa/'+x)];
 async function freePort() {
   const socket=net.createServer(); socket.listen(0,'127.0.0.1'); await once(socket,'listening');

@@ -208,6 +208,8 @@ async function createNativeTask(page, projectCanonical, name) {
                     'button[type=submit]',
                 ),
             );
+            // The previous submit navigates to the task detail; reopen the project board.
+            await page.goto(url + '/admin/projects/extras?kind=project&id=' + project);
             await page.locator('#task-board-' + dependent).selectOption('done');
             await nav(
                 page,

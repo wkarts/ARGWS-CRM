@@ -256,7 +256,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Clients.php": {
-      "sha256": "c99364d0bcbc0da9d3a9f3f3b344c8151e92892c28d3151a15f436e979539657",
+      "sha256": "6550ae6bffa67dc67cc7896f4aa3bbab4e1358d240cd0d0bdb01d3d7b60b7d06",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -5599,7 +5599,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyProjectOriginalHttp.php": {
-      "sha256": "09f3ec50cb8e55be788b3016b5564aafadc24890ae46e383b4a5d0836c7a7109",
+      "sha256": "4de5dee6e3a95e4ee1d1dc5b8b906552485ff0c4835c257b8ecdec5568084272",
       "categories": [
         "invoice_table"
       ],
@@ -8782,15 +8782,15 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Cnab400ReviewedReceipt.php": {
-      "sha256": "6c4cdac1e624a7af2ad7f2d86ac94e9b9387bf791b34e94c823b1aeee70e1816",
+      "sha256": "3d6501f94f227ca160669c62392fda58307eb2f2d6fe7295d84673630ccb83b1",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        59,
-        87,
-        131
+        61,
+        89,
+        133
       ],
       "state": "unreviewed",
       "evidence": ""
