@@ -61,6 +61,22 @@ final class EssentialTestLoader
     public function vars($variables): void { $this->variables = $variables; }
 }
 
+/** Keep diagnostics bounded without changing the values sent to PDO. */
+function essentialTraceValue($value, int $depth = 0)
+{
+    if (is_string($value) && strlen($value) > 512) {
+        return '[large-string bytes=' . strlen($value) . ' sha256=' . hash('sha256', $value) . ']';
+    }
+    if (is_array($value)) {
+        if ($depth >= 4) { return '[nested-array]'; }
+        $trace = [];
+        foreach ($value as $key => $item) { $trace[$key] = essentialTraceValue($item, $depth + 1); }
+        return $trace;
+    }
+    if (is_object($value)) { return '[object ' . get_debug_type($value) . ']'; }
+    return $value;
+}
+
 final class EssentialTestDb
 {
     public array $queries = [];
@@ -90,7 +106,7 @@ final class EssentialTestDb
     public function driver(): string { return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME); }
     public function query($sql, $params = [])
     {
-        $this->queries[] = [$sql, $params];
+        $this->queries[] = [$sql, array_map(static fn($value) => essentialTraceValue($value), $params)];
         if ($this->failOn !== null && str_contains($sql, $this->failOn)) { return false; }
         if ($this->driver() === 'sqlite') {
             $declaration=str_contains($sql,'information_schema.')&&is_string($params[0]??null)
@@ -135,7 +151,7 @@ final class EssentialTestDb
     }
     public function insert($table, $data): bool
     {
-        if ($this->failInsert) { $this->queries[] = ['FAILED INSERT ' . $table, $data]; return false; }
+        if ($this->failInsert) { $this->queries[] = ['FAILED INSERT ' . $table, essentialTraceValue($data)]; return false; }
         return $this->query('INSERT INTO ' . $this->table($table) . ' (' . implode(',', array_keys($data)) . ') VALUES ('
             . implode(',', array_fill(0, count($data), '?')) . ')', array_values($data)) !== false;
     }
@@ -144,12 +160,12 @@ final class EssentialTestDb
         [$clause, $params] = $this->takeWhere();
         if (($this->failVersion !== null && ($data['installed_version'] ?? null) === $this->failVersion)
             || ($this->failActive !== null && ($data['active'] ?? null) === $this->failActive)) {
-            $this->queries[] = ['FAILED UPDATE ' . $table, $data];
+            $this->queries[] = ['FAILED UPDATE ' . $table, essentialTraceValue($data)];
             return false;
         }
         if (($this->pretendVersionWrite && isset($data['installed_version']) && $data['installed_version'] === essentialHeaderVersion())
             || ($this->pretendActiveWrite !== null && ($data['active'] ?? null) === $this->pretendActiveWrite)) {
-            $this->queries[] = ['IGNORED UPDATE ' . $table, $data];
+            $this->queries[] = ['IGNORED UPDATE ' . $table, essentialTraceValue($data)];
             return true;
         }
         return $this->query('UPDATE ' . $this->table($table) . ' SET '
