@@ -9,6 +9,8 @@ require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 require_once APPPATH.'services/CompanyOperationalPortalAdmin.php';
 require_once APPPATH.'services/NativeCompanyResourceId.php';
 require_once APPPATH.'services/NativeCompanyProjectOriginalHttp.php';
+require_once APPPATH.'services/NativeProjectTabs.php';
+require_once APPPATH.'services/NativeCompanyProjectPins.php';
 
 class Projects extends AdminController
 {
@@ -170,14 +172,18 @@ class Projects extends AdminController
             }
             if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
             $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
-            $group=$selectedGroup??(string)($this->input->get('group')?:'project_overview');if(!in_array($group,['project_overview','project_files','project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt'],true))throw new DomainException('native_project_group_not_composed');
+            $acl=new IssuerResourceAccess($this->db,db_prefix());
+            $visibility=['project_tickets'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'tickets','view'),'project_contracts'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'contracts','view'),'project_invoices'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'invoices','view'),'project_estimates'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'estimates','view'),'project_expenses'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'expenses','view'),'project_credit_notes'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'credit_notes','view'),'project_subscriptions'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'subscriptions','view'),'project_proposals'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'proposals','view'),'sales'=>false];
+            $visibility['sales']=in_array(true,[$visibility['project_invoices'],$visibility['project_estimates'],$visibility['project_expenses'],$visibility['project_credit_notes'],$visibility['project_subscriptions'],$visibility['project_proposals']],true);
+            $nativeTabs=NativeProjectTabs::definitions('_l',$visibility);$allowedGroups=array_keys($nativeTabs);foreach($nativeTabs as$tab)foreach($tab['children']??[] as$child)$allowedGroups[]=$child['slug'];
+            $group=$selectedGroup??(string)($this->input->get('group')?:'project_overview');if($group==='sales')$group=$nativeTabs['sales']['children'][0]['slug']??'project_overview';if(!in_array($group,$allowedGroups,true))throw new DomainException('native_project_group_not_composed');
             $period=(string)($this->input->get('overview_chart')?:'this_week');
             require_once APPPATH.'services/NativeCompanyProjectDetail.php';$detail=new NativeCompanyProjectDetail($this->db,db_prefix());
             $overview=$detail->overview($ctx->issuerId(),$ctx->staffId(),$id,$period,'_l');$files=$detail->files($ctx->issuerId(),$ctx->staffId(),$id);
-            $facts=$overview['facts'];$acl=new IssuerResourceAccess($this->db,db_prefix());$canEdit=$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','edit');
+            $facts=$overview['facts'];$canEdit=$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','edit');
             $staff=$canEdit?(new CompanyProjects($this->db,db_prefix()))->staffOptions($ctx->issuerId(),$ctx->staffId()):[];
-            $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];
-            $portalControls=null;$portalRevision=null;$portalCsrf=null;if(($facts['reference']['source_kind']??null)==='company_project'){$portalRow=(new CompanyProjects($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);$portalControls=CompanyOperationalPortalAdmin::controls($this,$ctx->issuerId(),$ctx->staffId(),'projects',$portalRow);$portalRevision=(int)$portalRow['revision'];$portalCsrf=$this->nativeProjectPortalCsrf();}$data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,'portal_controls'=>$portalControls,'portal_revision'=>$portalRevision,'company_projects_csrf'=>$portalCsrf,
+            $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];$pin=(new NativeCompanyProjectPins($this->db,db_prefix()))->state($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);
+            $portalControls=null;$portalRevision=null;$portalCsrf=null;if(($facts['reference']['source_kind']??null)==='company_project'){$portalRow=(new CompanyProjects($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);$portalControls=CompanyOperationalPortalAdmin::controls($this,$ctx->issuerId(),$ctx->staffId(),'projects',$portalRow);$portalRevision=(int)$portalRow['revision'];$portalCsrf=$this->nativeProjectPortalCsrf();}$data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,'portal_controls'=>$portalControls,'portal_revision'=>$portalRevision,'company_projects_csrf'=>$portalCsrf,'native_project_tabs'=>$nativeTabs,'native_project_pin'=>$pin,
                 'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'can_create_task'=>$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','view')&&$acl->can($ctx->issuerId(),$ctx->staffId(),'tasks','create'),'canonical_id'=>$facts['reference']['canonical_id']]];
             $clock=time();$work=$this->nativeProjectWorkData($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id'],$group,$clock);$data+=$work;$data['actor']=$ctx->staffId();$data['company_project_rules_csrf']=$this->nativeProjectRulesCsrf();
             // The admin shell is prepared once by the request scope. Rebuilding it

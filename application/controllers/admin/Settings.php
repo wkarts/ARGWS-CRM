@@ -148,6 +148,8 @@ class Settings extends AdminController
                 show_error('Não foi possível confirmar as preferências. Recarregue a página antes de tentar novamente.', 503); return;
             }
 
+            require_once APPPATH.'services/NativePwaIdentity.php';NativePwaIdentity::publish($this);
+
             if ($success > 0) {
                 set_alert('success', _l('settings_updated'));
             }

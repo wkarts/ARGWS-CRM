@@ -30,10 +30,11 @@ $url=function($suffix='',?string $action=null,$child=null)use($native_project_vi
             </div>
             <div><a class="btn btn-default" href="<?php echo admin_url('projects'); ?>"><?php echo _l('back_to_list'); ?></a>
             <?php if($native_project_view['can_create_task']??false){ ?><a class="btn btn-default" href="#" onclick="new_task_from_relation(undefined,'project',<?php echo e($native_project_view['canonical_id']); ?>);return false;"><?php echo _l('new_task'); ?></a><?php } ?>
-            <?php if ($native_project_view['can_edit']) { ?><a class="btn btn-primary" href="<?php echo admin_url('projects/project/'.$native_project_view['canonical_id']); ?>"><?php echo _l('edit_project'); ?></a><?php } ?></div>
+            <?php if ($native_project_view['can_edit']) { ?><a class="btn btn-primary" href="<?php echo admin_url('projects/project/'.$native_project_view['canonical_id']); ?>"><?php echo _l('edit_project'); ?></a><?php } ?>
+            <?php if(isset($native_project_pin)){echo form_open(admin_url('projects/pin_action/'.$native_project_view['canonical_id']),['class'=>'tw-inline']);echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('project_id',$native_project_view['canonical_id']);echo form_hidden('revision',$native_project_overview['facts']['project']['revision']);echo form_hidden('pin_revision',$native_project_pin['revision']);echo form_hidden('pinned',$native_project_pin['pinned']?'0':'1');echo form_hidden('request_key',bin2hex(random_bytes(32))); ?><button class="btn btn-default" type="submit"><?= $native_project_pin['pinned']?'Desafixar projeto':'Fixar projeto'; ?></button><?php echo form_close();} ?></div>
         </div>
         <ul class="nav nav-tabs tw-mt-5">
-            <?php foreach(['project_overview','project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt','project_files']as$projectGroup){ ?><li class="<?= $native_project_view['group']===$projectGroup?'active':''; ?>"><a href="<?= admin_url('projects/view/'.$native_project_view['canonical_id'].'?group='.$projectGroup); ?>"><?= _l($projectGroup); ?></a></li><?php } ?>
+            <?php foreach($native_project_tabs??[] as$slug=>$tab){ if($slug==='sales'){ ?><li class="dropdown <?= in_array($native_project_view['group'],array_column($tab['children'],'slug'),true)?'active':''; ?>"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><?= e($tab['name']); ?> <span class="caret"></span></a><ul class="dropdown-menu"><?php foreach($tab['children'] as$child){ ?><li class="<?= $native_project_view['group']===$child['slug']?'active':''; ?>"><a href="<?= admin_url('projects/view/'.$native_project_view['canonical_id'].'?group='.$child['slug']); ?>"><?= e($child['name']); ?></a></li><?php } ?></ul></li><?php }else{ ?><li class="<?= $native_project_view['group']===$slug?'active':''; ?>"><a href="<?= admin_url('projects/view/'.$native_project_view['canonical_id'].'?group='.$slug); ?>"><?= e($tab['name']); ?></a></li><?php }} ?>
         </ul>
     </div></div>
 
@@ -63,7 +64,7 @@ $url=function($suffix='',?string $action=null,$child=null)use($native_project_vi
     </div></div>
     <?php } ?>
 
-    <?php if(in_array($native_project_view['group'],['project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt'],true)){ $this->load->view('admin/projects/'.$native_project_view['group'],get_defined_vars()); } ?>
+    <?php if(in_array($native_project_view['group'],['project_tasks','project_milestones','project_discussions','project_timesheets','project_gantt'],true)){ $this->load->view('admin/projects/'.$native_project_view['group'],get_defined_vars()); } elseif($native_project_view['group']==='project_notes'){ $this->load->view('admin/projects/native_notes',get_defined_vars()); } elseif($native_project_view['group']==='project_expenses'){ $this->load->view('admin/projects/native_expenses',get_defined_vars()); } elseif(isset($native_project_section)){ $this->load->view('admin/projects/native_section',get_defined_vars()); } ?>
     <?php if ($native_project_view['group']==='project_overview') { ?>
         <?php $this->load->view('admin/projects/project_overview',['native_project_overview'=>$native_project_overview]); ?>
         <div class="panel_s"><div class="panel-body"><h4 class="tw-font-bold tw-mt-0"><?php echo _l('project_members'); ?></h4>

@@ -1,108 +1,123 @@
-# PR 52 — evidência consolidada da candidatura
+# PR 52 — evidência consolidada da continuação
 
-Data da consolidação: 2026-10-31 (UTC). Repositório: `wkarts/ARGWS-CRM`.
-PR: `#52`, branch `fix/native-company-experience`, base `main`.
+Data desta validação: 2026-10-31 (UTC). Repositório: `wkarts/ARGWS-CRM`.
+PR: `#52`. Branch: `fix/native-company-experience`.
 
-## Escopo concluído
+## Reconciliação
 
-O complemento preserva o histórico da branch e fecha as 44 ações necessárias
-que permaneciam fora do catálogo multiempresa: Clientes (11), Despesas (2),
-Faturas (3), Pagamentos (1), Projetos (21) e Tarefas (6). Cada ação continua
-na URL/controller nativo e passa por `NativeCompanyParityHttp`, com contrato
-de dados próprio, revisão/CAS, CSRF, permissão e filtro de empresa. O teste
-`tests/native_pr52_parity_catalog.test.cjs` verifica a lista completa, o
-catálogo e o adaptador delimitado, sem transformar uma simples rota liberada
-em prova de equivalência.
+O HEAD remoto usado como pai desta continuação foi o SHA
+`98732e73a7351267f88b0c9bf0247f1151425fa8`. A cópia de trabalho fornecida
+para esta conversa não contém `.git`; por isso `git status`, `git diff` e
+`git log` locais não puderam produzir uma fotografia válida. A branch e o
+parent foram consultados pela integração do GitHub antes da publicação. Não
+foi feito reset, rebase, checkout destrutivo ou force-push.
 
-A matriz atualizada contém 331 métodos nos dez módulos: 316 catalogados para
-empresas secundárias e 15 mantidos fechados por serem internos ou não
-aplicáveis (10 e 5, respectivamente). A matriz continua distinguindo admissão
-de rota, adaptação funcional e homologação externa.
+## Implementação verificada no código
 
-## Identidade, PWA e superfícies preservadas
-
-Foi aplicada a identidade V2 nos pontos padrão de setup/instalação, login,
-administração, portal, relatórios/PDF, favicon e ícones PWA, usando as
-variantes dedicadas `logo-horizontal-colorido.svg`, `logo-horizontal-branco.svg`,
-`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`
-e `favicon.ico`. A precedência permanece instalação → empresa principal →
-ARGWS V2; marcas personalizadas da instalação e das empresas continuam
-preferenciais. O manifesto preserva `id`, `scope` e `start_url`, usa revisão
-de assets e não adiciona cache privado, URL externa arbitrária ou convite
-insistente.
-
-## Dados, instalação e upgrade
-
-Os gates remotos exercitam instalação limpa, login, seleção da empresa,
-empresa principal, A/B, usuário restrito, upgrade, CSRF, isolamento,
-idempotência, revisão/rollback, contratos, PDFs, projetos, tarefas,
-cronômetros, pagamentos, anexos, portal e fila financeira em bancos
-descartáveis. O smoke de upgrade explicita a única transformação histórica
-observada: a migration 342 normaliza `tblclients.default_language` de `NULL`
-para `portuguese_br`; todos os demais campos do cliente, identidade, vínculos
-e tabelas de negócio são comparados sem essa coluna e permanecem preservados.
-Nenhuma migration histórica foi reescrita.
+- Clientes: a composição nativa passou a reconhecer as seções legítimas de
+  notas, extrato, pagamentos, despesas, contratos, tarefas, estimativas,
+  propostas, créditos, assinaturas e lembretes. Extrato e pagamentos usam
+  dados reais, paginação/filtro, ACL, CSRF e contexto da empresa; notas têm
+  escritores próprios.
+- Projetos: as abas originais aplicáveis são expostas pelo catálogo nativo,
+  incluindo notas, despesas e relações de contratos, faturas, tickets,
+  estimativas, créditos, assinaturas e propostas. Tarefas, cronômetros,
+  arquivos, portal e lotes continuam nas rotas originais e no escopo da
+  empresa. Fixar projeto usa um ledger próprio e não o mecanismo de seguir.
+- Paridade HTTP: as 44 ações auditadas continuam em seus controllers e
+  rotas oficiais, com contratos delimitados. ZIPs de documentos carregam
+  PDFs reais; o manifesto permanece metadado. Extrato preserva o campo HTML;
+  edição de nota altera nota; fixação altera fixação; `cancelTask` captura o
+  input; lotes calculam revisão e chave por arquivo. Essas verificações
+  demonstram o contrato estático e a composição, não substituem HTTP
+  autenticado com dados reais.
+- Concorrência: transações, ACL, CSRF, idempotência, revisão/CAS e conflito
+  409 permanecem. A revisão de lote não é reutilizada depois de incrementada.
+- PWA: a projeção pública escolhe identidade explícita da instalação, depois
+  empresa principal, depois V2. Deriva 192, 512, maskable 512, Apple Touch e
+  favicons PNG com dimensões validadas, grava arquivos e manifesto
+  atomicamente, calcula hashes/revisão e não sobrescreve uma marca principal
+  publicada quando um ator secundário não tem ACL para lê-la. O worker não
+  persiste dados privados nem cria convite de instalação.
+- V2: os assets públicos de favicon, PWA e logos conferidos são byte-a-byte
+  iguais aos arquivos selecionados em `identidade-v2/`. Logos de empresa e de
+  instalação continuam prioritários nos pontos de personalização; V2 é
+  fallback padrão.
+- Build: `npm run build` mantém os dois passos do Mix e agora interpreta a
+  versão canônica de migration `483` como `4.8.3` de forma robusta, sem
+  depender de um comentário com formato frágil. O passo principal e o módulo
+  e-invoice compilam.
 
 ## CNAB400
 
-CNAB400 permanece disponível e configurável por empresa, sem habilitação
-global automática. A configuração, convênio, layout, autorização, integridade,
-idempotência e validação do candidato permanecem protegidos; `operational=false`
-continua significando que não se declara transmissão/aceite bancário sem os
-insumos e a homologação externa correspondentes. A ausência de homologação
-não desativa o recurso nem bloqueia publicação ou candidatura à revisão.
+CNAB400 continua disponível e configurável por empresa, sem habilitação global
+automática e sem bloqueio de publicação da aplicação. A política mantém
+BB API, CNAB240/400, Asaas e Efí, com validações de empresa, conta, convênio,
+layout, origem, fatura, moeda, autorização, integridade e idempotência.
 
-## Limpeza segura
+`bb400_homologation_required` continua sendo uma condição operacional na
+geração, download e conciliação do candidato: sem a declaração exigida, o
+arquivo não é gerado/baixado como operação confirmada. Isso não torna o módulo
+indisponível, não simula homologação e não autoriza transmissão ou baixa
+financeira automática. A política registra `available=true`,
+`configurable=true`, `operational=false` e `publication_blocked=false` para o
+candidato local.
 
-Foram removidos somente os sete descartáveis confirmados pela auditoria:
+## Matriz
 
-- `upload/image(7).png`
-- `upload/image(8).png`
-- `application/helpers/misc_helper.php.bak`
-- `application/helpers/assets_helper.php.bak`
-- `application/controllers/Cron.php.bak`
-- `application/controllers/admin/Emails.php.bak`
-- `application/language/portuguese_br/portuguese_br_lang.php.bak`
+`docs/companies/pr52-official-action-matrix.json` agora registra 331 métodos,
+316 admitidos e 15 mantidos fora do catálogo, com `full_parity_approved=false`.
+As 15 restantes têm justificativa individual:
 
-Uploads legítimos, `.htaccess`, vendor, templates, fontes e evidências foram
-preservados. O pacote de fontes exclui descartáveis, segredos, bancos de
-produção e caches reinstaláveis.
+| Classificação | Ações | Justificativa |
+| --- | --- | --- |
+| Internas (10) | `Contracts.get_template`; `Expenses.table`, `get_expenses_total`, `get_customer_change_data`; `Invoices.update_number_settings`, `get_merge_data`, `get_bill_expense_data`; `Projects.timesheet_task_assignees`, `get_pre_invoice_project_info`, `get_invoice_project_data` | Callbacks internos de editor, seleção, totalização ou preparação; não são telas/ações de empresa independentes e continuam sujeitos à composição e autorização do fluxo pai. |
+| Não aplicáveis (5) | `Clients.login_as_client`; `Projects.view_project_as_client`; `Settings.delete_option`, `Settings.clear_sessions`; `Staff.change_language` | Impersonação, limpeza global da instalação ou política global de idioma não podem ser concedidas a uma empresa secundária. Portal e sessões continuam com autenticação própria. |
 
-## Verificação
+As classificações não são contadas como paridade funcional aprovada. As ações
+admitidas e as 44 ações necessárias permanecem dependentes dos testes HTTP,
+instalação e dados reais do CI.
 
-O HEAD remoto da branch contém o código, as fixtures, o contrato de rota e os
-inventários reconciliados após os ciclos de focused. O SHA efetivo e os links de
-checks são mantidos na descrição da PR para evitar registrar um SHA intermediário
-quando a documentação é publicada junto com o último commit.
-Em particular, `NativeCompanyParityHttp` só carrega a classe real de escopo
-quando ela ainda não existe, preservando o bootstrap de produção e evitando
-redeclaração quando a fixture fornece seu double controlado. A fixture de
-saída aceita `null` no caminho de detalhe vazio e o teste de rotas reconhece
-`save_completed_checklist_visibility` como POST nativo admitido e
-`clients/delete` como a exclusão delimitada já implementada, porque a ação já
-possui escopo de empresa, CSRF, permissão e teste próprio.
+## Limpeza e preservação
 
-A fixture de exclusão de cliente foi alinhada ao contrato efetivo: requests
-incompletos são recusados por verbo, ownership ou revisão, e a exclusão
-delimitada nunca cai na cascata legada. A documentação de fronteira explicita
-que dependências não inventariadas continuam bloqueando a operação.
+Os sete descartáveis da auditoria não existem na cópia final:
 
-O auditor `scripts/audit-issuer-isolation.py` fecha sem erros (`677` arquivos;
-`647` unreviewed, `30` partial). O inventário lexical de boundaries está
-reconciliado em `15151` arquivos, todos ainda unresolved e
-`operational_ready=false`, com `source_sha256=41b9d406…`; o inventário de
-superfícies operacionais mantém `4675` fontes, `operational_ready=false` e
-`source_manifest_sha256=7948c2c6…`. Esses estados são deliberadamente
-conservadores e não liberam rollout.
+- `upload/image(7).png` e `upload/image(8).png`;
+- `application/helpers/misc_helper.php.bak`;
+  `application/helpers/assets_helper.php.bak`;
+  `application/controllers/Cron.php.bak`;
+  `application/controllers/admin/Emails.php.bak`;
+  `application/language/portuguese_br/portuguese_br_lang.php.bak`.
 
-Validação local adicional: `PATH="$PWD/node_modules/.bin:$PATH" ./node_modules/.bin/mix --production`
-reconstruiu os bundles compilados sem divergência; `node --test
-tests/native_tasks_shared.test.cjs tests/native_workspace_driver.test.cjs` passou
-13/13 e `python3 tests/ci/test_native_company_focused.py` passou 10/10.
-Os IDs e o resultado do CI do SHA final são registrados na descrição da PR e no
-relatório de evidências entregue com ela após a execução integral do CI final.
+Não foram reintroduzidos `company_*` alternativos, uploads legítimos,
+proteções `.htaccess`, fontes, vendor ou migrations históricas. A paginação de
+pagamentos, os filtros de empacotamento e a política de cache permanecem
+preservados. Nenhuma limpeza remota de cache é declarada; apenas o workflow e
+o código da branch são considerados.
 
-Limites explícitos: nenhuma credencial, transmissão bancária, e-mail externo,
-webhook de produção ou homologação bancária foi executado. Isso não reduz a
-disponibilidade/configurabilidade interna do CNAB400 nem transforma testes
-sintéticos em homologação.
+## Testes executados
+
+| Comando | Resultado |
+| --- | --- |
+| `node --test tests/native_pr52_parity_catalog.test.cjs tests/native_pwa.test.cjs` | 16/16 passou |
+| Suíte Node selecionada para paridade, PWA, e-mail, shell, settings, composição, tarefas e workspace | 49/49 passou |
+| `python3 tests/ci/test_native_company_focused.py` | 10/10 passou, incluindo casos negativos sintéticos |
+| `python3 tests/test_native_pwa_http.py` | 3 testes reconhecidos, pulados por servidor PHP/browser indisponível |
+| `node --check tests/settings_pusher_recovery_browser.cjs` | passou |
+| `PATH="$PWD/node_modules/.bin:$PATH" npm run build` | passou nos bundles principais e no módulo e-invoice |
+
+PHP, Docker/MySQL/MariaDB, Chromium/Playwright e o servidor autenticado não
+estão instalados neste workspace. Portanto não são alegados aqui instalação
+limpa, upgrade real sem perda de dados, login, empresas principal/A/B,
+usuário restrito, HTTP autenticado, renderização PDF ou confirmação de CI.
+Essas validações continuam gates necessários da revisão; testes sintéticos não
+são homologação externa.
+
+## Estado de publicação
+
+O SHA publicado e o resultado dos checks correspondentes devem ser lidos na
+descrição atualizada da PR e conferidos diretamente no branch head. Este arquivo
+deliberadamente não antecipa um SHA intermediário nem transforma checks
+pendentes em aprovação. A candidatura à revisão para merge só é recomendada
+depois de CI verde no SHA publicado e da aceitação dos gates HTTP/instalação;
+CNAB400 não é bloqueio por falta de homologação externa isolada.

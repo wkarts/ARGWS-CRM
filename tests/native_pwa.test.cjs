@@ -3,6 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync('assets/pwa/worker.js','utf8');
+const pwaEndpoint = fs.readFileSync('pwa.php','utf8');
+const pwaIdentity = fs.readFileSync('application/services/NativePwaIdentity.php','utf8');
+const pwaHelper = fs.readFileSync('application/helpers/pwa_helper.php','utf8');
 function worker(offline = false) {
   const handlers = {}, calls = [];
   const self = {registration:{scope:'https://crm.test/sub/'}, clients:{claim:async()=>{}}, addEventListener:(n,fn)=>handlers[n]=fn};
@@ -47,6 +50,25 @@ test('PNG fallback dimensions, masks and native views',()=>{
     assert.match(fs.readFileSync(`application/views/${file}`,'utf8'),/load->view\('includes\/pwa'\)/);
   }
 });
+
+test('PWA identity is a dynamic, atomic projection with installation/company/V2 precedence',()=>{
+  assert.match(pwaIdentity,/pwa_installation_name/);
+  assert.match(pwaIdentity,/pwa_icon_maskable_512/);
+  assert.match(pwaIdentity,/CompanySettingsIdentity/);
+  assert.match(pwaIdentity,/CompanyAssets/);
+  assert.match(pwaIdentity,/name_source/);
+  assert.match(pwaIdentity,/icon_source/);
+  assert.match(pwaIdentity,/if\(\$maskable===null\)\$maskable=self::readFile/);
+  assert.match(pwaIdentity,/if\(self::projectionExists\(\)\)return null/);
+  assert.match(pwaIdentity,/format'=>2/);
+  assert.match(pwaIdentity,/hashes/);
+  assert.match(pwaIdentity,/rename\(\$tmp,\$dir\.'\/identity\.json'/);
+  assert.match(pwaEndpoint,/identity\.json/);
+  assert.match(pwaEndpoint,/in_array\(\$doc\['format'\]\?\?null,\[1,2\]/);
+  assert.match(pwaEndpoint,/hash_file\('sha256'/);
+  assert.match(pwaHelper,/runtime\/identity\.json/);
+  assert.match(fs.readFileSync('application/views/includes/pwa.php','utf8'),/data-pwa-revision/);
+});
 test('V2 identity assets are wired without replacing company custom branding',()=>{
   const pngs=[['assets/images/argws/favicon-16.png',16],['assets/images/argws/favicon-32.png',32],['assets/pwa/apple-touch-icon-180.png',180]];
   for(const [file,size] of pngs){const png=fs.readFileSync(file);assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);}
@@ -76,6 +98,13 @@ test('browser owns install eligibility, dismissal and standalone; duplicate incl
     assert.equal(h.registrations[0].options.updateViaCache,'none');
     assert.deepEqual(Object.keys(h.events),[],'no installation interception or update invitations');
   }
+});
+
+test('PWA worker registration carries the committed identity revision',()=>{
+  const install=fs.readFileSync('assets/pwa/install.js','utf8');
+  assert.match(install,/pwaRevision/);
+  assert.match(install,/searchParams\.set\('v', revision\)/);
+  assert.doesNotMatch(install,/addEventListener\(['"]beforeinstallprompt|\.prompt\(/);
 });
 
 test('real HTTP browser gate is mandatory, pinned and has no dependency installation or mocked fetch',()=>{

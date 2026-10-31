@@ -26,6 +26,31 @@ class Clients extends AdminController
         show_error($status === 409 ? 'Este cadastro mudou. Reabra antes de salvar.' : 'Não foi possível concluir esta operação nesta empresa.', $status);
     }
 
+    /** Original client tabs backed by issuer-owned relation readers. */
+    private function nativeClientSectionData(int $issuer,int $actor,int $client,string $group):array
+    {
+        require_once APPPATH.'services/issuers/IssuerStorage.php';
+        $p=db_prefix();$acl=new IssuerResourceAccess($this->db,$p);$e=static fn($sql,$args=[])=>IssuerStorage::query($this->db,$sql,$args)->result_array();
+        if($group==='notes'){require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';return['view'=>'admin/clients/groups/native_notes','user_notes'=>(new NativeCompanyAuxiliaryUi($this->db,$p,$issuer,$actor,$this))->notes('client',$client)];}
+        if($group==='statement'){
+            $from=$this->input->get('from',false);$to=$this->input->get('to',false);$from=is_string($from)&&$from!==''?$from:'2000-01-01';$to=is_string($to)&&$to!==''?$to:'2100-12-31';
+            foreach([$from,$to] as $date)if(!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date)||!DateTimeImmutable::createFromFormat('!Y-m-d',$date)||DateTimeImmutable::createFromFormat('!Y-m-d',$date)->format('Y-m-d')!==$date)throw new DomainException('company_client_invalid_input');
+            if($from>$to)throw new DomainException('company_client_invalid_input');
+            return['view'=>'admin/clients/groups/native_statement','native_statement'=>['from'=>$from,'to'=>$to,'rows'=>$e('SELECT id,formatted_number,date,duedate,total,status,currency FROM '.$p.'invoices WHERE issuer_id=? AND clientid=? AND date BETWEEN ? AND ? ORDER BY date,id LIMIT 500',[$issuer,$client,$from,$to]),'contacts'=>$e('SELECT id,firstname,lastname,email FROM '.$p.'contacts WHERE userid=? AND active=1 ORDER BY id',[$client])]];
+        }
+        if($group==='payments'){
+            require_once APPPATH.'services/NativeCompanyPaymentRecords.php';
+            $pageValue=$this->input->get('page',false);$page=is_string($pageValue)&&preg_match('/^[1-9][0-9]{0,5}$/D',$pageValue)?(int)$pageValue:1;$length=25;$search=$this->input->get('search',false);$search=is_string($search)?trim($search):'';if(strlen($search)>200)throw new DomainException('company_client_invalid_input');
+            $result=(new NativeCompanyPaymentRecords($this->db,$p))->listingPage($issuer,$actor,$client,($page-1)*$length,$length,$search,[['field'=>'id','dir'=>'desc']]);
+            return['view'=>'admin/clients/groups/native_payments','native_payments_page'=>$result,'native_payments_page_no'=>$page,'native_payments_length'=>$length,'native_payments_search'=>$search];
+        }
+        $map=['expenses'=>['title'=>'Despesas','cap'=>'expenses','columns'=>['id','number','expense_date','category_name','description','currency','total_cents'],'sql'=>'SELECT e.id,e.number,e.expense_date,c.name category_name,e.description,e.currency,e.total_cents FROM '.$p.'company_expenses e JOIN '.$p.'company_expense_categories c ON c.id=e.category_id AND c.issuer_id=e.issuer_id WHERE e.issuer_id=? AND e.client_id=? ORDER BY e.id DESC LIMIT 500','args'=>[$issuer,$client]],'contracts'=>['title'=>'Contratos','cap'=>'contracts','columns'=>['id','number','name','status','start_date','due_date'],'sql'=>'SELECT id,number,name,status,start_date,due_date FROM '.$p.'company_contracts WHERE issuer_id=? AND client_id=? ORDER BY id DESC LIMIT 200','args'=>[$issuer,$client]],'tasks'=>['title'=>'Tarefas','cap'=>'tasks','columns'=>['id','name','status','due_date','project_id'],'sql'=>'SELECT t.id,t.name,t.status,t.due_date,t.project_id FROM '.$p.'company_tasks t JOIN '.$p.'company_projects p ON p.id=t.project_id AND p.issuer_id=t.issuer_id WHERE t.issuer_id=? AND p.client_id=? ORDER BY t.id DESC LIMIT 500','args'=>[$issuer,$client]],'estimates'=>['title'=>'Orçamentos','cap'=>'estimates','columns'=>['id','number','state','total','created_at'],'sql'=>'SELECT id,number,state,total,created_at FROM '.$p.'company_sales_documents WHERE issuer_id=? AND client_id=? AND kind=? ORDER BY id DESC LIMIT 200','args'=>[$issuer,$client,'estimates']], 'proposals'=>['title'=>'Propostas','cap'=>'proposals','columns'=>['id','number','state','total','created_at'],'sql'=>'SELECT id,number,state,total,created_at FROM '.$p.'company_sales_documents WHERE issuer_id=? AND client_id=? AND kind=? ORDER BY id DESC LIMIT 200','args'=>[$issuer,$client,'proposals']], 'credit_notes'=>['title'=>'Notas de crédito','cap'=>'credit_notes','columns'=>['id','formatted_number','date','total','status'],'sql'=>'SELECT id,formatted_number,date,total,status FROM '.$p.'creditnotes WHERE issuer_id=? AND clientid=? ORDER BY id DESC LIMIT 200','args'=>[$issuer,$client]], 'subscriptions'=>['title'=>'Assinaturas','cap'=>'subscriptions','columns'=>['id','next_date','state','created_at'],'sql'=>'SELECT id,next_date,state,created_at FROM '.$p.'company_recurring WHERE issuer_id=? AND payload_json LIKE ? ORDER BY id DESC LIMIT 200','args'=>[$issuer,'%"client_id":'.$client.'%']], 'reminders'=>['title'=>'Lembretes','cap'=>'customers','columns'=>['id','description','date','isnotified'],'sql'=>'SELECT id,description,date,isnotified FROM '.$p.'company_reminders WHERE issuer_id=? AND rel_type=? AND rel_id=? ORDER BY date,id DESC LIMIT 200','args'=>[$issuer,'client',$client]]];
+        $entry=$map[$group]??null;if(!$entry||!$acl->can($issuer,$actor,$entry['cap'],'view'))throw new DomainException('company_client_access_denied');
+        $tableMap=['expenses'=>['company_expenses','company_expense_categories'],'contracts'=>['company_contracts'],'tasks'=>['company_tasks','company_projects'],'estimates'=>['company_sales_documents'],'proposals'=>['company_sales_documents'],'credit_notes'=>['creditnotes'],'subscriptions'=>['company_recurring'],'reminders'=>['company_reminders']];
+        foreach($tableMap[$group]??[] as $table)if(!$this->db->table_exists($p.$table))return['view'=>'admin/clients/groups/native_section','native_client_section'=>['title'=>$entry['title'],'columns'=>$entry['columns'],'rows'=>[]]];
+        return['view'=>'admin/clients/groups/native_section','native_client_section'=>['title'=>$entry['title'],'columns'=>$entry['columns'],'rows'=>$e($entry['sql'],$entry['args'])]];
+    }
+
     private function nativeCompanyContactFailure(Throwable $error):void
     {
         $reason=$error instanceof DomainException?$error->getMessage():'';$status=$reason==='company_client_access_denied'?403:($reason==='company_client_stale'?409:($reason!==''?422:503));
@@ -232,7 +257,8 @@ class Clients extends AdminController
             try {
                 $group=$this->input->get('group')?:'profile';
                 $sourceCompany=$this->input->get('source',false)==='company';
-                if(!in_array($group,['profile','vault','contacts','attachments','map','tickets','invoices','projects'],true)){ show_error('Esta seção ainda não possui adaptação nativa por empresa.', 409); return; }
+                require_once APPPATH.'services/NativeCompanyClientsSettings.php';
+                if(!isset(NativeCompanyClientsSettings::TABS[$group])){show_404();return;}
                 if($id===''&&$group!=='profile'){show_404();return;}
                 $token=CompanyRequestScope::nativeCsrfToken($this);
                 $capabilities=$native->capabilities($id===''?null:IssuerPolicy::id($id));
@@ -326,8 +352,9 @@ class Clients extends AdminController
                             $data['native_ticket_structure']=$ticketIndex['native_ticket_index']['structure'];
                         }
                     }elseif($group==='tickets')throw new DomainException('company_client_access_denied');
-                    $data['tab']=$data['customer_tabs'][$group];
-                    $data['customer_tabs']=$native->filterProfileTabs((int)$id,$data['customer_tabs']);
+                    $relations=['notes'=>['contracts_notes_tab','fa-regular fa-note-sticky','customers'],'statement'=>['customer_statement','fa-solid fa-file-invoice-dollar','invoices'],'payments'=>['client_payments_tab','fa-solid fa-money-bill-wave','payments'],'proposals'=>['proposals','fa-regular fa-file-lines','proposals'],'credit_notes'=>['credit_notes','fa-regular fa-file-lines','credit_notes'],'estimates'=>['estimates','fa-regular fa-file-lines','estimates'],'subscriptions'=>['subscriptions','fa-solid fa-rotate','subscriptions'],'expenses'=>['expenses','fa-solid fa-receipt','expenses'],'contracts'=>['contracts','fa-solid fa-file-contract','contracts'],'tasks'=>['tasks','fa-regular fa-square-check','tasks'],'reminders'=>['client_reminders_tab','fa-regular fa-bell','customers']];
+                    foreach($relations as$key=>[$label,$icon,$feature])if($relationsAcl->can($ctx->issuerId(),$ctx->staffId(),'customers','view')&&$relationsAcl->can($ctx->issuerId(),$ctx->staffId(),$feature,'view')){$data['customer_tabs'][$key]=['name'=>_l($label),'view'=>'admin/clients/groups/native_section','icon'=>$icon];if($key==='notes')$data['customer_tabs'][$key]['view']='admin/clients/groups/native_notes';if($key==='statement')$data['customer_tabs'][$key]['view']='admin/clients/groups/native_statement';if($group===$key)$data+=$this->nativeClientSectionData($ctx->issuerId(),$ctx->staffId(),(int)$id,$key);}
+                    $data['customer_tabs']=$native->filterProfileTabs((int)$id,$data['customer_tabs']);if(!isset($data['customer_tabs'][$group]))throw new DomainException('company_client_access_denied');$data['tab']=$data['customer_tabs'][$group];
                 } elseif(!$capabilities['create']) {show_error('Sem permissão para criar clientes.',403);return;}
                 if($data['native_customer_owned'])$data+=$native->fieldData($id===''?null:$id);
                 $this->load->view('admin/clients/client',$data);

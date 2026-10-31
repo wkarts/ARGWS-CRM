@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyProjectRuleCommands.php';
 require_once __DIR__.'/NativeCompanyResourceReferences.php';
+require_once __DIR__.'/NativeCompanyAuxiliaryUi.php';
+require_once __DIR__.'/issuers/IssuerStorage.php';
 
 /** Composition of original project actions. Every route binds a finite command. */
 trait NativeCompanyProjectOriginalHttp
@@ -85,8 +87,30 @@ trait NativeCompanyProjectOriginalHttp
             if(count($ids)>1000)throw new DomainException('native_project_task_limit');$reader=new NativeCompanyTaskIndexProjection($this->db,$p);$data['native_project_tasks']=[];
             foreach($ids as$id)$data['native_project_tasks'][]=$reader->readOne($issuer,$actor,NativeCompanyResourceId::encode('company_task',$id['id']));
             if($group==='project_gantt')$data['gantt_state']=(new CompanyProjectGantt($this->db,$p))->get($issuer,$actor,$project,$this->input->get('task',false));
+        }elseif($group==='project_notes'){
+            $ui=new NativeCompanyAuxiliaryUi($this->db,$p,$issuer,$actor,$this);$data['native_project_notes']=$ui->notes('project',NativeCompanyResourceId::encode('company_project',$project));
+        }elseif($group==='project_expenses'){
+            require_once __DIR__.'/CompanyExpenses.php';$acl=new IssuerResourceAccess($this->db,$p);$data['native_project_expenses']=[];$data['native_project_expense_categories']=[];
+            if($acl->can($issuer,$actor,'expenses','view')){$data['native_project_expenses']=IssuerStorage::query($this->db,'SELECT e.id,e.number,e.expense_date,e.description,e.currency,e.amount_cents,e.tax_cents,e.total_cents,e.state,e.revision,c.name category_name FROM '.$p.'company_expenses e JOIN '.$p.'company_expense_categories c ON c.id=e.category_id AND c.issuer_id=e.issuer_id WHERE e.issuer_id=? AND e.project_id=? ORDER BY e.id DESC LIMIT 500',[$issuer,$project])->result_array();$data['native_project_expense_categories']=$acl->can($issuer,$actor,'expenses','create')?(new CompanyExpenses($this->db,$p))->categories($issuer,$actor):[];}
+        }elseif($group==='project_activity'){
+            $data['native_project_section']=['title'=>'Atividade do projeto','columns'=>['event','created_at','actor_id'],'rows'=>IssuerStorage::query($this->db,'SELECT event,created_at,actor_id FROM '.$p.'issuers_audit WHERE issuer_id=? AND subject_id=? ORDER BY id DESC LIMIT 200',[$issuer,$project])->result_array()];
+        }else{
+            $data['native_project_section']=$this->nativeProjectRelationSection($issuer,$actor,$project,$group);
         }
         return $data;
+    }
+
+    private function nativeProjectRelationSection(int $issuer,int $actor,int $project,string $group):array
+    {
+        $p=db_prefix();$acl=new IssuerResourceAccess($this->db,$p);$map=['project_invoices'=>['title'=>'Faturas','table'=>'invoices','sql'=>'SELECT id,formatted_number number,date,total,status FROM '.$p.'invoices WHERE issuer_id=? AND project_id=? ORDER BY id DESC LIMIT 200','cap'=>'invoices'],'project_contracts'=>['title'=>'Contratos','table'=>'company_contracts','sql'=>'SELECT id,number,name,status,start_date,due_date FROM '.$p.'company_contracts WHERE issuer_id=? AND client_id=(SELECT client_id FROM '.$p.'company_projects WHERE issuer_id=? AND id=?) ORDER BY id DESC LIMIT 200','cap'=>'contracts'],'project_tickets'=>['title'=>'Tickets','table'=>'company_tickets','sql'=>'SELECT id,subject,status,created_at FROM '.$p.'company_tickets WHERE issuer_id=? AND project_id=? ORDER BY id DESC LIMIT 200','cap'=>'tickets'],'project_estimates'=>['title'=>'Orçamentos','table'=>'company_sales_documents','sql'=>'SELECT id,number,state,total,created_at FROM '.$p.'company_sales_documents WHERE issuer_id=? AND kind=? AND payload_json LIKE ? ORDER BY id DESC LIMIT 200','cap'=>'estimates'],'project_proposals'=>['title'=>'Propostas','table'=>'company_sales_documents','sql'=>'SELECT id,number,state,total,created_at FROM '.$p.'company_sales_documents WHERE issuer_id=? AND kind=? AND payload_json LIKE ? ORDER BY id DESC LIMIT 200','cap'=>'proposals'],'project_credit_notes'=>['title'=>'Notas de crédito','table'=>'company_credit_documents','sql'=>'SELECT c.id,c.formatted_number number,c.date,c.total,c.status FROM '.$p.'creditnotes c WHERE c.issuer_id=? AND c.clientid=(SELECT client_id FROM '.$p.'company_projects WHERE issuer_id=? AND id=?) ORDER BY c.id DESC LIMIT 200','cap'=>'credit_notes'],'project_subscriptions'=>['title'=>'Assinaturas','table'=>'','sql'=>'','cap'=>'subscriptions']];$entry=$map[$group]??['title'=>$group,'table'=>'','sql'=>'','cap'=>'projects'];if(!$acl->can($issuer,$actor,$entry['cap'],'view'))throw new DomainException('native_project_access_denied');
+        // Recurring company schedules currently have no project foreign key.
+        // Keep the original tab available, but never project an unscoped list.
+        if($entry['table']===''||!$this->db->table_exists($p.$entry['table']))return['title'=>$entry['title'],'columns'=>[],'rows'=>[]];
+        if(in_array($group,['project_invoices','project_tickets'],true)&&!$this->db->field_exists('project_id',$p.$entry['table']))return['title'=>$entry['title'],'columns'=>[],'rows'=>[]];
+        if($group==='project_credit_notes'&&!$this->db->field_exists('issuer_id',$p.'creditnotes'))return['title'=>$entry['title'],'columns'=>[],'rows'=>[]];
+        $params=[$issuer,$project];if(in_array($group,['project_contracts','project_credit_notes'],true))$params=[$issuer,$issuer,$project];if(in_array($group,['project_estimates','project_proposals'],true)){$params=[$issuer,$group==='project_estimates'?'estimates':'proposals','%"project_id":'.$project.'%'];}
+        $fields=$this->db->list_fields($p.$entry['table'])?:[];$columns=array_values(array_filter($fields,static fn($field)=>in_array($field,['id','number','formatted_number','name','subject','status','state','date','created_at','start_date','due_date','next_date','total'],true)));
+        return['title'=>$entry['title'],'columns'=>$columns,'rows'=>IssuerStorage::query($this->db,$entry['sql'],$params)->result_array()];
     }
     private function nativeProjectMilestoneAction($id=''):void
     {

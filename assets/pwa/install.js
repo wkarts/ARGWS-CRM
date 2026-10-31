@@ -10,8 +10,11 @@
   // browser. Do not intercept beforeinstallprompt or create per-page invitations.
   // Registering the same script/scope across documents is idempotent; the promise
   // also prevents duplicate registration when a layout includes this asset twice.
+  const revision = script.dataset.pwaRevision;
+  const workerUrl = new URL('pwa.php?resource=worker', root);
+  if (revision && /^[a-f0-9]{64}$/.test(revision)) workerUrl.searchParams.set('v', revision);
   window.__crmPwaRegistration = navigator.serviceWorker.register(
-    new URL('pwa.php?resource=worker', root).href,
+    workerUrl.href,
     {scope: root.pathname, updateViaCache: 'none'}
   ).catch(() => { /* Unsupported deployment must not interrupt the CRM. */ });
   // Updates use the worker lifecycle. Never reload an unsaved CRM/financial form.

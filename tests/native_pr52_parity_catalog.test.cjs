@@ -43,3 +43,57 @@ test('bounded contracts retain the safety gates and no hard payment cap', () => 
   assert.match(adapter, /CompanyInvoiceDelivery/);
   assert.match(adapter, /CompanyRequestScope::assertNativeMutation/);
 });
+
+test('document and statement parity uses the original response contracts', () => {
+  const zipStart = adapter.indexOf("if(in_array($action,['zip_credit_notes'");
+  const zipEnd = adapter.indexOf("return['__download'=>['mime'=>'application/zip'", zipStart);
+  const zip = adapter.slice(zipStart, zipEnd);
+  assert.match(zip, /CompanyCredits/);
+  assert.match(zip, /CompanyFinancialDocumentPdf::payment/);
+  assert.match(zip, /NativeCompanyInvoicePdf/);
+  assert.match(zip, /salesPdf/);
+  assert.match(zip, /\.pdf'/);
+  assert.doesNotMatch(zip, /json_encode\(/, 'document entries must not be JSON payloads');
+  assert.match(adapter, /statementHtml\(\$rows,\$from,\$to\)/);
+  assert.match(adapter, /\['html'=>self::statementHtml/);
+  assert.match(adapter, /CompanyClientStatementDeliverySchema::assertValid/);
+});
+
+test('notes, pinning, task cancellation and revision batches retain their distinct semantics', () => {
+  const noteStart = adapter.indexOf("if(in_array($action,['save_note'");
+  const noteEnd = adapter.indexOf('\n    private static function massStopTimers', noteStart);
+  const note = adapter.slice(noteStart, noteEnd);
+  assert.match(note, /NativeCompanyAuxiliaryUi/);
+  assert.match(note, /saveNote\(/);
+  assert.doesNotMatch(note, /staffComment|addComment|follow/);
+  const pinStart = adapter.indexOf("if($action==='pin_action'");
+  const pinEnd = adapter.indexOf("if($action==='change_milestone_color'", pinStart);
+  const pin = adapter.slice(pinStart, pinEnd);
+  assert.match(pin, /NativeCompanyProjectPins/);
+  assert.doesNotMatch(pin, /follow/);
+  assert.match(adapter, /function\(\)use\(\$ci,\$p,\$issuer,\$actor,\$task,\$row,\$key,\$input\)/);
+  assert.match(adapter, /\$copy\['revision'\]=\(string\)\$row\['revision'\]/);
+  assert.match(adapter, /hash\('sha256',\$baseKey\.':'.*\$file/);
+});
+
+test('clients and projects expose the complete original native compositions', () => {
+  const clients = controllers.clients;
+  const clientSettings = read('application/services/NativeCompanyClientsSettings.php');
+  const projects = controllers.projects;
+  const projectTabs = read('application/services/NativeProjectTabs.php');
+  const projectOriginal = read('application/services/NativeCompanyProjectOriginalHttp.php');
+  for (const group of ['notes', 'statement', 'payments', 'expenses', 'contracts', 'tasks', 'estimates', 'proposals', 'credit_notes', 'subscriptions', 'reminders']) {
+    assert.match(clientSettings, new RegExp(`['"]${group}['"]`), `client tab ${group}`);
+  }
+  assert.match(clients, /private function nativeClientSectionData/);
+  assert.match(clients, /\$relations=\[/);
+  assert.match(clients, /native_statement/);
+  assert.match(clients, /native_payments/);
+  for (const group of ['project_notes', 'project_expenses', 'project_tickets', 'project_contracts', 'project_invoices', 'project_estimates', 'project_credit_notes', 'project_subscriptions', 'project_proposals']) {
+    assert.match(projectTabs, new RegExp(`['"]${group}['"]`), `project tab ${group}`);
+    assert.match(projectOriginal, new RegExp(`['"]${group}['"]`), `project reader ${group}`);
+  }
+  assert.match(projects, /NativeProjectTabs::definitions/);
+  assert.match(projects, /native_project_tabs/);
+  assert.match(projects, /NativeCompanyProjectPins/);
+});

@@ -280,6 +280,7 @@ class Issuers extends AdminController
                 'legal_name'=>$this->input->post('legal_name',false),'tax_id'=>$this->input->post('tax_id',false),
                 'profile'=>$this->input->post('company_profile',false)??[],
             ],$id,$revision);
+            require_once APPPATH.'services/NativePwaIdentity.php';NativePwaIdentity::publish($this);
             CompanyRequestScope::invalidateCaches($this);
             $this->session->set_flashdata('company_identity_notice','Identificação da empresa atualizada.');
         } catch(DomainException $error){

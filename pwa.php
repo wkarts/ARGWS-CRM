@@ -1,53 +1,14 @@
 <?php
-/** Public, database/session-free install metadata. Never bootstrap the CRM here. */
-require_once __DIR__ . '/application/helpers/app_branding_helper.php';
-header('Cache-Control: no-store, max-age=0');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: no-referrer');
-if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)) {
-    header('Allow: GET, HEAD'); http_response_code(405); exit;
-}
-$script = parse_url($_SERVER['SCRIPT_NAME'] ?? '/pwa.php', PHP_URL_PATH);
-$root = rtrim(str_replace('\\', '/', dirname($script)), '/') . '/';
-// Reject malformed server routing; never trust Host or forwarded headers for scope.
-if (!preg_match('#^/(?:[a-zA-Z0-9_.%~-]+/)*$#', $root)) {
-    http_response_code(400); exit;
-}
-$resource = $_GET['resource'] ?? 'manifest';
-if ($resource === 'worker') {
-    header('Content-Type: application/javascript; charset=utf-8');
-    header('Service-Worker-Allowed: ' . $root);
-    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile(__DIR__ . '/assets/pwa/worker.js');
-    exit;
-}
-if (!in_array($resource, ['manifest', 'icon-192', 'icon-512', 'icon-maskable-512'], true)) { http_response_code(404); exit; }
-$config = [];
-require __DIR__ . '/application/config/branding.php';
-$icons = [];
-foreach (['192' => 192, '512' => 512, 'maskable-512' => 512] as $variant => $size) {
-    $relative = $config['pwa_icon_' . str_replace('-', '_', (string) $variant)] ?? '';
-    $file = is_string($relative) ? realpath(__DIR__ . '/' . $relative) : false;
-    $public = realpath(__DIR__ . '/assets');
-    $info = $file && strpos($file, $public . DIRECTORY_SEPARATOR) === 0 ? @getimagesize($file) : false;
-    // Only exact-size local public PNGs, never tenant uploads, URLs or SVG scripts.
-    if (!$info || $info[0] !== $size || $info[1] !== $size || $info[2] !== IMAGETYPE_PNG
-        || !preg_match('~^assets/[a-zA-Z0-9_./-]+\.png$~', $relative) || strpos($relative, '..') !== false) {
-        $relative = 'assets/pwa/icon-' . $variant . '.png';
-    }
-    if ($resource === 'icon-' . $variant) {
-        header('Content-Type: image/png');
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile(__DIR__ . '/' . $relative);
-        exit;
-    }
-    $icons[] = ['src' => $root . 'pwa.php?resource=icon-' . $variant, 'sizes' => $size . 'x' . $size, 'type' => 'image/png', 'purpose' => $variant === 'maskable-512' ? 'maskable' : 'any'];
-}
-$theme = $config['pwa_theme_color'] ?? '#2563eb';
-if (!is_string($theme) || !preg_match('/^#[a-fA-F0-9]{6}$/', $theme)) $theme = '#2563eb';
-header('Content-Type: application/manifest+json; charset=utf-8');
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'HEAD') exit;
-echo json_encode([
-    'id' => $root, 'name' => crm_app_display_name(), 'short_name' => crm_app_display_name(),
-    'lang' => 'pt-BR', 'start_url' => $root . 'admin', 'scope' => $root,
-    'display' => 'standalone', 'background_color' => '#ffffff', 'theme_color' => $theme,
-    'icons' => $icons,
-], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+/** Public PWA metadata. It consumes only the atomically published projection. */
+require_once __DIR__.'/application/helpers/app_branding_helper.php';
+header('Cache-Control: no-store, max-age=0');header('X-Content-Type-Options: nosniff');header('Referrer-Policy: no-referrer');
+if(!in_array($_SERVER['REQUEST_METHOD']??'GET',['GET','HEAD'],true)){header('Allow: GET, HEAD');http_response_code(405);exit;}
+$script=parse_url($_SERVER['SCRIPT_NAME']??'/pwa.php',PHP_URL_PATH);$root=rtrim(str_replace('\\','/',dirname($script)),'/').'/';if(!preg_match('#^/(?:[a-zA-Z0-9_.%~-]+/)*$#',$root)){http_response_code(400);exit;}
+$resource=$_GET['resource']??'manifest';$fallback=['icon-192'=>'assets/pwa/icon-192.png','icon-512'=>'assets/pwa/icon-512.png','icon-maskable-512'=>'assets/pwa/icon-maskable-512.png','apple-touch-icon-180'=>'assets/pwa/apple-touch-icon-180.png','favicon-16'=>'assets/images/argws/favicon-16.png','favicon-32'=>'assets/images/argws/favicon-32.png','favicon-ico'=>'assets/images/argws/favicon.ico'];
+if($resource==='worker'){header('Content-Type: application/javascript; charset=utf-8');header('Service-Worker-Allowed: '.$root);if(($_SERVER['REQUEST_METHOD']??'GET')!=='HEAD')readfile(__DIR__.'/assets/pwa/worker.js');exit;}
+if(!in_array($resource,array_merge(['manifest'],array_keys($fallback)),true)){http_response_code(404);exit;}
+$runtime=null;$runtimeRoot=realpath(__DIR__.'/assets/pwa/runtime');$runtimeFile=$runtimeRoot===false?false:$runtimeRoot.'/identity.json';
+if($runtimeFile&&is_file($runtimeFile)){$doc=json_decode((string)@file_get_contents($runtimeFile),true);if(is_array($doc)&&in_array($doc['format']??null,[1,2],true)&&is_string($doc['revision']??null)&&preg_match('/^[a-f0-9]{64}$/D',$doc['revision'])&&is_array($doc['files']??null)&&is_array($doc['hashes']??null)){$valid=true;foreach(array_diff(array_keys($fallback),['favicon-ico'])as$key){$name=$doc['files'][$key]??null;$file=$runtimeRoot.'/'.(is_string($name)?$name:'');if(!is_string($name)||!preg_match('/^[a-z0-9_.-]+\.png$/D',$name)||realpath($file)!==$file||strpos($file,$runtimeRoot.DIRECTORY_SEPARATOR)!==0||!is_file($file)||!is_string($doc['hashes'][$key]??null)||!hash_equals($doc['hashes'][$key],hash_file('sha256',$file))){$valid=false;break;}}if($valid)$runtime=$doc;}}
+$revision=is_array($runtime)?$runtime['revision']:hash('sha256',implode('|',array_map(static function($path){$file=__DIR__.'/'.$path;return $path.(is_file($file)?':'.hash_file('sha256',$file):'');},array_values($fallback))));
+if($resource!=='manifest'){$relative=$runtime['files'][$resource]??null;$file=is_array($runtime)&&is_string($relative)?$runtimeRoot.'/'.$relative:__DIR__.'/'.$fallback[$resource];$info=@getimagesize($file);$expected=str_starts_with($resource,'favicon-16')?16:(str_starts_with($resource,'favicon-32')?32:($resource==='apple-touch-icon-180'?180:($resource==='icon-192'?192:512)));if(!$info||$info[0]!==$expected||$info[1]!==$expected||$info[2]!==IMAGETYPE_PNG){$file=__DIR__.'/'.$fallback[$resource];}$mime=$resource==='favicon-ico'?'image/x-icon':'image/png';header('Content-Type: '.$mime);if(($_SERVER['REQUEST_METHOD']??'GET')!=='HEAD')readfile($file);exit;}
+$config=[];require __DIR__.'/application/config/branding.php';$configured=getenv('APP_DISPLAY_NAME');$configured=is_string($configured)?trim($configured):'';$name=is_array($runtime)&&is_string($runtime['name']??null)?$runtime['name']:$configured;if($name===''&&is_string($config['pwa_installation_name']??null))$name=trim($config['pwa_installation_name']);if($name===''||$name==='CRM')$name='ARGWS CRM';$short=is_array($runtime)&&is_string($runtime['short_name']??null)?$runtime['short_name']:(strlen($name)<=32?$name:substr($name,0,29).'...');$theme=is_array($runtime)&&is_string($runtime['theme_color']??null)?$runtime['theme_color']:($config['pwa_theme_color']??'#2563eb');if(!preg_match('/^#[a-fA-F0-9]{6}$/',$theme))$theme='#2563eb';$icons=[];foreach(['icon-192'=>192,'icon-512'=>512,'icon-maskable-512'=>512]as$key=>$size)$icons[]=['src'=>$root.'pwa.php?resource='.$key.'&v='.$revision,'sizes'=>$size.'x'.$size,'type'=>'image/png','purpose'=>$key==='icon-maskable-512'?'maskable':'any'];header('Content-Type: application/manifest+json; charset=utf-8');if(($_SERVER['REQUEST_METHOD']??'GET')==='HEAD')exit;echo json_encode(['id'=>$root,'name'=>$name,'short_name'=>$short,'lang'=>'pt-BR','start_url'=>$root.'admin','scope'=>$root,'display'=>'standalone','background_color'=>'#ffffff','theme_color'=>$theme,'icons'=>$icons],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_INVALID_UTF8_SUBSTITUTE);

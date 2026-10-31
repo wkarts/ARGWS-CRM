@@ -36,9 +36,11 @@ mix.webpackConfig({
 
 if (mix.inProduction()) {
   mix.after(() => {
-    let migrationFile = fs.readFileSync("./application/config/migration.php");
-    let versionRegex = /(\['migration_version'\] = )(\d+;) (\/\/) (\d.\d.\d)/gm;
-    let versionConfig = versionRegex.exec(migrationFile)[4];
+    const migrationFile = fs.readFileSync("./application/config/migration.php", "utf8");
+    const versionMatch = migrationFile.match(/\$config\[['"]migration_version['"]\]\s*=\s*([0-9]+(?:\.[0-9]+){0,2})\s*;/m);
+    if (!versionMatch) throw new Error('Unable to determine the canonical migration version for e-invoice assets');
+    const rawVersion = versionMatch[1];
+    const versionConfig = rawVersion.includes('.') ? rawVersion : rawVersion.split('').join('.');
     console.log(versionConfig);
     [
       "modules/einvoice/assets/builds/codemirror.js",
