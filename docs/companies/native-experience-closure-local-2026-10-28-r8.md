@@ -28,7 +28,13 @@ O fluxo local já está preservado e foi mantido fechado para efeitos financeiro
 5. declaração de transmissão, avaliação do retorno e conciliação somente por revisão explícita;
 6. baixa financeira apenas quando o operador fornece o vínculo e a evidência exigidos.
 
-`Cnab400Generator::candidate()` continua retornando `operational=false`. O código não trata uma remessa local como arquivo homologado pelo Banco do Brasil e não aplica pagamento apenas por guardar ou ler retorno. A confirmação documental do CBR641, a homologação por conexão e o transporte/retorno real do banco continuam gates externos.
+`Cnab400Generator::candidate()` continua retornando `available=true`,
+`configurable=true`, `publication_blocked=false` e `operational=false`.
+Esse último campo significa somente que uma remessa local não é tratada como
+transmissão/aceite bancário. O fluxo por empresa permanece disponível sob ACL,
+CSRF, idempotência e auditoria, não aplica pagamento apenas por guardar ou ler
+retorno, e mantém como gates externos a confirmação documental do CBR641, a
+homologação por conexão e o transporte/retorno real do banco.
 
 ## Validação local
 
