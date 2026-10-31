@@ -59,11 +59,22 @@ def main():
                     failures += [j for j in jobs if j.get('conclusion') in BAD]
                     if len(jobs)<100:break
                     page+=1
-        for run_id in cancellation_plan(runs,pr,repo,own,bool(failures)):
-            if run_id in canceled:continue
-            # Recheck the PR head immediately before each mutation.
+        targets=[rid for rid in cancellation_plan(runs,pr,repo,own,bool(failures)) if rid not in canceled]
+        for run_id in targets:
             if api.call('/pulls/'+str(number))['head']['sha']!=expected:return 0
-            api.call('/actions/runs/'+str(run_id)+'/cancel','POST');canceled.add(run_id);print('Cancellation requested:',run_id,flush=True)
+            api.call('/actions/runs/'+str(run_id)+'/cancel','POST')
+            print('Cancellation requested:',run_id,flush=True)
+        if targets:
+            # Allow normal termination first. always() jobs can otherwise keep
+            # the concurrency slot despite an accepted cancellation request.
+            time.sleep(30)
+            for run_id in targets:
+                if api.call('/pulls/'+str(number))['head']['sha']!=expected:return 0
+                remaining=api.call('/actions/runs/'+str(run_id))
+                if remaining['status'] in ACTIVE and same_pr(remaining,pr,repo):
+                    api.call('/actions/runs/'+str(run_id)+'/force-cancel','POST')
+                    print('Unresponsive cancellation forced:',run_id,flush=True)
+                canceled.add(run_id)
         if failures:
             print('First failing validation(s):',json.dumps([{'name':r['name'],'url':r.get('html_url'),'conclusion':r['conclusion']} for r in failures]),flush=True)
             print('Logs remain available. A corrective commit starts a fresh round.');return 1

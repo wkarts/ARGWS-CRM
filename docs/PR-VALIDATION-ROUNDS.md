@@ -8,3 +8,5 @@
 - A correção é analisada e publicada na mesma branch; o novo commit inicia a próxima rodada. O monitor não escreve código, não cria commits vazios e não reexecuta automaticamente um SHA conhecido como reprovado.
 - Cancelamento de rodadas anteriores já iniciadas antes desta política pode exigir intervenção inicial; depois o novo monitor reconcilia execuções obsoletas da mesma PR.
 - Testes locais: `python3 -m unittest tests/test_pr_validation_round.py`; `actionlint`.
+
+Se uma execução continuar ativa após cancelamento normal (por exemplo, jobs com always()), o monitor reconfirma PR/repositório/HEAD e usa force-cancel exclusivamente naquela execução elegível. Isso libera o slot sem remover logs ou artefatos já gravados.
