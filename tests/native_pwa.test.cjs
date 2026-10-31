@@ -129,5 +129,6 @@ test('PWA evidence covers both widths, masks controls, preserves post-merge vali
 test('HTTP fixture has native mobile viewport and accessible synthetic field',()=>{
  const router=fs.readFileSync('tests/native_pwa_router.php','utf8');
  assert.match(router,/<meta name="viewport" content="width=device-width,initial-scale=1">/);
+ assert.match(router,/define\('APPPATH',\s*\$root\s*\.\s*'\/application\/'\)/);
  assert.match(router,/<label for="synthetic">Synthetic unsaved fixture field<\/label><input id="synthetic"/);
 });
