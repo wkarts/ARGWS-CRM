@@ -69,8 +69,17 @@ function essentialTraceValue($value, int $depth = 0)
     }
     if (is_array($value)) {
         if ($depth >= 4) { return '[nested-array]'; }
+        $count = count($value);
+        $limit = 32;
         $trace = [];
-        foreach ($value as $key => $item) { $trace[$key] = essentialTraceValue($item, $depth + 1); }
+        $seen = 0;
+        foreach ($value as $key => $item) {
+            if ($seen++ >= $limit) {
+                $trace['__truncated__'] = '[array items=' . $count . ']';
+                break;
+            }
+            $trace[$key] = essentialTraceValue($item, $depth + 1);
+        }
         return $trace;
     }
     if (is_object($value)) { return '[object ' . get_debug_type($value) . ']'; }
@@ -80,6 +89,8 @@ function essentialTraceValue($value, int $depth = 0)
 final class EssentialTestDb
 {
     public array $queries = [];
+    /** Worker subprocesses do not expose query diagnostics to the parent test. */
+    public bool $recordQueries = true;
     /** Opt-in MySQL metadata declarations for SQLite-only controller fixtures. */
     public array $declaredMysqlMetadata = [];
     /** Last failed statement for integration-test diagnostics; bound values are never retained. */
@@ -106,7 +117,9 @@ final class EssentialTestDb
     public function driver(): string { return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME); }
     public function query($sql, $params = [])
     {
-        $this->queries[] = [$sql, array_map(static fn($value) => essentialTraceValue($value), $params)];
+        if ($this->recordQueries) {
+            $this->queries[] = [$sql, array_map(static fn($value) => essentialTraceValue($value), $params)];
+        }
         if ($this->failOn !== null && str_contains($sql, $this->failOn)) { return false; }
         if ($this->driver() === 'sqlite') {
             $declaration=str_contains($sql,'information_schema.')&&is_string($params[0]??null)

@@ -2,7 +2,7 @@
 require_once dirname(__DIR__).'/issuers_core_support.php';if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
 function pvrConnection(string$p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
 if(($argv[1]??'')==='worker'){
-    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$GLOBALS['essentialPrefix']=$p;$db=pvrConnection($p);$GLOBALS['CI']=(object)['db'=>$db];if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');require APPPATH.'services/CompanyPostRefundManualReversalSource.php';$v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
+    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$GLOBALS['essentialPrefix']=$p;$db=pvrConnection($p);$db->recordQueries=false;$GLOBALS['CI']=(object)['db'=>$db];if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');require APPPATH.'services/CompanyPostRefundManualReversalSource.php';$v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
     try{(new CompanyPostRefundManual($db,$p))->reverse($v['issuer'],7,$v['invoice'],$v['manual_request_key'],$v['revision'],$v['key'],$v['entry'],$v['evidence'],true);echo'confirmed';}
     catch(DomainException$e){if(!in_array($e->getMessage(),['company_post_refund_manual_reversal_conflict','company_credit_access_denied','asaas_refund_grant_required','asaas_company_access_denied','company_invoice_stale'],true))throw$e;echo$e->getMessage();}exit(0);
 }
