@@ -83,6 +83,15 @@ As classificações não são contadas como paridade funcional aprovada. As aç�
 admitidas e as 44 ações necessárias permanecem dependentes dos testes HTTP,
 instalação e dados reais do CI.
 
+## Inventário de fronteiras
+
+`docs/issuer-isolation-inventory.json` foi regenerado contra o código final;
+`python3 scripts/audit-issuer-isolation.py` retorna zero erros de inventário.
+As fronteiras alteradas permanecem `unreviewed` ou `partial` até revisão
+específica, e `operational_rollout` continua `blocked`. O inventário é um
+controle de integridade e não uma autorização automática de operação
+multiempresa.
+
 ## Limpeza e preservação
 
 Os sete descartáveis da auditoria não existem na cópia final:
