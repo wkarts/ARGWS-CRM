@@ -161,7 +161,7 @@ async function fields(form) {
                     assert.equal(omittedState.priority, Number(priority));
                     assert.deepEqual(omittedState.followers, follow === '1' ? [setup.actor] : []);
                 } else {
-                    const route = url + '/admin/company_standalone_tasks';
+                    const route = url + '/admin/tasks/standalone';
                     const post = route;
                     await page.goto(route);
                     assert.equal(await page.locator('#task-new-priority').inputValue(), priority);
@@ -239,7 +239,7 @@ async function fields(form) {
             409,
         );
         assert.equal(
-            (await context.request.get(url + '/admin/company_standalone_tasks?task=' + created['a-standalone_tasks'])).status(),
+            (await context.request.get(url + '/admin/tasks/standalone?task=' + created['a-standalone_tasks'])).status(),
             409,
         );
         assert.deepEqual(
@@ -259,4 +259,5 @@ async function fields(form) {
     console.error(error.stack);
     process.exitCode = 1;
 });
+
 

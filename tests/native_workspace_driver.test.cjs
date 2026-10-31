@@ -84,9 +84,8 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
         'companies_sales_extras_browser.cjs':1,
         'settings/resume_439_connect_browser.cjs':1,
         'settings/resume_439_microsoft_browser.cjs':2,
-        'settings/task_timer_auto_stop_browser.cjs':1
     }, 'new nested role filters require a visibility audit; constructor coverage is not visibility proof');
-    assert.deepEqual(aliases, {'settings/task_timer_auto_stop_browser.cjs':['button','button','button','button'],'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; both timer aliases are in the selected-record default panel');
+    assert.deepEqual(aliases, {'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; the remaining legacy timer alias is in the selected-record default panel');
     const sales=fs.readFileSync(__dirname+'/companies_sales_extras_browser.cjs','utf8');
     const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/estimates?document='+sources[a])"));
     const tab=selected.indexOf("getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click()");
