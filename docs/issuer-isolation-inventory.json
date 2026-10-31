@@ -4537,7 +4537,7 @@
       "evidence": ""
     },
     "application/services/CompanyTasks.php": {
-      "sha256": "3f8c95025c6a5319e97261f23bc58f08ae1355e13e61207c803437db699ce59e",
+      "sha256": "a52d26034ee59e568372f3fb5545dfeed32f71204e45fa79261fcc2aa08e6bec",
       "categories": [
         "customer_privacy"
       ],
@@ -5814,7 +5814,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "3ce5545d5a26218c9a23baf54140abbc15908eb435d76c27dd54992e1c0baebc",
+      "sha256": "7ab47da0fcbfb13f5e2bf3c49c80053c25c3ae3454182bc02850ef70191cd574",
       "categories": [
         "invoice_table"
       ],
