@@ -76,10 +76,25 @@ async function createNativeProjectTask(page, baseUrl, options) {
     return { canonical: String(payload.id), sourceId: String(sourceId) };
 }
 
+async function addNativeTaskChecklistItem(page, baseUrl, taskCanonical, text) {
+    await page.goto(baseUrl + '/admin/tasks/list_tasks/' + taskCanonical);
+    await page.locator('[data-native-task-detail]').waitFor({ state: 'visible' });
+    await page.locator('button[onclick*="add_task_checklist_item"]').click();
+    const field = page.locator('textarea[name="checklist-description"]').last();
+    await field.fill(text);
+    const responsePromise = page.waitForResponse((response) =>
+        response.request().method() === 'POST' && response.url().includes('/admin/tasks/add_checklist_item'),
+    );
+    await field.press('Tab');
+    const response = await responsePromise;
+    assert.equal(response.status(), 200);
+}
+
 module.exports = {
     PROJECT_RADIX,
     TASK_RADIX,
     createNativeProject,
     createNativeProjectTask,
+    addNativeTaskChecklistItem,
     submitAndNavigate,
 };
