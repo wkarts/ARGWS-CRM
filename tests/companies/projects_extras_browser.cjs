@@ -64,8 +64,8 @@ async function createNativeTask(page, projectCanonical, name) {
     await form.waitFor({ state: 'attached' });
     await page.locator('#_task_modal').waitFor({ state: 'visible' });
     await form.locator('input[name="name"]').fill(name);
-    await form.locator('input[name="startdate"]').fill('2026-10-19');
-    await form.locator('input[name="duedate"]').fill('2026-11-19');
+    await form.locator('input[name="startdate"]').fill('19/10/2026');
+    await form.locator('input[name="duedate"]').fill('19/11/2026');
 
     const responsePromise = page.waitForResponse((response) =>
         response.request().method() === 'POST' && response.url().includes('/admin/tasks/task'),
@@ -123,8 +123,8 @@ async function createNativeTask(page, projectCanonical, name) {
             const projectForm = page.locator('#project_form');
             await projectForm.locator('#clientid').selectOption(client);
             await projectForm.locator('#name').fill(projectName);
-            await projectForm.locator('#start_date').fill('2026-10-19');
-            await projectForm.locator('#deadline').fill('2026-11-19');
+            await projectForm.locator('#start_date').fill('19/10/2026');
+            await projectForm.locator('#deadline').fill('19/11/2026');
             await projectForm.locator('#billing_type').selectOption('1');
             await nav(page, projectForm.locator('button[type=submit]'));
 
