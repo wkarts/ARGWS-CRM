@@ -46,7 +46,12 @@ foi feito reset, rebase, checkout destrutivo ou force-push.
 - Build: `npm run build` mantém os dois passos do Mix e agora interpreta a
   versão canônica de migration `483` como `4.8.3` de forma robusta, sem
   depender de um comentário com formato frágil. O passo principal e o módulo
-  e-invoice compilam.
+  e-invoice compilam. Como o ajuste do parser é funcional para o gate do
+  módulo, o e-invoice foi versionado para `1.0.2` com a migration nativa `102`
+  explícita e NOOP; a migration histórica `101` não foi alterada.
+- O fixture HTTP PWA inicializa `APPPATH` antes de carregar a mesma view de
+  produção. Assim o gate browser valida o manifest real em `/` e `/crm/`, em
+  vez de depender de uma página sintética sem os links PWA.
 
 ## CNAB400
 
@@ -104,6 +109,8 @@ o código da branch são considerados.
 | `python3 tests/ci/test_native_company_focused.py` | 10/10 passou, incluindo casos negativos sintéticos |
 | `python3 tests/test_native_pwa_http.py` | 3 testes reconhecidos, pulados por servidor PHP/browser indisponível |
 | `node --check tests/settings_pusher_recovery_browser.cjs` | passou |
+| `python3 -m unittest discover -s tests -p 'test_module_migration_diff.py'` | 44/44 passou |
+| `node --check tests/native_pwa.browser.cjs` | passou |
 | `PATH="$PWD/node_modules/.bin:$PATH" npm run build` | passou nos bundles principais e no módulo e-invoice |
 
 PHP, Docker/MySQL/MariaDB, Chromium/Playwright e o servidor autenticado não
