@@ -11,9 +11,11 @@ require_once __DIR__.'/ApiReceiptSchema.php';
 require_once __DIR__.'/ApiMovements.php';
 
 /**
- * Explicitly reviewed nominal CNAB400 receipt. Disabled unless a separate,
- * issuer-bound homologation declaration already exists for the exact batch.
- * No endpoint in this increment can create that declaration or issue a 400 file.
+ * Explicitly reviewed nominal CNAB400 receipt. Financial application remains
+ * gated by an issuer-bound declaration for the exact batch, while local
+ * preparation and generation endpoints remain available under their own
+ * technical, permission and audit checks. No automatic bank transmission or
+ * settlement is performed.
  */
 final class Cnab400ReviewedReceipt implements \CompanyReceiptSource
 {
