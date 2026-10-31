@@ -8,9 +8,6 @@ on:
     paths: ['modules/pige_bridge/**', 'application/config/argws_resources.php', 'tests/pige_bridge_*.php', 'tests/pige_bridge_*.py', 'tests/fixtures/pige-crm-diagnostics-v1.json', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
 permissions:
   contents: read
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   contract:
     runs-on: ubuntu-latest

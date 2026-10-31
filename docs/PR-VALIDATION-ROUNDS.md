@@ -10,3 +10,5 @@
 - Testes locais: `python3 -m unittest tests/test_pr_validation_round.py`; `actionlint`.
 
 Se uma execução continuar ativa após cancelamento normal (por exemplo, jobs com always()), o monitor reconfirma PR/repositório/HEAD e usa force-cancel exclusivamente naquela execução elegível. Isso libera o slot sem remover logs ou artefatos já gravados.
+
+Os workflows especializados de reconstrução da base CI e ponte PIGE não foram modificados só para concurrency, evitando acioná-los em toda a PR sem mudança de seu domínio. Quando executados numa PR, continuam cobertos pelo cancelamento central da rodada. Inventários devem ser gerados em árvore de fontes limpa, sem incluir bundles ignorados gerados por npm build.
