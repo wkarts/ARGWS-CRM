@@ -54,6 +54,13 @@ async function createForm(page,url,client) {
   // visible boxes even when the form element itself has zero computed height.
   await page.locator('#invoice-form .accounting-template').waitFor({state:'visible'});
   await page.waitForFunction(()=>typeof calculate_total==='function'&&typeof validate_invoice_form==='function');
+  const expectedClient=String(client);
+  await page.waitForFunction(expected=>{
+    const select=document.querySelector('#clientid');
+    return !!(select&&Array.from(select.options).some(option=>option.value===expected));
+  },expectedClient);
+  await picker(page,'#clientid',expectedClient);
+  await page.waitForFunction(expected=>document.querySelector('#clientid')?.value===expected,expectedClient);
   const currency=await page.locator('#currency option').evaluateAll(xs=>xs.find(x=>x.textContent.trim()==='BRL')?.value);
   assert(currency,'original form offers stored BRL currency');await picker(page,'#currency',currency);
 }
