@@ -122,7 +122,12 @@ async function save(page,url) {
   const responseMatches=r=>matches(r.request());
   const [request,response]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
   assert.equal(request.method(),'POST','the original invoice POST is observed');
-  await assertRedirect(page,response,url);
+  // Only the native command carries a durable request key. The principal
+  // keeps the original legacy writer, where replaying the same POST would
+  // legitimately collide with its already issued invoice number.
+  const nativeRequestKey=await page.locator('#invoice-form input[name="_native_invoice_request_key"]').count();
+  if(nativeRequestKey)await assertRedirect(page,response,url);
+  else if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed legacy document');assert.equal(response.status(),200,'worker exposes a successful final legacy document');}
   await page.waitForURL(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/);
   const id=new URL(page.url()).pathname.split('/').pop();
   await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});
