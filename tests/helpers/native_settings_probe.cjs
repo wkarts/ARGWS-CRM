@@ -15,7 +15,8 @@ async function probeNativeSettings(browser,url,password,issuers){
     const form=page.locator('#settings-form');assert.equal(await form.count(),1);
     assert.equal(await form.locator('[name="settings['+field+']"]').count(),1);
     assert.match(await form.locator('[name=native_settings_revision]').inputValue(),/^[a-f0-9]{64}$/);
-    assert.match(await form.locator('[name=_native_company_csrf]').inputValue(),/^[a-f0-9]{64}$/);
+    const tokens=await form.locator('[name=_native_company_csrf]').evaluateAll(xs=>xs.map(x=>x.value));
+    assert.equal(tokens.length>0&&tokens.every(value=>/^[a-f0-9]{64}$/.test(value)&&value===tokens[0]),true,'all native CSRF fields must contain the same valid token');
    }
   }
   console.log('Early native Settings groups HTTP/form/context probe passed for primary/A/B; no settings changed.');
