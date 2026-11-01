@@ -25,7 +25,7 @@ essentialThrows(fn()=>$pdfTransport->response($a, 999999, $branded, 'GET', []), 
 foreach (['POST', 'PUT', 'DELETE'] as $method) {
     essentialThrows(fn()=>$pdfTransport->response($a, 7, $branded, $method, []), 'native_company_invoice_method_denied', 'PDF is never a mutation transport');
 }
-foreach ([['output_type'=>'F'], ['output_type'=>'S'], ['output_type'=>['I']], ['print'=>['1']], ['issuer_id'=>$b], ['file'=>'/tmp/forbidden.pdf']] as $query) {
+foreach ([['output_type'=>'I','pdf'=>'1'], ['output_type'=>'F'], ['output_type'=>'S'], ['output_type'=>['I']], ['print'=>['1']], ['issuer_id'=>$b], ['file'=>'/tmp/forbidden.pdf']] as $query) {
     essentialThrows(fn()=>$pdfTransport->response($a, 7, $branded, 'GET', $query), 'native_company_invoice_pdf_input', 'filesystem modes and forged context are rejected');
 }
 $db->failOn = 'INSERT INTO '.$p.'issuers_audit';
