@@ -137,7 +137,9 @@ jobs:
           git -c safe.directory="$safe_directory" rev-parse --show-toplevel
           git -c safe.directory="$safe_directory" diff --exit-code -- assets/builds assets/js/main.min.js assets/js/native-tasks.min.js assets/js/native-ui-tools.min.js assets/js/tickets.min.js mix-manifest.json
       - name: Compile application PHP syntax before databases
-        run: python3 scripts/ci/check-php-syntax.py
+        run: |
+          python3 -m unittest tests/ci/test_php_syntax_preflight.py
+          python3 scripts/ci/check-php-syntax.py
       - name: Link native JavaScript dependencies before databases
         run: |
           node --test tests/ci/native_js_dependencies.test.cjs
