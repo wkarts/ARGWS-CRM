@@ -11,7 +11,7 @@ codes = (
     'issuer_mail_transport_write_unconfirmed', 'issuer_portal_mail_write_unconfirmed',
     'company_settings_write_unconfirmed', 'company_settings_invalid_input',
     'native_settings_invalid', 'native_mail_settings_invalid', 'native_mail_settings_stale',
-    'company_calendar_denied',
+    'company_calendar_denied', 'native_portal_secure_origin_required',
 )
 for line in text.splitlines():
     if line.startswith('PHP=') and re.fullmatch(r'PHP=[0-9.]+ memory_limit=[0-9A-Za-z-]+', line):

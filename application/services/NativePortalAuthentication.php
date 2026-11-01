@@ -16,7 +16,9 @@ final class NativePortalAuthentication
  private function render(string$view,string$title,?string$message=null):void{$this->ci->data(['title'=>_l($title),'bodyclass'=>$view==='login'?'customers_login':$view,'native_portal_message'=>$message]);$this->ci->view($view);$this->ci->layout();}
  private function redirect(string$path):void{redirect(NativePortalPresentation::url($path),'location',303);}
  private function cookie(?array$receipt):void{
-  $path=NativePortalPresentation::cookiePath($this->ci);$options=NativePortalRemember::cookieOptions($receipt['cookie']??'',$path,$receipt['expires_at']??date('Y-m-d H:i:s',time()-3600));
+  // Expiring a credential is not issuing one. Ordinary HTTP session login must
+  // not fail merely because it clears an optional Secure remember-cookie.
+  $path=NativePortalPresentation::cookiePath($this->ci,$receipt!==null);$options=NativePortalRemember::cookieOptions($receipt['cookie']??'',$path,$receipt['expires_at']??date('Y-m-d H:i:s',time()-3600));
   // CI 3.1.11's cookie helper ignores SameSite and may apply global domain/prefix.
   // Emit the explicit host-only native cookie instead of inheriting those options.
   $expires=$receipt===null?time()-3600:strtotime($receipt['expires_at']);$age=$receipt===null?0:$options['expire'];

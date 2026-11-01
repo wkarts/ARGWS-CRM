@@ -60,6 +60,8 @@ jobs:
         env:
           EXPECTED_PHP: ${{ matrix.php }}
         run: argws-ci-smoke
+      - name: Verify secure remember-cookie expiration before browser integration
+        run: php tests/companies/native_portal_cookie_expiration.php
       - name: Render actual native templates in Chromium before databases
         run: python3 scripts/ci/run-native-company-focused.py browser
       - name: Preserve browser preflight evidence

@@ -6007,14 +6007,14 @@
       "evidence": ""
     },
     "application/services/NativePortalAuthentication.php": {
-      "sha256": "9f30d7aa0a802d8f580c28b373b2a966f6ade2ea70fa67696826a00fc02a5285",
+      "sha256": "d0f62910ea79906f754e395491288b7aefd378f13e0dcf3eae4d13ff908e11a0",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         13,
-        53,
-        79
+        55,
+        81
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -6192,7 +6192,7 @@
       "evidence": ""
     },
     "application/services/NativePortalPresentation.php": {
-      "sha256": "f0d6cee9b53a0184785c8cf2d7d41a6968e6e341b37903e9f12fa7e97baca644",
+      "sha256": "21d3134ad0acda0a68df20577d141a5396b44bacecf7170a64ea5b25a6ee6d2e",
       "categories": [
         "customer_privacy",
         "invoice_table"

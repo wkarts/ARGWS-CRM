@@ -78,8 +78,8 @@ final class NativePortalPresentation
  public static function scripts(bool$captcha=false):string{
   $out='';foreach(['assets/plugins/bootstrap/js/bootstrap.min.js','assets/plugins/bootstrap-select/js/bootstrap-select.min.js']as$p)$out.='<script src="'.htmlspecialchars(base_url($p),ENT_QUOTES,'UTF-8').'"></script>';if($captcha)$out.='<script src="https://www.google.com/recaptcha/api.js" async defer></script>';return$out;
  }
- public static function cookiePath($ci):string{
-  $base=$ci->config->item('base_url');$parts=is_string($base)?parse_url($base):false;if(!$parts||($parts['scheme']??'')!=='https'||!isset($parts['host'])||isset($parts['user'])||isset($parts['pass'])||isset($parts['query'])||isset($parts['fragment']))throw new DomainException('native_portal_secure_origin_required');
+ public static function cookiePath($ci,bool$requireHttps=true):string{
+  $base=$ci->config->item('base_url');$parts=is_string($base)?parse_url($base):false;if(!$parts||!in_array($parts['scheme']??'',['http','https'],true)||($requireHttps&&$parts['scheme']!=='https')||!isset($parts['host'])||isset($parts['user'])||isset($parts['pass'])||isset($parts['query'])||isset($parts['fragment']))throw new DomainException('native_portal_secure_origin_required');
   $path=$parts['path']??'/';return rtrim($path,'/').'/';
  }
 }
