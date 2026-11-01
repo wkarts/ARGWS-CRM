@@ -115,10 +115,17 @@ async function assertInvoiceFormReady(page) {
   assert.equal(result.pending,0,'original invoice validation settled');
   assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
 }
-async function legacyInvoiceTarget(page,response,url,navigationResponse=null) {
+async function legacyInvoiceTarget(page,response,url,navigationResponse=null,navigationRequest=null,clientId=null) {
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
   const responses=navigationResponse?[response,navigationResponse]:[response];
   const candidates=[];
+  const addRequest=request=>{
+    if(!request)return;
+    candidates.push(request.url());
+    try {
+      for(let current=request.redirectedFrom();current&&candidates.length<16;current=current.redirectedFrom())candidates.push(current.url());
+    } catch (_) {}
+  };
   for(const candidateResponse of responses){
     candidates.push(candidateResponse.url(),candidateResponse.headers()['location']);
     try {
@@ -130,11 +137,52 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null) {
       if(match)candidates.push(match[1]);
     } catch (_) {}
   }
+  addRequest(navigationRequest);
+  try {
+    const entries=await page.evaluate(()=>[
+      ...performance.getEntriesByType('navigation'),
+      ...performance.getEntriesByType('resource'),
+    ].map(entry=>entry.name));
+    candidates.push(...entries);
+  } catch (_) {}
   for(const candidate of candidates){
     if(!candidate)continue;
     try {
       const target=new URL(candidate,url);
       if(listPath.test(target.pathname))return target.href;
+    } catch (_) {}
+  }
+  // A service-worker navigation can follow the legacy 302 internally while
+  // Chromium exposes only the original form URL and response. The invoice is
+  // already committed, so recover its canonical id from the original table
+  // through the same authenticated browser session; never replay the POST.
+  if(clientId){
+    try {
+      const listUrl=new URL('/admin/invoices/list_invoices',url).href;
+      await page.goto(listUrl,{waitUntil:'domcontentloaded'});
+      const table=page.locator('table.table-invoices');
+      await table.waitFor({state:'visible',timeout:15000});
+      await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices tbody tr a[href]')).some(anchor=>{
+        try{return new URL(anchor.href,location.href).pathname.endsWith('/clients/client/'+expected);}catch(_){return false;}
+      }),String(clientId),{timeout:15000}).catch(()=>{});
+      const target=await table.locator('tbody tr').evaluateAll((rows,expected)=>{
+        const matches=[];
+        for(const row of rows){
+          const anchors=Array.from(row.querySelectorAll('a[href]'));
+          const owns=anchors.some(anchor=>{
+            try{return new URL(anchor.href,location.href).pathname.endsWith('/clients/client/'+expected);}catch(_){return false;}
+          });
+          const invoice=anchors.find(anchor=>{
+            try{return /\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/.test(new URL(anchor.href,location.href).pathname);}catch(_){return false;}
+          });
+          if(owns&&invoice)matches.push(invoice.href);
+        }
+        return matches.sort((left,right)=>{
+          const id=value=>Number(new URL(value,location.href).pathname.split('/').pop());
+          return id(left)-id(right);
+        }).pop()||null;
+      },String(clientId));
+      if(target)return target;
     } catch (_) {}
   }
   return null;
@@ -145,10 +193,27 @@ async function save(page,url) {
   const matches=r=>r.method()==='POST'&&new URL(r.url()).pathname===route;
   const responseMatches=r=>matches(r.request());
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
+  const clientId=await page.locator('#clientid').inputValue().catch(()=>null);
+  const observedNavigationRequests=[];
+  const observeNavigationRequest=request=>{
+    try {
+      if(request.method()==='GET'&&listPath.test(new URL(request.url()).pathname))observedNavigationRequests.push(request);
+    } catch (_) {}
+  };
+  page.context().on('request',observeNavigationRequest);
   const navigationResponse=page.waitForResponse(r=>{
     try{return r.request().method()==='GET'&&listPath.test(new URL(r.url()).pathname+'#'+new URL(r.url()).hash.replace(/^#/,''));}catch(_){return false;}
   },{timeout:10000}).catch(()=>null);
-  const [request,response,redirected]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),navigationResponse,page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  const navigationRequest=page.waitForRequest(r=>{
+    try{return r.method()==='GET'&&listPath.test(new URL(r.url()).pathname);}catch(_){return false;}
+  },{timeout:10000}).catch(()=>null);
+  let observed;
+  try {
+    observed=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),navigationRequest,navigationResponse,page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  } finally {
+    page.context().off('request',observeNavigationRequest);
+  }
+  const [request,response,redirectedRequest,redirectedResponse]=observed;
   assert.equal(request.method(),'POST','the original invoice POST is observed');
   // Only the native command carries a durable request key. The principal
   // keeps the original legacy writer, where replaying the same POST would
@@ -162,7 +227,7 @@ async function save(page,url) {
     // durable PRG target from the redirect GET/POST response pair and perform
     // only its GET; never replay the legacy POST (the invoice number is already
     // consumed).
-    const target=await legacyInvoiceTarget(page,response,url,redirected);
+    const target=await legacyInvoiceTarget(page,response,url,redirectedResponse,redirectedRequest||observedNavigationRequests[0]||null,clientId);
     assert(target,'legacy invoice POST exposes its persisted list destination');
     await page.goto(target);
   }
@@ -190,4 +255,3 @@ async function payment(page,url,id,amount,reference,note='Synthetic evidence'){
   await assertRedirect(page,response,url);await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});return response.request();
 }
 module.exports={picker,security,postRecorded,preview,createForm,line,save,edit,assertRedirect,formatDate,date,payment};
-
