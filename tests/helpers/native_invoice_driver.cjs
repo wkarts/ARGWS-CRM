@@ -111,8 +111,9 @@ async function assertInvoiceFormReady(page) {
 async function save(page,url) {
   const route=new URL(await page.locator('#invoice-form').getAttribute('action'),url).pathname;
   await assertInvoiceFormReady(page);
-  const matches=r=>r.request().method()==='POST'&&new URL(r.url()).pathname===route;
-  const [request,response]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(matches),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  const matches=r=>r.method()==='POST'&&new URL(r.url()).pathname===route;
+  const responseMatches=r=>matches(r.request());
+  const [request,response]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
   assert.equal(request.method(),'POST','the original invoice POST is observed');
   await assertRedirect(page,response,url);
   await page.waitForURL(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/);
