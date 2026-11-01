@@ -18,7 +18,7 @@ class Credit_notes extends AdminController
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
             require_once APPPATH.'services/NativeCompanyCreditsController.php';
-            NativeCompanyCreditsController::handle($this);
+            NativeCompanyCreditsController::handle($this, $id);
             return;
         }
         $this->list_credit_notes($id);
@@ -29,7 +29,7 @@ class Credit_notes extends AdminController
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
             require_once APPPATH.'services/NativeCompanyCreditsController.php';
-            NativeCompanyCreditsController::handle($this);
+            NativeCompanyCreditsController::handle($this, $id);
             return;
         }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {

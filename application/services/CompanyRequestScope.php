@@ -228,6 +228,11 @@ final class CompanyRequestScope
             $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method));
             $sharedOwnedLead = $native && $class === 'leads'
                 && in_array($method, ['index', 'file', 'export'], true);
+            // Credit notes already dispatch through the bounded native adapter
+            // for named companies.  The principal must use that same official
+            // route so its data, ACL and CSRF contract cannot diverge.
+            $sharedOwnedCredits = $native && $class === 'credit_notes'
+                && in_array($method, ['index', 'list_credit_notes'], true);
             // Estimates and proposals already dispatch to the bounded
             // NativeCompanySalesAdminHttp adapter. Mark their official list,
             // form, PDF and due-date actions as shared so the principal company
@@ -239,7 +244,7 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedOperational || $ownedStaffDownload) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $ownedStaffDownload) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
@@ -254,6 +259,7 @@ final class CompanyRequestScope
             if($sharedOwnedClient&&!self::$nativePresentation)self::deny($ci,'native_client_method_invalid',405);
             if($sharedOwnedLead&&!self::$nativePresentation)self::deny($ci,'native_lead_method_invalid',405);
             if($sharedOwnedSales&&!self::$nativePresentation)self::deny($ci,'native_sales_method_invalid',405);
+            if($sharedOwnedCredits&&!self::$nativePresentation)self::deny($ci,'native_credit_method_invalid',405);
             // Route-specific adapters report an unsupported HTTP verb as 405.
             // The generic isolated-route denial remains the final fallback for
             // actions that are not part of one of those explicit contracts.

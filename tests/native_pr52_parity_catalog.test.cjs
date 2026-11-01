@@ -97,3 +97,19 @@ test('clients and projects expose the complete original native compositions', ()
   assert.match(projects, /native_project_tabs/);
   assert.match(projects, /NativeCompanyProjectPins/);
 });
+
+test('credit notes use one native adapter for the principal and named companies', () => {
+  const scope = read('application/services/CompanyRequestScope.php');
+  const credits = read('application/controllers/admin/Credit_notes.php');
+  const adapter = read('application/services/NativeCompanyCreditsController.php');
+
+  assert.match(scope, /\$sharedOwnedCredits\s*=\s*\$native\s*&&\s*\$class\s*===\s*'credit_notes'/);
+  assert.match(scope, /\['index', 'list_credit_notes'\]/);
+  assert.match(scope, /\|\| \$sharedOwnedCredits \|\|/);
+  assert.match(scope, /native_credit_method_invalid/);
+  assert.match(credits, /NativeCompanyCreditsController::handle\(\$this, \$id\)/);
+  assert.match(credits, /public function list_credit_notes\(\$id = ''\)[\s\S]*?NativeCompanyCreditsController::handle\(\$this, \$id\)/);
+  assert.match(adapter, /CompanyRequestScope::sealedFor\(\$ci\)/);
+  assert.match(adapter, /IssuerResourceAccess/);
+  assert.match(adapter, /\$legacyCreditId/);
+});
