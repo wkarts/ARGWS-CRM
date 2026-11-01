@@ -8,6 +8,13 @@
     "elFinderBrowser": "9b2a18011be229134cfe153c420d3cbd8c210ef0136086771f018576397e4395",
     "init_ajax_search": "8d2f5561f3d424bb17806933eb543817366ba7115a73acd9c44127528ffa3fbd",
     "system_popup": "f81698a0ebdbc97b331107cecf9fbee982d753b2a4904115554d5a9c0f06a483",
-    "showHideTagsPlaceholder": "8a6436b066edddbc4babed9dcbf429ce5df14b58732d981ba7c677042c4a9934"
+    "showHideTagsPlaceholder": "8a6436b066edddbc4babed9dcbf429ce5df14b58732d981ba7c677042c4a9934",
+    "deselect_ajax_search": "fe2ba7a0554615d94ecccce944e110caa763a6981585889a60a33a335805f1ab",
+    "unformat_date": "21444a0560c82aa8e04af29b7fd634ff66e1a32af63b1364fc6ab2461a2bedb0",
+    "_split_formatted_date_by_separator": "30decd7efe5986e483ac20a283d0df8eb9f12d5676d6ca91b9cbf3a344d75a84",
+    "initializeTinyMceMentions": "c7d1ee8e259d741fff4a9d699c712980e8db1a512b035a94dfc9043d59379033"
+  },
+  "additional_source_commits": {
+    "initializeTinyMceMentions": "35ace2830eade7075cd107424b482945efb2cef4"
   }
 }

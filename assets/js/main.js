@@ -4152,23 +4152,7 @@ function edit_estimate_scheduled_email(schedule_id) {
 
 
 // Custom function for deselecting selected value from ajax dropdown
-function deselect_ajax_search(e) {
-  var $elm = $("select#" + $(e).attr("data-id"));
-  $elm.data("AjaxBootstrapSelect").list.cache = {};
-  var $elmWrapper = $elm.parents(".bootstrap-select");
-  $elm
-    .html("")
-    .append('<option value=""></option>')
-    .selectpicker("val", $elm.attr("multiple") == "multiple" ? [] : "");
-  $elmWrapper
-    .removeClass("ajax-remove-values-option")
-    .find(".ajax-clear-values")
-    .remove();
-  setTimeout(function () {
-    $elm.trigger("selected.cleared.ajax.bootstrap.select", e);
-    $elm.trigger("change").data("AjaxBootstrapSelect").list.cache = {};
-  }, 50);
-}
+
 
 // Ajax project search but only for specific customer
 
@@ -4717,57 +4701,9 @@ function do_prefix_year(date) {
   }
 }
 
-function unformat_date(date) {
-  var date_array = _split_formatted_date_by_separator(date),
-    // Y-m-d is default, see below commented code
-    month_index = 1,
-    year_index = 0,
-    day_index = 2;
-  if (
-    app.options.date_format == "d-m-Y" ||
-    app.options.date_format == "d/m/Y" ||
-    app.options.date_format == "d.m.Y"
-  ) {
-    day_index = 0;
-    month_index = 1;
-    year_index = 2;
-  } else if (
-    /* else if (app.options.date_format == 'Y-m-d') {
-            day_index = 2;
-            month_index = 1;
-            year_index = 0;
-        }*/
-    app.options.date_format == "m-d-Y" ||
-    app.options.date_format == "m.d.Y" ||
-    app.options.date_format == "m/d/Y"
-  ) {
-    day_index = 1;
-    month_index = 0;
-    year_index = 2;
-  }
 
-  return (
-    date_array[year_index] +
-    "-" +
-    date_array[month_index] +
-    "-" +
-    date_array[day_index]
-  );
-}
 
-function _split_formatted_date_by_separator(date) {
-  var date_array;
 
-  if (date.indexOf(".") > -1) {
-    date_array = date.split(".");
-  } else if (date.indexOf("-") > -1) {
-    date_array = date.split("-");
-  } else if (date.indexOf("/") > -1) {
-    date_array = date.split("/");
-  }
-
-  return date_array;
-}
 
 function init_tabs_scrollable() {
   // Not working fine on RTL
@@ -4818,72 +4754,7 @@ function fetch_notifications(callback) { return NativeAdminNotifications.fetch(c
 
 // Shared native task component: init_new_task_comment (assets/js/native-tasks.js).
 
-function initializeTinyMceMentions(editor, usersCallback, options = {}) {
-  if(!Object.hasOwn(editor, 'perfexCommands')) {
-    editor.perfexCommands = {}
-  }
 
-  let cachedUsers = null;
-
-  editor.perfexCommands.getUsersForMention = async function() {
-    if(Array.isArray(cachedUsers)) {
-      return cachedUsers
-    }
-
-    let users = await usersCallback()
-
-    // The task endpoint has historically returned HTML-encoded names; project
-    // endpoints return text. Normalize only the declared encoded contract so a
-    // literal "&lt;" in a project name is not silently changed.
-    const decodeName = value => {
-      if (!options.namesHtmlEncoded) return String(value);
-      const decoder = editor.getDoc().createElement('textarea');
-      decoder.innerHTML = String(value);
-      return decoder.value;
-    };
-    cachedUsers = users.map(u=>({
-      value: u.id.toString(),
-      text: decodeName(u.name),
-    }));
-
-    return cachedUsers
-  },
-  editor.perfexCommands.insertMentionUser = function (id, name, rng) {
-    // Insert in to the editor
-    editor.selection.setRng(rng || 0)
-
-    // Text and attribute values are serialized by the DOM, never concatenated
-    // into HTML received from the user directory.
-    const mention = editor.getDoc().createElement('span');
-    mention.className = 'mention';
-    mention.setAttribute('contenteditable', 'false');
-    mention.setAttribute('data-mention-id', String(id));
-    mention.textContent = '@' + String(name);
-    editor.insertContent(mention.outerHTML + '&nbsp;');
-  }
-
-  editor.ui.registry.addAutocompleter('mentions', {
-    trigger: '@', // the trigger character to open the autocompleter
-    minChars: 0, // 0 to open the dropdown immediately after the @ is typed
-    columns: 1, // must be 1 for text-based results
-
-    // Retrieve the available users
-    fetch: function (pattern) {
-      return new Promise(resolve =>
-          resolve(editor.perfexCommands.getUsersForMention())
-      )
-    },
-
-    // Executed when user is selected from the dropdown
-    onAction: function (autocompleteApi, rng, value) {
-      editor.perfexCommands.getUsersForMention().then(users=> {
-        let user = users.find(user=>user.value == value)
-        editor.perfexCommands.insertMentionUser(value, user.text, rng)
-        autocompleteApi.hide()
-      })
-    },
-  })
-}
 
 // Shared native UI helper: init_ajax_search (assets/js/native-ui-tools.js).
 

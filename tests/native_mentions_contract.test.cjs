@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const source = fs.readFileSync('assets/js/main.js', 'utf8');
+const source = fs.readFileSync('assets/js/native-ui-tools.js', 'utf8');
 const start = source.indexOf('function initializeTinyMceMentions(');
 const end = source.indexOf('\n// Shared native UI helper:', start);
 assert(start >= 0 && end > start, 'real mention initializer is present');

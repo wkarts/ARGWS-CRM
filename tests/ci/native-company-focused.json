@@ -2791,6 +2791,11 @@
       "node",
       "--test",
       "tests/native_pr52_parity_catalog.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/task_form_helpers.test.cjs"
     ]
   ],
   "mysql": [

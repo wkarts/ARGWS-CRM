@@ -43,7 +43,7 @@ def main():
     event=json.load(open(os.environ['GITHUB_EVENT_PATH']));pr=event['pull_request'];number=pr['number'];expected=pr['head']['sha']
     if pr['head']['repo']['full_name']!=repo:raise SystemExit('Fork PR: no cancellation authority')
     api=Api(repo,os.environ['GH_TOKEN']);started=time.monotonic();canceled=set();stable_since=None;cursor=0;first=True
-    while time.monotonic()-started<45*60:
+    while time.monotonic()-started<90*60:
         latest=api.call('/pulls/'+str(number))
         if latest['state']!='open' or latest['head']['sha']!=expected:
             print('PR closed or superseded; stop without touching newer validation.');return 0
@@ -93,5 +93,5 @@ def main():
                 print('All observed PR validations completed successfully.');return 0
         else:stable_since=None
         time.sleep(30)
-    raise SystemExit('Validation still pending after 45 minutes; no success claimed.')
+    raise SystemExit('Validation still pending after 90 minutes; no success claimed.')
 if __name__=='__main__':raise SystemExit(main())

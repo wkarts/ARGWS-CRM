@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const plugin = path.join(root, 'assets/plugins/tinymce');
-const source = fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'assets/js/native-ui-tools.js'), 'utf8');
 const begin = source.indexOf('function initializeTinyMceMentions(');
 const end = source.indexOf('\n// Shared native UI helper:', begin);
 assert(begin >= 0 && end > begin);
