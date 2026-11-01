@@ -126,6 +126,12 @@ class FocusedContract(unittest.TestCase):
   self.assertIn('Verify reproducible compiled native assets',node_job)
   self.assertNotIn('Verify reproducible compiled native assets',php_job)
   self.assertEqual(workflow.count('npm ci --ignore-scripts'),1)
-  self.assertIn('needs: [validation-gate, node-contracts]',php_job)
+  self.assertIn('needs: [validation-gate, node-contracts, view-contracts]',php_job)
+  self.assertEqual(workflow.count('run-native-company-focused.py browser'),1)
+  self.assertNotIn('run-native-company-focused.py browser',php_job)
+  browser_job=workflow.split('  view-contracts:',1)[1].split('  focused:',1)[0]
+  self.assertIn('needs: node-contracts',browser_job)
+  self.assertNotIn('services:',browser_job)
+  self.assertIn('Native browser preflight (${{ matrix.php }})',browser_job)
   self.assertLess(node_job.index('Verify compiled assets'),node_job.index('Test shared native UI contracts'))
 if __name__=='__main__':unittest.main()

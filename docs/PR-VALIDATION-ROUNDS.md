@@ -29,3 +29,9 @@ Após merge, os quatro fluxos longos podem reutilizar seu resultado da PR SOMENT
 Não foi reduzida durabilidade de MySQL, alterado banco de produção ou omitida cobertura funcional para acelerar o CI.
 
 A publicação na main também exige sucesso dos quatro fluxos longos no SHA publicado ou prova da mesma árvore da PR aprovada. Não publica enquanto CI estiver reprovado, cancelado ou incompleto. Nenhum merge ou deploy é autorizado por esses scripts.
+
+## Browser fixtures before database suites (2026-11-01)
+
+The status browser fixture must load the shipped `native-ui-tools.js` module. Its previous extraction from `main.js` became stale after the shared helper extraction and failed before Chromium started. The fixture now loads the actual whole, definition-only shared module. POST, CSRF, CAS, exact large IDs, retry key, missing-revision refusal and HTTP 409 assertions remain unchanged.
+
+All 13 browser fixture commands now run in a separate early PHP 8.1/8.5 preflight, immediately after shared Node/build/syntax checks, without a MySQL service. The focused database matrix waits for both browser legs; other long workflows also require all three named jobs. The previous late browser phase is removed from the database matrix, avoiding duplicate execution. Missing, cancelled or skipped preflight is never considered success. Gate observation budget is fifteen minutes, not a new artificial success timeout.

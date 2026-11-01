@@ -16,7 +16,7 @@ jobs:
   validation-gate:
     name: Preflight and exact-tree evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 18
     permissions:
       contents: read
       actions: read
@@ -33,10 +33,47 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VALIDATION_WORKFLOW_PATH: .github/workflows/native-company-experience.yml
         run: python3 scripts/ci/validation-gate.py
+  view-contracts:
+    name: Native browser preflight (${{ matrix.php }})
+    needs: node-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: ${{ github.event_name == 'pull_request' }}
+      matrix:
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
+    env:
+      NATIVE_COMPANY_EVIDENCE: /tmp/native-browser-preflight
+      NATIVE_COMPANY_SCREENSHOT_DIR: /tmp/native-browser-preflight/screenshots
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify pinned CI runtime
+        env:
+          EXPECTED_PHP: ${{ matrix.php }}
+        run: argws-ci-smoke
+      - name: Render actual native templates in Chromium before databases
+        run: python3 scripts/ci/run-native-company-focused.py browser
+      - name: Preserve browser preflight evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-browser-preflight-php-${{ matrix.php }}
+          path: /tmp/native-browser-preflight
+          if-no-files-found: warn
+          retention-days: 3
   focused:
     # The existing matrix checks must also gate the separate Node job.
-    needs: [validation-gate, node-contracts]
-    if: ${{ needs.node-contracts.result == 'success' && needs.validation-gate.outputs.run == 'true' }}
+    needs: [validation-gate, node-contracts, view-contracts]
+    if: ${{ needs.node-contracts.result == 'success' && needs.view-contracts.result == 'success' && needs.validation-gate.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -93,8 +130,6 @@ jobs:
         run: python3 scripts/ci/run-native-company-focused.py mysql
       - name: Test actual PHP services and controllers using disposable SQLite
         run: python3 scripts/ci/run-native-company-focused.py sqlite
-      - name: Render actual native templates in Chromium
-        run: python3 scripts/ci/run-native-company-focused.py browser
       - name: Preserve focused receipts and synthetic screenshots
         if: always()
         uses: actions/upload-artifact@v4

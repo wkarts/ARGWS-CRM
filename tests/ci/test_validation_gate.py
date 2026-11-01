@@ -13,4 +13,14 @@ class GateTests(unittest.TestCase):
  def test_old_proof(self):self.run['updated_at']='2026-10-29T23:00:00Z';self.assertFalse(self.allowed())
  def test_latest_failure_not_hidden_by_earlier_success(self):
   fail=dict(self.run,id=2,conclusion='failure');self.assertEqual(m.latest([self.run,fail],'flow.yml')['conclusion'],'failure')
+class BrowserPreflightTests(unittest.TestCase):
+ def jobs(self):return [{'name':name,'status':'completed','conclusion':'success'} for name in ['node-contracts','Native browser preflight (8.1)','Native browser preflight (8.5)']]
+ def test_all_three_required(self):self.assertEqual(m.preflight_state(self.jobs()),'success')
+ def test_node_only_never_opens_database_gate(self):self.assertEqual(m.preflight_state(self.jobs()[:1]),'pending')
+ def test_browser_failure_closes_gate(self):
+  jobs=self.jobs();jobs[1]['conclusion']='failure';self.assertEqual(m.preflight_state(jobs),'failure')
+ def test_skipped_is_not_success(self):
+  jobs=self.jobs();jobs[2]['conclusion']='skipped';self.assertEqual(m.preflight_state(jobs),'failure')
+ def test_running_is_pending(self):
+  jobs=self.jobs();jobs[2]['status']='in_progress';jobs[2]['conclusion']=None;self.assertEqual(m.preflight_state(jobs),'pending')
 if __name__=='__main__':unittest.main()

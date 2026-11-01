@@ -16,7 +16,7 @@ jobs:
   validation-gate:
     name: Preflight and exact-tree evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 18
     permissions:
       contents: read
       actions: read
