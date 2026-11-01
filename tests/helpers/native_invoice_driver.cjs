@@ -75,9 +75,45 @@ async function assertRedirect(page,response,url) {
   assert.match(new URL(direct.headers().location,url).pathname,/^\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/,'redirect targets the persisted original invoice');
   if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed document');assert.equal(response.status(),200,'worker exposes a successful final document');}
 }
+async function assertInvoiceFormReady(page) {
+  // The shipped form validates the invoice number remotely before its submit
+  // handler is allowed to issue the original POST. Synchronize that validator
+  // explicitly so the browser proof never races its pending request.
+  await page.waitForFunction(() => {
+    const form = window.jQuery && window.jQuery('#invoice-form');
+    return !!(form && form.length && form.data('validator'));
+  });
+  await page.evaluate(() => {
+    const form = window.jQuery('#invoice-form');
+    if (!form.valid()) return;
+  });
+  await page.waitForFunction(() => {
+    const form = window.jQuery && window.jQuery('#invoice-form');
+    const validator = form && form.data('validator');
+    return !!(validator && validator.pendingRequest === 0);
+  });
+  const result = await page.evaluate(() => {
+    const form = window.jQuery('#invoice-form');
+    const validator = form.data('validator');
+    const valid = form.valid();
+    return {
+      valid,
+      pending: validator.pendingRequest,
+      errors: validator.errorList.map(error => ({
+        field: error.element && error.element.name,
+        message: error.message,
+      })),
+    };
+  });
+  assert.equal(result.pending,0,'original invoice validation settled');
+  assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
+}
 async function save(page,url) {
   const route=new URL(await page.locator('#invoice-form').getAttribute('action'),url).pathname;
-  const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===route),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  await assertInvoiceFormReady(page);
+  const matches=r=>r.request().method()==='POST'&&new URL(r.url()).pathname===route;
+  const [request,response]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(matches),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  assert.equal(request.method(),'POST','the original invoice POST is observed');
   await assertRedirect(page,response,url);
   await page.waitForURL(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/);
   const id=new URL(page.url()).pathname.split('/').pop();
