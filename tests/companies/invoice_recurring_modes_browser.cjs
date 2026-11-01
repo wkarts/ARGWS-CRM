@@ -2,6 +2,7 @@ const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs')
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Reconstructed HTTP440 runner. Original recovered440 assertions retained; native schema must preexist.
 'use strict';
+const {invoiceScheduleId}=require('../helpers/native_invoice_schedule_driver.cjs');
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{createHash}=require('node:crypto'),fs=require('node:fs'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
 assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.match(db||'',/^argws-crm-provision-db-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -30,7 +31,7 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
     // Validation page does not repopulate a failed form: reopen and refill the independent valid attempt.
     return schedule(owner,mode,principal,cycles,true);
    }
-   await submit(page,f.locator('button[type=submit]'));const id=new URL(page.url()).searchParams.get('schedule');if(!id){fs.writeFileSync(output+'/mode-create-failure.html',await page.content());throw Error('Schedule create remained at '+page.url()+': '+await page.locator('body').innerText());}assert.match(id||'',/^[1-9]\d*$/);return{id,url:page.url(),run:await hidden(form('run'))};}
+   await submit(page,f.locator('button[type=submit]'));const id=invoiceScheduleId(page.url());if(!id){fs.writeFileSync(output+'/mode-create-failure.html',await page.content());throw Error('Schedule create remained at '+page.url()+': '+await page.locator('body').innerText());}assert.match(id||'',/^[1-9]\d*$/);return{id,url:page.url(),run:await hidden(form('run'))};}
   const own={};
   for(const letter of['a','b']){
    const owner=own[letter]={...fixture.owners[letter]};await select(owner.issuer);

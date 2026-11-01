@@ -1,4 +1,5 @@
 'use strict';
+const {invoiceScheduleId,invoiceScheduleForm}=require('./helpers/native_invoice_schedule_driver.cjs');
 const {salesSourceId,salesPublicId}=require('./helpers/native_sales_ids.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
@@ -24,8 +25,14 @@ try{
   await nav(page,page.getByRole('button',{name:'Converter em fatura',exact:true}));const invoice=sql('SELECT invoice_id FROM tblcompany_sales_documents WHERE id='+salesSourceId('estimates',id));assert.match(invoice,/^[1-9]\d*$/);assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+invoice),'94.49');assert.equal(sql('SELECT state FROM tblcompany_sales_documents WHERE id='+salesSourceId('estimates',id)),'converted');
   const stateFields=await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=portal_permission]')}).first());const retry=await ctx.request.post(url+'/admin/estimates',{form:{...stateFields,action:'convert',document_id:id}});assert.equal(retry.status(),200);assert.equal(sql('SELECT invoice_id FROM tblcompany_sales_documents WHERE id='+salesSourceId('estimates',id)),invoice);
   await page.goto(url+'/admin/proposals');await input(client,'Proposal browser '+letter);await nav(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));const proposal=new URL(page.url()).searchParams.get('document');await nav(page,page.getByRole('button',{name:'Registrar recusa',exact:true}));assert.equal(sql('SELECT state FROM tblcompany_sales_documents WHERE id='+salesSourceId('proposals',proposal)),'declined');
-  await page.goto(url+'/admin/invoices/recurring');await input(client,'Recurring browser '+letter);await page.locator('#recurring-max').fill('2');await nav(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));const schedule=new URL(page.url()).searchParams.get('schedule');recurring[issuer]=schedule;assert.match(schedule||'',/^[1-9]\d*$/);await nav(page,page.getByRole('button',{name:'Emitir próxima ocorrência vencida',exact:true}));assert.equal(sql('SELECT completed_runs FROM tblcompany_recurring WHERE id='+schedule),'1');assert.equal(sql('SELECT COUNT(*) FROM tblcompany_recurring_runs WHERE schedule_id='+schedule),'1');
-  await nav(page,page.getByRole('button',{name:'Pausar novas emissões',exact:true}));assert.equal(sql('SELECT state FROM tblcompany_recurring WHERE id='+schedule),'paused');await nav(page,page.getByRole('button',{name:'Retomar série com a origem original',exact:true}));assert.equal(sql('SELECT state FROM tblcompany_recurring WHERE id='+schedule),'active');
+  await page.goto(url+'/admin/invoices/recurring');await input(client,'Recurring browser '+letter);
+  const scheduleCreate=invoiceScheduleForm(page,'create');await scheduleCreate.locator('#schedule-cycles').fill('2');await scheduleCreate.locator('#schedule-send').uncheck();
+  await nav(page,scheduleCreate.locator('button[type=submit]'));const schedule=invoiceScheduleId(page.url());recurring[issuer]=schedule;
+  assert.equal(sql('SELECT issuer_id FROM tblcompany_invoice_schedules WHERE id='+schedule),issuer);
+  await nav(page,invoiceScheduleForm(page,'run').locator('button[type=submit]'));
+  assert.equal(sql('SELECT completed_cycles FROM tblcompany_invoice_schedules WHERE id='+schedule),'1');assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_schedule_runs WHERE schedule_id='+schedule),'1');
+  await nav(page,invoiceScheduleForm(page,'pause').locator('button[type=submit]'));assert.equal(sql('SELECT state FROM tblcompany_invoice_schedules WHERE id='+schedule),'paused');assert.equal(await invoiceScheduleForm(page,'run').count(),0);
+  await nav(page,invoiceScheduleForm(page,'resume').locator('button[type=submit]'));assert.equal(sql('SELECT state FROM tblcompany_invoice_schedules WHERE id='+schedule),'active');assert.equal(await invoiceScheduleForm(page,'run').count(),1);
   // A form from the previous company must not produce a second quote after context changes.
   await select(issuer===a?b:a);assert.equal((await ctx.request.post(url+'/admin/estimates',{form:{...oldCreate,action:'create','invoice[client_id]':client}})).status(),409);await select(issuer);
  }
