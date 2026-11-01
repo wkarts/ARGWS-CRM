@@ -1,4 +1,5 @@
 'use strict';
+const native=require('./helpers/native_invoice_driver.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
@@ -73,12 +74,10 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.goto(url+'/admin/clients/client/'+client);
   const vat=page.locator('#edit_vat');await vat.fill('11144477735');
   await navigate(page,vat.locator('xpath=ancestor::form').locator('button[type=submit]'));
-  await page.goto(url+'/admin/invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
-  // A bank credit cannot predate invoice issuance: choose the bank's business date explicitly, independent of the PHP default timezone.
-  await page.locator('#invoice-date').fill(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
-  await page.locator('#invoice-item-0-description').fill('SYNTHETIC BB SERVICE');await page.locator('#invoice-item-0-qty').fill('1');await page.locator('#invoice-item-0-rate').fill('100.00');
-  await navigate(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));
-  const invoice=new URL(page.url()).searchParams.get('invoice');assert.match(invoice||'',/^[1-9]\d*$/);
+  await native.createForm(page,url,client);
+  await native.date(page,'#date',new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
+  await native.line(page,{description:'SYNTHETIC BB SERVICE',qty:'1',rate:'100.00'});
+  const {id:invoice}=await native.save(page,url);assert.match(invoice,/^[1-9]\d*$/);
   let response=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
   await page.locator('#bb-tab-account').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
   const variation=page.locator('input[name=variation]');await variation.fill('019');

@@ -1,4 +1,5 @@
 'use strict';
+const {salesSourceId}=require('../helpers/native_sales_ids.cjs');
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // New recovery regression: actual shared form, cloned fields, optional flags, PDF and conversion.
@@ -34,7 +35,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
    await page.locator('#invoice-item-2-description').fill('NEVER-RENDER-OPTIONAL');await page.locator('#invoice-item-2-qty').fill('1.00');await page.locator('#invoice-item-2-rate').fill('999.00');await page.locator('#invoice-item-2-details').fill('NEVER-RENDER-OPTIONAL-DETAIL');await page.locator('#invoice-item-2-choice').selectOption('unselected');assert.equal(await page.locator('[name="invoice[items][2][is_optional]"]').inputValue(),'1');assert.equal(await page.locator('[name="invoice[items][2][is_selected]"]').inputValue(),'0');
    await page.locator('#invoice-note').fill('Recovery metadata '+letter+' '+kind+' '+stamp);
    await nav(page,page.getByRole('button',{name:'Emitir documento privado',exact:true}));
-   const document=new URL(page.url()).searchParams.get('document');assert.match(document||'',/^[1-9]\d*$/);
+   const publicDocument=new URL(page.url()).searchParams.get('document');assert.match(publicDocument||'',/^[1-9]\d*$/);const document=salesSourceId(kind,publicDocument);
    assert.equal(sql('SELECT total FROM tblcompany_sales_documents WHERE id='+document),'131.00');
    const body=await page.locator('section').first().innerText();assert(body.includes('Complemento literal <b>não HTML</b>'));assert(body.includes('hora <b>'));assert(body.includes('Opcional não escolhido — fora do total e do PDF'));
    const pdf=await context.request.get(await page.getByRole('link',{name:'Baixar PDF privado',exact:true}).getAttribute('href'));assert.equal(pdf.status(),200);assert.match(pdf.headers()['content-type'],/application\/pdf/);const bytes=await pdf.body();assert.equal(bytes.subarray(0,5).toString(),'%PDF-');

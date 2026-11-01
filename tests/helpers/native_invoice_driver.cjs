@@ -88,4 +88,18 @@ async function edit(page,url,id) {
   const response=await page.goto(url+'/admin/invoices/invoice/'+id);assert.equal(response.status(),200,'same original invoice form opens persisted values');
   await page.locator('#invoice-form tr.item').first().waitFor({state:'visible'});
 }
-module.exports={picker,security,postRecorded,preview,createForm,line,save,edit,assertRedirect};
+function formatDate(iso,format){
+  assert.match(iso,/^\d{4}-\d{2}-\d{2}$/);assert(['d-m-Y','d/m/Y','Y-m-d','d.m.Y','m-d-Y','m.d.Y','m/d/Y'].includes(format),'original date format is supported');
+  const [Y,m,d]=iso.split('-');return format.replace(/[Ymd]/g,key=>({Y,m,d}[key]));
+}
+async function date(page,selector,iso){const format=await page.evaluate(()=>window.app.options.date_format);await page.locator(selector).fill(formatDate(iso,format));}
+async function payment(page,url,id,amount,reference,note='Synthetic evidence'){
+  await preview(page,url,id);
+  const [opened]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/invoices/record_invoice_payment_ajax/'+id),page.locator('a[onclick*="record_payment("]').click()]);
+  assert.equal(opened.status(),200);const form=page.locator('#record_payment_form');await form.locator('.panel_s').waitFor({state:'visible'});
+  await form.locator('#amount').fill(amount);await form.locator('#transactionid').fill(reference);await form.locator('#note').fill(note);
+  if(await form.locator('#do_not_send_email_template').count())await form.locator('#do_not_send_email_template').check();
+  const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/invoices/record_payment'),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('button[type=submit]').click()]);
+  await assertRedirect(page,response,url);await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});return response.request();
+}
+module.exports={picker,security,postRecorded,preview,createForm,line,save,edit,assertRedirect,formatDate,date,payment};
