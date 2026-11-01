@@ -159,7 +159,30 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
   if(clientId){
     try {
       const listUrl=new URL('/admin/invoices/list_invoices',url).href;
+      const tableResponsePromise=page.waitForResponse(candidateResponse=>{
+        try{return candidateResponse.request().method()==='POST'&&/^\/admin\/invoices\/table(?:\/[1-9][0-9]*)?$/.test(new URL(candidateResponse.url()).pathname);}catch(_){return false;}
+      },{timeout:20000}).catch(()=>null);
       await page.goto(listUrl,{waitUntil:'domcontentloaded'});
+      const tableResponse=await tableResponsePromise;
+      if(tableResponse){
+        try {
+          const payload=await tableResponse.json();
+          const rows=Array.isArray(payload.aaData)?payload.aaData:(Array.isArray(payload.data)?payload.data:[]);
+          const targets=[];
+          for(const row of rows){
+            const cells=Array.isArray(row)?row:Object.values(row||{});
+            const html=cells.map(value=>String(value??'')).join(' ');
+            if(!html.includes('/clients/client/'+String(clientId)))continue;
+            const match=html.match(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*/);
+            if(match)targets.push(new URL(match[0],url).href);
+          }
+          const target=targets.sort((left,right)=>{
+            const id=value=>Number(new URL(value,url).pathname.split('/').pop());
+            return id(left)-id(right);
+          }).pop();
+          if(target)return target;
+        } catch (_) {}
+      }
       const table=page.locator('table.table-invoices');
       await table.waitFor({state:'visible',timeout:15000});
       await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices tbody tr a[href]')).some(anchor=>{
