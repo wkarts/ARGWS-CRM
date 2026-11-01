@@ -1,4 +1,5 @@
 'use strict';
+const {salesSourceId,salesPublicId}=require('./helpers/native_sales_ids.cjs');
 const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Future overlay suite, after existing native sales/browser fixtures. No external providers or mail dispatch.
@@ -16,7 +17,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
   if(owner===a){await openSalesSettings(second);stale=await fields(second.locator('form').filter({has:second.locator('input[name="settings[estimate_prefix]"]')}));}
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter.toLowerCase()+"'");for(const kind of ['estimates','proposals']){
    await page.goto(url+'/admin/'+kind);await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});await page.locator('#invoice-item-0-description').fill('Preferences browser '+letter+' '+kind);await page.locator('#invoice-item-0-rate').fill('100.00');await nav(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));const id=new URL(page.url()).searchParams.get('document');assert.match(id||'',/^[1-9]\d*$/);docs[owner+kind]=id;const prefix=letter+(kind==='estimates'?'-ORC-':'-PROP-');assert.match(await page.locator('body').innerText(),new RegExp(prefix+'\\d{6}'));assert.match(await page.locator('body').innerText(),new RegExp((kind==='estimates'?'Quote':'Proposal')+' terms '+letter));
-   const pdf=await context.request.get(url+'/admin/'+kind+'?document='+id+'&pdf=1');assert.equal(pdf.status(),200);assert.equal((await pdf.body()).subarray(0,5).toString(),'%PDF-');await nav(page,page.getByRole('button',{name:'Registrar aceite',exact:true}));await nav(page,page.getByRole('button',{name:'Converter em fatura',exact:true}));assert.equal(sql('SELECT state FROM tblcompany_sales_documents WHERE id='+id),'converted');
+   const pdf=await context.request.get(url+'/admin/'+kind+'?document='+id+'&pdf=1');assert.equal(pdf.status(),200);assert.equal((await pdf.body()).subarray(0,5).toString(),'%PDF-');await nav(page,page.getByRole('button',{name:'Registrar aceite',exact:true}));await nav(page,page.getByRole('button',{name:'Converter em fatura',exact:true}));assert.equal(sql('SELECT state FROM tblcompany_sales_documents WHERE id='+salesSourceId(kind,id)),'converted');
   }
  }
  const before=sql('SELECT settings_json FROM tblissuers_registry WHERE id='+a);assert.equal((await context.request.post(url+'/admin/settings?group=sales_documents',{form:{...stale,'settings[estimate_prefix]':'STALE-MUST-NOT-WRITE'}})).status(),409,'old settings tab denied before any write');assert.equal(sql('SELECT settings_json FROM tblissuers_registry WHERE id='+a),before);

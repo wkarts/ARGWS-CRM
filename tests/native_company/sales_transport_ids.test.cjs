@@ -1,0 +1,7 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {salesSourceId,salesPublicId}=require('../helpers/native_sales_ids.cjs');
+test('sales browser transport round trips through the actual PHP namespace codec',()=>{for(const kind of ['estimates','proposals'])for(const source of ['1','4294967295']){const publicId=salesPublicId(kind,source);assert.notEqual(publicId,source);assert.equal(salesSourceId(kind,publicId),source);}});
+test('different sales types with equal storage IDs never collide',()=>{const estimate=salesPublicId('estimates','3'),proposal=salesPublicId('proposals','3');assert.notEqual(estimate,proposal);assert.throws(()=>salesSourceId('proposals',estimate));assert.throws(()=>salesSourceId('estimates',proposal));});
+test('legacy and invalid IDs cannot be mistaken for owned document storage IDs',()=>{assert.throws(()=>salesSourceId('estimates','3'));assert.throws(()=>salesPublicId('other','3'));assert.throws(()=>salesPublicId('estimates','0'));assert.throws(()=>salesPublicId('estimates','4294967296'));});
+test('all sales browser suites distinguish public transport IDs from database IDs',()=>{const fs=require('node:fs'),path=require('node:path');for(const file of ['companies_sales_browser.cjs','companies_sales_extras_browser.cjs','settings_sales_documents_browser.cjs','settings_sales_pdf_browser.cjs']){const text=fs.readFileSync(path.resolve(__dirname,'..',file),'utf8');assert.match(text,/native_sales_ids/);assert.doesNotMatch(text,/FROM tblcompany_sales_documents WHERE id='\+(?:id|oldId|proposal)\b/);}});
