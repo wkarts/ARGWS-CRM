@@ -115,15 +115,21 @@ async function assertInvoiceFormReady(page) {
   assert.equal(result.pending,0,'original invoice validation settled');
   assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
 }
-async function legacyInvoiceTarget(page,response,url) {
+async function legacyInvoiceTarget(page,response,url,navigationResponse=null) {
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
-  const candidates=[response.url(),response.headers()['location']];
-  for(let request=response.request();request&&candidates.length<12;request=request.redirectedFrom())candidates.push(request.url());
-  try {
-    const body=await response.text();
-    const match=body.match(/(?:https?:[^"'\s]+)?(\/admin\/invoices\/list_invoices\/[1-9][0-9]*)/);
-    if(match)candidates.push(match[1]);
-  } catch (_) {}
+  const responses=navigationResponse?[response,navigationResponse]:[response];
+  const candidates=[];
+  for(const candidateResponse of responses){
+    candidates.push(candidateResponse.url(),candidateResponse.headers()['location']);
+    try {
+      for(let request=candidateResponse.request();request&&candidates.length<16;request=request.redirectedFrom())candidates.push(request.url());
+    } catch (_) {}
+    try {
+      const body=await candidateResponse.text();
+      const match=body.match(/(?:https?:[^"'\s]+)?(\/admin\/invoices\/list_invoices\/[1-9][0-9]*)/);
+      if(match)candidates.push(match[1]);
+    } catch (_) {}
+  }
   for(const candidate of candidates){
     if(!candidate)continue;
     try {
@@ -138,7 +144,11 @@ async function save(page,url) {
   await assertInvoiceFormReady(page);
   const matches=r=>r.method()==='POST'&&new URL(r.url()).pathname===route;
   const responseMatches=r=>matches(r.request());
-  const [request,response]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
+  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
+  const navigationResponse=page.waitForResponse(r=>{
+    try{return r.request().method()==='GET'&&listPath.test(new URL(r.url()).pathname+'#'+new URL(r.url()).hash.replace(/^#/,''));}catch(_){return false;}
+  },{timeout:10000}).catch(()=>null);
+  const [request,response,redirected]=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),navigationResponse,page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
   assert.equal(request.method(),'POST','the original invoice POST is observed');
   // Only the native command carries a durable request key. The principal
   // keeps the original legacy writer, where replaying the same POST would
@@ -146,13 +156,13 @@ async function save(page,url) {
   const nativeRequestKey=await page.locator('#invoice-form input[name="_native_invoice_request_key"]').count();
   if(nativeRequestKey)await assertRedirect(page,response,url);
   else if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed legacy document');assert.equal(response.status(),200,'worker exposes a successful final legacy document');}
-  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
   if(!listPath.test(page.url())){
     // The legacy POST can be fulfilled by Chromium's navigation loader while
     // the existing PWA worker leaves the address bar on the form. Recover the
-    // durable PRG target from that same response and perform only its GET;
-    // never replay the legacy POST (the invoice number is already consumed).
-    const target=await legacyInvoiceTarget(page,response,url);
+    // durable PRG target from the redirect GET/POST response pair and perform
+    // only its GET; never replay the legacy POST (the invoice number is already
+    // consumed).
+    const target=await legacyInvoiceTarget(page,response,url,redirected);
     assert(target,'legacy invoice POST exposes its persisted list destination');
     await page.goto(target);
   }
