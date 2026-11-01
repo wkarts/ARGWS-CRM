@@ -11,5 +11,8 @@ class RoundTests(unittest.TestCase):
  def test_push_release_dispatch_never(self):
   for event in ['push','release','workflow_dispatch','workflow_run']:self.assertEqual(self.plan([self.run_row(event=event)],True),[])
  def test_completed_and_self_never(self):self.assertEqual(self.plan([self.run_row(99),self.run_row(status='completed')],True),[])
+ def test_replaced_same_sha_run_is_not_a_false_failure(self):
+  runs=[{'id':1,'workflow_id':8,'conclusion':'cancelled'},{'id':2,'workflow_id':8,'conclusion':'success'},{'id':3,'workflow_id':9,'conclusion':'success'}]
+  self.assertEqual([r['id'] for r in m.latest_workflow_runs(runs)],[2,3])
  def test_missing_identity_never(self):self.assertEqual(self.plan([self.run_row(pull_requests=[])],True),[])
 if __name__=='__main__':unittest.main()

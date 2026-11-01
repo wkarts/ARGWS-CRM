@@ -55,7 +55,9 @@ jobs:
       - name: Validar ownership transacional do checkout Asaas antes do smoke longo
         run: php tests/asaas_checkout_transaction_tables.php
       - name: Preparar navegador para validar o shell nativo
+        timeout-minutes: 6
         run: |
+          bash scripts/ci/prepare-apt-mirrors.sh
           mkdir -p "$RUNNER_TEMP/ci-browser"
           cp docker/ci/package.json docker/ci/package-lock.json "$RUNNER_TEMP/ci-browser/"
           npm ci --prefix "$RUNNER_TEMP/ci-browser" --ignore-scripts

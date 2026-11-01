@@ -9,6 +9,13 @@ def same_pr(run, pr, repository):
 def cancellation_plan(runs,pr,repository,own,failed=False):
     return [r['id'] for r in runs if r['id']!=own and same_pr(r,pr,repository)
             and r['status'] in ACTIVE and (r['head_sha']!=pr['head']['sha'] or failed)]
+def latest_workflow_runs(runs):
+    latest={}
+    for run in runs:
+        key=run['workflow_id']
+        if key not in latest or run['id']>latest[key]['id']:latest[key]=run
+    return list(latest.values())
+
 class Api:
     def __init__(self,repo,token): self.base='https://api.github.com/repos/'+repo; self.token=token
     def call(self,path,method='GET'):
@@ -44,7 +51,8 @@ def main():
         if first:
             for status in sorted(ACTIVE):runs+=api.runs(pr['head']['ref'],status=status)
             runs=list({r['id']:r for r in runs}.values());first=False
-        current=[r for r in runs if r['id']!=own and same_pr(r,pr,repo) and r['head_sha']==expected]
+        own_workflow=next((r['workflow_id'] for r in runs if r['id']==own),None)
+        current=latest_workflow_runs([r for r in runs if r['id']!=own and r['workflow_id']!=own_workflow and same_pr(r,pr,repo) and r['head_sha']==expected])
         failures=[r for r in current if r.get('conclusion') in BAD]
         # Detect the first failed job before other jobs in that workflow finish.
         busy=[r for r in current if r['status']=='in_progress']

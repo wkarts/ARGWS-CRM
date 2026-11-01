@@ -12,3 +12,5 @@
 Se uma execução continuar ativa após cancelamento normal (por exemplo, jobs com always()), o monitor reconfirma PR/repositório/HEAD e usa force-cancel exclusivamente naquela execução elegível. Isso libera o slot sem remover logs ou artefatos já gravados.
 
 Os workflows especializados de reconstrução da base CI e ponte PIGE não foram modificados só para concurrency, evitando acioná-los em toda a PR sem mudança de seu domínio. Quando executados numa PR, continuam cobertos pelo cancelamento central da rodada. Inventários devem ser gerados em árvore de fontes limpa, sem incluir bundles ignorados gerados por npm build.
+
+A preparação do navegador teve espera de18min no mirror HTTP azure.archive.ubuntu.com. O runner descartável agora usa o arquivo oficial HTTPS Ubuntu, mantém validação de assinaturas e limita timeout/retry de APT. A etapa tem limite6min; falha de infraestrutura não fica ocupando a fila indefinidamente. O monitor considera somente a execução mais recente de cada workflow no SHA para não confundir a substituição de uma execução com falha do produto.
