@@ -115,6 +115,24 @@ async function assertInvoiceFormReady(page) {
   assert.equal(result.pending,0,'original invoice validation settled');
   assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
 }
+async function legacyInvoiceTarget(page,response,url) {
+  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
+  const candidates=[response.url(),response.headers()['location']];
+  for(let request=response.request();request&&candidates.length<12;request=request.redirectedFrom())candidates.push(request.url());
+  try {
+    const body=await response.text();
+    const match=body.match(/(?:https?:[^"'\s]+)?(\/admin\/invoices\/list_invoices\/[1-9][0-9]*)/);
+    if(match)candidates.push(match[1]);
+  } catch (_) {}
+  for(const candidate of candidates){
+    if(!candidate)continue;
+    try {
+      const target=new URL(candidate,url);
+      if(listPath.test(target.pathname))return target.href;
+    } catch (_) {}
+  }
+  return null;
+}
 async function save(page,url) {
   const route=new URL(await page.locator('#invoice-form').getAttribute('action'),url).pathname;
   await assertInvoiceFormReady(page);
@@ -128,7 +146,17 @@ async function save(page,url) {
   const nativeRequestKey=await page.locator('#invoice-form input[name="_native_invoice_request_key"]').count();
   if(nativeRequestKey)await assertRedirect(page,response,url);
   else if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed legacy document');assert.equal(response.status(),200,'worker exposes a successful final legacy document');}
-  await page.waitForURL(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/);
+  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
+  if(!listPath.test(page.url())){
+    // The legacy POST can be fulfilled by Chromium's navigation loader while
+    // the existing PWA worker leaves the address bar on the form. Recover the
+    // durable PRG target from that same response and perform only its GET;
+    // never replay the legacy POST (the invoice number is already consumed).
+    const target=await legacyInvoiceTarget(page,response,url);
+    assert(target,'legacy invoice POST exposes its persisted list destination');
+    await page.goto(target);
+  }
+  await page.waitForURL(listPath);
   const id=new URL(page.url()).pathname.split('/').pop();
   await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});
   return {id,request:response.request()};
@@ -152,3 +180,4 @@ async function payment(page,url,id,amount,reference,note='Synthetic evidence'){
   await assertRedirect(page,response,url);await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});return response.request();
 }
 module.exports={picker,security,postRecorded,preview,createForm,line,save,edit,assertRedirect,formatDate,date,payment};
+
