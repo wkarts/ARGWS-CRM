@@ -78,7 +78,7 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     }
     // Operational attachments/timers belong to the first selected-record panel.
     // Microsoft/Connect use ordinary settings, without generated workspace panels.
-    // Sales attachments alone need the explicitly opened portal-access panel below.
+    // Sales attachments need their actual containing panel opened before role lookup.
     assert.deepEqual(found, {
         'companies/operation_files_browser.cjs':1,
         'companies_sales_extras_browser.cjs':1,
@@ -88,7 +88,7 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     assert.deepEqual(aliases, {'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; the remaining legacy timer alias is in the selected-record default panel');
     const sales=fs.readFileSync(__dirname+'/companies_sales_extras_browser.cjs','utf8');
     const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/estimates?document='+sources[a])"));
-    const tab=selected.indexOf("getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click()");
+    const tab=selected.indexOf("await revealWorkspaceControl(page,attachment)");
     const visible=selected.indexOf("getByRole('link',{name:'sales-browser-a.pdf',exact:true}).isVisible()");
     const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
     assert.ok(tab>=0&&visible>tab&&row>visible,'open actual panel and prove PDF visible before nested role lookup');

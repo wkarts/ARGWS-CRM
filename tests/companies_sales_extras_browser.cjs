@@ -2,7 +2,7 @@
 const {loginNativePortal}=require('./helpers/native_portal_login_driver.cjs');
 const {salesSourceId,salesPublicId,salesPortalId}=require('./helpers/native_sales_ids.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
-const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
+const { workspacePage, revealWorkspaceControl } = require('./helpers/native_workspace_driver.cjs');
 // Actual HTTP/MySQL/Chromium, restricted to the disposable upgrade fixture. No external sends.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -29,8 +29,11 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
  const pc=await browser.newContext();publicContexts.push(pc);await pc.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portal=await workspacePage(pc);await loginNativePortal(portal,url,a,'changed-portal@example.invalid','synthetic-password-a');await portal.goto(url+'/clients/estimates?issuer_id='+a);const detailLink=portal.locator('a[href*="/estimate/'+salesPortalId('estimates',sources[a])+'/"]').first();assert.equal(await detailLink.count(),1);await portal.goto(await detailLink.getAttribute('href'));
  const f=portal.getByRole('link',{name:'sales-browser-a.pdf',exact:true});assert.equal(await f.count(),1,'published sales file has positive canonical portal path');const fileUrl=await f.getAttribute('href');let file=await pc.request.get(fileUrl);assert.equal(file.status(),200);assert.deepEqual(await file.body(),pdf);const forged=fileUrl.replace(proofs[a],proofs[b]).replace('estimate_id='+salesPortalId('estimates',sources[a]),'estimate_id='+salesPortalId('estimates',sources[b]));assert.equal((await pc.request.get(forged)).status(),404,'A contact cannot fetch B published file');
  await select(a);await page.goto(url+'/admin/estimates?document='+sources[a]);
- // Extras are nested under the real portal-access workspace panel, not a standalone Anexos tab.
- await page.getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click();
+ // Locate the exact stored attachment even when its presentation panel is hidden.
+ // Open its actual containing workspace tab through the normal visible button.
+ const attachment=page.locator('a[href*="file='+proofs[a]+'"]').filter({hasText:'sales-browser-a.pdf'});
+ assert.equal(await attachment.count(),1,'exact private attachment must exist before revealing its panel');
+ await revealWorkspaceControl(page,attachment);
  assert.equal(await page.getByRole('link',{name:'sales-browser-a.pdf',exact:true}).isVisible(),true,'private attachment is visible before constructing a role-filtered row');
  const row=page.locator('li').filter({has:page.getByRole('link',{name:'sales-browser-a.pdf',exact:true})});await nav(page,row.getByRole('button',{name:'Ocultar anexo e preservar histórico',exact:true}));assert.equal(sql("SELECT active FROM tblcompany_sales_files WHERE file_key='"+proofs[a]+"'"),'0');assert.equal((await pc.request.get(fileUrl)).status(),404,'hidden file stops byte delivery in existing portal session');
  assert.deepEqual(errors,[]);console.log(JSON.stringify({files:'A/B multipart PDF/PNG normalization download sandbox preview hide stale/cross-parent',portal:'explicit per-file publication native2 authenticated download hide/cross-owner',notifications:'A/B queue status immutable retry own sender/template/portal link',smtp:'not executed externally'}));
