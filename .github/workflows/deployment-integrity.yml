@@ -13,7 +13,29 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  validation-gate:
+    name: Preflight and exact-tree evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_WORKFLOW_PATH: .github/workflows/deployment-integrity.yml
+        run: python3 scripts/ci/validation-gate.py
   validate:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

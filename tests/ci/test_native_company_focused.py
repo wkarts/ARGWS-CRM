@@ -119,5 +119,12 @@ class FocusedContract(unittest.TestCase):
   self.assertNotIn('scripts/company-surface-inventory.php',workflow)
   self.assertNotIn('scripts/inventory-company-boundaries.py',workflow)
   self.assertNotIn('tests/native_ui_surface_inventory.py',workflow)
-  self.assertRegex(workflow,r"(?s)- uses: actions/setup-node@v4\s+if: matrix\.php == '8\.1'")
+  node_job=workflow.split('  node-contracts:',1)[1]
+  php_job=workflow.split('  focused:',1)[1].split('  node-contracts:',1)[0]
+  self.assertIn('actions/setup-node@v4',node_job)
+  self.assertIn('Verify reproducible compiled native assets',node_job)
+  self.assertNotIn('Verify reproducible compiled native assets',php_job)
+  self.assertEqual(workflow.count('npm ci --ignore-scripts'),1)
+  self.assertIn('needs: [validation-gate, node-contracts]',php_job)
+  self.assertLess(node_job.index('Verify compiled assets'),node_job.index('Test shared native UI contracts'))
 if __name__=='__main__':unittest.main()

@@ -36,6 +36,11 @@ jobs:
           }
       - name: Validar contrato de versão ARGWS
         run: bash ./scripts/check-release-version.sh
+      - name: Confirmar validação completa ou prova da mesma árvore mesclada
+        timeout-minutes: 93
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/verify-release-validation.py
       - name: Executar testes funcionais, de versão e de distribuição
         run: |
           set -euo pipefail

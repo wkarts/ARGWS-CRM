@@ -1972,44 +1972,7 @@ function task_attachments_toggle() {
 // Shared native staff component: init_roles_permissions (assets/js/native-admin-staff.js).
 
 // Show/hide full table
-function toggle_small_view(table, main_data) {
-  if (
-    !is_mobile() &&
-    $("#small-table").hasClass("hide") &&
-    $(".small-table-right-col").hasClass("col-md-12")
-  ) {
-    $("#small-table").toggleClass("hide");
-    $(".small-table-right-col").toggleClass("col-md-12 col-md-7");
-    $(window).trigger("resize");
-    return;
-  }
-  $("body").toggleClass("small-table");
-  var tablewrap = $("#small-table");
-  if (tablewrap.length === 0) {
-    return;
-  }
-  var _visible = false;
-  if (tablewrap.hasClass("col-md-5")) {
-    tablewrap.removeClass("col-md-5").addClass("col-md-12");
-    _visible = true;
-    $(".toggle-small-view")
-      .find("i")
-      .removeClass("fa fa-angle-double-right")
-      .addClass("fa fa-angle-double-left");
-  } else {
-    tablewrap.addClass("col-md-5").removeClass("col-md-12");
-    $(".toggle-small-view")
-      .find("i")
-      .removeClass("fa fa-angle-double-left")
-      .addClass("fa fa-angle-double-right");
-  }
-  var _table = $(table).DataTable();
-  // Show hide hidden columns
-  _table.columns(hidden_columns).visible(_visible, false);
-  _table.columns.adjust();
-  $(main_data).toggleClass("hide");
-  $(window).trigger("resize");
-}
+// Shared definition: toggle_small_view (native-ui-tools.js).
 
 // Main logout function check if timers found to show the warning
 function logout() {
@@ -2082,16 +2045,7 @@ function init_btn_with_tooltips() {
 }
 
 // Helper hash id for estimates,invoices,proposals,expenses, credit notes
-function do_hash_helper(hash) {
-  if (typeof history.pushState != "undefined") {
-    var url = window.location.href;
-    var obj = {
-      Url: url,
-    };
-    history.pushState(obj, "", obj.Url);
-    window.location.hash = hash;
-  }
-}
+// Shared definition: do_hash_helper (native-ui-tools.js).
 
 // Reminder handlers are shared in native-admin-reminders.js.
 
@@ -2160,158 +2114,10 @@ function kanban_load_more(status_id, e, url, column_px, container_px) {
 }
 
 // Check if kanban col is empty and perform necessary actions
-function check_kanban_empty_col(selector) {
-  var statuses = $("[data-col-status-id]");
-  $.each(statuses, function (i, obj) {
-    var total = $(obj).find(selector).length;
-    if (total == 0) {
-      $(obj).find(".kanban-empty").removeClass("hide");
-      $(obj).find(".kanban-load-more").addClass("hide");
-    } else {
-      $(obj).find(".kanban-empty").addClass("hide");
-    }
-  });
-}
+// Shared definition: check_kanban_empty_col (native-ui-tools.js).
 
 // General function to init kan ban based on settings
-function init_kanban(
-  url,
-  callbackUpdate,
-  connect_with,
-  column_px,
-  container_px,
-  callback_after_load
-) {
-  if ($("#kan-ban").length === 0) {
-    return;
-  }
-
-  var parameters = [];
-  var _kanban_param_val;
-
-  $.each($("#kanban-params input"), function () {
-    if ($(this).attr("type") == "checkbox") {
-      _kanban_param_val = $(this).prop("checked") === true ? $(this).val() : "";
-    } else {
-      _kanban_param_val = $(this).val();
-    }
-    if (_kanban_param_val !== "") {
-      parameters[$(this).attr("name")] = _kanban_param_val;
-    }
-  });
-
-  var search = $('input[name="search"]').val();
-  if (typeof search != "undefined" && search !== "") {
-    parameters["search"] = search;
-  }
-
-  var sort_type = $('input[name="sort_type"]');
-  var sort = $('input[name="sort"]').val();
-  if (sort_type.length != 0 && sort_type.val() !== "") {
-    parameters["sort_by"] = sort_type.val();
-    parameters["sort"] = sort;
-  }
-
-  parameters["kanban"] = true;
-
-  url = admin_url + url;
-  url = buildUrl(url, parameters);
-  var $kanBanCols = $(".kan-ban-col");
-  if ($kanBanCols.length > 0) {
-    var refreshParams = [];
-    $kanBanCols.each(function (index, col) {
-      refreshParams.push({
-        status: $(col).data("col-status-id"),
-        total: parseInt($(col).attr("data-total")),
-      });
-    });
-    url +=
-      "&" +
-      refreshParams
-        .map(function (el, idx) {
-          return "refresh[" + el.status + "]=" + el.total;
-        })
-        .join("&");
-  }
-
-  delay(function () {
-    $("body").append('<div class="dt-loader"></div>');
-    $("#kan-ban").load(url, function () {
-      fix_kanban_height(column_px, container_px);
-      var scrollingSensitivity = 20,
-        scrollingSpeed = 60;
-
-      if (typeof callback_after_load != "undefined") {
-        callback_after_load();
-      }
-
-      $(".status").sortable({
-        connectWith: connect_with,
-        helper: "clone",
-        appendTo: "#kan-ban",
-        placeholder: "ui-state-highlight-card",
-        revert: "invalid",
-        scrollingSensitivity: 50,
-        scrollingSpeed: 70,
-        sort: function (event, uiHash) {
-          var scrollContainer = uiHash.placeholder[0].parentNode;
-          // Get the scrolling parent container
-          scrollContainer = $(scrollContainer).parents(
-            ".kan-ban-content-wrapper"
-          )[0];
-          var overflowOffset = $(scrollContainer).offset();
-          if (
-            overflowOffset.top + scrollContainer.offsetHeight - event.pageY <
-            scrollingSensitivity
-          ) {
-            scrollContainer.scrollTop =
-              scrollContainer.scrollTop + scrollingSpeed;
-          } else if (event.pageY - overflowOffset.top < scrollingSensitivity) {
-            scrollContainer.scrollTop =
-              scrollContainer.scrollTop - scrollingSpeed;
-          }
-          if (
-            overflowOffset.left + scrollContainer.offsetWidth - event.pageX <
-            scrollingSensitivity
-          ) {
-            scrollContainer.scrollLeft =
-              scrollContainer.scrollLeft + scrollingSpeed;
-          } else if (event.pageX - overflowOffset.left < scrollingSensitivity) {
-            scrollContainer.scrollLeft =
-              scrollContainer.scrollLeft - scrollingSpeed;
-          }
-        },
-        change: function () {
-          var list = $(this).closest("ul");
-          var KanbanLoadMore = $(list).find(".kanban-load-more");
-          $(list).append($(KanbanLoadMore).detach());
-        },
-        start: function (event, ui) {
-          $("body").css("overflow", "hidden");
-
-          $(ui.helper).addClass("tilt");
-          $(ui.helper).find(".panel-body").css("background", "#fbfbfb");
-          // Start monitoring tilt direction
-          tilt_direction($(ui.helper));
-        },
-        stop: function (event, ui) {
-          $("body").removeAttr("style");
-          $(ui.helper).removeClass("tilt");
-          // Unbind temporary handlers and excess data
-          $("html").off("mousemove", $(ui.helper).data("move_handler"));
-          $(ui.helper).removeData("move_handler");
-        },
-        update: function (event, ui) {
-          callbackUpdate(ui, this);
-        },
-      });
-
-      $(".status").sortable({
-        cancel: ".not-sortable",
-      });
-    });
-  }, 200);
-}
+// Shared definition: init_kanban (native-ui-tools.js).
 
 function kan_ban_sort(type, callback) {
   var sort_type = $('input[name="sort_type"]');
@@ -3128,23 +2934,7 @@ function leads_kanban_update(ui, object) {
   }, 200);
 }
 
-function update_kan_ban_total_when_moving(ui, newStatus) {
-  if (ui.sender) {
-    var oldStatusCol = $(ui.sender.closest(".kan-ban-col"));
-    if (oldStatusCol.data("status-id") != newStatus) {
-      var newStatusCol = $('[data-col-status-id="' + newStatus + '"]');
-      newStatusCol.attr(
-        "data-total",
-        parseInt(newStatusCol.attr("data-total")) + 1
-      );
-      var oldStatusCol = $(ui.sender.closest(".kan-ban-col"));
-      oldStatusCol.attr(
-        "data-total",
-        parseInt(oldStatusCol.attr("data-total")) - 1
-      );
-    }
-  }
-}
+// Shared definition: update_kan_ban_total_when_moving (native-ui-tools.js).
 
 // Leads statuses kanban sortable
 function init_leads_status_sortable() {
@@ -3686,51 +3476,7 @@ function unmark_complete(task_id) {
 }
 
 // Mark task status
-function task_mark_as(status, task_id, url) {
-  url =
-    typeof url == "undefined" ? "tasks/mark_as/" + status + "/" + task_id : url;
-  var taskModalVisible = $("#task-modal").is(":visible");
-  url += "?single_task=" + taskModalVisible;
-  $("body").append('<div class="dt-loader"></div>');
-  var request;
-  if ($("body").hasClass("native-company-admin")) {
-    var row = $('[data-native-task-id]').filter(function () {
-      return $(this).attr('data-native-task-id') === String(task_id);
-    }).first();
-    var revision = row.attr('data-task-revision');
-    var fieldsRevision = row.attr('data-native-fields-revision') || '';
-    if (taskModalVisible || !/^[1-5]$/.test(String(status)) || !/^[1-9][0-9]*$/.test(String(task_id)) || !/^[1-9][0-9]*$/.test(revision || '') || (fieldsRevision && !/^[1-9][0-9]*$/.test(fieldsRevision))) {
-      $("body").find(".dt-loader").remove();
-      alert_float("danger", "Não foi possível confirmar a revisão desta tarefa. Atualize a página e tente novamente.");
-      return;
-    }
-    var key = native_task_template_request_key(row, 'status:' + status + ':' + revision + ':' + fieldsRevision);
-    request = $.ajax({url: admin_url + 'tasks/mark_as/' + encodeURIComponent(status) + '/' + encodeURIComponent(task_id), type:'POST', dataType:'json', data:{native_revision:revision,native_fields_revision:fieldsRevision,native_request_key:key}});
-  } else {
-    request = requestGetJSON(url);
-  }
-  request.done(function (response) {
-    $("body").find(".dt-loader").remove();
-    if (response.success === true || response.success == "true") {
-      reload_tasks_tables();
-      if (taskModalVisible) {
-        _task_append_html(response.taskHtml);
-      }
-      if (
-        status == 5 &&
-        typeof _maybe_remove_task_from_project_milestone == "function"
-      ) {
-        _maybe_remove_task_from_project_milestone(task_id);
-      }
-      if ($(".tasks-kanban").length === 0) {
-        alert_float("success", response.message);
-      }
-    }
-  }).fail(function () {
-    $("body").find(".dt-loader").remove();
-    if ($("body").hasClass("native-company-admin")) alert_float("danger", "Não foi possível alterar o estado da tarefa. Atualize a página e tente novamente.");
-  });
-}
+// Shared definition: task_mark_as (native-ui-tools.js).
 
 // Change task priority from sigle modal
 function task_change_priority(priority_id, task_id) {
@@ -3882,39 +3628,10 @@ function save_edited_comment(id, task_id) {
 // Shared native task component: fix_task_modal_left_col_height (assets/js/native-tasks.js).
 
 // Updates task when action performed form kan ban area eq status changed.
-function tasks_kanban_update(ui, object) {
-  if (object === ui.item.parent()[0]) {
-    var status = $(ui.item.parent()[0]).attr("data-task-status-id");
-
-    var data = {
-      order: [],
-      status: status,
-    };
-
-    $.each($(ui.item.parent()[0]).find("[data-task-id]"), function (idx, el) {
-      var id = $(el).attr("data-task-id");
-      if (id) {
-        data.order.push([id, idx + 1]);
-      }
-    });
-
-    task_mark_as(status, $(ui.item).attr("data-task-id"));
-
-    check_kanban_empty_col("[data-task-id]");
-
-    setTimeout(function () {
-      $.post(admin_url + "tasks/update_order", data).done(function (response) {
-        update_kan_ban_total_when_moving(ui, data.status);
-        tasks_kanban();
-      });
-    }, 200);
-  }
-}
+// Shared definition: tasks_kanban_update (native-ui-tools.js).
 
 // Init tasks kan ban
-function tasks_kanban() {
-  init_kanban("tasks/kanban", tasks_kanban_update, ".tasks-status", 240, 360);
-}
+// Shared definition: tasks_kanban (native-ui-tools.js).
 
 // Task single edit description with inline editor, used from task single modal
 function edit_task_inline_description(e, id) {
@@ -4017,48 +3734,10 @@ function tasks_bulk_action(event) {
   }
 }
 
-function load_small_table_item(id, selector, input_name, url, table) {
-  var _tmpID = $('input[name="' + input_name + '"]').val();
-  // Check if id passed from url, hash is prioritized becuase is last
-  if (_tmpID !== "" && !window.location.hash) {
-    id = _tmpID;
-    // Clear the current id value in case user click on the left sidebar credit_note_ids
-    $('input[name="' + input_name + '"]').val("");
-  } else {
-    // check first if hash exists and not id is passed, becuase id is prioritized
-    if (window.location.hash && !id) {
-      id = window.location.hash.substring(1); //Puts hash in variable, and removes the # character
-    }
-  }
-  if (typeof id == "undefined" || id === "") {
-    return;
-  }
-  destroy_dynamic_scripts_in_element($(selector));
-  if (!$("body").hasClass("small-table")) {
-    toggle_small_view(table, selector);
-  }
-  $('input[name="' + input_name + '"]').val(id);
-  do_hash_helper(id);
-  $(selector).load(admin_url + url + "/" + id)
-
-  $("html, body").animate(
-    {
-      scrollTop: $(selector).offset().top + (is_mobile() ? 150 : 0),
-    },
-    600
-  );
-}
+// Shared definition: load_small_table_item (native-ui-tools.js).
 
 // Init single invoice
-function init_invoice(id) {
-  load_small_table_item(
-    id,
-    "#invoice",
-    "invoiceid",
-    "invoices/get_invoice_data_ajax",
-    ".table-invoices"
-  );
-}
+// Shared definition: init_invoice (native-ui-tools.js).
 
 // Init single credit note
 function init_credit_note(id) {
@@ -4403,100 +4082,10 @@ function init_expenses_total() {
 // Validate invoice add/edit form
 
 
-function validate_credit_note_form(selector) {
-  selector = typeof selector == "undefined" ? "#credit-note-form" : selector;
-
-  appValidateForm($(selector), {
-    clientid: {
-      required: {
-        depends: function () {
-          var customerRemoved =
-            $("select#clientid").hasClass("customer-removed");
-          return !customerRemoved;
-        },
-      },
-    },
-    date: "required",
-    currency: "required",
-    number: {
-      required: true,
-    },
-  });
-
-  $("body")
-    .find('input[name="number"]')
-    .rules("add", {
-      remote: {
-        url: admin_url + "credit_notes/validate_number",
-        type: "post",
-        data: {
-          number: function () {
-            return $('input[name="number"]').val();
-          },
-          isedit: function () {
-            return $('input[name="number"]').data("isedit");
-          },
-          original_number: function () {
-            return $('input[name="number"]').data("original-number");
-          },
-          date: function () {
-            return $(".credit_note input[name='date']").val();
-          },
-        },
-      },
-      messages: {
-        remote: app.lang.credit_note_number_exists,
-      },
-    });
-}
+// Shared definition: validate_credit_note_form (native-ui-tools.js).
 
 // Validates estimate add/edit form
-function validate_estimate_form(selector) {
-  selector = typeof selector == "undefined" ? "#estimate-form" : selector;
-
-  appValidateForm($(selector), {
-    clientid: {
-      required: {
-        depends: function () {
-          var customerRemoved =
-            $("select#clientid").hasClass("customer-removed");
-          return !customerRemoved;
-        },
-      },
-    },
-    date: "required",
-    currency: "required",
-    number: {
-      required: true,
-    },
-  });
-
-  $("body")
-    .find('input[name="number"]')
-    .rules("add", {
-      remote: {
-        url: admin_url + "estimates/validate_estimate_number",
-        type: "post",
-        data: {
-          number: function () {
-            return $('input[name="number"]').val();
-          },
-          isedit: function () {
-            return $('input[name="number"]').data("isedit");
-          },
-          original_number: function () {
-            return $('input[name="number"]').data("original-number");
-          },
-          date: function () {
-            return $("body").find('.estimate input[name="date"]').val();
-          },
-        },
-      },
-      messages: {
-        remote: app.lang.estimate_number_exists,
-      },
-    });
-}
+// Shared definition: validate_estimate_form (native-ui-tools.js).
 
 // Sort estimates in the pipeline view / switching sort type by click
 function estimates_pipeline_sort(type) {
@@ -5035,64 +4624,9 @@ function add_batch_payment() {
   );
 }
 
-function configure_ai_editor(editor) {
-  let items = [
-      {
-        type: 'menuitem',
-        text:app.lang.text_enhancement_make_polite,
-        icon: 'brightness',
-        onAction: function () {
-          make_ai_text_enhancement_request(editor, 'polite')
-        }
-      },
-      {
-        type: 'menuitem',
-        text: app.lang.text_enhancement_make_formal,
-        icon: 'accessibility-check',
-        onAction: function () {
-          make_ai_text_enhancement_request(editor, 'formal')
-        }
-      },
-      {
-        type: 'menuitem',
-        icon: 'emoji',
-        text: app.lang.text_enhancement_make_friendly,
-        onAction: function () {
-          make_ai_text_enhancement_request(editor, 'friendly')
-        }
-      }
-    ];
+// Shared definition: configure_ai_editor (native-ui-tools.js).
 
-    editor.ui.registry.addMenuButton('ai', {
-      icon: 'ai',
-      fetch: function (callback) {
-        callback(items);
-      }
-    });
-}
-
-function make_ai_text_enhancement_request(editor, type) {
-  const selectedText = editor.selection.getContent({ format: 'text' });
-
-  if (!selectedText.trim()) {
-      alert_float('warning', 'Please select text to enhance.');
-      return;
-  }
-
-  $.post(admin_url + 'ai/text_enhancement/' + type, {
-      text: selectedText,
-  })
-  .done(function (response) {
-      const result = JSON.parse(response);
-      if (result.success) {
-          editor.selection.setContent(result.message);
-      }
-  })
-  .catch(function (error) {
-      const result = JSON.parse(error.responseText);
-      alert_float('danger', result.error ? result.error : app.lang.something_went_wrong);
-  });
-}
+// Shared definition: make_ai_text_enhancement_request (native-ui-tools.js).
 
 /**
  * @DEPRECATED FUNCTIONS

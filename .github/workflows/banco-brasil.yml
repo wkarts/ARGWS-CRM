@@ -13,7 +13,29 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  validation-gate:
+    name: Preflight and exact-tree evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_WORKFLOW_PATH: .github/workflows/banco-brasil.yml
+        run: python3 scripts/ci/validation-gate.py
   checkout-presentation:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -34,6 +56,8 @@ jobs:
           path: /tmp/bb-checkout-render/
           if-no-files-found: error
   unit:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -67,6 +91,8 @@ jobs:
       - run: php tests/banco_brasil_mtls.php
       - run: python3 tests/banco_brasil_mtls_transport.py
   mysql:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -160,6 +186,8 @@ jobs:
           ISSUERS_TEST_PASSWORD: root
 
   mariadb:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     services:
       mariadb:

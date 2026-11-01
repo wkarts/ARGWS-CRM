@@ -16,3 +16,16 @@ Os workflows especializados de reconstrução da base CI e ponte PIGE não foram
 A preparação do navegador teve espera de18min no mirror HTTP azure.archive.ubuntu.com. O runner descartável agora usa o arquivo oficial HTTPS Ubuntu, mantém validação de assinaturas e limita timeout/retry de APT. A etapa tem limite6min; falha de infraestrutura não fica ocupando a fila indefinidamente. O monitor considera somente a execução mais recente de cada workflow no SHA para não confundir a substituição de uma execução com falha do produto.
 
 O limite do monitor cobre o smoke integrado completo, que ainda é sequencial. Ele não reduz asserções nem transforma teste pendente em aprovado. Fail-fast trata falha observada, sem impor um limite menor que o conjunto de validações existente. A preparação de pacotes do deployer também usa o espelho oficial/timeout limitado.
+
+
+## Prevalidação consolidada e repetição após merge
+
+Antes de iniciar bancos e navegadores longos, um preflight único em `node-contracts` compila a sintaxe PHP própria, recompila e compara os bundles, verifica ligações entre funções JavaScript compartilhadas e executa os contratos Node. O gate detecta referências a funções deixadas somente no bootstrap legado, distingue funções locais e não executa requests. Isso antecipa uma classe de falhas; não substitui testes reais de negócio.
+
+Empresas no núcleo, Banco do Brasil e Integridade das stacks aguardam esse preflight, em vez de consumir seus ambientes longos antes dele. O fluxo focado já faz essa dependência internamente. Os compilados saem do final da matriz PHP e são verificados uma única vez no início.
+
+Após merge, os quatro fluxos longos podem reutilizar seu resultado da PR SOMENTE quando a árvore Git inteira é idêntica, a PR está realmente mesclada nesse commit/branch, é do mesmo repositório, o último run do workflow e SHA correto passou e tem menos de24horas. O gate mostra o link da evidência reutilizada. Qualquer divergência, falha, evidência ausente ou erro de consulta executa a validação completa. O preflight rápido continua sendo executado; não há aprovação fictícia nem reutilização de um resultado de outro código. Os testes leves de versão/distribuição continuam independentes. O reaproveitamento pós-merge tem testes automatizados de casos positivos e negativos; sua confirmação operacional ocorrerá no merge autorizado.
+
+Não foi reduzida durabilidade de MySQL, alterado banco de produção ou omitida cobertura funcional para acelerar o CI.
+
+A publicação na main também exige sucesso dos quatro fluxos longos no SHA publicado ou prova da mesma árvore da PR aprovada. Não publica enquanto CI estiver reprovado, cancelado ou incompleto. Nenhum merge ou deploy é autorizado por esses scripts.

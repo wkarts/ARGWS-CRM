@@ -84,7 +84,29 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  validation-gate:
+    name: Preflight and exact-tree evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_WORKFLOW_PATH: .github/workflows/issuer-foundation.yml
+        run: python3 scripts/ci/validation-gate.py
   migration-convention:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -94,6 +116,8 @@ jobs:
           node-version: 22
       - run: node --test tests/native_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/email_template_completeness.test.cjs tests/ma_email_interface.test.cjs
   boundary-inventory:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -115,12 +139,15 @@ jobs:
           name: company-boundaries-full
           path: /tmp/company-boundaries-full.json
   registry-plan:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - run: python3 -m unittest discover -s tests/ci -p 'test_company_registry_shards.py'
   registry-shards:
-    needs: registry-plan
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: [validation-gate, registry-plan]
     runs-on: ubuntu-latest
     strategy:
       # Preserve evidence from other shards when one runtime fails.
@@ -243,7 +270,7 @@ jobs:
   # cannot satisfy either gate, even if the other PHP version succeeded.
   registry:
     if: always()
-    needs: [registry-plan, registry-shards]
+    needs: [validation-gate, registry-plan, registry-shards]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -251,6 +278,14 @@ jobs:
     steps:
       - name: Exigir todos os shards e o inventário exato
         env:
+          REUSED: ${{ needs.validation-gate.outputs.run }}
+          GATE_RESULT: ${{ needs.validation-gate.result }}
           PLAN_RESULT: ${{ needs.registry-plan.result }}
           SHARDS_RESULT: ${{ needs.registry-shards.result }}
-        run: test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success
+        run: |
+          test "$GATE_RESULT" = success
+          if [ "$REUSED" = false ]; then
+            echo "Exact-tree successful PR evidence was verified by validation-gate."
+          else
+            test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success
+          fi

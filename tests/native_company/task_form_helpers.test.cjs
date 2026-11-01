@@ -17,6 +17,14 @@ test('shared Ajax picker clear retains original cache reset and change events',(
 test('distributed shared bundle provides the same task form dependencies',()=>{
  const context=vm.createContext({app:{options:{date_format:'d/m/Y'}}});
  vm.runInContext(fs.readFileSync('assets/js/native-ui-tools.min.js','utf8'),context);
- for(const name of ['deselect_ajax_search','unformat_date','_split_formatted_date_by_separator','initializeTinyMceMentions'])assert.equal(typeof context[name],'function',name);
+ for(const name of Object.keys(JSON.parse(fs.readFileSync('tests/fixtures/native-ui-tools-extraction.json')).functions))assert.equal(typeof context[name],'function',name);
  assert.equal(context.unformat_date('21/10/2026'),'2026-10-21');
+});
+
+test('estimate and credit-note validators are available without legacy bootstrap',()=>{
+ const registered=[];const field={rules:(method,options)=>registered.push(options),hasClass:()=>false};
+ const selection={find:()=>field};const context=vm.createContext({app:{lang:{credit_note_number_exists:'duplicate',estimate_number_exists:'duplicate'}},admin_url:'/admin/',$:()=>selection,appValidateForm:()=>{}});
+ vm.runInContext(source,context);context.validate_credit_note_form();context.validate_estimate_form();
+ assert.equal(registered[0].remote.url,'/admin/credit_notes/validate_number');assert.equal(registered[1].remote.url,'/admin/estimates/validate_estimate_number');
+ assert.equal(registered[0].remote.type,'post');assert.equal(registered[1].remote.type,'post');
 });
