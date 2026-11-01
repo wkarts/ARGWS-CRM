@@ -1,6 +1,6 @@
 'use strict';
 const {loginNativePortal}=require('./helpers/native_portal_login_driver.cjs');
-const {salesSourceId,salesPublicId}=require('./helpers/native_sales_ids.cjs');
+const {salesSourceId,salesPublicId,salesPortalId}=require('./helpers/native_sales_ids.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 // Actual HTTP/MySQL/Chromium, restricted to the disposable upgrade fixture. No external sends.
@@ -26,8 +26,8 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   await select(issuer===a?b:a);assert.equal((await ctx.request.post(url+'/admin/estimates',{form:{...old,action:'sales_file_hide',document_id:publicDoc,file_key:key,content_hash:require('node:crypto').createHash('sha256').update(pdf).digest('hex')}})).status(),409,'old company upload context cannot mutate files');await select(issuer);
  }
  await select(b);assert([403,409].includes((await ctx.request.get(url+'/admin/estimates?document='+sources[a]+'&file='+proofs[a])).status()),'direct foreign owner file URL denied');
- const pc=await browser.newContext();publicContexts.push(pc);await pc.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portal=await workspacePage(pc);await loginNativePortal(portal,url,a,'changed-portal@example.invalid','synthetic-password-a');await portal.goto(url+'/clients/estimates?issuer_id='+a);const detailLink=portal.locator('a[href*="/estimate/'+sources[a]+'/"]').first();assert.equal(await detailLink.count(),1);await portal.goto(await detailLink.getAttribute('href'));
- const f=portal.getByRole('link',{name:'sales-browser-a.pdf',exact:true});assert.equal(await f.count(),1,'published sales file has positive canonical portal path');const fileUrl=await f.getAttribute('href');let file=await pc.request.get(fileUrl);assert.equal(file.status(),200);assert.deepEqual(await file.body(),pdf);const forged=fileUrl.replace(proofs[a],proofs[b]).replace('estimate_id='+sources[a],'estimate_id='+sources[b]);assert.equal((await pc.request.get(forged)).status(),404,'A contact cannot fetch B published file');
+ const pc=await browser.newContext();publicContexts.push(pc);await pc.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portal=await workspacePage(pc);await loginNativePortal(portal,url,a,'changed-portal@example.invalid','synthetic-password-a');await portal.goto(url+'/clients/estimates?issuer_id='+a);const detailLink=portal.locator('a[href*="/estimate/'+salesPortalId('estimates',sources[a])+'/"]').first();assert.equal(await detailLink.count(),1);await portal.goto(await detailLink.getAttribute('href'));
+ const f=portal.getByRole('link',{name:'sales-browser-a.pdf',exact:true});assert.equal(await f.count(),1,'published sales file has positive canonical portal path');const fileUrl=await f.getAttribute('href');let file=await pc.request.get(fileUrl);assert.equal(file.status(),200);assert.deepEqual(await file.body(),pdf);const forged=fileUrl.replace(proofs[a],proofs[b]).replace('estimate_id='+salesPortalId('estimates',sources[a]),'estimate_id='+salesPortalId('estimates',sources[b]));assert.equal((await pc.request.get(forged)).status(),404,'A contact cannot fetch B published file');
  await select(a);await page.goto(url+'/admin/estimates?document='+sources[a]);
  // Extras are nested under the real portal-access workspace panel, not a standalone Anexos tab.
  await page.getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click();

@@ -9,4 +9,4 @@ function codec(mode,kind,id){
  const code='require $argv[1]; $type=$argv[3]; if($argv[2]==="encode"){echo NativeCompanyResourceId::encode("company_".$type,$argv[4]);}else{$r=NativeCompanyResourceId::decode($type,$argv[4]);if($r["source_kind"]!=="company_".$type){throw new RuntimeException("Expected owned sales document");}echo $r["source_id"];}';
  return execFileSync('php',['-r',code,'--',implementation,mode,resource,String(id)],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
 }
-module.exports={salesSourceId:(kind,id)=>codec('decode',kind,id),salesPublicId:(kind,id)=>codec('encode',kind,id)};
+module.exports={salesPortalId:(kind,id)=>codec('decode',kind,id),salesSourceId:(kind,id)=>codec('decode',kind,id),salesPublicId:(kind,id)=>codec('encode',kind,id)};
