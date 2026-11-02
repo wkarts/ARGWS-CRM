@@ -6,13 +6,43 @@ set -euo pipefail
 : "${ISSUER_SMOKE_DB_USER:?}" "${ISSUER_SMOKE_DB_PASSWORD:?}" "${ISSUER_SMOKE_ROOT_PASSWORD:?}"
 [[ "$ISSUER_SMOKE_DATABASE" =~ ^argws-crm-provision-db-[0-9]+$ ]]
 trap 'status=$?; echo "Standalone HTTP smoke failed at line $LINENO (exit $status)." >&2' ERR
-# Keep the original serial order: browser suites share the installed fixture.
-# Emit timings at each boundary so the next slow/failing suite is identifiable.
+# Each worker keeps the original order inside its own isolated fixture.
+browser_group="${ARGWS_BROWSER_GROUP:-all}"
+browser_plan="$(python3 scripts/ci/standalone-browser-plan.py --group "$browser_group")"
+declare -a browser_commands browser_databases browser_selected
+while IFS=$'\t' read -r index selected database command; do
+    browser_commands[index]="$command"
+    browser_databases[index]="$database"
+    browser_selected[index]="$selected"
+done <<< "$browser_plan"
+browser_evidence_root="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}"
+browser_index=0
+browser_completed=0
+browser_required=0
+for selected in "${browser_selected[@]}"; do browser_required=$((browser_required+selected)); done
+owns_shell() { [[ "$browser_group" = all || "$browser_group" = "$1" ]]; }
 node() {
-    local started=$SECONDS status
-    echo "BROWSER_START $*" >&2
-    if command node "$@"; then status=0; else status=$?; fi
-    echo "BROWSER_END $* seconds=$((SECONDS-started)) exit=$status" >&2
+    local index=$browser_index started=$SECONDS status browser_log
+    browser_index=$((browser_index+1))
+    if [[ "${browser_commands[index]:-}" != "$*" || ( "${browser_databases[index]:-}" != "-" && "${browser_databases[index]:-}" != "${ISSUERS_BROWSER_DB_NAME:-}" ) ]]; then
+        echo "Browser invocation identity/order mismatch at $index; refusing incomplete coverage." >&2
+        return 2
+    fi
+    if [[ "${browser_selected[index]}" != 1 ]]; then return 0; fi
+    echo "BROWSER_START group=$browser_group index=$index $*" >&2
+    browser_log="$work/browser-$index.log"
+    if command node "$@" 2>&1 | tee "$browser_log"; then status=0; else status=$?; fi
+    echo "BROWSER_END group=$browser_group index=$index $* seconds=$((SECONDS-started)) exit=$status" >&2
+    local evidence="$browser_evidence_root"
+    mkdir -p "$evidence"
+    printf '%s\t%s\t%s\t%s\n' "$index" "$status" "$((SECONDS-started))" "$*" >> "$evidence/browser-timings.tsv"
+    if [[ "$status" = 0 ]]; then
+        browser_completed=$((browser_completed+1))
+    else
+        { printf 'group=%s invocation=%s exit=%s command=%s\n' "$browser_group" "$index" "$status" "$*"; tail -c 16384 "$browser_log"; } | sanitize_smoke_failure_log > "$evidence/browser-failure-$index.log"
+        python3 -c 'import pathlib,sys; message=pathlib.Path(sys.argv[1]).read_text(); message=message.replace("%","%25").replace("\r","%0D").replace("\n","%0A"); print("::error title=Isolated browser failure::"+message)' "$evidence/browser-failure-$index.log"
+    fi
+    rm -f "$browser_log"
     return "$status"
 }
 suffix="$$"
@@ -613,6 +643,7 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/companies/post_refund_manual_cycle_browser.cjs
 
+if owns_shell providers; then
 # Untrusted CA must fail in the production client; the generated CA enables the same verified client.
 provider_before_gets="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind")=="synthetic_get" for x in open(sys.argv[1])))' "$work/provider-events.jsonl")"
 provider_probe_status=0
@@ -638,6 +669,8 @@ provider_evidence="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}"
 mkdir -p "$provider_evidence"
 cp "$work/provider-events.jsonl" "$provider_evidence/refund-provider-local-tls.jsonl"
 
+fi
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -659,6 +692,7 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/banco_brasil_own_number_browser.cjs
 
+if owns_shell providers; then
 # Both provider clients keep certificate/hostname verification under the one strict local sink.
 ai_probe_owner="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))[0])' "$work/ai-owners.json")"
 ai_before_calls="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind")=="synthetic_completion" for x in open(sys.argv[1])))' "$work/provider-events.jsonl")"
@@ -685,6 +719,8 @@ assert all(x['tls_version'] in ('TLSv1.2','TLSv1.3') for x in ai+drops)
 print('Real GUI/SDK AI A/B/principal dispatch used verified local TLS; untrusted CA rejected and uncertain request not resent. No external forwarding.')
 PY_DUAL_TLS
 cp "$work/provider-events.jsonl" "$provider_evidence/dual-provider-local-tls.jsonl"
+
+fi
 
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
@@ -727,6 +763,7 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/banco_brasil_tariff_browser.cjs
 
+if owns_shell banking; then
 # Prepare only synthetic BB16 observations with injected provider and canonical native writers.
 # The new LOCAL declaration/restoration/funds themselves run through real GUI/API below.
 docker exec "$upgrade" mkdir -p /app/tests/support
@@ -743,12 +780,15 @@ rows=[json.loads((root/('local447-'+case+'.json')).read_text())for case in ['a',
 assert len({row['issuer']for row in rows})==2
 (root/'local447-fixtures.json').write_text(json.dumps({'fixtures':rows}))
 PY_LOCAL447
+fi
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_ARTIFACTS="$work/local447-artifacts" NONCASH_BROWSER_FIXTURES="$work/local447-fixtures.json" \
 node tests/banco_brasil_local_noncash_browser_v3.cjs
 
+if owns_shell tasks-domains; then
 #448: prior task/calendar regression runs first; this suite then opts into auto-follow by GUI.
 docker exec "$upgrade" mkdir -p /app/tests/settings
 docker cp tests/settings/task_operations_http_fixture.php "$upgrade:/app/tests/settings/task_operations_http_fixture.php"
@@ -757,14 +797,19 @@ cat > "$work/task448-php" <<'PHP448_EXEC'
 exec docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$ISSUERS_BROWSER_APP_CONTAINER" php "$@"
 PHP448_EXEC
 chmod +x "$work/task448-php"
+fi
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_OPERATIONS_BROWSER_FIXTURE_PHP=/app/tests/settings/task_operations_http_fixture.php \
 node tests/settings/task_operations_browser.cjs
 
+if owns_shell tasks-domains; then
 #449: only explicit own policy changes status during the native start; stopping keeps status.
 docker cp tests/settings/task_timer_http_fixture.php "$upgrade:/app/tests/settings/task_timer_http_fixture.php"
+fi
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -772,8 +817,11 @@ ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/a
 node tests/settings/task_timer_browser.cjs
 
 
+if owns_shell tasks-domains; then
 #451: explicit own automatic stop never modifies a timer owned by another company.
 docker cp tests/settings/task_timer_stop_http_fixture.php "$upgrade:/app/tests/settings/task_timer_stop_http_fixture.php"
+fi
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -832,3 +880,6 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/hr-credentials-456" \
 node tests/companies/hr_tokens_browser.cjs
+
+[[ "$browser_index" = "${#browser_commands[@]}" && "$browser_completed" = "$browser_required" ]]
+echo "BROWSER_GROUP_COMPLETE group=$browser_group completed=$browser_completed required=$browser_required invocations=$browser_index"

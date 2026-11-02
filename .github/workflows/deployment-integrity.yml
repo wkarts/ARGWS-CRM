@@ -2,10 +2,10 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/ci/standalone-browser-plan.json, scripts/ci/standalone-browser-plan.py, tests/settings/**, tests/settings*browser.cjs, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/legacy_invoice_pdf_format.php, tests/ci/test_standalone_browser_plan.py, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/ci/standalone-browser-plan.json, scripts/ci/standalone-browser-plan.py, tests/settings/**, tests/settings*browser.cjs, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/legacy_invoice_pdf_format.php, tests/ci/test_standalone_browser_plan.py, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VALIDATION_WORKFLOW_PATH: .github/workflows/deployment-integrity.yml
         run: python3 scripts/ci/validation-gate.py
-  validate:
+  prepare:
     if: ${{ needs.validation-gate.outputs.run == 'true' }}
     needs: validation-gate
     runs-on: ubuntu-latest
@@ -42,6 +42,8 @@ jobs:
       - name: Validar sintaxe YAML dos workflows
         run: |
           ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
+      - name: Conferir cobertura completa dos grupos isolados
+        run: python3 scripts/ci/standalone-browser-plan.py --check
       - name: Validar ordem dos preflights e isolamento das ferramentas
         run: node --test tests/ci_preflight_order.test.cjs tests/native_company/mail_queue_form.test.cjs tests/persisted_invoice_target.test.cjs
       - uses: actions/setup-python@v5
@@ -75,7 +77,9 @@ jobs:
       - name: Validar auditoria do responsável antes do smoke longo
         run: php tests/installed_master_proof.php
       - name: Validar isolamento do número no POST legado antes do smoke longo
-        run: php tests/legacy_invoice_number_scope.php
+        run: |
+          php tests/legacy_invoice_number_scope.php
+          php tests/legacy_invoice_pdf_format.php
       - name: Validar ownership transacional do checkout Asaas antes do smoke longo
         run: php tests/asaas_checkout_transaction_tables.php
       - name: Reutilizar somente binários do navegador pareados ao lockfile
@@ -168,20 +172,70 @@ jobs:
           labels: org.argws.smoke.source-tree=${{ steps.smoke_tree.outputs.tree }}
           cache-from: type=gha,scope=crm-provision-smoke
           cache-to: type=gha,mode=max,scope=crm-provision-smoke
+      - name: Exportar a imagem desta árvore para os grupos isolados
+        run: docker save argws-crm-provision-smoke:ci -o "$RUNNER_TEMP/crm-smoke-image.tar"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crm-smoke-image-${{ github.sha }}
+          path: ${{ runner.temp }}/crm-smoke-image.tar
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+  http:
+    needs: [validation-gate, prepare]
+    if: ${{ needs.validation-gate.outputs.run == 'true' && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [sales-pdf, projects, support, expenses, banking, providers, settings, tasks-domains]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: crm-smoke-image-${{ github.sha }}
+          path: ${{ runner.temp }}/smoke-image
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - name: Carregar imagem previamente construída e identificada
+        run: docker load -i "$RUNNER_TEMP/smoke-image/crm-smoke-image.tar"
+      - name: Reutilizar binários do navegador pareados ao lockfile
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docker/ci/package-lock.json') }}
+      - name: Preparar navegador com o lockfile dedicado
+        timeout-minutes: 6
+        run: |
+          bash scripts/ci/prepare-apt-mirrors.sh
+          mkdir -p "$RUNNER_TEMP/ci-browser"
+          cp docker/ci/package.json docker/ci/package-lock.json "$RUNNER_TEMP/ci-browser/"
+          npm ci --prefix "$RUNNER_TEMP/ci-browser" --ignore-scripts
+          "$RUNNER_TEMP/ci-browser/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/ci-browser/node_modules" >> "$GITHUB_ENV"
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         id: issuer_browser
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'
+          ARGWS_BROWSER_GROUP: ${{ matrix.group }}
           ARGWS_SMOKE_PREBUILT_IMAGE: '1'
         run: bash tests/docker_provision_smoke.sh
       - name: Preservar evidências visuais sintéticas
         if: always() && (steps.issuer_browser.outcome == 'success' || steps.issuer_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
-          name: issuer-native-browser
+          name: issuer-native-browser-${{ matrix.group }}
           path: /tmp/issuer-browser-evidence
           if-no-files-found: ignore
           retention-days: 1
+  tooling:
+    needs: [validation-gate, prepare]
+    if: ${{ needs.validation-gate.outputs.run == 'true' && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: 1.90.0
@@ -211,3 +265,24 @@ jobs:
           docker compose --env-file deploy/production/.env.example -f deploy/production/compose.yaml config --quiet
           ARGWS_DB_HOST=database.example.invalid ARGWS_DB_NAME=argws_crm ARGWS_DB_USER=argws_crm ARGWS_DB_PASSWORD=ci-test-password docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
           docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
+  validate:
+    # Retain the existing required check. Cancelled, failed or incomplete groups cannot satisfy it.
+    if: always()
+    needs: [validation-gate, prepare, http, tooling]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exigir a rodada completa ou a prova exata já validada
+        env:
+          GATE: ${{ needs.validation-gate.result }}
+          RUN: ${{ needs.validation-gate.outputs.run }}
+          PREPARE: ${{ needs.prepare.result }}
+          HTTP: ${{ needs.http.result }}
+          TOOLING: ${{ needs.tooling.result }}
+        run: |
+          test "$GATE" = success
+          if [ "$RUN" = false ]; then
+            test "$PREPARE" = skipped && test "$HTTP" = skipped && test "$TOOLING" = skipped
+          else
+            test "$RUN" = true
+            test "$PREPARE" = success && test "$HTTP" = success && test "$TOOLING" = success
+          fi

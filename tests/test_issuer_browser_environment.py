@@ -36,7 +36,7 @@ process.stdout.write(JSON.stringify(results));
             "company-identity-presentation": ("node tests/native_identity_browser.cjs", "warn"),
             "client-identity-presentation": ("node tests/companies/client_identity_browser.cjs", "error"),
             "asaas-native-settings-presentation": ("node tests/asaas_settings_tabs.browser.cjs", "error"),
-            "issuer-native-browser": ("bash tests/docker_provision_smoke.sh", "ignore"),
+            "issuer-native-browser-${{ matrix.group }}": ("bash tests/docker_provision_smoke.sh", "ignore"),
         }
         for artifact, (command, missing_policy) in cases.items():
             with self.subTest(artifact=artifact):

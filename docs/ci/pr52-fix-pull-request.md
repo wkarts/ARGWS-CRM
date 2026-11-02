@@ -2,11 +2,13 @@
 
 **Branch:** `fix/native-company-experience` (desenvolvimento local em `fix/pr52-invoice-validation`).
 
-**Título:** `fix(ci): alinhar número legado e reduzir trabalho repetido da validação`
+**Título:** `fix(ci): corrigir formato PDF legado e dividir smoke em oito stacks isoladas`
 
-**Descrição / contexto / objetivo:** O validador remoto permitia números pertencentes a outra empresa, mas o POST legado os rejeitava e o navegador procurava por minutos uma fatura inexistente. Alinhar criação/edição ao escopo legado e reduzir preparação repetida de toda a rodada, preservando cobertura.
+**Descrição / contexto / objetivo:** A última falha de dimensão vinha de exigir um formato congelado no renderer legado, que lê a opção global atual. A conferência agora exige o formato atual exato no legado e o snapshot imutável nos documentos nativos. O smoke de 101 chamadas Node é distribuído em oito stacks isoladas, com cobertura completa, dependências explícitas e gate agregado obrigatório. Detalhes em [standalone-browser-groups.md](standalone-browser-groups.md). Histórico anterior: O validador remoto permitia números pertencentes a outra empresa, mas o POST legado os rejeitava e o navegador procurava por minutos uma fatura inexistente. Alinhar criação/edição ao escopo legado e reduzir preparação repetida de toda a rodada, preservando cobertura.
 
 ## Escopo e decisões
+
+Nova etapa: `settings_document_pdf_browser.cjs`, teste rápido `legacy_invoice_pdf_format.php`, manifest/runner de grupos e casos negativos, orquestração em `deployment-integrity.yml`, artefatos por grupo e Rust/Compose paralelo. Imagem construída uma vez e validada pela árvore em cada worker. Nenhuma alteração de código da aplicação nesta etapa.
 
 Duas consultas no controller; driver de testes; regressões rápidas; caches de ferramentas/compilação; compilação paralela das mesmas extensões; retirada de job sem teste; evidências de tempos e auditoria histórica. Fora do escopo: refatoração da aplicação, paralelização no mesmo banco, exclusão de testes ou publicação/merge. Detalhes e fontes em [pr52-validation.md](pr52-validation.md).
 
@@ -40,9 +42,13 @@ Removidos waits fixos de dez segundos por save e sucessivos fallbacks de 90 segu
 
 ## Testes implementados
 
+Novos: quatro cenários de formato legado atual versus snapshot nativo; 101 invocações com dono único; oito execuções simuladas usando os blocos reais do shell; ordem, dependências, falhas propagadas, execução incompleta, modo Node sem banco e gate obrigatório rejeitando falha/cancelamento/skip.
+
 12 cenários do controller: criação/edição, número em empresa nomeada, duplicidade legada, rascunho, próprio ID, ano e schema anterior. Quatro testes Node de identidade exata/ambiguidade/entrada/banco indisponível. Três contratos Python para imagem incorreta, cache sem omitir execução e gate sem job vazio.
 
 ## Testes executados
+
+Etapa atual: 55 testes Python de CI aprovados; testes de ambiente/provisionamento/empacotamento; quatro cenários dos renderers em PHP 8.1/8.5; parse YAML, sintaxe JS/shell e quatro inventários. Nenhum entrypoint anterior removido. Execução real dos oito grupos ainda precisa concluir no CI do commit final.
 
 - Teste PHP com doubles contra código anterior: falha reproduzida no caso `named`; contra código corrigido em PHP 8.3: 12 cenários aprovados.
 - `python3 -m unittest discover -s tests/ci -p 'test_*.py'`: 48 aprovados.

@@ -1,0 +1,796 @@
+{
+  "format": 1,
+  "scope": "All original invocations retain order; each matrix worker owns its disposable stack. Common fixture creation and explicit prerequisites are replayed, never shared between databases.",
+  "common": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "invocations": [
+    {
+      "argv": [
+        "tests/issuers_browser_smoke.cjs"
+      ],
+      "database": "argws_legacy_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/hr_cli_http.cjs"
+      ],
+      "database": "argws_legacy_ci"
+    },
+    {
+      "argv": [
+        "tests/issuers_browser_smoke.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_onboarding_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_certificates_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_portal_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/native_portal_login_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_invoices_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_credits_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/projects_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_expenses_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_imports_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/contracts_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/operation_files_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/portal_operations_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/projects_extras_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_sales_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_sales_extras_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_sales_documents_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_primary_sales_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_sales_pdf_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_document_pdf_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_google_mail_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_google_portal_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_project_files_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_pdf_typography_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_reports_api_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_ledger_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/operations_api_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/operations_subresources_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/portal_support_write_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/portal_support_files_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/contract_discussions_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_portal_tasks_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/portal_task_write_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_milestones_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_timesheets_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_gantt_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_contact_files_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/task_billing_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/task_timesheets_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_billing_rate_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_fixed_billing_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/client_imports_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/expense_billing_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/expense_recurring_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_origination_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_components_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_external_reversal_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_callback_http.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api_monthly_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api_fixed_discount_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api_percentage_discount_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api16_components_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api_origin_cnab240_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_asaas_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "--test",
+        "tests/asaas_settings_real_browser.test.cjs"
+      ],
+      "database": null,
+      "reason": "Node contracts do not use an installed database; the original command has no DB environment assignment."
+    },
+    {
+      "argv": [
+        "tests/companies/asaas_settings_real_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_asaas_remote_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies_asaas_checkout_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/asaas_refund_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/asaas_checkout_legacy_scope_http.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/resume_439_native_staff_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/operations_resume_439_sales_lines_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/operations_resume_439_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/resume_439_microsoft_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/resume_439_connect_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_pusher_recovery_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/recurrence_resume_439_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_resume_439_amend_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/invoice_drafts_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/invoice_recurring_modes_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/project_copies_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/task_copies_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_ticket_connect_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_api_window_discount_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/post_refund_manual_cycle_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/expense_api_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/expense_copies_resume_442_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings_company_ai_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_own_number_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/sales_mutations_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_cnab400_aux_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/ticket_preferences_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_preferences_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/calendar_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/calendar_unassigned_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_tariff_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/banco_brasil_local_noncash_browser_v3.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_operations_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_timer_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_timer_auto_stop_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/task_recurring_http_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/staff_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/leads_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/leads_bearer_http.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/purchases_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/purchases_http_transport.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/purchases_events_http.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/hr_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/hr_tokens_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    }
+  ],
+  "groups": {
+    "sales-pdf": {
+      "owned": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        25,
+        81
+      ],
+      "prerequisites": []
+    },
+    "projects": {
+      "owned": [
+        9,
+        15,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        72,
+        73
+      ],
+      "prerequisites": [
+        16
+      ]
+    },
+    "support": {
+      "owned": [
+        12,
+        13,
+        14,
+        28,
+        29,
+        30,
+        31,
+        32,
+        83
+      ],
+      "prerequisites": [
+        9,
+        16,
+        17
+      ]
+    },
+    "expenses": {
+      "owned": [
+        10,
+        11,
+        26,
+        27,
+        43,
+        44,
+        45,
+        77,
+        78
+      ],
+      "prerequisites": [
+        9,
+        16,
+        17
+      ]
+    },
+    "banking": {
+      "owned": [
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        69,
+        75,
+        80,
+        82,
+        87,
+        88
+      ],
+      "prerequisites": []
+    },
+    "providers": {
+      "owned": [
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        76,
+        79
+      ],
+      "prerequisites": [
+        46,
+        47,
+        48
+      ]
+    },
+    "settings": {
+      "owned": [
+        22,
+        23,
+        24,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        70,
+        71,
+        74
+      ],
+      "prerequisites": [
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    },
+    "tasks-domains": {
+      "owned": [
+        84,
+        85,
+        86,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100
+      ],
+      "prerequisites": [
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        33,
+        34
+      ]
+    }
+  },
+  "shell_owners": {
+    "refund_tls": "providers",
+    "ai_tls": "providers",
+    "local_noncash": "banking",
+    "task_cli_adapters": "tasks-domains"
+  }
+}

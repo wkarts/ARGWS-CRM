@@ -1,0 +1,83 @@
+import importlib.util,json,pathlib,copy,shlex,subprocess,tempfile,os,unittest
+ROOT=pathlib.Path(__file__).resolve().parents[2]
+spec=importlib.util.spec_from_file_location('browser_plan',ROOT/'scripts/ci/standalone-browser-plan.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+class BrowserPlanTests(unittest.TestCase):
+ def setUp(self):
+  self.source=m.SOURCE.read_text();self.plan=json.loads(m.MANIFEST.read_text())
+ def test_every_original_invocation_is_owned_exactly_once_and_ordered(self):
+  m.validate(self.plan,self.source)
+  owners=self.plan['common']+[i for g in self.plan['groups'].values() for i in g['owned']]
+  self.assertEqual(sorted(owners),list(range(101)))
+  self.assertEqual(self.plan['invocations'][0]['argv'],self.plan['invocations'][2]['argv'])
+  self.assertNotEqual(self.plan['invocations'][0]['database'],self.plan['invocations'][2]['database'])
+  self.assertEqual(self.plan['invocations'][56]['argv'][0],'--test')
+ def test_missing_duplicate_new_commands_and_unknown_groups_fail_closed(self):
+  p=copy.deepcopy(self.plan);p['groups']['sales-pdf']['owned'].pop()
+  with self.assertRaises(ValueError):m.validate(p,self.source)
+  p=copy.deepcopy(self.plan);p['groups']['sales-pdf']['owned'].append(21)
+  with self.assertRaises(ValueError):m.validate(p,self.source)
+  with self.assertRaises(ValueError):m.validate(self.plan,self.source+'\nnode tests/new-browser.cjs\n')
+  with self.assertRaises(ValueError):m.selected(self.plan,'typo')
+ def test_shared_state_dependencies_replay_the_real_original_browsers(self):
+  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],90:[89],91:[90],97:[96],98:[96],100:[99]}
+  for group in self.plan['groups']:
+   selected=m.selected(self.plan,group)
+   for child,parents in dependencies.items():
+    if child in selected:
+     self.assertTrue(set(parents)<=selected,(group,child,parents))
+     self.assertTrue(all(parent<child for parent in parents))
+ def test_workflow_isolates_stacks_and_requires_every_group(self):
+  source=(ROOT/'.github/workflows/deployment-integrity.yml').read_text()
+  self.assertIn('fail-fast: false',source)
+  self.assertIn('ARGWS_BROWSER_GROUP: ${{ matrix.group }}',source)
+  self.assertIn('name: issuer-native-browser-${{ matrix.group }}',source)
+  self.assertIn('needs: [validation-gate, prepare, http, tooling]',source)
+  self.assertIn('test "$HTTP" = success',source)
+  self.assertIn('test "$TOOLING" = success',source)
+  self.assertIn('docker save argws-crm-provision-smoke:ci',source)
+  self.assertIn('docker load -i',source)
+  for group in self.plan['groups']:self.assertIn(group,source)
+ def test_required_gate_rejects_incomplete_or_failed_groups(self):
+  import textwrap
+  source=(ROOT/'.github/workflows/deployment-integrity.yml').read_text()
+  body=textwrap.dedent(source.rsplit('        run: |',1)[1])
+  good={**os.environ,'GATE':'success','RUN':'true','PREPARE':'success','HTTP':'success','TOOLING':'success'}
+  def run(env):return subprocess.run(['bash','-ec',body],env=env,capture_output=True).returncode
+  self.assertEqual(run(good),0)
+  for name in ['GATE','PREPARE','HTTP','TOOLING']:
+   for state in ['failure','cancelled','skipped','']:
+    self.assertNotEqual(run({**good,name:state}),0,(name,state))
+  self.assertEqual(run({**good,'RUN':'false','PREPARE':'skipped','HTTP':'skipped','TOOLING':'skipped'}),0)
+  self.assertNotEqual(run({**good,'RUN':'false'}),0)
+ def runtime(self,group,fail='',omit=False):
+  with tempfile.TemporaryDirectory() as folder:
+   root=pathlib.Path(folder);node=root/'node';node.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$FAKE_NODE_LOG"\nif [ "$*" = "$FAIL_COMMAND" ]; then exit 7; fi\n');node.chmod(0o755)
+   header=self.source[self.source.index('browser_group='):self.source.index('suffix="$$"')]
+   lines=self.source.splitlines();calls=[]
+   for index,line in enumerate(lines):
+    if not line.startswith('node '):continue
+    start=index
+    while start>0 and lines[start-1].rstrip().endswith('\\'):start-=1
+    calls.append('\n'.join(lines[start:index+1]))
+   self.assertNotIn('ISSUERS_BROWSER_DB_NAME',calls[56])
+   if omit:calls=calls[:-1]
+   fixtures='work='+shlex.quote(str(root))+'\nurl=http://127.0.0.1:1234\nupgrade_url=$url\nupgrade=argws-crm-upgrade-42\nlegacy=argws-crm-legacy-42\nISSUER_SMOKE_DATABASE=argws-crm-provision-db-42\nISSUER_SMOKE_DB_USER=synthetic\nISSUER_SMOKE_DB_PASSWORD=synthetic\n'
+   sanitizer=self.source[self.source.index('sanitize_smoke_failure_log() {'):self.source.index('collect_smoke_failure() {')]
+   body='set -euo pipefail\n'+fixtures+header+'\n'+sanitizer+'\n'+'\n'.join(calls)+'\n'
+   body+='[[ "$browser_index" = "${#browser_commands[@]}" && "$browser_completed" = "$browser_required" ]]\n'
+   env={**os.environ,'PATH':str(root)+':'+os.environ['PATH'],'ARGWS_BROWSER_GROUP':group,'ISSUERS_BROWSER_ARTIFACTS':str(root/'evidence'),'FAKE_NODE_LOG':str(root/'calls'),'FAIL_COMMAND':fail}
+   result=subprocess.run(['bash','-c',body],cwd=ROOT,env=env,capture_output=True,text=True)
+   actual=(root/'calls').read_text().splitlines() if (root/'calls').exists() else []
+   return result,actual
+ def test_real_bash_selector_executes_only_the_full_ordered_plan_of_each_group(self):
+  for group in self.plan['groups']:
+   result,actual=self.runtime(group)
+   self.assertEqual(result.returncode,0,result.stderr)
+   selected=m.selected(self.plan,group)
+   self.assertEqual(actual,[' '.join(row['argv']) for i,row in enumerate(self.plan['invocations']) if i in selected])
+ def test_bash_propagates_failure_and_rejects_incomplete_run(self):
+  result,_=self.runtime('sales-pdf',fail='tests/settings_document_pdf_browser.cjs')
+  self.assertEqual(result.returncode,7,result.stderr)
+  result,_=self.runtime('sales-pdf',omit=True)
+  self.assertNotEqual(result.returncode,0)
+if __name__=='__main__':unittest.main()
