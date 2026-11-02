@@ -3,6 +3,20 @@
 import argparse,json,os,pathlib,re,subprocess,sys,time
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 MANIFEST=ROOT/'tests/ci/native-company-focused.json'
+def failure_annotation(phase,command,output,environment=None):
+    environment=os.environ if environment is None else environment
+    message=output
+    for key,value in environment.items():
+        if re.search(r'PASSWORD|TOKEN|SECRET|KEY|DSN',key,re.I) and len(value)>=4:
+            message=message.replace(value,'[redacted]')
+    message=re.sub(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}','[email]',message,flags=re.I)
+    message=re.sub(r'(?i)(password|token|secret|authorization)(\s*[:=]\s*)[^\s,;]+',r'\1\2[redacted]',message)
+    message=re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]','',message)
+    errors=re.findall(r'(?m)^(?:PHP )?(?:Fatal error|Parse error|Warning|Deprecated|Notice|AssertionError|Error):[^\r\n]*',message)
+    message='\n'.join(line[:350] for line in errors[-2:])+'\n'+message[-1200:]
+    escaped=message.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+    tail=escaped.encode('utf-8')[-3000:].decode('utf-8',errors='ignore')
+    return f'::error::Focused {phase} failed: {command[-1]}%0A'+tail
 def commands(phase):
     manifest=json.loads(MANIFEST.read_text())
     if manifest.get('format')!=1 or phase not in ('sqlite','node','mysql','browser'): raise ValueError('Invalid focused phase')
@@ -72,6 +86,8 @@ def main():
         sys.stdout.write(output);records.append({'command':command,'exit':code,'php_diagnostics':diagnostics,'seconds':round(time.monotonic()-start,3)})
         (out/f'{args.phase}.json').write_text(json.dumps({'sha':os.environ.get('GITHUB_SHA'),'phase':args.phase,'nested_coverage':covered,'records':records,'complete':len(records)==len(selected),'success':len(records)==len(selected) and all(r['exit']==0 for r in records)},indent=2)+'\n')
         print(f'END {args.phase} {index+1}/{len(selected)} exit={code}',flush=True)
-        if code: return code
+        if code:
+            print(failure_annotation(args.phase,command,output),flush=True)
+            return code
     return 0
 if __name__=='__main__':sys.exit(main())

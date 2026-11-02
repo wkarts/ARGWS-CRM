@@ -34,7 +34,7 @@ Sem DDL ou migração de dados nesta correção. A migration 136 é NOOP e prese
 
 ## Validação
 
-- 71 testes Python dos contratos de CI e 19 testes Node direcionados aprovados; manifest confere 101 invocações e oito grupos.
+- 74 testes Python dos contratos de CI e 19 testes Node direcionados aprovados; manifest confere 101 invocações e oito grupos.
 - Novos contratos rápidos: 12 cenários de numeração, quatro de formato PDF, 47 de roteamento API, 45 de seleção do leitor por origem persistida e 21 de callback negado.
 - MySQL real: 110 checks do leitor do portal, 133 de arquivos, 250 de subrecursos operacionais, 228 de tracking bancário até 136.
 - Chromium/MySQL direcionados aprovados: relatórios/API; Google/portal/política de arquivos; publicação e escrita de tarefas; arquivos operacionais inclusive rejeição de upload em chamado fechado; vendas e conversão com PDF/impostos; Asaas, ciclo pós-devolução A/B, IA A/B/principal e origem/componentes/reversão bancários.
@@ -59,3 +59,5 @@ Filas, cache frio e capacidade dos runners variam; não há promessa de duraçã
 Pusher: a origem privada resolve a atribuição nativa explícita de um único responsável, preservando o marcador armazenado e as atribuições legadas. Remoção, ambiguidade e troca de época vetam o envio; novos casos PDO exercitam esses limites. Carregamentos de classes em fixtures/bootstraps HTTP são idempotentes, sem excluir cenários ou assertivas.
 
 Regressões novas: formulário e writer completos com 236 checks SQLite e 232 MySQL; contexto/bootstrap com 132; Pusher com 35 adicionais em cada banco sobre os 78 básicos; portal com 110 checks MySQL. O teste de impostos cobre preservação, retry, falsificação de nome/taxa/linha, nova linha sem autorização de catálogo, empresa estrangeira, algoritmo forjado e proteção do legado NULL.
+
+Correção do contrato de sessão dos quatro fixtures de Settings: dependência explícita, negação sem flash e mensagem vinculada a empresa/ator/grupo. Os 14 entrypoints MySQL focados passaram localmente; a fase remota será repetida no novo commit. Falhas dessa suíte agora produzem anotação pública sanitizada e limitada, preservando causa e final da pilha.

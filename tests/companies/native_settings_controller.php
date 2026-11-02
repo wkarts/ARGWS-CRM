@@ -17,6 +17,7 @@ class CompanyRequestScope{
 }
 require APPPATH.'controllers/admin/Settings.php';
 CompanyRequestScope::$issuer=$a;$controller=new Settings();$controller->db=$db;
+$controller->session=new class{public array $flash=[];function set_flashdata($key,$value){$this->flash[$key]=$value;}};
 $controller->input=new class{public string $verb='GET';public array $query=['group'=>'localization'],$body=[];function method($upper=true){return$this->verb;}function get($name,$filter=false){return$this->query[$name]??null;}function post($name=null,$filter=false){return$name===null?$this->body:($this->body[$name]??null);}};
 $controller->security=new class{function get_csrf_token_name(){return'csrf_token';}};
 $controller->load=new class{public array $views=[];function helper($names){}function model($name){throw new RuntimeException('Global settings model must not load');}function view($name,$data){$this->views[]=[$name,$data];}};
@@ -26,9 +27,11 @@ $visible=[];foreach($view[1]['sections']as$section)foreach($section['children']a
 essentialCheck(!in_array('payment_gateways',$visible,true),'unadapted native Settings links are not rendered as dead forms');
 $controller->input->verb='POST';$controller->input->body=['settings'=>$locale,'native_settings_revision'=>$view[1]['native_settings_revision']];
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Missing CSRF accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'native controller rejects missing CSRF');}
+essentialCheck($controller->session->flash===[],'denied native save emits no success flash');
 $controller->input->body['_native_company_csrf']='fixture-csrf';$controller->input->body['settings']['time_format']='12';
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 essentialCheck($GLOBALS['settingsRedirect']===['https://fixture.invalid/admin/settings?group=localization',303]&&$store->get($a,'time_format')==='12','original native POST commits then303 same route');
+essentialCheck($controller->session->flash['native_settings_saved']===['issuer'=>$a,'actor'=>7,'group'=>'localization'],'native save confirmation is bound to the exact company, actor and group');
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Stale accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===409,'stale browser form rejected');}
 $controller->input->verb='GET';$controller->input->query=['group'=>'company'];
 CompanyRequestScope::$issuer=$a;CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());$companyA=end($controller->load->views)[1];

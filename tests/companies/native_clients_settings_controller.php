@@ -18,6 +18,7 @@ class CompanyRequestScope{
 }
 require APPPATH.'controllers/admin/Settings.php';
 $controller=new Settings();$controller->db=$db;$controller->input=new class{public string$verb='GET';public array$query=['group'=>'clients'],$body=[];function method($upper=true){return$this->verb;}function get($name){return$this->query[$name]??null;}function post($name=null,$filter=false){return$name===null?$this->body:($this->body[$name]??null);}};
+$controller->session=new class{public array $flash=[];function set_flashdata($key,$value){$this->flash[$key]=$value;}};
 $controller->security=new class{function get_csrf_token_name(){return'csrf_token';}};
 $controller->load=new class{public array$views=[];function helper($names){}function model($name){throw new RuntimeException('Global settings model must not load');}function view($name,$data){$this->views[]=[$name,$data];}};
 $start=$GLOBALS['essentialChecks'];

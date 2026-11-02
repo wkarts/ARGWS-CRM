@@ -1,9 +1,24 @@
-import importlib.util,json,pathlib,re,tempfile,unittest
+import contextlib,io,importlib.util,json,pathlib,re,tempfile,unittest
 from unittest.mock import patch
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('focused',ROOT/'scripts/ci/run-native-company-focused.py')
 focused=importlib.util.module_from_spec(spec);spec.loader.exec_module(focused)
 class FocusedContract(unittest.TestCase):
+ def test_public_failure_annotation_redacts_environment_and_escapes_commands(self):
+  output='Fatal error: synthetic-password user@example.invalid token=unlisted-token\n::notice::forged\r%value\nTrace tests/real.php:19'
+  message=focused.failure_annotation('mysql',['php','tests/real.php'],output,{'MYSQL_PASSWORD':'synthetic-password'})
+  self.assertNotIn('synthetic-password',message);self.assertNotIn('user@example.invalid',message);self.assertNotIn('unlisted-token',message)
+  self.assertNotIn('\n',message);self.assertNotIn('\r',message);self.assertIn('%0A::notice::forged%0D%25value',message)
+  self.assertIn('tests/real.php:19',message);self.assertTrue(message.startswith('::error::Focused mysql failed: tests/real.php'))
+ def test_public_failure_annotation_is_bounded_and_retains_failure_tail(self):
+  message=focused.failure_annotation('sqlite',['php','tests/last.php'],'private-prefix'*1000+'\nFatal error: final assertion\ntrace.php:27',{})
+  self.assertLess(len(message.encode()),4000);self.assertIn('Fatal error: final assertion',message);self.assertIn('trace.php:27',message)
+  message=focused.failure_annotation('mysql',['php','tests/last.php'],'😀\n'*2000+'Fatal error: final assertion',{})
+  self.assertLess(len(message.encode()),4000);self.assertIn('Fatal error: final assertion',message)
+ def test_nested_php_failure_keeps_cause_before_a_long_child_trace(self):
+  output='Fatal error: missing fixture dependency\n'+'#1 long trace\n'*500+'Fatal error: parent contract failed\nparent.php:13'
+  message=focused.failure_annotation('mysql',['php','tests/parent.php'],output,{})
+  self.assertIn('missing fixture dependency',message);self.assertIn('parent contract failed',message);self.assertIn('parent.php:13',message)
  def test_real_manifest(self):
   seen=set()
   for phase in ('sqlite','node','mysql','browser'):
@@ -18,12 +33,12 @@ class FocusedContract(unittest.TestCase):
     file=pathlib.Path(folder)/'manifest.json';file.write_text(json.dumps({'format':1,'sqlite':rows}))
     with patch.object(focused,'MANIFEST',file),self.assertRaises(ValueError):focused.commands('sqlite')
  def test_first_failure_stops_and_records_incomplete(self):
-  with tempfile.TemporaryDirectory() as folder,patch.object(focused,'commands',return_value=[['node','tests/first.cjs'],['node','tests/second.cjs']]),patch.object(focused.sys,'argv',['runner','node']),patch.dict(focused.os.environ,{'NATIVE_COMPANY_EVIDENCE':folder}),patch.object(focused.subprocess,'run') as run:
+  with tempfile.TemporaryDirectory() as folder,patch.object(focused,'commands',return_value=[['node','tests/first.cjs'],['node','tests/second.cjs']]),patch.object(focused.sys,'argv',['runner','node']),patch.dict(focused.os.environ,{'NATIVE_COMPANY_EVIDENCE':folder}),patch.object(focused.subprocess,'run') as run,contextlib.redirect_stdout(io.StringIO()):
    run.return_value=type('Result',(),{'stdout':'synthetic failure\n','returncode':1})()
    self.assertEqual(focused.main(),1);self.assertEqual(run.call_count,1)
    receipt=json.loads((pathlib.Path(folder)/'node.json').read_text());self.assertFalse(receipt['complete']);self.assertFalse(receipt['success'])
  def test_php_warning_is_failure_even_with_exit_zero(self):
-  with tempfile.TemporaryDirectory() as folder,patch.object(focused,'commands',return_value=[['php','tests/first.php']]),patch.object(focused.sys,'argv',['runner','sqlite']),patch.dict(focused.os.environ,{'NATIVE_COMPANY_EVIDENCE':folder,'ISSUERS_TEST_DSN':''}),patch.object(focused.subprocess,'run') as run:
+  with tempfile.TemporaryDirectory() as folder,patch.object(focused,'commands',return_value=[['php','tests/first.php']]),patch.object(focused.sys,'argv',['runner','sqlite']),patch.dict(focused.os.environ,{'NATIVE_COMPANY_EVIDENCE':folder,'ISSUERS_TEST_DSN':''}),patch.object(focused.subprocess,'run') as run,contextlib.redirect_stdout(io.StringIO()):
    run.return_value=type('Result',(),{'stdout':'Warning: synthetic warning\n','returncode':0})()
    self.assertEqual(focused.main(),1);receipt=json.loads((pathlib.Path(folder)/'sqlite.json').read_text());self.assertTrue(receipt['records'][0]['php_diagnostics']);self.assertFalse(receipt['success'])
  def test_mysql_requires_exact_disposable_service(self):
