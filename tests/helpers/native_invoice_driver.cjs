@@ -117,6 +117,32 @@ async function assertInvoiceFormReady(page) {
 }
 async function legacyInvoiceTarget(page,response,url,navigationResponse=null,navigationRequest=null,clientId=null) {
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
+  const invoiceTargetFromRows=(rows,expectedClient=null)=>{
+    const candidates=[];
+    const add=(value)=>{
+      const html=String(value??'');
+      const owned=expectedClient===null||html.includes('/clients/client/'+String(expectedClient));
+      for(const match of html.matchAll(/\/admin\/invoices\/list_invoices\/([1-9][0-9]*)/g))candidates.push({href:new URL(match[0],url).href,id:Number(match[1]),owned});
+    };
+    for(const row of rows){
+      if(Array.isArray(row))row.forEach(add);else if(row&&typeof row==='object')Object.values(row).forEach(add);else add(row);
+    }
+    const owned=candidates.filter(candidate=>candidate.owned);
+    return [...(owned.length?owned:candidates)].sort((left,right)=>left.id-right.id).pop()?.href||null;
+  };
+  const invoiceTargetFromTable=async(tableResponse,expectedClient=null)=>{
+    try {
+      const payload=await tableResponse.json();
+      const rows=Array.isArray(payload.aaData)?payload.aaData:(Array.isArray(payload.data)?payload.data:[]);
+      return invoiceTargetFromRows(rows,expectedClient);
+    } catch (_) { return null; }
+  };
+  const invoiceTargetFromDom=async(expectedClient=null)=>{
+    try {
+      const rows=await page.locator('table.table-invoices-single-client tbody tr, table.table-invoices tbody tr').evaluateAll(xs=>xs.map(row=>row.innerHTML));
+      return invoiceTargetFromRows(rows,expectedClient);
+    } catch (_) { return null; }
+  };
   const responses=navigationResponse?[response,navigationResponse]:[response];
   const candidates=[];
   const addRequest=request=>{
@@ -161,50 +187,40 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
       const listUrl=new URL('/admin/invoices/list_invoices',url).href;
       const tableResponsePromise=page.waitForResponse(candidateResponse=>{
         try{return candidateResponse.request().method()==='POST'&&/^\/admin\/invoices\/table(?:\/[1-9][0-9]*)?$/.test(new URL(candidateResponse.url()).pathname);}catch(_){return false;}
-      },{timeout:20000}).catch(()=>null);
+      },{timeout:90000}).catch(()=>null);
       await page.goto(listUrl,{waitUntil:'domcontentloaded'});
       const tableResponse=await tableResponsePromise;
       if(tableResponse){
-        try {
-          const payload=await tableResponse.json();
-          const rows=Array.isArray(payload.aaData)?payload.aaData:(Array.isArray(payload.data)?payload.data:[]);
-          const targets=[];
-          for(const row of rows){
-            const cells=Array.isArray(row)?row:Object.values(row||{});
-            const html=cells.map(value=>String(value??'')).join(' ');
-            if(!html.includes('/clients/client/'+String(clientId)))continue;
-            const match=html.match(/\/admin\/invoices\/list_invoices\/[1-9][0-9]*/);
-            if(match)targets.push(new URL(match[0],url).href);
-          }
-          const target=targets.sort((left,right)=>{
-            const id=value=>Number(new URL(value,url).pathname.split('/').pop());
-            return id(left)-id(right);
-          }).pop();
-          if(target)return target;
-        } catch (_) {}
+        const target=await invoiceTargetFromTable(tableResponse,clientId);
+        if(target)return target;
       }
-      const table=page.locator('table.table-invoices');
-      await table.waitFor({state:'visible',timeout:15000});
+      const table=page.locator('table.table-invoices').first();
+      await table.waitFor({state:'visible',timeout:90000});
       await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices tbody tr a[href]')).some(anchor=>{
         try{return new URL(anchor.href,location.href).pathname.endsWith('/clients/client/'+expected);}catch(_){return false;}
-      }),String(clientId),{timeout:15000}).catch(()=>{});
-      const target=await table.locator('tbody tr').evaluateAll((rows,expected)=>{
-        const matches=[];
-        for(const row of rows){
-          const anchors=Array.from(row.querySelectorAll('a[href]'));
-          const owns=anchors.some(anchor=>{
-            try{return new URL(anchor.href,location.href).pathname.endsWith('/clients/client/'+expected);}catch(_){return false;}
-          });
-          const invoice=anchors.find(anchor=>{
-            try{return /\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/.test(new URL(anchor.href,location.href).pathname);}catch(_){return false;}
-          });
-          if(owns&&invoice)matches.push(invoice.href);
-        }
-        return matches.sort((left,right)=>{
-          const id=value=>Number(new URL(value,location.href).pathname.split('/').pop());
-          return id(left)-id(right);
-        }).pop()||null;
-      },String(clientId));
+      }),String(clientId),{timeout:90000}).catch(()=>{});
+      const target=await invoiceTargetFromDom(clientId);
+      if(target)return target;
+    } catch (_) {}
+    try {
+      // The principal table can be slow or omit the client column while the
+      // legacy list is rebuilding. The official customer profile owns a
+      // client-scoped DataTable endpoint; use its authenticated GET/POST
+      // sequence as a second read-only recovery path.
+      const profileUrl=new URL('/admin/clients/client/'+encodeURIComponent(String(clientId))+'?group=statement',url).href;
+      const profileTableResponse=page.waitForResponse(candidateResponse=>{
+        try{return candidateResponse.request().method()==='POST'&&new URL(candidateResponse.url()).pathname==='/admin/invoices/table/'+String(clientId);}catch(_){return false;}
+      },{timeout:90000}).catch(()=>null);
+      await page.goto(profileUrl,{waitUntil:'domcontentloaded'});
+      const tableResponse=await profileTableResponse;
+      if(tableResponse){
+        const target=await invoiceTargetFromTable(tableResponse,clientId);
+        if(target)return target;
+      }
+      await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices-single-client tbody tr a[href], table.table-invoices tbody tr a[href]')).some(anchor=>{
+        try{return new URL(anchor.href,location.href).pathname.includes('/admin/invoices/list_invoices/');}catch(_){return false;}
+      }),String(clientId),{timeout:90000}).catch(()=>{});
+      const target=await invoiceTargetFromDom(clientId);
       if(target)return target;
     } catch (_) {}
   }
