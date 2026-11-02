@@ -39,3 +39,41 @@ $service->discard($a,7,$blankKept,1,hash('sha256','discard-before-positive-blank
 essentialCheck($db->query('SELECT stopped_at FROM '.$p.'company_standalone_timers WHERE issuer_id=? AND task_id=? AND actor_id=7',[$a,$five])->row_array()['stopped_at']!==null,'Starting native blank timer stops assigned owned timer under ON policy');
 essentialCheck($db->query('SELECT state FROM '.$p.'company_blank_task_timers WHERE id=?',[$newBlank])->row_array()['state']==='active','Blank start and assigned stop commit together');
 echo 'Native blank start automatic stop: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";
+
+// A fully migrated installation also has the project-only milestone participants.
+require_once APPPATH.'services/CompanyProjectMilestonesSchema.php';
+if($db->driver()==='sqlite'){
+    foreach(CompanyProjectMilestonesSchema::definitions($p) as$table=>$columns){
+        $db->query(str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','','CREATE TABLE '.$p.$table.'('.implode(',',$columns).')'));
+    }
+    unset($db->data_cache['table_names']);
+}else CompanyProjectMilestonesSchema::ensure($db,$p);
+$service->discard($a,7,$newBlank,1,hash('sha256','discard-before-modality-pairs'));
+$writers=['project'=>new CompanyTasks($db,$p),'standalone'=>new CompanyStandaloneTasks($db,$p)];
+foreach(['project','standalone'] as$oldKind)foreach(['project','standalone'] as$newKind){
+    $pair=$oldKind.'-'.$newKind;$ids=[];
+    foreach(['old'=>$oldKind,'new'=>$newKind] as$label=>$kind){
+        $input=['assignee_id'=>7,'name'=>'Native pair '.$pair.' '.$label,'description'=>'','due_date'=>'2026-10-30','status'=>'todo','checklist'=>[]];
+        if($kind==='project')$input=['project_id'=>$project]+$input;
+        $ids[$label]=$writers[$kind]->create($a,7,$input,hash('sha256','pair-create-'.$pair.'-'.$label));
+    }
+    $oldTable=$oldKind==='project'?'company_task_timers':'company_standalone_timers';
+    $newTable=$newKind==='project'?'company_task_timers':'company_standalone_timers';
+    $writers[$oldKind]->nativeTimer($a,7,$ids['old'],1,'start',null,0,'Old pair note',$onAgain,hash('sha256','pair-old-'.$pair));
+    $beforePair=[];foreach(['company_task_timers','company_standalone_timers'] as$table)$beforePair[$table]=$db->query('SELECT * FROM '.$p.$table.' ORDER BY id')->result_array();
+    $db->failOn='INSERT INTO '.$p.'company_project_requests';
+    essentialThrows(fn()=>$writers[$newKind]->nativeTimer($a,7,$ids['new'],1,'start',null,0,'Pair replacement',$onAgain,hash('sha256','pair-new-'.$pair)),'issuer_storage_failed','Cross-modality receipt failure rolls back the complete stop/start');
+    $db->failOn=null;
+    foreach($beforePair as$table=>$rows)essentialCheck($db->query('SELECT * FROM '.$p.$table.' ORDER BY id')->result_array()===$rows,'Both modality histories survive a late failed start');
+    $writers[$newKind]->nativeTimer($a,7,$ids['new'],1,'start',null,0,'Pair replacement',$onAgain,hash('sha256','pair-new-'.$pair));
+    $oldTimer=$db->query('SELECT * FROM '.$p.$oldTable.' WHERE issuer_id=? AND task_id=?',[$a,$ids['old']])->row_array();
+    $newTimers=$db->query('SELECT * FROM '.$p.$newTable.' WHERE issuer_id=? AND task_id=?',[$a,$ids['new']])->result_array();
+    essentialCheck(count($newTimers)===1&&$oldTimer['stopped_at']===$newTimers[0]['started_at']&&$newTimers[0]['stopped_at']===null,'Every native modality pair shares one atomic stop/start boundary');
+    $oldTaskTable=$oldKind==='project'?'company_tasks':'company_standalone_tasks';
+    essentialCheck($db->query('SELECT status FROM '.$p.$oldTaskTable.' WHERE id=?',[$ids['old']])->row_array()['status']==='todo','Automatic stop preserves the prior task workflow');
+    $oldSource=$oldKind==='project'?'company_task_timer':'company_standalone_timer';
+    essentialCheck($details->forOwnTimesheet($a,7,$oldSource,(int)$oldTimer['id'])['hourly_rate']==='99.00','Cross-modality stop preserves the captured rate');
+    $writers[$newKind]->nativeTimer($a,7,$ids['new'],2,'stop',(int)$newTimers[0]['id'],1,'Pair complete',$onAgain,hash('sha256','pair-stop-'.$pair));
+}
+$newBlank=$service->start($a,7,$onAgain,hash('sha256','restore-active-blank-after-modality-pairs'));
+echo 'Native all-modality atomic stop/start: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";

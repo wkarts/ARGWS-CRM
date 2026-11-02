@@ -23,6 +23,7 @@ A validação demorava mais de uma hora e interrompia cenários posteriores em f
 - Calendário aceita a ausência histórica de fonte externa (`calendar_id IS NULL`) da principal, mantendo o frame bruto na revalidação e o armazenamento intacto. IDs não vazios inválidos continuam negados; quatro novos checks cobrem a fronteira. Recusas da página registram somente códigos delimitados.
 - A atribuição em lote de Tarefas exibe nomes de funcionários como texto literal antes do helper de selects que aceita HTML. A prova de equipe também navega nessa tela com o nome contendo `<script>`, preservando o rótulo e recusando execução de JavaScript.
 - O controller original de equipe converte recusas de ACL/CSRF/proteção em 403, revisão/conflito em 409, entrada inválida em 422 e armazenamento não confirmado em 503, sem expor exceções. Sete casos adicionais exercitam o tratamento; a principal conserva seu CSRF dedicado e o formulário legado.
+- A parada automática entre modalidades compõe os participantes declarados pelos dois writers, inclusive os marcos exclusivos de projetos. A propriedade da transação continua obrigatória. Quatro pares exercitam falha tardia de recibo, rollback dos dois históricos, recuperação, instante único de stop/start e preservação do estado e da tarifa capturada.
 - Fixtures posteriores verificam IDs tipados e atribuições ativas atuais; datas de projetos/tarefas são preenchidas no formato da empresa. As provas de recorrência configuram explicitamente o transporte sintético e a preferência de notificações do contato.
 
 ## CI, GHCR e desempenho
