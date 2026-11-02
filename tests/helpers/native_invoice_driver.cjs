@@ -147,7 +147,7 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
   const invoiceTargetFromDatabase=(expectedClient)=>{
     try {
       const client=String(expectedClient??'');
-      if(!/^[1-9]\\d*$/.test(client))return null;
+      if(!/^[1-9]\d*$/.test(client))return null;
       const container=process.env.ISSUERS_BROWSER_DB_CONTAINER;
       const database=process.env.ISSUERS_BROWSER_DB_NAME||'argws_upgrade_ci';
       const user=process.env.ISSUERS_BROWSER_DB_USER;
@@ -158,8 +158,8 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
         '--user='+user,database,'--batch','--skip-column-names','-e',
         'SELECT id FROM tblinvoices WHERE clientid='+client+' AND issuer_id IS NULL ORDER BY id DESC LIMIT 1',
       ],{env:{...process.env,MYSQL_PWD:password},encoding:'utf8'}).trim();
-      const id=output.split(/\\s+/)[0];
-      if(!/^[1-9]\\d*$/.test(id))return null;
+      const id=output.split(/\s+/)[0];
+      if(!/^[1-9]\d*$/.test(id))return null;
       return new URL('/admin/invoices/list_invoices/'+id,url).href;
     } catch (_) { return null; }
   };
