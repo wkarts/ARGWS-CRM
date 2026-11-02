@@ -115,7 +115,7 @@ async function assertInvoiceFormReady(page) {
   assert.equal(result.pending,0,'original invoice validation settled');
   assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
 }
-async function legacyInvoiceTarget(page,response,url,navigationResponse=null,navigationRequest=null,clientId=null) {
+async function legacyInvoiceTarget(page,response,url,navigationResponse=null,navigationRequest=null,clientId=null,requestFields=null) {
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
   const invoiceTargetFromRows=(rows,expectedClient=null)=>{
     const candidates=[];
@@ -145,8 +145,9 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
   };
   const invoiceTargetFromDirectTable=async(tableUrl,expectedClient=null)=>{
     try {
-      const hidden=await page.locator('input[type="hidden"][name]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
-      const response=await page.context().request.post(tableUrl,{form:{...hidden,draw:'1',start:'0',length:'100','search[value]':'','search[regex]':'false','order[0][column]':'3','order[0][dir]':'desc','order[1][column]':'0','order[1][dir]':'desc'},headers:{'X-Requested-With':'XMLHttpRequest','Referer':tableUrl}});
+      const hidden=requestFields&&Object.keys(requestFields).length?requestFields:await page.locator('input[type="hidden"][name]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
+      const form={...hidden,draw:'1',start:'0',length:'100','search[value]':'','search[regex]':'false','order[0][column]':'3','order[0][dir]':'desc','order[1][column]':'0','order[1][dir]':'desc'};
+      const response=await page.context().request.post(tableUrl,{form,headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','Referer':tableUrl}});
       if(!response.ok())return null;
       return invoiceTargetFromTable(response,expectedClient);
     } catch (_) { return null; }
@@ -249,6 +250,12 @@ async function save(page,url) {
   const responseMatches=r=>matches(r.request());
   const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
   const clientId=await page.locator('#clientid').inputValue().catch(()=>null);
+  const requestFields=await page.evaluate(()=>{
+    const fields=Object.fromEntries(Array.from(document.querySelectorAll('input[type="hidden"][name]')).map(input=>[input.name,input.value]));
+    const csrf=typeof csrfData==='object'&&csrfData?csrfData:null;
+    if(csrf&&csrf.token_name&&csrf.hash)fields[csrf.token_name]=csrf.hash;
+    return fields;
+  }).catch(()=>({}));
   const observedNavigationRequests=[];
   const observeNavigationRequest=request=>{
     try {
@@ -282,7 +289,7 @@ async function save(page,url) {
     // durable PRG target from the redirect GET/POST response pair and perform
     // only its GET; never replay the legacy POST (the invoice number is already
     // consumed).
-    const target=await legacyInvoiceTarget(page,response,url,redirectedResponse,redirectedRequest||observedNavigationRequests[0]||null,clientId);
+    const target=await legacyInvoiceTarget(page,response,url,redirectedResponse,redirectedRequest||observedNavigationRequests[0]||null,clientId,requestFields);
     assert(target,'legacy invoice POST exposes its persisted list destination');
     await page.goto(target);
   }
