@@ -584,7 +584,10 @@ class Invoices extends AdminController
                         $this->session->set_userdata('send_later', true);
                     }
 
-                    redirect($redUrl);
+                    // A successful legacy POST must use an explicit PRG response.
+                    // 303 keeps the persisted invoice destination observable even
+                    // when the existing PWA worker handles the follow-up GET.
+                    redirect($redUrl, 'location', 303);
                 }
             } else {
                 if (staff_cant('edit', 'invoices')) {
