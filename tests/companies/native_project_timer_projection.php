@@ -4,9 +4,15 @@ require_once APPPATH.'services/NativeCompanyTasksRead.php';
 $projectSource=(int)$savedSource['source_id'];$ts=new CompanyTasks($db,$p);
 $task=$ts->create($a,7,['project_id'=>$projectSource,'assignee_id'=>7,'name'=>'Native overview real timer','description'=>'','due_date'=>'2026-10-27','status'=>'todo','checklist'=>[]],$tk('native-overview-task'));
 $ts->activity($a,7,$task,1,'start',$tk('native-overview-start'));
-$clock=time();$start=date('Y-m-d H:i:s',$clock-3600);$db->query('UPDATE '.$p.'company_task_timers SET started_at=? WHERE issuer_id=? AND task_id=?',[$start,$a,$task]);
+$clock=time();
+// Keep the synthetic running timer inside the current calendar week even
+// when CI starts just after Monday midnight; a fixed one-hour subtraction can
+// otherwise place the timer on Sunday and make the weekly chart legitimately
+// omit it. The elapsed duration remains real and is asserted below.
+$weekStart=strtotime('monday this week');$duration=max(0,min(3600,$clock-$weekStart));
+$start=date('Y-m-d H:i:s',$clock-$duration);$db->query('UPDATE '.$p.'company_task_timers SET started_at=? WHERE issuer_id=? AND task_id=?',[$start,$a,$task]);
 $read=new NativeCompanyTasksRead($db,$p,date_default_timezone_get());$running=$read->projectTimers($a,7,$saved,$clock);
-essentialCheck($running['total_seconds']===3600&&$running['member_seconds'][7]===3600&&$running['timers'][0]['end_time']===null,'Original overview derives elapsed running time from actual owned timer and fixed clock');
+essentialCheck($running['total_seconds']===$duration&&$running['member_seconds'][7]===$duration&&$running['timers'][0]['end_time']===null,'Original overview derives elapsed running time from actual owned timer and fixed clock');
 $ts->activity($a,7,$task,2,'stop',$tk('native-overview-stop'));
 $stopped=$read->projectTimers($a,7,$saved,$clock+5);$raw=$db->query('SELECT seconds FROM '.$p.'company_task_timers WHERE issuer_id=? AND task_id=?',[$a,$task])->row_array();
 essentialCheck($stopped['total_seconds']===(int)$raw['seconds']&&$stopped['timers'][0]['duration_basis']==='native_persisted_duration_seconds','Stopped overview duration uses persisted authoritative seconds, not guessed wall-clock subtraction');
