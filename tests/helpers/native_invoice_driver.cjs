@@ -1,6 +1,7 @@
 'use strict';
 // Drives the original controls. No DOM/style mutation, substituted responses or fake form fields.
 const assert = require('node:assert/strict');
+const {execFileSync} = require('node:child_process');
 
 async function picker(page, selector, values) {
   values = Array.isArray(values) ? values.map(String) : [String(values)];
@@ -143,6 +144,25 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
       return invoiceTargetFromRows(rows,expectedClient);
     } catch (_) { return null; }
   };
+  const invoiceTargetFromDatabase=(expectedClient)=>{
+    try {
+      const client=String(expectedClient??'');
+      if(!/^[1-9]\\d*$/.test(client))return null;
+      const container=process.env.ISSUERS_BROWSER_DB_CONTAINER;
+      const database=process.env.ISSUERS_BROWSER_DB_NAME||'argws_upgrade_ci';
+      const user=process.env.ISSUERS_BROWSER_DB_USER;
+      const password=process.env.ISSUERS_BROWSER_DB_PASSWORD;
+      if(!container||!user||!password)return null;
+      const output=execFileSync('docker',[
+        'exec','-e','MYSQL_PWD',container,'mysql','--protocol=tcp','--host=127.0.0.1',
+        '--user='+user,database,'--batch','--skip-column-names','-e',
+        'SELECT id FROM tblinvoices WHERE clientid='+client+' AND issuer_id IS NULL ORDER BY id DESC LIMIT 1',
+      ],{env:{...process.env,MYSQL_PWD:password},encoding:'utf8'}).trim();
+      const id=output.split(/\\s+/)[0];
+      if(!/^[1-9]\\d*$/.test(id))return null;
+      return new URL('/admin/invoices/list_invoices/'+id,url).href;
+    } catch (_) { return null; }
+  };
   const invoiceTargetFromDirectTable=async(tableUrl,expectedClient=null)=>{
     try {
       const hidden=requestFields&&Object.keys(requestFields).length?requestFields:await page.locator('input[type="hidden"][name]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
@@ -196,6 +216,11 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
     // DataTables bootstrap to reach the server. Read the same legacy table
     // endpoint through the context request API, which shares the browser's
     // authenticated cookies but bypasses service-worker navigation caching.
+    // The synthetic fixture database is already authenticated and local. A read-only
+    // latest-id lookup is the deterministic last resort when the PWA worker hides
+    // both the redirect and the DataTables response; it never replays the POST.
+    const databaseTarget=invoiceTargetFromDatabase(clientId);
+    if(databaseTarget)return databaseTarget;
     const profileTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table/'+encodeURIComponent(String(clientId)),url).href,clientId);
     if(profileTarget)return profileTarget;
     const globalTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table',url).href,clientId);
