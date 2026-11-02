@@ -1,6 +1,12 @@
 import importlib.util,pathlib,unittest
 spec=importlib.util.spec_from_file_location('round',pathlib.Path(__file__).resolve().parents[1]/'scripts/ci/pr-validation-round.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class RoundTests(unittest.TestCase):
+ def test_only_known_validation_families_finish_current_failed_shards(self):
+  for path in m.DIAGNOSTIC_WORKFLOWS:
+   self.assertTrue(m.retains_failed_shards({'path':path+'@refs/pull/52/merge'},[{'conclusion':'failure'}]))
+   self.assertFalse(m.retains_failed_shards({'path':path},[{'conclusion':'success'}]))
+  self.assertFalse(m.retains_failed_shards({'path':'.github/workflows/release-packages.yml'},[{'conclusion':'failure'}]))
+  self.assertFalse(m.retains_failed_shards({'path':'.github/workflows/unreviewed.yml'},[{'conclusion':'failure'}]))
  def setUp(self):self.pr={'number':52,'head':{'sha':'new'}};self.repo='wkarts/ARGWS-CRM'
  def run_row(self,id=1,**kw):return dict({'id':id,'event':'pull_request','head_sha':'new','status':'in_progress','head_repository':{'full_name':self.repo},'pull_requests':[{'number':52}]},**kw)
  def plan(self,rows,failed=False):return m.cancellation_plan(rows,self.pr,self.repo,99,failed)

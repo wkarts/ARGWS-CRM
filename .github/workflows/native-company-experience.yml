@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
-      fail-fast: ${{ github.event_name == 'pull_request' }}
+      fail-fast: false
       matrix:
         include:
           - php: '8.1'
@@ -79,8 +79,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
-      # Abort sibling PR matrix legs on failure; rerun both on the corrective SHA.
-      fail-fast: ${{ github.event_name == 'pull_request' }}
+      # Complete both PHP diagnostics; failed or cancelled legs cannot satisfy the gate.
+      fail-fast: false
       matrix:
         include:
           - php: '8.1'

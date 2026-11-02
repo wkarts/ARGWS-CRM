@@ -2,6 +2,18 @@ import importlib.util,json,pathlib,copy,shlex,subprocess,tempfile,os,unittest
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('browser_plan',ROOT/'scripts/ci/standalone-browser-plan.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class BrowserPlanTests(unittest.TestCase):
+ def test_long_workers_leave_capacity_for_all_http_groups(self):
+  import re
+  def section(file,name):
+   source=(ROOT/file).read_text();return re.search(r'^  '+name+r':\n(.*?)(?=^  [\w-]+:\n|\Z)',source,re.M|re.S).group(1)
+  core=section('.github/workflows/issuer-foundation.yml','registry-shards')
+  bb=[section('.github/workflows/banco-brasil.yml',db+'-shards') for db in ['mysql','mariadb']]
+  slots=sum(int(re.search(r'max-parallel: (\d+)',job).group(1)) for job in [core,*bb])
+  focused=section('.github/workflows/native-company-experience.yml','focused')
+  slots+=len(self.plan['groups'])+len(re.findall(r"- php: '[^']+'",focused))+2 # tooling and round monitor
+  self.assertLessEqual(slots,20,'long SQL matrices cannot occupy every runner before HTTP starts')
+  http=section('.github/workflows/deployment-integrity.yml','http')
+  self.assertRegex(http,r'group: \[tasks-domains, support,')
  def setUp(self):
   self.source=m.SOURCE.read_text();self.plan=json.loads(m.MANIFEST.read_text())
  def test_every_original_invocation_is_owned_exactly_once_and_ordered(self):

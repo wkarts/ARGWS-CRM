@@ -3,7 +3,9 @@
 import argparse
 import hashlib
 import json
+import importlib.util
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -11,6 +13,17 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / 'tests/ci/company-registry-commands.json'
 PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
 SHARDS = 4
+
+
+def execute_logged(command, **kwargs):
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors='replace', **kwargs)
+    sys.stdout.write(result.stdout)
+    if result.returncode:
+        spec = importlib.util.spec_from_file_location('focused_failure', ROOT / 'scripts/ci/run-native-company-focused.py')
+        focused = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(focused)
+        print(focused.failure_annotation('registry', command, result.stdout), flush=True)
+    return result
 
 
 def load_commands(path=MANIFEST):
@@ -54,7 +67,7 @@ def select_commands(commands, shard, assignments=None):
     return [(index, command) for index, command in enumerate(commands) if assignments[index] == shard]
 
 
-def run(commands, shard, timings, execute=subprocess.run, assignments=None):
+def run(commands, shard, timings, execute=execute_logged, assignments=None):
     selected = select_commands(commands, shard, assignments)
     Path(timings).parent.mkdir(parents=True, exist_ok=True)
     with Path(timings).open('w') as evidence:

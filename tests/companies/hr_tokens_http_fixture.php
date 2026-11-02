@@ -76,10 +76,10 @@ if ($mode === 'context') {
     $paths = array_merge(glob(APPPATH . 'services/CompanyHr*.php'), [
         APPPATH . 'controllers/admin/Staff.php', APPPATH . 'controllers/Hr_access.php',
         APPPATH . 'views/admin/staff/native_hr.php', APPPATH . 'views/admin/staff/native_hr_mine.php', APPPATH . 'views/admin/staff/native_hr_records.php', APPPATH . 'views/hr_access.php',
-        APPPATH . 'views/admin/settings/native_api_tokens.php', APPPATH . 'controllers/admin/Api_tokens.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
+        APPPATH . 'views/admin/settings/native_api_tokens.php', APPPATH . 'controllers/admin/Settings.php', APPPATH . 'services/NativeCompanySpecializedOperations.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
     ]);
     $value = [];
-    foreach ($paths as $path) $value[substr($path, strlen(FCPATH))] = hash_file('sha256', $path);
+    foreach ($paths as $path) { if (!is_file($path)) throw new RuntimeException('HR source witness requires the current native handler'); $value[substr($path, strlen(FCPATH))] = hash_file('sha256', $path); }
     ksort($value);
 } else throw new RuntimeException('Unknown read-only HR token witness');
 echo json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) . PHP_EOL;

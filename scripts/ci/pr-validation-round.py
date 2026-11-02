@@ -3,6 +3,9 @@
 import json, os, time, urllib.request, urllib.error
 ACTIVE={'queued','in_progress','pending','waiting','requested'}
 BAD={'failure','timed_out','action_required','startup_failure'}
+DIAGNOSTIC_WORKFLOWS={'.github/workflows/deployment-integrity.yml','.github/workflows/issuer-foundation.yml','.github/workflows/banco-brasil.yml','.github/workflows/native-company-experience.yml'}
+def retains_failed_shards(run,jobs):
+    return run.get('path','').split('@')[0] in DIAGNOSTIC_WORKFLOWS and any(job.get('conclusion') in BAD for job in jobs)
 def same_pr(run, pr, repository):
     return (run.get('event')=='pull_request' and run.get('head_repository',{}).get('full_name')==repository
             and any(p.get('number')==pr['number'] for p in run.get('pull_requests',[])))
@@ -67,9 +70,9 @@ def main():
                     jobs=api.call('/actions/runs/'+str(run['id'])+'/jobs?filter=latest&per_page=100&page='+str(page))['jobs']
                     job_failures=[j for j in jobs if j.get('conclusion') in BAD]
                     failures += job_failures
-                    # Let independent HTTP groups finish diagnostic collection after their own failure.
-                    # Obsolete SHAs still cancel, and a failure in another workflow keeps the old policy.
-                    if job_failures and run.get('path','').split('@')[0]=='.github/workflows/deployment-integrity.yml':
+                    # Finish the failing workflow's current-head shards for one
+                    # complete diagnosis. Other workflows and obsolete SHAs cancel.
+                    if retains_failed_shards(run,jobs):
                         diagnostic_runs.add(run['id'])
                     if len(jobs)<100:break
                     page+=1
@@ -91,7 +94,7 @@ def main():
                 canceled.add(run_id)
         if failures:
             print('First failing validation(s):',json.dumps([{'name':r['name'],'url':r.get('html_url'),'conclusion':r['conclusion']} for r in failures]),flush=True)
-            if diagnostic_runs:print('Independent HTTP diagnostic groups continue without satisfying the failed PR round:',sorted(diagnostic_runs),flush=True)
+            if diagnostic_runs:print('Independent diagnostic shards continue without satisfying the failed PR round:',sorted(diagnostic_runs),flush=True)
             print('Logs remain available. A corrective commit starts a fresh round.');return 1
         if current and all(r['status']=='completed' for r in current):
             if stable_since is None:stable_since=time.monotonic()

@@ -95,9 +95,10 @@ jobs:
     needs: validation-gate
     name: mysql SQL shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 2
       matrix:
         shard: [0, 1, 2, 3]
     env:
@@ -209,9 +210,10 @@ jobs:
     needs: validation-gate
     name: mariadb SQL shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 2
       matrix:
         shard: [0, 1, 2, 3]
     env:

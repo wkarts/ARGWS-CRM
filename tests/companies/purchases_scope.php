@@ -9,15 +9,19 @@ $original=$_SERVER; $api=['company_purchases_api','index','orders','23']; $porta
 try {
     foreach ([['/index.php','/company_purchases_api/index/orders/23'],['/index.php','/index.php/company_purchases_api/index/orders/23'],['/crm/index.php','/crm/company_purchases_api/index/orders/23?after=0'],['/crm/index.php','/crm/index.php/company_purchases_api/index/orders/23']] as [$script,$uri]) {
         $_SERVER=['SCRIPT_NAME'=>$script,'REQUEST_URI'=>$uri]; purchaseScopeCheck(CompanyPurchasesScope::earlyCandidate($_SERVER)&&CompanyPurchasesScope::prepare(purchaseScopeCi($api))&&CompanyPurchasesScope::activeApi(),'canonical API raw path works with native front-controller/base path');
+        purchaseScopeCheck(CompanyPurchasesScope::prepare(purchaseScopeCi($api,'purchases_api'))&&CompanyPurchasesScope::activeApi(),'declared API alias accepts the controller name resolved by native CI');
     }
     foreach ([['/index.php','/company_purchase_portal',$portal],['/index.php','/company_purchase_portal/index',[...$portal,'index']],['/crm/index.php','/crm/index.php/company_purchase_portal',$portal]] as [$script,$uri,$segments]) {
         $_SERVER=['SCRIPT_NAME'=>$script,'REQUEST_URI'=>$uri]; purchaseScopeCheck(CompanyPurchasesScope::prepare(purchaseScopeCi($segments,'company_purchase_portal'))&&CompanyPurchasesScope::activePortal(),'canonical portal has a distinct authenticated session boundary');
+        purchaseScopeCheck(CompanyPurchasesScope::prepare(purchaseScopeCi($segments,'purchase_portal'))&&CompanyPurchasesScope::activePortal(),'declared portal alias accepts the controller name resolved by native CI');
     }
     foreach (['/alias','/COMPANY_PURCHASES_API/index/orders/23','/company_%70urchases_api/index/orders/23','/company_purchases_api//index/orders/23','/company_purchases_api/index/orders/23/','/index.php/company_purchases_api/index/orders/23/extra','/wrong-base/company_purchases_api/index/orders/23','/company_purchases_api/index/orders/%32%33','//company_purchases_api/index/orders/23','http://untrusted.invalid/company_purchases_api/index/orders/23','/company_purchases_api/index/orders/23#fragment'] as $uri) {
         $_SERVER=['SCRIPT_NAME'=>'/index.php','REQUEST_URI'=>$uri]; purchaseScopeCheck(!CompanyPurchasesScope::prepare(purchaseScopeCi($api))&&!CompanyPurchasesScope::activeApi()&&CompanyPurchasesScope::requested(),'noncanonical or aliased raw API path remains vetoed before hydration: '.$uri);
+        purchaseScopeCheck(!CompanyPurchasesScope::prepare(purchaseScopeCi($api,'purchases_api'))&&!CompanyPurchasesScope::activeApi(),'resolved API controller cannot authorize a noncanonical raw path');
     }
     foreach (['/portal-alias','/COMPANY_PURCHASE_PORTAL','/company_purchase_portal//','/company_purchase_%70ortal','/company_purchase_portal?x=1#fragment'] as $uri) {
         $_SERVER=['SCRIPT_NAME'=>'/index.php','REQUEST_URI'=>$uri]; purchaseScopeCheck(!CompanyPurchasesScope::prepare(purchaseScopeCi($portal,'company_purchase_portal'))&&!CompanyPurchasesScope::activePortal(),'noncanonical portal cannot adopt another router alias');
+        purchaseScopeCheck(!CompanyPurchasesScope::prepare(purchaseScopeCi($portal,'purchase_portal'))&&!CompanyPurchasesScope::activePortal(),'resolved portal controller cannot authorize another raw namespace');
     }
     foreach (['0','01','-1','1e2','2147483648','23.json'] as $id) {
         $segments=['company_purchases_api','index','orders',$id]; $_SERVER=['SCRIPT_NAME'=>'/index.php','REQUEST_URI'=>'/'.implode('/',$segments)]; purchaseScopeCheck(!CompanyPurchasesScope::prepare(purchaseScopeCi($segments)),'noncanonical or overflowing resource ID rejected');

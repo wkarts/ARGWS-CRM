@@ -28,10 +28,14 @@ final class CompanyPurchasesScope
         self::$requested=true;
         if (strtolower((string)$ci->router->fetch_method())!=='index'||!isset($ci->uri)||!method_exists($ci->uri,'segment')) { return false; }
         $segments=[]; for ($i=1;$i<=5;$i++) { $s=$ci->uri->segment($i); if ($s===null||$s===false||$s==='') { break; } $segments[]=(string)$s; }
-        if (($segments[0]??null)!==$class) { return false; }
+        // CI resolves declared public aliases to their native controller names;
+        // the original raw namespace still has to match the exact request below.
+        $namespace=$segments[0]??null;
+        $aliases=['purchase_portal'=>'company_purchase_portal','purchases_api'=>'company_purchases_api'];
+        if ($namespace!==$class&&(!isset($aliases[$class])||$namespace!==$aliases[$class])) { return false; }
         if (!self::canonicalRequest($_SERVER,$segments)) { return false; }
-        if ($class==='company_purchase_portal') {
-            if ($segments!==[$class]&&$segments!==[$class,'index']) { return false; }
+        if ($namespace==='company_purchase_portal') {
+            if ($segments!==[$namespace]&&$segments!==[$namespace,'index']) { return false; }
             self::$active='portal'; return true;
         }
         $resources=['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'];

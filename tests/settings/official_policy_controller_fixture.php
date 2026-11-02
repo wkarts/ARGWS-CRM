@@ -17,6 +17,7 @@ function redirect($url,$method='location',$status=302){$GLOBALS['officialSetting
 function set_alert($type,$message){}
 $GLOBALS['CI']->input=new class{public string $group='';public array $payload=[];function get($key,$filter=false){return$key==='group'?$this->group:null;}function method($upper=true){return$this->payload===[]?'GET':'POST';}function post($key=null,$filter=false){return$key===null?$this->payload:($this->payload[$key]??null);}};
 $GLOBALS['CI']->security=new class{function get_csrf_token_name(){return'framework_csrf';}};
+$GLOBALS['CI']->session=new class{public array $flash=[];function set_flashdata($key,$value){$this->flash[$key]=$value;}};
 $GLOBALS['CI']->output=new class{public int $status=200;function set_header($h){return$this;}function set_status_header($s){$this->status=$s;return$this;}};
 $GLOBALS['CI']->load=new class{public array $views=[];function helper($names){}function view($view,$data){$this->views[]=[$view,$data];}function model($name){throw new RuntimeException('Global model fallback');}};
 require APPPATH.'controllers/admin/Settings.php';

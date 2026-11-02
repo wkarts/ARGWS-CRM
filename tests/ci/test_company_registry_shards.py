@@ -1,4 +1,7 @@
 import hashlib
+import contextlib
+import io
+import os
 import importlib.util
 import json
 import re
@@ -7,6 +10,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('registry_shard', ROOT / 'scripts/ci/run-company-registry-shard.py')
@@ -15,6 +19,16 @@ spec.loader.exec_module(runner)
 
 
 class RegistryShardsTest(unittest.TestCase):
+    def test_real_command_failure_preserves_output_status_and_sanitized_public_cause(self):
+        result = subprocess.CompletedProcess(['php','tests/origin.php'], 19, stdout='Fatal error: missing fixture dependency\npassword=private-fixture-password\norigin.php:27\n')
+        output = io.StringIO()
+        with patch.object(runner.subprocess,'run',return_value=result) as execute,patch.dict(os.environ,{'MYSQL_PASSWORD':'private-fixture-password'}),contextlib.redirect_stdout(output):
+            self.assertIs(runner.execute_logged(result.args,cwd=ROOT,check=False),result)
+        self.assertEqual(execute.call_args.kwargs['stderr'],subprocess.STDOUT)
+        self.assertNotIn('shell',execute.call_args.kwargs)
+        annotation=next(line for line in output.getvalue().splitlines() if line.startswith('::error::'))
+        self.assertIn('missing fixture dependency',annotation);self.assertIn('origin.php:27',annotation)
+        self.assertNotIn('private-fixture-password',annotation)
     def test_exact_pre_sharding_inventory(self):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
@@ -247,7 +261,9 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertIn('  registry:\n    if: always()\n    needs: [validation-gate, registry-shards]', source)
         self.assertIn('test "$GATE_RESULT" = success',source)
         self.assertIn('if [ "$REUSED" = false ]; then',source)
-        self.assertIn("fail-fast: ${{ github.event_name == 'pull_request' }}",source)
+        self.assertIn('fail-fast: false',source)
+        self.assertIn('max-parallel: 4',source)
+        self.assertIn('timeout-minutes: 30',source)
         self.assertIn('test "$SHARDS_RESULT" = success', source)
         self.assertNotIn('continue-on-error', source)
         self.assertIn('  pull_request:', source)

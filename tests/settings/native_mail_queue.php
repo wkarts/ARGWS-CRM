@@ -6,7 +6,8 @@ require APPPATH . 'libraries/App_Email.php';
 if (!function_exists('log_message')) { function log_message($level,$message) {} }
 final class QueueFixtureDb {
     public array $rows=[]; public bool $loseClaim=false; private array $where=[]; private int $affected=0; private array $set=[];
-    public function __construct(public $inner) {}
+    public PDO $pdo;
+    public function __construct(public $inner) { $this->pdo=$inner->pdo; }
     public function query($sql,$args=[]) { return $this->inner->query($sql,$args); }
     public array $tablesChecked=[];
     public function table_exists($table) { $this->tablesChecked[]=$table;return $this->inner->table_exists($table); }
@@ -39,6 +40,7 @@ $start=$GLOBALS['essentialChecks'];
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
 foreach([41=>'a',82=>'b'] as $issuer=>$label){foreach(['mail_engine'=>'codeigniter','email_protocol'=>'smtp','smtp_host'=>"{$label}.invalid",'smtp_port'=>'587','smtp_password'=>"synthetic-{$label}"] as $name=>$value){$store->mutate($issuer,7,'update',$name,$value,null);}}
 $q=new QueueFixtureDb($db);
+essentialCheck($q->pdo===$db->pdo,'queue adapter exposes its actual PDO driver for optional-schema inspection');
 foreach([1=>41,2=>82,3=>null] as $id=>$issuer){$q->rows[$id]=['id'=>$id,'issuer_id'=>$issuer,'status'=>'pending','engine'=>'codeigniter','email'=>'synthetic@example.invalid','cc'=>'','bcc'=>'','headers'=>serialize([]),'attachments'=>'','message'=>'synthetic','alt_message'=>''];}
 $ci=(object)['db'=>$q,'config'=>new class{public array$config=['smtp_host'=>'legacy.invalid','smtp_pass'=>'synthetic-legacy'];public function item($name){return$name==='base_url'?'https://crm.example.invalid/':($this->config[$name]??null);}},'encryption'=>new class{function decrypt($v){return 'decoded:'.$v;}},'load'=>new class{function config($name){}}];
 $mail=new QueueFixtureMailer($ci);

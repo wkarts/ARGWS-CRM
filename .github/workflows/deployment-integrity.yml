@@ -191,7 +191,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [sales-pdf, projects, support, expenses, banking, providers, settings, tasks-domains]
+        group: [tasks-domains, support, projects, expenses, sales-pdf, settings, providers, banking]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
