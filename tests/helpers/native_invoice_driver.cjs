@@ -143,6 +143,14 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
       return invoiceTargetFromRows(rows,expectedClient);
     } catch (_) { return null; }
   };
+  const invoiceTargetFromDirectTable=async(tableUrl,expectedClient=null)=>{
+    try {
+      const hidden=await page.locator('input[type="hidden"][name]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
+      const response=await page.context().request.post(tableUrl,{form:{...hidden,draw:'1',start:'0',length:'100','search[value]':'','search[regex]':'false','order[0][column]':'3','order[0][dir]':'desc','order[1][column]':'0','order[1][dir]':'desc'},headers:{'X-Requested-With':'XMLHttpRequest','Referer':tableUrl}});
+      if(!response.ok())return null;
+      return invoiceTargetFromTable(response,expectedClient);
+    } catch (_) { return null; }
+  };
   const responses=navigationResponse?[response,navigationResponse]:[response];
   const candidates=[];
   const addRequest=request=>{
@@ -183,6 +191,14 @@ async function legacyInvoiceTarget(page,response,url,navigationResponse=null,nav
   // already committed, so recover its canonical id from the original table
   // through the same authenticated browser session; never replay the POST.
   if(clientId){
+    // The original PWA worker may serve the list page without allowing its
+    // DataTables bootstrap to reach the server. Read the same legacy table
+    // endpoint through the context request API, which shares the browser's
+    // authenticated cookies but bypasses service-worker navigation caching.
+    const profileTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table/'+encodeURIComponent(String(clientId)),url).href,clientId);
+    if(profileTarget)return profileTarget;
+    const globalTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table',url).href,clientId);
+    if(globalTarget)return globalTarget;
     try {
       const listUrl=new URL('/admin/invoices/list_invoices',url).href;
       const tableResponsePromise=page.waitForResponse(candidateResponse=>{
