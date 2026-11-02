@@ -12,15 +12,16 @@ ROOT = Path(__file__).resolve().parents[2]
 BASELINE = ROOT / 'tests/ci/company-registry-timing-baseline.json'
 PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
 UNMEASURED = ROOT / 'tests/ci/company-registry-unmeasured.json'
+SHARDS = 5
 
 
 def balanced_assignment(weights, shards=4):
-    if not weights or len(weights) % shards or any(type(w) is not int or w < 0 for w in weights):
-        raise ValueError('Nonnegative integer weights and equal shard capacity required')
-    capacity = len(weights) // shards
+    if not weights or type(shards) is not int or shards < 1 or len(weights) < shards or any(type(w) is not int or w < 0 for w in weights):
+        raise ValueError('Nonnegative integer weights and nonempty count-balanced shard capacities required')
+    capacities = [len(weights) // shards + (s < len(weights) % shards) for s in range(shards)]
     totals, counts, assignment = [0] * shards, [0] * shards, [0] * len(weights)
     for index in sorted(range(len(weights)), key=lambda i: (-weights[i], i)):
-        target = min((s for s in range(shards) if counts[s] < capacity), key=lambda s: (totals[s], counts[s], s))
+        target = min((s for s in range(shards) if counts[s] < capacities[s]), key=lambda s: (totals[s], counts[s], s))
         assignment[index] = target + 1
         totals[target] += weights[index]
         counts[target] += 1
@@ -64,15 +65,15 @@ def build_plan(commands, baseline, unmeasured=None):
     # Preserve the exact historical argv/order and paired observations. Unknown
     # durations are not zero-duration samples and must never enter the LPT model.
     historical = historical_measured_commands(commands, unmeasured, baseline)
-    base = build_measured_plan(historical, baseline)
+    base = build_measured_plan(historical, baseline, shards=SHARDS)
     historical_assignment = {tuple(argv): shard for argv, shard in zip(historical, base['assignments'])}
     assignment_by_argv = {tuple(argv): historical_assignment[tuple(argv)] for argv in measured}
-    counts = [list(assignment_by_argv.values()).count(shard) for shard in range(1, 5)]
+    counts = [list(assignment_by_argv.values()).count(shard) for shard in range(1, SHARDS + 1)]
     for entry in unmeasured:
-        target = min(range(4), key=lambda shard: (counts[shard], shard))
+        target = min(range(SHARDS), key=lambda shard: (counts[shard], shard))
         assignment_by_argv[tuple(entry['argv'])] = target + 1
         counts[target] += 1
-    return {**base, 'model': 'frozen-paired-lpt-retired-plus-unmeasured-count-v2',
+    return {**base, 'model': 'frozen-paired-lpt-retired-plus-unmeasured-count-v3', 'shards': SHARDS,
             'manifest_sha256': hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
             'measured_manifest_sha256': base['manifest_sha256'],
             'retired': baseline.get('retired', []),
@@ -80,7 +81,7 @@ def build_plan(commands, baseline, unmeasured=None):
             'assignments': [assignment_by_argv[tuple(argv)] for argv in commands]}
 
 
-def build_measured_plan(commands, baseline):
+def build_measured_plan(commands, baseline, shards=4):
     manifest_hash = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
     if baseline['manifest_sha256'] != manifest_hash or set(baseline['milliseconds']) != {'8.1', '8.5'}:
         raise ValueError('Timing evidence must match exact command manifest and both PHP versions')
@@ -93,7 +94,7 @@ def build_measured_plan(commands, baseline):
     weights = [math.isqrt(max(1, a) * max(1, b)) for a, b in zip(samples['8.1'], samples['8.5'])]
     return {'model': 'paired-geometric-ms-capacity-lpt-v1', 'manifest_sha256': manifest_hash,
             'baseline_sha256': hashlib.sha256(json.dumps(baseline, sort_keys=True, separators=(',', ':')).encode()).hexdigest(),
-            'assignments': balanced_assignment(weights)}
+            'assignments': balanced_assignment(weights, shards=shards)}
 
 
 def verify_artifacts(directory, historical_commands, baseline):
@@ -139,10 +140,10 @@ def main():
     else:
         PLAN.write_text(json.dumps(plan, indent=2) + '\n')
     historical = historical_measured_commands(commands, plan['unmeasured'], baseline)
-    historical_plan = build_measured_plan(historical, baseline)
+    historical_plan = build_measured_plan(historical, baseline, shards=SHARDS)
     for php, times in baseline['milliseconds'].items():
         old = [sum(t for i, t in enumerate(times) if i % 4 == shard) / 1000 for shard in range(4)]
-        new = [sum(t for i, t in enumerate(times) if historical_plan['assignments'][i] == shard and historical[i] not in [entry['argv'] for entry in plan['retired']]) / 1000 for shard in range(1, 5)]
+        new = [sum(t for i, t in enumerate(times) if historical_plan['assignments'][i] == shard and historical[i] not in [entry['argv'] for entry in plan['retired']]) / 1000 for shard in range(1, SHARDS + 1)]
         print(json.dumps({'php': php, 'observed_round_robin_command_seconds': old,
                           'estimated_replay_balanced_command_seconds': new,
                           'unmeasured_commands_excluded': plan['unmeasured'],

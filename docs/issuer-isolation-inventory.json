@@ -632,7 +632,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Projects.php": {
-      "sha256": "ca26bc0a61eb2b9d3180988a7ee3c0d5d3ce902ecf25e2c4a427e3f6fc1fdf05",
+      "sha256": "c78bfd9ceea5bc2e9975b652e7c3aebccdc4d3d1bebfebf5b004ff46f8402241",
       "categories": [
         "documents_numbering",
         "invoice_model",
@@ -739,7 +739,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Tasks.php": {
-      "sha256": "c3525bb6bc576e2446394294682199594d4936acd66441ad7c10195f86aa5231",
+      "sha256": "221e654128f6b20b8e221501032aac2eb5e20705ad52ce5f003cd1d249cc235f",
       "categories": [
         "invoice_table"
       ],
@@ -6511,7 +6511,7 @@
       "evidence": ""
     },
     "application/views/admin/clients/groups/profile.php": {
-      "sha256": "18622407838e8b93b092d9da8d577bc1c833827f06dd31937df15a67b4ba456a",
+      "sha256": "7755a2c013d86683056eec1407ae763b2e3fd52e87ac52b5e4a2006fb74f8b6a",
       "categories": [
         "invoice_table"
       ],
@@ -7685,7 +7685,7 @@
       "evidence": ""
     },
     "application/views/admin/tasks/task.php": {
-      "sha256": "1b0ac3a0232631e8114f8e7624de6b7c2ad363587c9a96593c3fbfc8a809eb8b",
+      "sha256": "116c2f806f2146ce02c86848ed925aad190f5f709ef5ec3fdfdd9f407a293416",
       "categories": [
         "documents_numbering"
       ],

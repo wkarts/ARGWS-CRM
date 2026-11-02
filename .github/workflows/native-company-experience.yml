@@ -81,8 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
-      # Complete both PHP diagnostics; failed or cancelled legs cannot satisfy the gate.
+      # Complete both PHP diagnostics; serialize these two legs to reserve the
+      # fifth core SQL worker without increasing the twenty-runner long phase.
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - php: '8.1'

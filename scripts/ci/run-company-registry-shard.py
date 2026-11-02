@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / 'tests/ci/company-registry-commands.json'
 PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
-SHARDS = 4
+SHARDS = 5
 
 
 def execute_logged(command, **kwargs):
@@ -48,7 +48,7 @@ def load_commands(path=MANIFEST):
 def load_assignment(commands, path=PLAN):
     plan = json.loads(Path(path).read_text())
     digest = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
-    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-retired-plus-unmeasured-count-v2':
+    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-retired-plus-unmeasured-count-v3' or plan.get('shards') != SHARDS:
         raise ValueError('Frozen shard plan does not match command manifest/model')
     assignments = plan.get('assignments')
     if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments) or sorted(assignments.count(s) for s in range(1, SHARDS + 1)) != sorted(len(commands) // SHARDS + (s < len(commands) % SHARDS) for s in range(SHARDS)):
@@ -58,7 +58,7 @@ def load_assignment(commands, path=PLAN):
 
 def select_commands(commands, shard, assignments=None):
     if shard not in range(1, SHARDS + 1):
-        raise ValueError('Shard must be 1..4')
+        raise ValueError('Shard must be 1..5')
     if assignments is None:
         assignments = load_assignment(commands)
     if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments):

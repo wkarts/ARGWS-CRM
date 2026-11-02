@@ -149,3 +149,25 @@ O navegador39 completo passou em249,7s após a recusa de sufixos: A/B/principal,
 
 
 O navegador83 completo passou em167,3s: GUI A/B/principal, defaults/ordem de respostas, publicação individual e mensagens privadas, falha tardia observada/rollback, contexto/revisão409, ator exclusivoB e revogação atual403, snapshots financeiros e todos os settings alheios preservados. O papel vazio é escolhido depois de abrir o tab Permissões original. A repetição preparou apenas a preferência própria da principal pela GUI; não houve reset de JSON nem remoção de campos dos snapshots.
+
+
+Rodada43bd9167: o grupo completo de vendas/PDF passou em26min54s, incluindo os erros originais de destino da fatura e dimensão PDF. TemporizadoresA passaram completos em27min14s; suporte e temporizadores da principal também passaram. Settings e provedores passaram, assim como os quatro shards PHP8.1. Banco do Brasil completo passou em52min29s. A rodada reprovou depois no projeto41: a rota billing_rates aceitava um sufixo desconhecido e retornava200. Os entrypoints billing_rates/fixed_billing/time_billing e time_batches passam a recusar sufixos com404 antes de hidratar, emGET/POST. Dez novos checks preservam os bytes das faturas; as regressões falham antes e passam depois emSQLite/MySQL.
+
+A mesma rodada mostrou shards próximos de28min, sob o limite de30. O núcleo passa a cinco shards de94–95 comandos por versão e até cinco workers simultâneos, sem aumentar o timeout. A matriz focada conserva os dois jobs/checks, executando um por vez; o orçamento longo permanece20 (núcleo5+bancos2+focada1+HTTP11+monitor1). O manifest conserva seus472 argv e SHA-256. O novo plano reproduz os mesmos tempos pareados em cinco capacidades, sem inventar amostras para o comando não medido; baseline/oito ZIPs/944 observações e reprodução histórica de quatro permanecem intactos. Os81 contratos Python passaram, inclusive cobertura única, capacidades não divisíveis e recusa de metadados de partição ausentes/incorretos. A rodada final ainda é necessária.
+
+
+O diagnóstico remoto43bd9167 concluiu o núcleo inteiro PHP8.1/8.5 em59min52s e o Banco do Brasil em52min29s. O workflow HTTP reprovou em1h1min56s; não é duração de validação integral aprovada. O teste41 completo passou localmente em77,4s após a correção, e42 passou em121,9s (A/B/principal, PDF, retry, falha tardia/recuperação, stale e finanças intactas).
+
+O navegador90 é independente do89: cria seus clientes/projetos/tarefas pela GUI, aceita a política própria inicial e usa um leitor estritamente read-only. Foi movido para sales-pdf, com shim/leitor preparados nesse worker e sem repetir84–89. O seletor usa Settings/DOMContentLoaded; as assertivas e as três empresas permanecem. Os82 contratos deCI e24 de ambiente/provisionamento passaram. A duração e o exit de cada invocação também são publicados no resumo do job HTTP, além do TSV existente. A nova distribuição precisa concluir no commit final.
+
+
+A execução local completa90 após a redistribuição encontrou um erro JavaScript latente nos nomes de seguidores: um membro sintético com `<script>literal</script>` entrava como HTML no helper render_select. A view agora escapa somente a cópia dos rótulos; IDs, seleção, projeção e armazenamento ficam intactos. O renderer real reproduz o erro antes e passa nos14 checks depois. A assertiva errors[] do navegador não foi removida nem filtrada; o cenário completo foi repetido com os mesmos nomes.
+
+
+O diagnóstico curto identificou que os cinco erros JavaScript restantes eram emitidos pelo perfil do cliente, no seletor customer_admins[]. O mesmo helper recebia nomes raw de funcionários como `Exclusive <script>literal</script> Staff453`. A correção copia e escapa somente os rótulos desse seletor, mantendo IDs/seleção/projeção. Três novos checks do renderer real reproduzem o erro antes e passam emSQLite/MySQL depois; a persistência literal e o replay do cliente permanecem aprovados. O seletor de seguidores tinha o mesmo defeito de saída, independentemente dessa origem; ambas as views foram corrigidas. O navegador90 conserva errors[] estrito e registra o pathname da página quando há erro, sem query strings ou credenciais.
+
+
+O navegador90 completo passou em295,7s com A/B/principal e os mesmos nomes de funcionários que antes geravam cinco erros. Permaneceram todas as assertivas de OFF/ON, projeto/avulsa, recibo único, stop preservando estado, CSRF/revisão/contexto e snapshots financeiros/opções. Não houve reset de dados ou filtro de errors[]. O cliente teve três novos checks de rótulo/ID/projeção emSQLite/MySQL, e os consumidores de seguidores/defaults também passaram nos dois bancos.
+
+
+Cada worker HTTP tem limite explícito de60 minutos para impedir navegador/processo preso consumindo o padrão de seis horas do GitHub. Timeout continua reprovando o check obrigatório; nenhuma cobertura incompleta passa. O limite não representa a duração esperada nem é utilizado como comprovação de ganho.

@@ -425,7 +425,12 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
                             <div class="col-md-6">
                                 <?php
                      $follower = ($taskFormOption('new_task_auto_follower_current_member') == '1') ? [get_staff_user_id()] : '';
-                     echo render_select('followers[]', $members, ['staffid', ['firstname', 'lastname']], 'task_single_followers', $follower, ['multiple' => true], [], '', '', false);
+                     $followerMembers = array_map(static function ($member) {
+                         $member['firstname'] = e($member['firstname']);
+                         $member['lastname'] = e($member['lastname']);
+                         return $member;
+                     }, $members);
+                     echo render_select('followers[]', $followerMembers, ['staffid', ['firstname', 'lastname']], 'task_single_followers', $follower, ['multiple' => true], [], '', '', false);
                      ?>
                             </div>
                         </div>

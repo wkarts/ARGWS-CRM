@@ -8,7 +8,8 @@ function html_escape($value){return is_array($value)?array_map('html_escape',$va
 function config_item($key){return$key==='charset'?'UTF-8':null;}
 function &get_instance(){return$GLOBALS['CI'];}
 function admin_url($path=''){return'https://crm.invalid/sub/admin/'.$path;}
-function get_staff_user_id(){return7;}
+function get_staff_user_id(){return 7;}
+function file_upload_max_size(){return 1048576;}
 function is_mobile(){return false;}
 function html_purify($value){return strip_tags((string)$value,'<p><b>');} // Sanitizer boundary; not a purifier test.
 function get_option(){throw new RuntimeException('Unexpected global option');}
@@ -39,4 +40,13 @@ $html=$render($dto);$checks=0;$check=function($pass,$label)use(&$checks){if(!$pa
 foreach(['id="_task_modal"','id="task-form"','name="hourly_rate"','name="repeat_every"','name="tags"','name="native_revision"']as$part)$check(str_contains($html,$part),'Native original field missing '.$part);
 $check(str_contains($html,'Literal &lt;task&gt;'),'Task title escaped in original field');$check(str_contains($html,'25/10/2026'),'Supplied company date shown');
 $bad=$dto;unset($bad['native_task_form']['counts']['followers']);try{$render($bad);throw new LogicException('Missing count accepted');}catch(RuntimeException$e){$check($e->getMessage()==='native_task_form_projection_incomplete','No invented missing count');}
+$new=$dto;unset($new['task']);$new['id']='';$new['start_date']='25/10/2026';
+$new['native_task_form']['options']+=['default_task_priority'=>2,'task_biillable_checked_on_creation'=>'1','allowed_files'=>'.pdf'];
+$new['members']=[['staffid'=>7,'firstname'=>'Literal <script>literal</script>','lastname'=>'A & B']];$rawMembers=$new['members'];
+$newHtml=$render($new);$found=preg_match('/<select[^>]*name="followers\[\]"[^>]*>(.*?)<\/select>/s',$newHtml,$followerSelect);
+$check($found===1,'Original follower selector remains present');
+$check(!str_contains($followerSelect[1],'<script>'),'Follower labels never create executable script nodes');
+$check(str_contains($followerSelect[1],'&lt;script&gt;literal&lt;/script&gt;'),'Follower name HTML remains literal text');
+$check(str_contains($followerSelect[1],'value="7"')&&html_entity_decode(trim(strip_tags($followerSelect[1])),ENT_QUOTES,'UTF-8')==='Literal <script>literal</script> A & B','Follower keeps the same identity and exact visible name');
+$check($new['members']===$rawMembers,'Escaping display labels never rewrites member projection or assignee input');
 echo "Native task original modal: $checks checks passed. Renderer only; no browser or authenticated HTTP claim.\n";

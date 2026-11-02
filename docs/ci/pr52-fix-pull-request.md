@@ -24,7 +24,7 @@ A validação demorava mais de uma hora e interrompia cenários posteriores em f
 - A atribuição em lote de Tarefas exibe nomes de funcionários como texto literal antes do helper de selects que aceita HTML. A prova de equipe também navega nessa tela com o nome contendo `<script>`, preservando o rótulo e recusando execução de JavaScript.
 - O controller original de equipe converte recusas de ACL/CSRF/proteção em 403, revisão/conflito em 409, entrada inválida em 422 e armazenamento não confirmado em 503, sem expor exceções. Sete casos adicionais exercitam o tratamento; a principal conserva seu CSRF dedicado e o formulário legado.
 - Salvar um funcionário já sem papel não cria um catálogo vazio nem reescreve os settings da empresa. A revisão e as verificações de autoridade continuam obrigatórias; remover uma atribuição existente continua gravando e auditando. A regressão conserva todos os bytes e testa perda de autoridade dentro da transação.
-- A rota de faturamento de tarefas recusa sufixos desconhecidos com404 antes de hidratar a coleção, emGET ePOST. As conversões próprias, faturas, PDFs e recusas entre empresas conservam seus controles.
+- As rotas de faturamento de tarefas, preço horário/faturamento fixo/apontamentos de projetos e lotes de horas recusam sufixos desconhecidos com404 antes de hidratar a coleção, emGET ePOST. As conversões próprias, faturas, PDFs e recusas entre empresas conservam seus controles.
 - A parada automática entre modalidades compõe os participantes declarados pelos dois writers, inclusive os marcos exclusivos de projetos. A propriedade da transação continua obrigatória. Quatro pares exercitam falha tardia de recibo, rollback dos dois históricos, recuperação, instante único de stop/start e preservação do estado e da tarifa capturada.
 - Fixtures posteriores verificam IDs tipados e atribuições ativas atuais; datas de projetos/tarefas são preenchidas no formato da empresa. As provas de recorrência configuram explicitamente o transporte sintético e a preferência de notificações do contato.
 
@@ -34,11 +34,13 @@ Uma imagem da árvore Git exata é construída e exportada para os onze workers 
 
 As 12 combinações de parada automática executam uma vez nos grupos próprios timers-a, timers-b e timers-primary. As recusas entre empresas/CSRF e a alteração efetiva de política continuam na parte A. As três partes criam seus próprios clientes/projetos/tarefas por GUI, preservam snapshots financeiros e preparam o mesmo leitor PHP privado. O plano recusa parte ausente, repetida ou concentrada no mesmo worker. A execução direta sem argumentos mantém o cenário completo. O seletor já presente na página é utilizado sem recarregar o dashboard; a troca de empresa continua pela GUI original.
 
+O navegador90 cria suas próprias origens e passa a sales-pdf sem repetir os cenários84–89. Seu leitor privado é preparado nesse worker; a troca de empresa usa Settings em lugar do dashboard. O resumo de cada job HTTP passa a listar duração/exit de cada invocação.
+
 Node e os dois preflights Chromium executam em paralelo em checkouts independentes. Os jobs SQL e o gate compartilhado continuam exigindo sucesso do build/contratos Node e de ambos os navegadores. Assets versionados e reprodutibilidade do build são conferidos antes dos bancos.
 
 Os 60 comandos MySQL e 72 MariaDB do Banco do Brasil são conferidos por contagem e SHA-256 e distribuídos em quatro bancos por variante. Verificador e checkout permanecem no mesmo worker. Os checks `mysql`/`mariadb` exigem os quatro comprovantes vinculados ao commit/run atual. Núcleo continua com 472 comandos e sua matriz PHP 8.1/8.5.
 
-Núcleo usa até quatro workers simultâneos e cada variante bancária um, mantendo os quatro shards por banco. Com onze HTTP, duas versões focadas e monitor, o patamar longo usa até 20 runners; tooling termina antes dos HTTP. Grupos demorados aparecem primeiro na matriz. Os quatro workflows de diagnóstico terminam seus shards do mesmo head após uma falha; a rodada continua reprovada, e workflows auxiliares e heads obsoletos são cancelados. Matrizes também são inspecionadas quando o GitHub reporta o workflow como queued. Matrizes SQL têm limite de 30 minutos; suíte focada mantém 20. Falha, cancelamento ou cobertura incompleta não passam.
+O núcleo divide cada versão PHP em cinco shards de94–95 comandos, com até cinco workers simultâneos na matriz inteira; cada variante bancária mantém quatro shards e um worker. As duas versões focadas executam uma por vez. Com onze HTTP e monitor, o patamar longo continua em até20 runners; tooling termina antes dos HTTP. Grupos demorados aparecem primeiro na matriz. Os quatro workflows de diagnóstico terminam seus shards do mesmo head após uma falha; a rodada continua reprovada, e workflows auxiliares e heads obsoletos são cancelados. Matrizes também são inspecionadas quando o GitHub reporta o workflow como queued. Matrizes SQL têm limite de 30 minutos; suíte focada mantém 20. Falha, cancelamento ou cobertura incompleta não passam.
 
 Sete workflows adicionais reutilizam as bases GHCR PHP 8.1/8.5 existentes por digest. Bases são reconstruídas quando seus inputs mudam ou por atualização manual explícita, sempre com smoke real. Caches npm/Chromium/Rust/Buildx e compilação paralela reduzem preparação. A construção da imagem levou 46 segundos na rodada 6829ea87 e 183 segundos na rodada 2151777b; esses números não representam o tempo global.
 
@@ -46,7 +48,7 @@ Os dois servidores HTTP PHP usam o OPcache já incluído na imagem, com verifica
 
 ## Validação
 
-- 80 contratos Python de CI e 13 do monitor aprovados; planejamento confere 103 invocações HTTP, as três partes obrigatórias e o orçamento de concorrência.
+- 82 contratos Python de CI e 13 do monitor aprovados; planejamento confere 103 invocações HTTP, as três partes obrigatórias e o orçamento de concorrência.
 - Contratos rápidos: 12 casos de numeração,4 de formato PDF,47 de roteamento API,45 de leitor por origem persistida,21 de callback negado e 59 de fronteira de compras.
 - Fase SQLite local: 443 execuções completas e 199 verificações por inclusão, todas aprovadas. Os14 entrypoints MySQL focados passaram localmente. Os118 comandos do shard 4 do núcleo foram cobertos na execução e continuações direcionadas em PHP 8.3/MySQL8.0.
 - Chromium/MySQL: provedores e TLS;15 alvos bancários; portal de tarefas, marcos, horas, Gantt e arquivos; preferências de chamados; configurações/recorrência; faturamento de despesas; relatórios/API; compras 96–98; RH 99–100. Tokens de RH incluem221 verificações.
@@ -54,6 +56,9 @@ Os dois servidores HTTP PHP usam o OPcache já incluído na imagem, com verifica
 - Correções posteriores: estornos204/258 checks por banco, importação118 SQLite/121 MySQL, atendimento136 SQLite/139 MySQL e recorrência164 cumulativos MySQL. Chromium completo: importação43, suporte30–32, recorrência45, despesas77/78 e recorrência de tarefas92 (seis combinações A/B/principal × projeto/avulsa). Equipe93 também passou integralmente em113,8s, leads94 em97,1s e95 em2,3s/58 checks bearer. São execuções direcionadas, sem comprovante de rodada completa.
 - Faturamento39 completo emChromium/MySQL passou em249,7s, incluindo rota desconhecida404, A/B/principal, ciclo de edição/cancelamento/retry, PDF, recuperação503 e origem stale. As dependências de apontamento/faturamento fixo também passaram emSQLite/MySQL.
 - Preferências83 completas emChromium/MySQL passaram em167,3s, com ator exclusivoB, revogação atual, rollback e todos os snapshots intactos.
+- Preço horário41 completo passou em77,4s e faturamento fixo42 em121,9s, com as recusas404 e todas as assertivas de PDF/retry/recuperação/isolamento.
+- Os seletores de seguidores da tarefa e administradores do cliente escapam nomes como texto antes do helper que aceita HTML, preservando IDs e os dados originais. A regressão do renderer falha antes da correção e passa nos14 checks depois; o perfil de cliente tem três checks adicionais emSQLite/MySQL.
+- Temporizador90 completo passou em295,7s, nas três empresas, com os mesmos nomes sintéticos que causavam erro, errors[] intacto e todos os checks de recibo/CSRF/stale/finanças.
 - Os quatro inventários gerados são reconciliados e conferidos, preservando a classificação de prontidão operacional.
 
 Execuções locais direcionadas não equivalem ao CI completo. A matriz remota do commit final e o ganho global ainda precisam concluir. Evidências, rodadas e limites em [pr52-validation.md](pr52-validation.md); arquitetura em [standalone-browser-groups.md](standalone-browser-groups.md).

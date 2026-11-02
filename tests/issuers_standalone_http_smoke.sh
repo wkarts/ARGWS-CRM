@@ -20,6 +20,9 @@ browser_index=0
 browser_completed=0
 browser_required=0
 for selected in "${browser_selected[@]}"; do browser_required=$((browser_required+selected)); done
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    printf '\n### HTTP %s\n\n| Invocation | Exit | Seconds | Command |\n|---|---|---|---|\n' "$browser_group" >> "$GITHUB_STEP_SUMMARY"
+fi
 owns_shell() { [[ "$browser_group" = all || "$browser_group" = "$1" ]]; }
 node() {
     local index=$browser_index started=$SECONDS status browser_log
@@ -36,6 +39,9 @@ node() {
     local evidence="$browser_evidence_root"
     mkdir -p "$evidence"
     printf '%s\t%s\t%s\t%s\n' "$index" "$status" "$((SECONDS-started))" "$*" >> "$evidence/browser-timings.tsv"
+    if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+        printf '| %s | %s | %s | %s |\n' "$index" "$status" "$((SECONDS-started))" "$*" >> "$GITHUB_STEP_SUMMARY"
+    fi
     if [[ "$status" = 0 ]]; then
         browser_completed=$((browser_completed+1))
     else
@@ -805,15 +811,23 @@ ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$IS
 ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_OPERATIONS_BROWSER_FIXTURE_PHP=/app/tests/settings/task_operations_http_fixture.php \
 node tests/settings/task_operations_browser.cjs
 
-if owns_shell tasks-domains; then
-#449: only explicit own policy changes status during the native start; stopping keeps status.
+#449_SHARD_FIXTURE_BEGIN
+if owns_shell sales-pdf; then
+# Self-contained GUI scenario; no prior task/calendar browser state is required.
+docker exec "$upgrade" mkdir -p /app/tests/settings
 docker cp tests/settings/task_timer_http_fixture.php "$upgrade:/app/tests/settings/task_timer_http_fixture.php"
+cat > "$work/task449-php" <<'PHP449_EXEC'
+#!/bin/sh
+exec docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$ISSUERS_BROWSER_APP_CONTAINER" php "$@"
+PHP449_EXEC
+chmod +x "$work/task449-php"
 fi
+#449_SHARD_FIXTURE_END
 
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
-ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_http_fixture.php \
+ISSUERS_BROWSER_PHP_BINARY="$work/task449-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_http_fixture.php \
 node tests/settings/task_timer_browser.cjs
 
 

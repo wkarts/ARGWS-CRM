@@ -146,10 +146,10 @@ jobs:
     strategy:
       # Collect all current-head failures once; the aggregate remains mandatory.
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 5
       matrix:
         php: ['8.1', '8.5']
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5]
         include:
           - php: '8.1'
             image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14

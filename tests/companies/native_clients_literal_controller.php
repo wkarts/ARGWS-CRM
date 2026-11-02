@@ -12,3 +12,19 @@ essentialCheck($adapterB->details((int)$created['userid'])===null,'new literal i
 $controller->client();
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'clients WHERE company=?',['Literal customer <script>'])->row()->n===1,'complete original payload remains idempotent');
 echo "Native client literal identity, isolated persistence and durable replay passed.\n";
+
+require_once APPPATH.'helpers/fields_helper.php';
+$profileSource=file_get_contents(APPPATH.'views/admin/clients/groups/profile.php');
+$modalStart=strpos($profileSource,'id="customer_admins_assign"');
+if($modalStart===false)throw new RuntimeException('Original customer admin modal missing');
+$selectorStart=strpos($profileSource,'$selected = [];',$modalStart);
+if($selectorStart===false)throw new RuntimeException('Original customer admin selector missing');
+$selectorEnd=strpos($profileSource,'?>',$selectorStart);
+if($selectorEnd===false)throw new RuntimeException('Original customer admin renderer incomplete');
+$selectorCode=substr($profileSource,$selectorStart,$selectorEnd-$selectorStart);
+$staff=[['staffid'=>7,'firstname'=>'Exclusive <script>literal</script>','lastname'=>'A & B']];$rawStaff=$staff;
+$adminSelector=(static function(array &$staff,string $code){$customer_admins=[['staff_id'=>7]];ob_start();try{eval($code);return ob_get_clean();}catch(Throwable $error){ob_end_clean();throw$error;}})($staff,$selectorCode);
+essentialCheck(!str_contains($adminSelector,'<script>')&&str_contains($adminSelector,'&lt;script&gt;literal&lt;/script&gt;'),'actual customer-admin selector renders staff names as literal text');
+essentialCheck(str_contains($adminSelector,'value="7" selected'),'customer-admin selector retains the same selected staff identity');
+essentialCheck($staff===$rawStaff,'customer-admin label escaping preserves the raw staff projection');
+echo "Customer profile admin labels: three additional real-renderer checks passed.\n";

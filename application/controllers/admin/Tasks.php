@@ -19,7 +19,7 @@ class Tasks extends AdminController
     public function recurring() { $this->nativeTaskRecurring(); }
     public function standalone() { $this->nativeTaskStandalone(); }
     public function billing($suffix = '') { if ($suffix !== '') { show_404(); return; } $this->nativeTaskBilling(); }
-    public function time_batches() { $this->nativeTaskTimeBatches(); }
+    public function time_batches($suffix = '') { if ($suffix !== '') { show_404(); return; } $this->nativeTaskTimeBatches(); }
     public function __construct()
     {
         parent::__construct();

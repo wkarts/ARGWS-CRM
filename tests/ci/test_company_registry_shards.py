@@ -42,8 +42,8 @@ class RegistryShardsTest(unittest.TestCase):
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
-        shards = [runner.select_commands(commands, i) for i in range(1, 5)]
-        self.assertEqual([len(shard) for shard in shards], [118,118,118,118])
+        shards = [runner.select_commands(commands, i) for i in range(1, runner.SHARDS + 1)]
+        self.assertEqual([len(shard) for shard in shards], [95,95,94,94,94])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -201,10 +201,11 @@ class RegistryShardsTest(unittest.TestCase):
         historical = planner.historical_measured_commands(commands, expected['unmeasured'], baseline)
         old = planner.build_measured_plan(historical, baseline)
         retired = baseline['retired'][0]
-        retained_assignments = [assignment for index, assignment in enumerate(old['assignments']) if index != retired['index']]
-        self.assertEqual(expected['assignments'][1:], retained_assignments, 'all retained historical placements unchanged')
+        replay = planner.build_measured_plan(historical, baseline, shards=5)
+        retained_assignments = [assignment for index, assignment in enumerate(replay['assignments']) if index != retired['index']]
+        self.assertEqual(expected['assignments'][1:], retained_assignments, 'each retained placement follows the same paired evidence replayed for five shards')
         self.assertEqual(old['assignments'][retired['index']], 2, 'retired command occupied shard2')
-        self.assertEqual(expected['assignments'][0], 2, 'unmeasured command fills retired shard capacity')
+        self.assertEqual(expected['assignments'][0], replay['assignments'][retired['index']], 'unmeasured command fills retired shard capacity without inventing a duration')
         self.assertEqual(expected['retired'], baseline['retired'])
         self.assertEqual(hashlib.sha256((json.dumps(old, indent=2)+'\n').encode()).hexdigest(),
                          '16503a60a61942303257d72386271696d7c05a46c67aef4385041acac521ec6b')
@@ -232,6 +233,24 @@ class RegistryShardsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             planner.build_plan(runner.load_commands(), changed)
 
+    def test_five_shards_keep_uneven_capacities_and_reject_missing_partition_metadata(self):
+        planner_spec = importlib.util.spec_from_file_location('planner', ROOT / 'scripts/ci/plan-company-registry-shards.py')
+        planner = importlib.util.module_from_spec(planner_spec)
+        planner_spec.loader.exec_module(planner)
+        self.assertEqual(planner.balanced_assignment([10] * 12, shards=5), [1,2,3,4,5,1,2,3,4,5,1,2])
+        for shards in [0, True, 13]:
+            with self.assertRaises(ValueError):
+                planner.balanced_assignment([10] * 12, shards=shards)
+        commands = runner.load_commands()
+        for shards in [None, 4, 6]:
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / 'plan.json'
+                invalid = json.loads(runner.PLAN.read_text())
+                invalid['shards'] = shards
+                path.write_text(json.dumps(invalid))
+                with self.assertRaises(ValueError):
+                    runner.load_assignment(commands, path)
+
     def test_invalid_or_stale_plan_cannot_silently_change_coverage(self):
         commands = runner.load_commands()
         with tempfile.TemporaryDirectory() as directory:
@@ -242,11 +261,11 @@ class RegistryShardsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'plan.json'
             invalid = json.loads(runner.PLAN.read_text())
-            invalid['assignments'][1] = 1  # break 119/118/118/118 capacity
+            invalid['assignments'][1] = invalid['assignments'][1] % runner.SHARDS + 1  # break 94/95 capacities
             path.write_text(json.dumps(invalid))
             with self.assertRaises(ValueError):
                 runner.load_assignment(commands, path)
-        for assignments in [None, [], [1] * (len(commands)-1), [5] * len(commands), [True] * len(commands)]:
+        for assignments in [None, [], [1] * (len(commands)-1), [runner.SHARDS+1] * len(commands), [True] * len(commands)]:
             if assignments is None:
                 continue
             with self.assertRaises(ValueError):
@@ -255,14 +274,14 @@ class RegistryShardsTest(unittest.TestCase):
     def test_workflow_preserves_matrix_and_fail_closed_required_names(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         self.assertIn("  registry-shards:\n    if: ${{ needs.validation-gate.outputs.run == 'true' }}\n    needs: validation-gate", source)
-        self.assertIn('        shard: [1, 2, 3, 4]', source)
+        self.assertIn('        shard: [1, 2, 3, 4, 5]', source)
         self.assertIn('      image: ${{ matrix.image }}', source)
         self.assertEqual(source.count("php: ['8.1', '8.5']"), 2)
         self.assertIn('  registry:\n    if: always()\n    needs: [validation-gate, registry-shards]', source)
         self.assertIn('test "$GATE_RESULT" = success',source)
         self.assertIn('if [ "$REUSED" = false ]; then',source)
         self.assertIn('fail-fast: false',source)
-        self.assertIn('max-parallel: 4',source)
+        self.assertIn('max-parallel: 5',source)
         self.assertIn('timeout-minutes: 30',source)
         self.assertIn('test "$SHARDS_RESULT" = success', source)
         self.assertNotIn('continue-on-error', source)

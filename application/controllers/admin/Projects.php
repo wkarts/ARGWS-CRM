@@ -19,10 +19,10 @@ class Projects extends AdminController
 
     public function extras() { $this->nativeProjectExtras(); }
     public function portal_rules() { $this->nativeProjectPortalRules(); }
-    public function billing_rates() { $this->nativeProjectBillingRates(); }
-    public function fixed_billing() { $this->nativeProjectFixedBilling(); }
+    public function billing_rates($suffix = '') { if ($suffix !== '') { show_404(); return; } $this->nativeProjectBillingRates(); }
+    public function fixed_billing($suffix = '') { if ($suffix !== '') { show_404(); return; } $this->nativeProjectFixedBilling(); }
     public function copies() { $this->nativeProjectCopies(); }
-    public function time_billing() { $this->nativeProjectTimeBilling(); }
+    public function time_billing($suffix = '') { if ($suffix !== '') { show_404(); return; } $this->nativeProjectTimeBilling(); }
     public function __construct()
     {
         parent::__construct();

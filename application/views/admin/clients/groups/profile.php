@@ -398,7 +398,12 @@ echo render_select('country', $countries, ['country_id', ['short_name']], 'clien
     foreach ($customer_admins as $c_admin) {
         array_push($selected, $c_admin['staff_id']);
     }
-    echo render_select('customer_admins[]', $staff, ['staffid', ['firstname', 'lastname']], '', $selected, ['multiple' => true], [], '', '', false); ?>
+    $adminStaff = array_map(static function ($member) {
+        $member['firstname'] = e($member['firstname']);
+        $member['lastname'] = e($member['lastname']);
+        return $member;
+    }, $staff);
+    echo render_select('customer_admins[]', $adminStaff, ['staffid', ['firstname', 'lastname']], '', $selected, ['multiple' => true], [], '', '', false); ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"

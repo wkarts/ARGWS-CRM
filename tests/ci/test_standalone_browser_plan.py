@@ -11,7 +11,8 @@ class BrowserPlanTests(unittest.TestCase):
   slots=sum(int(re.search(r'max-parallel: (\d+)',job).group(1)) for job in [core,*bb])
   focused=section('.github/workflows/native-company-experience.yml','focused')
   # Tooling and HTTP are separate phases; only the monitor overlaps both.
-  slots+=max(len(self.plan['groups']),1)+len(re.findall(r"- php: '[^']+'",focused))+1
+  focused_slots=min(len(re.findall(r"- php: '[^']+'",focused)),int(re.search(r'max-parallel: (\d+)',focused).group(1)))
+  slots+=max(len(self.plan['groups']),1)+focused_slots+1
   self.assertLessEqual(slots,20,'long SQL matrices cannot occupy every runner before HTTP starts')
   http=section('.github/workflows/deployment-integrity.yml','http')
   self.assertRegex(http,r'group: \[tasks-domains, support,')
@@ -34,7 +35,7 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaises(ValueError):m.validate(self.plan,self.source+'\nnode tests/new-browser.cjs\n')
   with self.assertRaises(ValueError):m.selected(self.plan,'typo')
  def test_shared_state_dependencies_replay_the_real_original_browsers(self):
-  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],90:[89],97:[96],98:[96],100:[99]}
+  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],97:[96],98:[96],100:[99]}
   for group in self.plan['groups']:
    selected=m.selected(self.plan,group)
    for child,parents in dependencies.items():
@@ -53,6 +54,22 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'partition'):m.validate(changed,self.source.replace(script+' --owner b',script+' --owner a'))
   changed=copy.deepcopy(self.plan);changed['groups']['timers-primary']['owned'].remove(102);changed['groups']['timers-b']['owned'].append(102);del changed['groups']['timers-primary']
   with self.assertRaisesRegex(ValueError,'distinct isolated'):m.validate(changed,self.source)
+ def test_self_contained_transition_timer_has_its_own_reader_in_sales_worker(self):
+  self.assertIn(90,self.plan['groups']['sales-pdf']['owned'])
+  self.assertFalse(set([84,85,86,89])&m.selected(self.plan,'sales-pdf'))
+  section=self.source.split('#449_SHARD_FIXTURE_BEGIN\n',1)[1].split('#449_SHARD_FIXTURE_END',1)[0]
+  owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))
+  for group in [*self.plan['groups'],'all']:
+   with tempfile.TemporaryDirectory()as folder:
+    root=pathlib.Path(folder);log=root/'docker.log'
+    body='set -euo pipefail\nwork='+shlex.quote(folder)+'\nupgrade=argws-crm-upgrade-42\nbrowser_group='+shlex.quote(group)+'\n'+owns+'\n'
+    body+='docker(){ printf "%s\\n" "$*" >> '+shlex.quote(str(log))+'; }\n'+section
+    result=subprocess.run(['bash','-c',body],cwd=ROOT,capture_output=True,text=True)
+    self.assertEqual(result.returncode,0,result.stderr)
+    prepared=group in {'sales-pdf','all'};shim=root/'task449-php'
+    self.assertEqual(shim.exists(),prepared)
+    if prepared:
+     self.assertTrue(os.access(shim,os.X_OK));self.assertIn('ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',shim.read_text());self.assertIn('task_timer_http_fixture.php',log.read_text())
  def test_real_timer_fixture_preparation_runs_in_every_partition_worker(self):
   section=self.source.split('#451_SHARD_FIXTURE_BEGIN\n',1)[1].split('#451_SHARD_FIXTURE_END',1)[0]
   owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))
@@ -71,6 +88,8 @@ class BrowserPlanTests(unittest.TestCase):
   source=(ROOT/'.github/workflows/deployment-integrity.yml').read_text()
   self.assertIn('fail-fast: false',source)
   self.assertIn('ARGWS_BROWSER_GROUP: ${{ matrix.group }}',source)
+  http=source.split('  http:\n',1)[1].split('  validate:',1)[0]
+  self.assertIn('    timeout-minutes: 60',http)
   self.assertIn('name: issuer-native-browser-${{ matrix.group }}',source)
   self.assertIn('needs: [validation-gate, prepare, http, tooling]',source)
   self.assertIn('test "$HTTP" = success',source)
@@ -106,9 +125,11 @@ class BrowserPlanTests(unittest.TestCase):
    sanitizer=self.source[self.source.index('sanitize_smoke_failure_log() {'):self.source.index('collect_smoke_failure() {')]
    body='set -euo pipefail\n'+fixtures+header+'\n'+sanitizer+'\n'+'\n'.join(calls)+'\n'
    body+='[[ "$browser_index" = "${#browser_commands[@]}" && "$browser_completed" = "$browser_required" ]]\n'
-   env={**os.environ,'PATH':str(root)+':'+os.environ['PATH'],'ARGWS_BROWSER_GROUP':group,'ISSUERS_BROWSER_ARTIFACTS':str(root/'evidence'),'FAKE_NODE_LOG':str(root/'calls'),'FAIL_COMMAND':fail}
+   env={**os.environ,'PATH':str(root)+':'+os.environ['PATH'],'ARGWS_BROWSER_GROUP':group,'ISSUERS_BROWSER_ARTIFACTS':str(root/'evidence'),'FAKE_NODE_LOG':str(root/'calls'),'FAIL_COMMAND':fail,'GITHUB_STEP_SUMMARY':str(root/'summary.md')}
    result=subprocess.run(['bash','-c',body],cwd=ROOT,env=env,capture_output=True,text=True)
    actual=(root/'calls').read_text().splitlines() if (root/'calls').exists() else []
+   summary=(root/'summary.md').read_text().splitlines()
+   self.assertEqual(len([line for line in summary if line.startswith('| ')]),len(actual)+1,'timing summary records only invocations actually executed by this worker')
    return result,actual
  def test_real_bash_selector_executes_only_the_full_ordered_plan_of_each_group(self):
   for group in self.plan['groups']:

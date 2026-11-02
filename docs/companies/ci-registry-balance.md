@@ -1,8 +1,8 @@
-# Timing-based registry allocation — proposed isolated follow-up
+# Timing-based registry allocation — frozen evidence and five-shard replay
 
-This patch is prepared separately from the active PR-validation SHA. Its replay
-estimates are **not measurements of a new run**, and it must not replace a running
-validation merely to claim an improvement.
+The five-shard plan replays the same frozen successful timing evidence. Its
+estimates are **not measurements of a new run**. The complete final PR validation
+must establish the current duration; historical estimates cannot replace it.
 
 ## Evidence
 
@@ -27,7 +27,7 @@ test delay or execution timeout. It keeps one rounded zero from erasing its pair
 
 Assign commands in descending weight order (ties by original manifest index) to
 the least estimated-load shard with capacity remaining. Ties use command count,
-then shard number. Capacity is 118 commands per shard. The resulting assignment
+then shard number. The current replay has five shards with 94–95 commands each; the historical four-shard replay keeps its original 118-command capacities. The resulting assignment
 is committed, identical for both PHP versions, and coupled to the exact manifest
 hash. The runner executes each shard in **original manifest order**, not weight
 order; no argv, fixture, assertion, include, lock wait or test subprocess changes.
@@ -40,7 +40,7 @@ not infer per-runner correction factors from unrelated commands or promise that
 PHP itself caused the difference. Queue, VM load, filesystem and DB cache variation
 remain confounders. There is no per-PHP schedule tuned to one favorable runner.
 
-## Comparison: command sums only
+## Historical four-shard comparison: command sums only
 
 | PHP | Observed round-robin shard seconds | Estimated replay of frozen balanced plan | Observed / estimated maximum |
 |---|---|---|---|
@@ -51,15 +51,13 @@ Across both versions the largest command sum would fall from 23m52.896s to
 19m31.506s under unchanged per-command runtimes: **4m21.390s estimated**, not
 measured. Setup, queue, pulls, smoke, preflight, external audit and upload are not
 included. Shard 1's extra checks can affect the true critical path. The only
-removed work is the retired parallel-calendar controller check; all retained
-commands preserve their historical shard. Fewer GitHub concurrency slots can
+removed work is the retired parallel-calendar controller check; the current manifest remains complete. The five-shard replay changes placements while preserving relative command order and the original observations. Fewer GitHub concurrency slots can
 also reduce or erase wall-clock benefit.
 
 A sensitivity replay using only 8.1 weights gives an 8.5 maximum of 1236.258s;
 using only 8.5 weights gives an 8.1 maximum of 1089.115s. These same-run cross-version
 checks indicate how schedule estimates depend on the chosen samples; they are
-**not independent validation**. The next authorized full run must measure all eight
-jobs before claiming improvement, and multiple runs should precede further tuning.
+**not independent validation**. The current five-shard plan must complete all ten PHP/shard jobs before its wall-clock improvement can be claimed. The numbers above describe only the historical four-shard replay.
 
 ## Reproduce / verify
 
@@ -71,8 +69,10 @@ python3 -m unittest discover -s tests/ci -p test_company_registry_shards.py
 
 The optional evidence directory has the original `*/company-registry-timings*.zip`
 layout. No network or provider action is used. To intentionally update the plan,
-review new complete successful paired evidence and run the planner without
-`--check`; never silently accept timings from a failed/partial run.
+when changing timing inputs, review complete successful paired evidence;
+when changing only partition capacity, replay the existing immutable baseline.
+Run the planner without `--check` and inspect the full coverage contracts.
+Never silently accept timings from a failed/partial run.
 
 ## Repeated setup: analysis only in this patch
 
@@ -191,3 +191,24 @@ PHP versions, execution order within each shard, and required aggregate gates ar
 unchanged. Local validation includes the registry planner unit suite and planner
 `--check`; actual
 execution of the expanded PHP suite remains a CI responsibility.
+
+
+## Five-shard replay used by the current PR head
+
+The immutable baseline still contains 944 paired successful records and eight
+original ZIP receipts. The default four-shard replay retains its exact historical
+hash. The new plan uses the same integer weights for five nonempty capacities;
+no failed/partial run is substituted for these observations, and the one explicitly
+unmeasured command still runs without receiving an invented timing.
+
+| PHP | Estimated five-shard command sums (seconds) |
+|---|---|
+|8.1|852.316 /863.438 /852.838 /881.152 /867.158|
+|8.5|949.080 /930.981 /920.326 /910.571 /927.599|
+
+These are partial historical replays, excluding the retired command and the
+unknown duration of the unmeasured command. They are not current source timings,
+current totals, a new run, or a guaranteed duration. Count/union/digest contracts
+require all 472 current commands exactly once per PHP version. The core matrix
+uses five simultaneous workers; focused PHP jobs run one at a time so the full
+long-phase budget remains 20. The 30-minute per-shard timeout is unchanged.
