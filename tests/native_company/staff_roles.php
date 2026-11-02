@@ -1,8 +1,15 @@
 <?php
 require __DIR__.'/../settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyStaffRoles.php';
+$roleChecksStart=$GLOBALS['essentialChecks'];
 $db->query('UPDATE '.$p.'issuers_registry SET active=1 WHERE id=82');
 $s=new NativeCompanyStaffRoles($db,$p);$page=$s->page(41,7);$before=$db->query('SELECT * FROM '.$p.'staff')->result_array();
+$noRoleRaw=$db->query('SELECT settings_json FROM '.$p.'issuers_registry WHERE id=41')->row_array()['settings_json'];
+$noRoleAudit=$db->query('SELECT * FROM '.$p.'issuers_audit ORDER BY id')->result_array();
+essentialCheck(!property_exists(json_decode($noRoleRaw), 'native_staff_roles'),'no role node exists before the explicit no-role selection');
+IssuerTransaction::run($db,$p,$s->tables(),fn()=>$s->assignInOwnedTransaction(41,7,12,null,$page['revision']));
+essentialCheck($db->query('SELECT settings_json FROM '.$p.'issuers_registry WHERE id=41')->row_array()['settings_json']===$noRoleRaw,'choosing no role preserves every unrelated setting and raw JSON byte');
+essentialCheck($db->query('SELECT * FROM '.$p.'issuers_audit ORDER BY id')->result_array()===$noRoleAudit,'unchanged no-role selection does not invent a role assignment event');
 $id=$s->save(41,7,null,$page['revision'],'Native role',['tasks'=>['view']]);$page=$s->page(41,7);
 essentialCheck($id===1&&$page['roles'][$id]->name==='Native role','scoped role uses stable source ID');
 essentialCheck($s->page(82,7)['roles']===[],'B never reads A roles');
@@ -18,4 +25,4 @@ essentialCheck($s->page(41,7)['roles']===[],'unreferenced role delete succeeds')
 settingThrows(fn()=>$s->page(41,12),'native_staff_role_denied','staff grants alone do not grant roles access');
 $db->query('CREATE TRIGGER role_audit_ignored BEFORE INSERT ON '.$p.'issuers_audit BEGIN SELECT RAISE(IGNORE); END');$revision=$s->page(41,7)['revision'];settingThrows(fn()=>$s->save(41,7,null,$revision,'Rollback',[]),'issuer_storage_failed','ignored audit prevents partial role storage');$db->query('DROP TRIGGER role_audit_ignored');
 essentialCheck($s->page(41,7)['revision']===$revision,'role state rolls back with ignored audit');
-echo "Native staff roles: 10 actual SQLite isolation/CAS/reference/propagation/audit checks passed.\n";
+echo 'Native staff roles: '.($GLOBALS['essentialChecks']-$roleChecksStart)." actual SQLite isolation/CAS/reference/propagation/audit checks passed.\n";

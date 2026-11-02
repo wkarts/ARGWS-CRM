@@ -49,7 +49,9 @@ if($db->driver()==='sqlite'){
     unset($db->data_cache['table_names']);
 }else CompanyProjectMilestonesSchema::ensure($db,$p);
 $service->discard($a,7,$newBlank,1,hash('sha256','discard-before-modality-pairs'));
-$writers=['project'=>new CompanyTasks($db,$p),'standalone'=>new CompanyStandaloneTasks($db,$p)];
+// Reuse the writers: a declaration prepared before milestone installation must
+// not survive into another operation on the same service instance.
+$writers=['project'=>$projects,'standalone'=>$standalone];
 foreach(['project','standalone'] as$oldKind)foreach(['project','standalone'] as$newKind){
     $pair=$oldKind.'-'.$newKind;$ids=[];
     foreach(['old'=>$oldKind,'new'=>$newKind] as$label=>$kind){

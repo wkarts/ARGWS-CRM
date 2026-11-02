@@ -17,6 +17,11 @@ class BrowserPreflightTests(unittest.TestCase):
  def jobs(self):return [{'name':name,'status':'completed','conclusion':'success'} for name in ['node-contracts','Native browser preflight (8.1)','Native browser preflight (8.5)']]
  def test_all_three_required(self):self.assertEqual(m.preflight_state(self.jobs()),'success')
  def test_node_only_never_opens_database_gate(self):self.assertEqual(m.preflight_state(self.jobs()[:1]),'pending')
+ def test_browser_results_without_node_never_open_database_gate(self):self.assertEqual(m.preflight_state(self.jobs()[1:]),'pending')
+ def test_node_failure_closes_gate_while_independent_browsers_are_running(self):
+  jobs=self.jobs();jobs[0]['conclusion']='failure'
+  for job in jobs[1:]:job['status']='in_progress';job['conclusion']=None
+  self.assertEqual(m.preflight_state(jobs),'failure')
  def test_browser_failure_closes_gate(self):
   jobs=self.jobs();jobs[1]['conclusion']='failure';self.assertEqual(m.preflight_state(jobs),'failure')
  def test_skipped_is_not_success(self):

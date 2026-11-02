@@ -16,6 +16,12 @@ def validate(plan,source):
   if set(values)&set(common):raise ValueError('Common fixtures cannot also be group owned')
  for r in rows:
   if r['database'] not in [None,'argws_legacy_ci','argws_upgrade_ci'] or not all(isinstance(a,str) and a for a in r['argv']):raise ValueError('Invalid invocation identity')
+ for partition in plan.get('partitions',[]):
+  pieces=[(i,r['argv']) for i,r in enumerate(rows) if r['argv'][0]==partition['script']]
+  expected=partition['values']
+  if not expected or len(set(expected))!=len(expected) or any(len(argv)!=3 or argv[1]!=partition['argument'] for _,argv in pieces) or sorted(argv[2] for _,argv in pieces)!=sorted(expected):raise ValueError('Every suite partition must execute exactly once')
+  groups=[name for i,_ in pieces for name,g in plan['groups'].items() if i in g['owned']]
+  if len(groups)!=len(pieces) or len(set(groups))!=len(pieces):raise ValueError('Suite partitions require distinct isolated workers')
  for owner in plan['shell_owners'].values():
   if owner not in plan['groups']:raise ValueError('Shell block owner missing')
  return plan

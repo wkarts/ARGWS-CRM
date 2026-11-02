@@ -35,7 +35,9 @@ jobs:
         run: python3 scripts/ci/validation-gate.py
   view-contracts:
     name: Native browser preflight (${{ matrix.php }})
-    needs: node-contracts
+    # Separate checkouts render committed assets while Node verifies their build.
+    # Database jobs and the shared gate still require all three preflight results.
+    needs: validation-gate
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:

@@ -145,7 +145,9 @@ class FocusedContract(unittest.TestCase):
   self.assertEqual(workflow.count('run-native-company-focused.py browser'),1)
   self.assertNotIn('run-native-company-focused.py browser',php_job)
   browser_job=workflow.split('  view-contracts:',1)[1].split('  focused:',1)[0]
-  self.assertIn('needs: node-contracts',browser_job)
+  self.assertIn('needs: validation-gate',browser_job)
+  self.assertNotIn('needs: node-contracts',browser_job)
+  self.assertIn("needs.node-contracts.result == 'success' && needs.view-contracts.result == 'success'",php_job)
   self.assertNotIn('services:',browser_job)
   self.assertIn('Native browser preflight (${{ matrix.php }})',browser_job)
   self.assertLess(node_job.index('Verify compiled assets'),node_job.index('Test shared native UI contracts'))

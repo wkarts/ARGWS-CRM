@@ -54,8 +54,11 @@ final class NativeCompanyStaffRoles
     {
         IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());if($createdBy!==null)$createdBy->assertCreatedInOwned($this->db,$this->p,$i,$a,'staff',$staff);$cap=$createdBy!==null?'create':'edit';(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($i,$a,$staff,$cap);$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$i||!$acl->can($i,$a,'staff',$cap)||$acl->isInstallationMaster($staff))throw new DomainException('native_staff_role_denied');
         $doc=$this->document($i);$n=$this->node($doc);if(!hash_equals(self::hash($n),$revision))throw new DomainException('native_staff_role_stale');
+        // An already-unassigned member needs no role document rewrite. Keep the
+        // revision and both live authority checks even for this idempotent case.
+        $needsWrite=$role!==null||property_exists($n->assignments,(string)$staff);
         if($role!==null){$this->templatesForStaff($i,$a);if(!isset($n->roles->{(string)$role}))throw new DomainException('native_staff_role_denied');$this->grants($i,$a,(array)$n->roles->{(string)$role}->permissions);$n->assignments->{(string)$staff}=$role;}else unset($n->assignments->{(string)$staff});
-        $this->persist($i,$a,$doc,$n,'native_staff_role_assigned',$staff);(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($i,$a,$staff,$cap);if(!$acl->can($i,$a,'staff',$cap))throw new DomainException('native_staff_role_denied');
+        if($needsWrite)$this->persist($i,$a,$doc,$n,'native_staff_role_assigned',$staff);(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($i,$a,$staff,$cap);if(!$acl->can($i,$a,'staff',$cap))throw new DomainException('native_staff_role_denied');
     }
     public function delete(int $i,int $a,int $id,string $revision):void
     {

@@ -10,16 +10,19 @@ class BrowserPlanTests(unittest.TestCase):
   bb=[section('.github/workflows/banco-brasil.yml',db+'-shards') for db in ['mysql','mariadb']]
   slots=sum(int(re.search(r'max-parallel: (\d+)',job).group(1)) for job in [core,*bb])
   focused=section('.github/workflows/native-company-experience.yml','focused')
-  slots+=len(self.plan['groups'])+len(re.findall(r"- php: '[^']+'",focused))+2 # tooling and round monitor
+  # Tooling and HTTP are separate phases; only the monitor overlaps both.
+  slots+=max(len(self.plan['groups']),1)+len(re.findall(r"- php: '[^']+'",focused))+1
   self.assertLessEqual(slots,20,'long SQL matrices cannot occupy every runner before HTTP starts')
   http=section('.github/workflows/deployment-integrity.yml','http')
   self.assertRegex(http,r'group: \[tasks-domains, support,')
+  self.assertIn('needs: [validation-gate, prepare, tooling]',http)
+  self.assertIn("needs.tooling.result == 'success'",http)
  def setUp(self):
   self.source=m.SOURCE.read_text();self.plan=json.loads(m.MANIFEST.read_text())
  def test_every_original_invocation_is_owned_exactly_once_and_ordered(self):
   m.validate(self.plan,self.source)
   owners=self.plan['common']+[i for g in self.plan['groups'].values() for i in g['owned']]
-  self.assertEqual(sorted(owners),list(range(101)))
+  self.assertEqual(sorted(owners),list(range(103)))
   self.assertEqual(self.plan['invocations'][0]['argv'],self.plan['invocations'][2]['argv'])
   self.assertNotEqual(self.plan['invocations'][0]['database'],self.plan['invocations'][2]['database'])
   self.assertEqual(self.plan['invocations'][56]['argv'][0],'--test')
@@ -31,13 +34,39 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaises(ValueError):m.validate(self.plan,self.source+'\nnode tests/new-browser.cjs\n')
   with self.assertRaises(ValueError):m.selected(self.plan,'typo')
  def test_shared_state_dependencies_replay_the_real_original_browsers(self):
-  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],90:[89],91:[90],97:[96],98:[96],100:[99]}
+  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],90:[89],97:[96],98:[96],100:[99]}
   for group in self.plan['groups']:
    selected=m.selected(self.plan,group)
    for child,parents in dependencies.items():
     if child in selected:
      self.assertTrue(set(parents)<=selected,(group,child,parents))
      self.assertTrue(all(parent<child for parent in parents))
+ def test_all_company_timer_partitions_are_required_on_independent_workers(self):
+  rows=self.plan['invocations'];script='tests/settings/task_timer_auto_stop_browser.cjs'
+  pieces=[(i,row['argv'])for i,row in enumerate(rows)if row['argv'][0]==script]
+  self.assertEqual([argv[1:]for _,argv in pieces],[['--owner','a'],['--owner','b'],['--owner','primary']])
+  self.assertEqual(len({name for i,_ in pieces for name,g in self.plan['groups'].items()if i in g['owned']}),3)
+  for i,_ in pieces:
+   owner=next(name for name,g in self.plan['groups'].items()if i in g['owned'])
+   self.assertNotIn(90,m.selected(self.plan,owner),'self-contained timer partition does not repeat earlier task/calendar browsers')
+  changed=copy.deepcopy(self.plan);changed['invocations'][101]['argv'][-1]='a'
+  with self.assertRaisesRegex(ValueError,'partition'):m.validate(changed,self.source.replace(script+' --owner b',script+' --owner a'))
+  changed=copy.deepcopy(self.plan);changed['groups']['timers-primary']['owned'].remove(102);changed['groups']['timers-b']['owned'].append(102);del changed['groups']['timers-primary']
+  with self.assertRaisesRegex(ValueError,'distinct isolated'):m.validate(changed,self.source)
+ def test_real_timer_fixture_preparation_runs_in_every_partition_worker(self):
+  section=self.source.split('#451_SHARD_FIXTURE_BEGIN\n',1)[1].split('#451_SHARD_FIXTURE_END',1)[0]
+  owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))
+  for group in [*self.plan['groups'],'all']:
+   with tempfile.TemporaryDirectory()as folder:
+    root=pathlib.Path(folder);log=root/'docker.log'
+    body='set -euo pipefail\nwork='+shlex.quote(folder)+'\nupgrade=argws-crm-upgrade-42\nbrowser_group='+shlex.quote(group)+'\n'+owns+'\n'
+    body+='docker(){ printf "%s\\n" "$*" >> '+shlex.quote(str(log))+'; }\n'+section
+    result=subprocess.run(['bash','-c',body],cwd=ROOT,capture_output=True,text=True)
+    self.assertEqual(result.returncode,0,result.stderr)
+    prepared=group in {'timers-a','timers-b','timers-primary','all'};shim=root/'task451-php'
+    self.assertEqual(shim.exists(),prepared)
+    if prepared:
+     self.assertTrue(os.access(shim,os.X_OK));self.assertIn('ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',shim.read_text());self.assertIn('task_timer_stop_http_fixture.php',log.read_text())
  def test_workflow_isolates_stacks_and_requires_every_group(self):
   source=(ROOT/'.github/workflows/deployment-integrity.yml').read_text()
   self.assertIn('fail-fast: false',source)

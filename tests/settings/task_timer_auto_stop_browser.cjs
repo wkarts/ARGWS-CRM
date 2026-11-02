@@ -20,6 +20,11 @@ const base = env.ISSUERS_BROWSER_URL;
 const php = env.ISSUERS_BROWSER_PHP_BINARY || 'php';
 const fixturePath = env.TASK_TIMER_STOP_BROWSER_FIXTURE_PHP;
 const output = env.ISSUERS_BROWSER_ARTIFACTS;
+const args = process.argv.slice(2);
+assert(args.length === 0 || (args.length === 2 && args[0] === '--owner'), 'exact optional company partition');
+const requestedOwner = args.length ? args[1] : 'all';
+assert(['all', 'a', 'b', 'primary'].includes(requestedOwner), 'known automatic-stop company partition');
+const checksCrossCompany = requestedOwner === 'all' || requestedOwner === 'a';
 
 assert.match(base || '', /^http:\/\/127\.0\.0\.1:\d+$/);
 assert(fixturePath && path.isAbsolute(fixturePath));
@@ -77,7 +82,12 @@ const STANDALONE_TASK_RADIX = 12884901888n;
         await nav(page, page.locator('button[type=submit]'));
 
         async function select(owner) {
-            await page.goto(base + '/admin/');
+            const selector = page.locator('.company-selector');
+            if (await selector.count() !== 1 || await selector.getAttribute('data-company-current') !== String(owner)) {
+                // Switch from Settings so an open task modal cannot cover the
+                // native selector or carry a resource URL into another company.
+                await page.goto(base + '/admin/settings?group=task_timer_stop', { waitUntil: 'domcontentloaded' });
+            }
             await selectCompanyOption(page, String(owner));
         }
 
@@ -167,7 +177,8 @@ const STANDALONE_TASK_RADIX = 12884901888n;
         await page.goto(route);
         const initial = fixture('snapshot');
 
-        for (const [label, owner] of Object.entries(setup.owners)) {
+        const selectedOwners = Object.entries(setup.owners).filter(([label]) => requestedOwner === 'all' || requestedOwner === label);
+        for (const [label, owner] of selectedOwners) {
             console.log('TASK_AUTO_STOP_CASE_START',label);await select(owner);
             await page.goto(base+'/admin/settings?group=task_defaults');const defaults=page.locator('form').filter({has:page.locator('#company-setting-default_task_status')});await defaults.locator('#company-setting-default_task_status').selectOption('todo');await nav(page,defaults.locator('button[type=submit]'));assert.equal(await page.locator('#company-setting-default_task_status').inputValue(),'todo','automatic-stop sources explicitly start A fazer');await page.goto(route);
             const prior = setup.own_timer_stop_policies[owner];
@@ -252,48 +263,55 @@ const STANDALONE_TASK_RADIX = 12884901888n;
             }
         }
 
-        await select(setup.owners.a);
-        const old = await create(setup.owners.a, 'tasks', 'foreign A old');
-        await start(old);
-        const foreignBefore = fixture('snapshot');
+        assert.equal(results.length, selectedOwners.length * 4, 'every modality pair in the selected company partition completed');
+        let current;
+        if (checksCrossCompany) {
+            await select(setup.owners.a);
+            const old = await create(setup.owners.a, 'tasks', 'foreign A old');
+            await start(old);
+            const protectedOld = fixture('task', setup.owners.a, 'tasks', old);
 
-        await select(setup.owners.b);
-        const next = await create(setup.owners.b, 'standalone_tasks', 'foreign B next');
-        const rejected = await timerFields(next);
-        delete rejected._native_company_csrf;
-        assert.equal(
-            (await context.request.post(base + '/admin/tasks/timer_tracking?single_task=true', {
-                form: rejected,
+            await select(setup.owners.b);
+            const next = await create(setup.owners.b, 'standalone_tasks', 'foreign B next');
+            const rejected = await timerFields(next);
+            const foreignBefore = fixture('snapshot');
+            delete rejected._native_company_csrf;
+            assert.equal(
+                (await context.request.post(base + '/admin/tasks/timer_tracking?single_task=true', {
+                    form: rejected,
+                    maxRedirects: 0,
+                })).status(),
+                403,
+            );
+            assert.deepEqual(fixture('snapshot'), foreignBefore, 'missing native CSRF has no timer effect');
+
+            const foreignAttempt = await timerFields(next);
+            const foreignResponse = await context.request.post(base + '/admin/tasks/timer_tracking?single_task=true', {
+                form: foreignAttempt,
                 maxRedirects: 0,
-            })).status(),
-            403,
-        );
-        assert.deepEqual(fixture('snapshot'), foreignBefore, 'missing native CSRF has no timer effect');
+            });
+            assert.notEqual(foreignResponse.status(), 200, 'active timer from another company cannot be mutated');
+            assert.deepEqual(fixture('snapshot'), foreignBefore, 'foreign refusal has no storage effect');
+            assert.deepEqual(fixture('task', setup.owners.a, 'tasks', old), protectedOld, 'the exact foreign timer and task remain unchanged');
 
-        const foreignAttempt = await timerFields(next);
-        const foreignResponse = await context.request.post(base + '/admin/tasks/timer_tracking?single_task=true', {
-            form: foreignAttempt,
-            maxRedirects: 0,
-        });
-        assert.notEqual(foreignResponse.status(), 200, 'active timer from another company cannot be mutated');
+            await select(setup.owners.a);
+            await stop(old);
+            await select(setup.owners.b);
+            await start(next);
+            assert.equal(fixture('task', setup.owners.b, 'standalone_tasks', next).timer_count, 1);
+            await stop(next);
 
-        await select(setup.owners.a);
-        await stop(old);
-        await select(setup.owners.b);
-        await start(next);
-        assert.equal(fixture('task', setup.owners.b, 'standalone_tasks', next).timer_count, 1);
-        await stop(next);
-
-        await select(setup.owners.a);
-        const oldForm = await timerFields(old);
-        await policy('0');
-        const current = fixture('snapshot');
-        const staleResponse = await context.request.post(
-            base + '/admin/tasks/timer_tracking?single_task=true',
-            { form: oldForm, maxRedirects: 0 },
-        );
-        assert.notEqual(staleResponse.status(), 200, 'replayed timer receipt is rejected after the task changed');
-        assert.deepEqual(fixture('snapshot'), current);
+            await select(setup.owners.a);
+            const oldForm = await timerFields(old);
+            await policy('1');
+            current = fixture('snapshot');
+            const staleResponse = await context.request.post(
+                base + '/admin/tasks/timer_tracking?single_task=true',
+                { form: oldForm, maxRedirects: 0 },
+            );
+            assert.notEqual(staleResponse.status(), 200, 'rendered timer policy is rejected after an actual saved policy change');
+            assert.deepEqual(fixture('snapshot'), current);
+        } else current = fixture('snapshot');
 
         assert.deepEqual(
             current.financial,
@@ -304,21 +322,20 @@ const STANDALONE_TASK_RADIX = 12884901888n;
 
         if (output) {
             fs.writeFileSync(
-                path.join(output, 'task-auto-stop451.json'),
+                path.join(output, 'task-auto-stop451' + (requestedOwner === 'all' ? '' : '-' + requestedOwner) + '.json'),
                 JSON.stringify({
                     native_marker: setup.native_marker,
                     read_only_fixture: true,
+                    company_partition: requestedOwner,
                     results,
-                    foreign403: true,
-                    csrf403: true,
-                    stale_rejected: true,
+                    ...(checksCrossCompany ? { foreign403: true, csrf403: true, stale_rejected: true } : {}),
                     financial_and_global_unchanged: true,
                     external_transport: false,
                 }, null, 2),
             );
         }
         console.log(
-            'Own auto-stop451 Chromium PASS: A/B/principal, all four native modality pairs, OFF/ON, one captured stop/start boundary, foreign-company refusal, CSRF/stale, unchanged finances/options.',
+            'Own auto-stop451 Chromium PASS: ' + selectedOwners.map(([label]) => label).join('/') + ', all four native modality pairs, OFF/ON, one captured stop/start boundary, ' + (checksCrossCompany ? 'foreign-company refusal, CSRF/stale, ' : '') + 'unchanged finances/options.',
         );
     } finally {
         await context.close();

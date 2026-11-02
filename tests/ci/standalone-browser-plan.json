@@ -563,7 +563,9 @@
     },
     {
       "argv": [
-        "tests/settings/task_timer_auto_stop_browser.cjs"
+        "tests/settings/task_timer_auto_stop_browser.cjs",
+        "--owner",
+        "a"
       ],
       "database": "argws_upgrade_ci"
     },
@@ -618,6 +620,22 @@
     {
       "argv": [
         "tests/companies/hr_tokens_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_timer_auto_stop_browser.cjs",
+        "--owner",
+        "b"
+      ],
+      "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/settings/task_timer_auto_stop_browser.cjs",
+        "--owner",
+        "primary"
       ],
       "database": "argws_upgrade_ci"
     }
@@ -760,12 +778,29 @@
         85,
         86,
         89,
-        90,
-        91
+        90
       ],
       "prerequisites": [
         9
       ]
+    },
+    "timers-a": {
+      "owned": [
+        91
+      ],
+      "prerequisites": []
+    },
+    "timers-b": {
+      "owned": [
+        101
+      ],
+      "prerequisites": []
+    },
+    "timers-primary": {
+      "owned": [
+        102
+      ],
+      "prerequisites": []
     }
   },
   "shell_owners": {
@@ -773,5 +808,16 @@
     "ai_tls": "providers",
     "local_noncash": "banking",
     "task_cli_adapters": "tasks-domains"
-  }
+  },
+  "partitions": [
+    {
+      "script": "tests/settings/task_timer_auto_stop_browser.cjs",
+      "argument": "--owner",
+      "values": [
+        "a",
+        "b",
+        "primary"
+      ]
+    }
+  ]
 }

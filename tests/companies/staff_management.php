@@ -1,6 +1,15 @@
 <?php
 require __DIR__.'/staff_fixture.php';
 $db=staffFixture();$p=$db->prefix;$s=new CompanyStaff($db,$p);$masterBefore=$db->query('SELECT * FROM '.$p.'issuers_installation_identity')->result_array();$profileMaster=$db->query('SELECT * FROM '.$p.'staff WHERE staffid=17')->result_array();
+require_once APPPATH.'services/NativeCompanyStaffRoles.php';
+$noRoles=new NativeCompanyStaffRoles($db,$p);$noRolePage=$noRoles->page(2,17);$noRoleRaw=$db->query('SELECT settings_json FROM '.$p.'issuers_registry WHERE id=2')->row_array()['settings_json'];$noRoleBefore=staffSnapshot($db);
+staffCheck(!property_exists(json_decode($noRoleRaw),'native_staff_roles'),'unassigned membership has no materialized role node');
+IssuerTransaction::run($db,$p,$noRoles->tables(),fn()=>$noRoles->assignInOwnedTransaction(2,17,21,null,$noRolePage['revision']));
+staffCheck($db->query('SELECT settings_json FROM '.$p.'issuers_registry WHERE id=2')->row_array()['settings_json']===$noRoleRaw&&staffSnapshot($db)===$noRoleBefore,'no-role save preserves complete identity/grants/audit and raw unrelated settings');
+staffThrows(fn()=>IssuerTransaction::run($db,$p,$noRoles->tables(),fn()=>$noRoles->assignInOwnedTransaction(2,17,21,null,str_repeat('0',64))),'native_staff_role_stale','idempotent no-role choice still enforces the captured revision');
+$db->observer=static function($sql,$params,$db){if(str_starts_with($sql,'SELECT settings_json FROM '.$db->prefix.'issuers_registry')){$db->observer=null;$db->pdo->exec('UPDATE '.$db->prefix.'staff SET active=0 WHERE staffid=17');}};
+staffThrows(fn()=>IssuerTransaction::run($db,$p,$noRoles->tables(),fn()=>$noRoles->assignInOwnedTransaction(2,17,21,null,$noRolePage['revision'])),'issuer_staff_denied','no-role no-op still revalidates live authority before returning');
+staffCheck(staffSnapshot($db)===$noRoleBefore&&$db->query('SELECT settings_json FROM '.$p.'issuers_registry WHERE id=2')->row_array()['settings_json']===$noRoleRaw,'late authority loss rolls back with every original byte retained');
 $profile=['firstname'=>'Ana <synthetic>','lastname'=>'Team','email'=>'ana@example.invalid','phonenumber'=>'000','password'=>'synthetic-initial-123'];$grant=['tasks'=>['view']];
 $key=staffKey();$id=$s->create(2,21,$profile,$grant,true,$key);staffCheck($id>23,'authorized secondary manager creates native identity and membership');
 $detail=$s->get(2,21,$id);staffCheck($detail['grants']===$grant&&$detail['default_current']===true,'own permission/default visible');staffCheck((int)$detail['admin']===0&&(int)$detail['role']===0,'no global promotion');

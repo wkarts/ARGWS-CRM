@@ -14,8 +14,13 @@ trait NativeCompanyTaskTimerOperations
         // timer context, so their declared participant lists do not recurse.
         $peers=[];
         if($this->nativeTimerContext['action']==='start'){
-            require_once __DIR__.'/CompanyTasks.php';require_once __DIR__.'/CompanyStandaloneTasks.php';
-            $peers=array_merge((new CompanyTasks($this->db,$this->p))->copyTransactionParticipants(),(new CompanyStandaloneTasks($this->db,$this->p))->copyTransactionParticipants());
+            // Freeze only this operation's participant declaration. Each live
+            // target still validates its own schema, references and authority.
+            if(!isset($this->nativeTimerContext['peer_tables'])){
+                require_once __DIR__.'/CompanyTasks.php';require_once __DIR__.'/CompanyStandaloneTasks.php';
+                $this->nativeTimerContext['peer_tables']=array_merge((new CompanyTasks($this->db,$this->p))->copyTransactionParticipants(),(new CompanyStandaloneTasks($this->db,$this->p))->copyTransactionParticipants());
+            }
+            $peers=$this->nativeTimerContext['peer_tables'];
         }
         return array_values(array_unique(array_merge($peers,NativeCompanyTimerPolicy::tables(),array_keys(NativeCompanyWorkAssignmentsSchema::definitions()),array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),['taskstimers','company_blank_task_timers','company_task_assignees','company_standalone_assignees'],(new NativeCompanyTaskTimerDetails($this->db,$this->p))->tables())));
     }

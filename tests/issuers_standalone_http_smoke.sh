@@ -817,16 +817,24 @@ ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/a
 node tests/settings/task_timer_browser.cjs
 
 
-if owns_shell tasks-domains; then
-#451: explicit own automatic stop never modifies a timer owned by another company.
+#451_SHARD_FIXTURE_BEGIN
+if owns_shell timers-a || owns_shell timers-b || owns_shell timers-primary; then
+# Read-only inspection is prepared separately in each company-partition worker.
+docker exec "$upgrade" mkdir -p /app/tests/settings
 docker cp tests/settings/task_timer_stop_http_fixture.php "$upgrade:/app/tests/settings/task_timer_stop_http_fixture.php"
+cat > "$work/task451-php" <<'PHP451_EXEC'
+#!/bin/sh
+exec docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$ISSUERS_BROWSER_APP_CONTAINER" php "$@"
+PHP451_EXEC
+chmod +x "$work/task451-php"
 fi
+#451_SHARD_FIXTURE_END
 
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
-ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
-node tests/settings/task_timer_auto_stop_browser.cjs
+ISSUERS_BROWSER_PHP_BINARY="$work/task451-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
+node tests/settings/task_timer_auto_stop_browser.cjs --owner a
 
 #453: positive task schedules and scoped Staff, after preserved portal/calendar/timers.
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
@@ -880,6 +888,18 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/hr-credentials-456" \
 node tests/companies/hr_tokens_browser.cjs
+
+# The other company partitions use the same original GUI assertions on isolated databases.
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_PHP_BINARY="$work/task451-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
+node tests/settings/task_timer_auto_stop_browser.cjs --owner b
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_PHP_BINARY="$work/task451-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
+node tests/settings/task_timer_auto_stop_browser.cjs --owner primary
 
 [[ "$browser_index" = "${#browser_commands[@]}" && "$browser_completed" = "$browser_required" ]]
 echo "BROWSER_GROUP_COMPLETE group=$browser_group completed=$browser_completed required=$browser_required invocations=$browser_index"

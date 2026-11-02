@@ -185,13 +185,15 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   http:
-    needs: [validation-gate, prepare]
-    if: ${{ needs.validation-gate.outputs.run == 'true' && needs.prepare.result == 'success' }}
+    # Tooling finishes first so eleven isolated HTTP workers still fit the
+    # twenty-runner long-phase budget alongside the unchanged SQL coverage.
+    needs: [validation-gate, prepare, tooling]
+    if: ${{ needs.validation-gate.outputs.run == 'true' && needs.prepare.result == 'success' && needs.tooling.result == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        group: [tasks-domains, support, projects, expenses, sales-pdf, settings, providers, banking]
+        group: [tasks-domains, support, timers-a, timers-b, timers-primary, projects, expenses, sales-pdf, settings, providers, banking]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
