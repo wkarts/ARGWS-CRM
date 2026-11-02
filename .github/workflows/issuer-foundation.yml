@@ -138,16 +138,9 @@ jobs:
         with:
           name: company-boundaries-full
           path: /tmp/company-boundaries-full.json
-  registry-plan:
-    if: ${{ needs.validation-gate.outputs.run == 'true' }}
-    needs: validation-gate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - run: echo "Registry plan and negative contract cases passed in the shared preflight for this SHA."
   registry-shards:
     if: ${{ needs.validation-gate.outputs.run == 'true' }}
-    needs: [validation-gate, registry-plan]
+    needs: validation-gate
     runs-on: ubuntu-latest
     strategy:
       # Cancel sibling PR shards on failure; retain the full matrix outside PRs.
@@ -270,7 +263,7 @@ jobs:
   # cannot satisfy either gate, even if the other PHP version succeeded.
   registry:
     if: always()
-    needs: [validation-gate, registry-plan, registry-shards]
+    needs: [validation-gate, registry-shards]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -280,12 +273,11 @@ jobs:
         env:
           REUSED: ${{ needs.validation-gate.outputs.run }}
           GATE_RESULT: ${{ needs.validation-gate.result }}
-          PLAN_RESULT: ${{ needs.registry-plan.result }}
           SHARDS_RESULT: ${{ needs.registry-shards.result }}
         run: |
           test "$GATE_RESULT" = success
           if [ "$REUSED" = false ]; then
             echo "Exact-tree successful PR evidence was verified by validation-gate."
           else
-            test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success
+            test "$SHARDS_RESULT" = success
           fi

@@ -43,7 +43,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends libsqlite3-dev
-          docker-php-ext-install pdo_sqlite
+          docker-php-ext-install -j"$(nproc)" pdo_sqlite
       - name: Validar política sem banco externo ou chamadas aos provedores
         run: |
           php -v

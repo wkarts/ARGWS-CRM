@@ -562,6 +562,7 @@ class Invoices extends AdminController
 
                 if (hooks()->apply_filters('validate_invoice_number', true)) {
                     $number = ltrim($invoice_data['number'], '0');
+                    \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
                     if (total_rows('invoices', [
                         'YEAR(date)' => (int) date('Y', strtotime(to_sql_date($invoice_data['date']))),
                         'number'     => $number,
@@ -597,6 +598,7 @@ class Invoices extends AdminController
                 // If number not set, is draft
                 if (hooks()->apply_filters('validate_invoice_number', true) && isset($invoice_data['number'])) {
                     $number = trim(ltrim($invoice_data['number'], '0'));
+                    \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
                     if (total_rows('invoices', [
                         'YEAR(date)' => (int) date('Y', strtotime(to_sql_date($invoice_data['date']))),
                         'number'     => $number,

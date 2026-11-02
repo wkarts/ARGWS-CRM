@@ -162,6 +162,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.23.4
+          cache: npm
+          cache-dependency-path: package-lock.json
       - name: Verify reproducible compiled native assets
         working-directory: ${{ github.workspace }}
         run: |

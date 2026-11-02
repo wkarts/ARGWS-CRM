@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "f700ce27bebb5fb62e3523bb608c56a34f1f8dcb3fa7cb5c8a1b6535b4d4f42d",
+    "source_manifest_sha256": "ca7ff5b01e5a1f9d627d600996ecabde104f3defed2682dbdfea7ad6c8b5dd80",
     "counts": {
         "modules": 38,
         "source_files": 4687,
@@ -10429,7 +10429,7 @@
         },
         {
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "bce880e69c4857412c0ed6e5c7c5f9a23fc420730a6fee7a634b59bf0e249d02",
+            "source_sha256": "bacac91c064c6c52e8aed5522041000b46f316ab00ed44959a7d68f03ef7244d",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10536,67 +10536,67 @@
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 673,
+                    "line": 675,
                     "visibility": "public"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 771,
+                    "line": 773,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 793,
+                    "line": 795,
                     "visibility": "public"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 830,
+                    "line": 832,
                     "visibility": "public"
                 },
                 {
                     "method": "record_payment",
-                    "line": 858,
+                    "line": 860,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 894,
+                    "line": 896,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 953,
+                    "line": 955,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 985,
+                    "line": 987,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1004,
+                    "line": 1006,
                     "visibility": "public"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1032,
+                    "line": 1034,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 1054,
+                    "line": 1056,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1123,
+                    "line": 1125,
                     "visibility": "public"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1144,
+                    "line": 1146,
                     "visibility": "public"
                 }
             ],
@@ -28845,7 +28845,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 636
+            "reference_count": 638
         },
         {
             "name": "issuer_certificate_audit",

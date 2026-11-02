@@ -1,0 +1,333 @@
+{
+  "collected_at_utc": "2026-11-02T07:19:30Z",
+  "branch": "fix/native-company-experience",
+  "pull_request": "https://github.com/wkarts/ARGWS-CRM/pull/52",
+  "method": "Public GitHub Actions daily branch queries; uncapped UI totalCount for each UTC day. Workflow run records, not jobs, individual tests, rerun attempts or billable minutes. Branch history includes runs before PR creation.",
+  "first_branch_run": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40227414639",
+  "first_branch_run_at_utc": "2026-10-25T19:43:59Z",
+  "pr_opened_at_utc": "2026-10-25T21:02:18Z",
+  "branch_commits_above_main_at_collection": 351,
+  "total_workflow_run_records": 7506,
+  "daily_counts_utc": [
+    {
+      "date": "2026-10-25",
+      "total": 50,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-25"
+    },
+    {
+      "date": "2026-10-26",
+      "total": 1435,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-26"
+    },
+    {
+      "date": "2026-10-27",
+      "total": 890,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-27"
+    },
+    {
+      "date": "2026-10-28",
+      "total": 454,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-28"
+    },
+    {
+      "date": "2026-10-29",
+      "total": 1926,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-29"
+    },
+    {
+      "date": "2026-10-30",
+      "total": 1159,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-30"
+    },
+    {
+      "date": "2026-10-31",
+      "total": 596,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-10-31"
+    },
+    {
+      "date": "2026-11-01",
+      "total": 710,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-11-01"
+    },
+    {
+      "date": "2026-11-02",
+      "total": 286,
+      "capped": false,
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions?query=branch%3Afix%2Fnative-company-experience+created%3A2026-11-02"
+    }
+  ],
+  "latest_round": [
+    {
+      "name": "Empresas no núcleo",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172660",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "32m 18s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Native header layout",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172612",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 18s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Barreiras de escopo de faturas",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172545",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 14s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Versão e migrations do núcleo",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172558",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "51s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Calendario das faturas recorrentes",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172666",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 7s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Versão e migrations dos módulos",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172631",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "52s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Interface CRM e catálogo de pagamentos",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172676",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 48s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Interface nativa multiempresa",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172553",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 42s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "PWA nativo sem cache privado",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172575",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 41s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Barreiras de privacidade de clientes",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172624",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1m 38s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Certificados A1 por empresa",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172540",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 9s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Origem e remocao segura Asaas",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172541",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 18s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Rota segura callback Asaas",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172678",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 29s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Regras recorrentes independentes",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172762",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 33s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Containers ARGWS CRM",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172642",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "4m 36s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Aviso de atualização do painel",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172632",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "37s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Identidade global de equipe",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172647",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 47s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "ARGWS CRM Deployer - binários e releases",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172587",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "2m 37s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Native company experience focused",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172606",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "15m 24s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Banco do Brasil module",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172659",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "42m 52s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_SUCCESS"
+      }
+    },
+    {
+      "name": "Integridade das stacks ARGWS CRM",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172548",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1h 3m 0s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_FAILURE"
+      }
+    },
+    {
+      "name": "PR validation round",
+      "runUrl": "https://github.com/wkarts/ARGWS-CRM/actions/runs/41397172592",
+      "timing": {
+        "kind": "WORKFLOW_RUN_TIMING_KIND_DURATION",
+        "text": "1h 3m 35s"
+      },
+      "state": {
+        "status": "WORKFLOW_RUN_STATUS_COMPLETED",
+        "conclusion": "WORKFLOW_RUN_CONCLUSION_FAILURE"
+      }
+    }
+  ]
+}

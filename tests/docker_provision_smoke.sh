@@ -33,7 +33,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+if [ "${ARGWS_SMOKE_PREBUILT_IMAGE:-0}" = 1 ]; then
+    # The workflow builds and loads this image locally from this exact checkout.
+    # Cached layers are inputs, never evidence that a test passed.
+    expected_tree="$(git rev-parse 'HEAD^{tree}')"
+    actual_tree="$(docker image inspect --format '{{ index .Config.Labels "org.argws.smoke.source-tree" }}' "$image")"
+    if [ "$actual_tree" != "$expected_tree" ]; then
+        echo "Prebuilt smoke image does not match the checked out source tree." >&2
+        exit 1
+    fi
+else
+    docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+fi
 docker run --rm --entrypoint /bin/sh "$image" -ec 'test "$(id -u www-data):$(id -g www-data)" = "33:33"'
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/brand_assets_smoke.php
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/email_templates_php_smoke.php

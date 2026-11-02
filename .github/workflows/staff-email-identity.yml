@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Preparar PHP sem credenciais de produção
-        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libonig-dev && docker-php-ext-install mysqli pdo_mysql pdo_sqlite mbstring
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libonig-dev && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pdo_sqlite mbstring
       - name: Validar sintaxe
         run: |
           php -l application/services/StaffEmailIdentity.php

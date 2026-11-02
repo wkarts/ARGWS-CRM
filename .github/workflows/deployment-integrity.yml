@@ -2,10 +2,10 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/native_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/classify_php_error_log.py, tests/installed_master_proof*, tests/helpers/installed_master_proof.cjs, tests/helpers/*invoice*.cjs, tests/persisted_invoice_target.test.cjs, tests/legacy_invoice_number_scope.php, tests/native_shell_browser.cjs, tests/native_identity_browser.cjs, tests/native_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,7 +43,7 @@ jobs:
         run: |
           ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
       - name: Validar ordem dos preflights e isolamento das ferramentas
-        run: node --test tests/ci_preflight_order.test.cjs tests/native_company/mail_queue_form.test.cjs
+        run: node --test tests/ci_preflight_order.test.cjs tests/native_company/mail_queue_form.test.cjs tests/persisted_invoice_target.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -74,8 +74,15 @@ jobs:
           php-version: '8.1'
       - name: Validar auditoria do responsável antes do smoke longo
         run: php tests/installed_master_proof.php
+      - name: Validar isolamento do número no POST legado antes do smoke longo
+        run: php tests/legacy_invoice_number_scope.php
       - name: Validar ownership transacional do checkout Asaas antes do smoke longo
         run: php tests/asaas_checkout_transaction_tables.php
+      - name: Reutilizar somente binários do navegador pareados ao lockfile
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docker/ci/package-lock.json') }}
       - name: Preparar navegador para validar o shell nativo
         timeout-minutes: 6
         run: |
@@ -146,10 +153,26 @@ jobs:
           path: /tmp/asaas-settings-evidence
           if-no-files-found: error
           retention-days: 1
+      - uses: docker/setup-buildx-action@v3
+      - name: Identificar árvore exata da imagem de smoke
+        id: smoke_tree
+        run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construir imagem de smoke com cache de camadas
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          tags: argws-crm-provision-smoke:ci
+          build-args: ARGWS_VERSION=ci
+          labels: org.argws.smoke.source-tree=${{ steps.smoke_tree.outputs.tree }}
+          cache-from: type=gha,scope=crm-provision-smoke
+          cache-to: type=gha,mode=max,scope=crm-provision-smoke
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         id: issuer_browser
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'
+          ARGWS_SMOKE_PREBUILT_IMAGE: '1'
         run: bash tests/docker_provision_smoke.sh
       - name: Preservar evidências visuais sintéticas
         if: always() && (steps.issuer_browser.outcome == 'success' || steps.issuer_browser.outcome == 'failure')
@@ -163,6 +186,14 @@ jobs:
         with:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
+      - name: Reutilizar compilação e downloads Rust sem reutilizar resultados de testes
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/argws-crm-deployer/target
+          key: rust-${{ runner.os }}-1.90.0-${{ hashFiles('tools/argws-crm-deployer/Cargo.lock') }}
       - name: Testar deployer Rust
         run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
       - name: Gerar as stacks e validar Compose

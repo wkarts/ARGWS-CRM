@@ -240,15 +240,15 @@ class RegistryShardsTest(unittest.TestCase):
 
     def test_workflow_preserves_matrix_and_fail_closed_required_names(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
-        self.assertIn("  registry-shards:\n    if: ${{ needs.validation-gate.outputs.run == 'true' }}\n    needs: [validation-gate, registry-plan]", source)
+        self.assertIn("  registry-shards:\n    if: ${{ needs.validation-gate.outputs.run == 'true' }}\n    needs: validation-gate", source)
         self.assertIn('        shard: [1, 2, 3, 4]', source)
         self.assertIn('      image: ${{ matrix.image }}', source)
         self.assertEqual(source.count("php: ['8.1', '8.5']"), 2)
-        self.assertIn('  registry:\n    if: always()\n    needs: [validation-gate, registry-plan, registry-shards]', source)
+        self.assertIn('  registry:\n    if: always()\n    needs: [validation-gate, registry-shards]', source)
         self.assertIn('test "$GATE_RESULT" = success',source)
         self.assertIn('if [ "$REUSED" = false ]; then',source)
         self.assertIn("fail-fast: ${{ github.event_name == 'pull_request' }}",source)
-        self.assertIn('test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success', source)
+        self.assertIn('test "$SHARDS_RESULT" = success', source)
         self.assertNotIn('continue-on-error', source)
         self.assertIn('  pull_request:', source)
         self.assertIn('  push:', source)

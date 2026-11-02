@@ -6,6 +6,15 @@ set -euo pipefail
 : "${ISSUER_SMOKE_DB_USER:?}" "${ISSUER_SMOKE_DB_PASSWORD:?}" "${ISSUER_SMOKE_ROOT_PASSWORD:?}"
 [[ "$ISSUER_SMOKE_DATABASE" =~ ^argws-crm-provision-db-[0-9]+$ ]]
 trap 'status=$?; echo "Standalone HTTP smoke failed at line $LINENO (exit $status)." >&2' ERR
+# Keep the original serial order: browser suites share the installed fixture.
+# Emit timings at each boundary so the next slow/failing suite is identifiable.
+node() {
+    local started=$SECONDS status
+    echo "BROWSER_START $*" >&2
+    if command node "$@"; then status=0; else status=$?; fi
+    echo "BROWSER_END $* seconds=$((SECONDS-started)) exit=$status" >&2
+    return "$status"
+}
 suffix="$$"
 legacy="argws-crm-legacy-$suffix"
 upgrade="argws-crm-upgrade-$suffix"

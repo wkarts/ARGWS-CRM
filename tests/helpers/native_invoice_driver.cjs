@@ -1,7 +1,6 @@
 'use strict';
 // Drives the original controls. No DOM/style mutation, substituted responses or fake form fields.
 const assert = require('node:assert/strict');
-const {execFileSync} = require('node:child_process');
 
 async function picker(page, selector, values) {
   values = Array.isArray(values) ? values.map(String) : [String(values)];
@@ -116,218 +115,46 @@ async function assertInvoiceFormReady(page) {
   assert.equal(result.pending,0,'original invoice validation settled');
   assert.equal(result.valid,true,'original invoice form is valid: '+JSON.stringify(result.errors));
 }
-async function legacyInvoiceTarget(page,response,url,navigationResponse=null,navigationRequest=null,clientId=null,requestFields=null) {
-  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/;
-  const invoiceTargetFromRows=(rows,expectedClient=null)=>{
-    const candidates=[];
-    const add=(value)=>{
-      const html=String(value??'');
-      const owned=expectedClient===null||html.includes('/clients/client/'+String(expectedClient));
-      for(const match of html.matchAll(/\/admin\/invoices\/list_invoices\/([1-9][0-9]*)/g))candidates.push({href:new URL(match[0],url).href,id:Number(match[1]),owned});
-    };
-    for(const row of rows){
-      if(Array.isArray(row))row.forEach(add);else if(row&&typeof row==='object')Object.values(row).forEach(add);else add(row);
-    }
-    const owned=candidates.filter(candidate=>candidate.owned);
-    return [...(owned.length?owned:candidates)].sort((left,right)=>left.id-right.id).pop()?.href||null;
-  };
-  const invoiceTargetFromTable=async(tableResponse,expectedClient=null)=>{
-    try {
-      const payload=await tableResponse.json();
-      const rows=Array.isArray(payload.aaData)?payload.aaData:(Array.isArray(payload.data)?payload.data:[]);
-      return invoiceTargetFromRows(rows,expectedClient);
-    } catch (_) { return null; }
-  };
-  const invoiceTargetFromDom=async(expectedClient=null)=>{
-    try {
-      const rows=await page.locator('table.table-invoices-single-client tbody tr, table.table-invoices tbody tr').evaluateAll(xs=>xs.map(row=>row.innerHTML));
-      return invoiceTargetFromRows(rows,expectedClient);
-    } catch (_) { return null; }
-  };
-  const invoiceTargetFromDatabase=(expectedClient=null)=>{
-    const container=process.env.ISSUERS_BROWSER_DB_CONTAINER;
-    const database=process.env.ISSUERS_BROWSER_DB_NAME||'argws_upgrade_ci';
-    const user=process.env.ISSUERS_BROWSER_DB_USER;
-    const password=process.env.ISSUERS_BROWSER_DB_PASSWORD;
-    if(!container||!user||!password)return null;
-    const readTarget=where=>{
-      try {
-        const output=execFileSync('docker',[
-          'exec','-e','MYSQL_PWD',container,'mysql','--protocol=tcp','--host=127.0.0.1',
-          '--user='+user,database,'--batch','--skip-column-names','-e',
-          'SELECT id FROM tblinvoices WHERE '+where+' ORDER BY id DESC LIMIT 1',
-        ],{env:{...process.env,MYSQL_PWD:password},encoding:'utf8'}).trim();
-        const id=output.split(/\s+/)[0];
-        if(!/^[1-9]\d*$/.test(id))return null;
-        return new URL('/admin/invoices/list_invoices/'+id,url).href;
-      } catch (_) { return null; }
-    };
-    const client=String(expectedClient??'');
-    if(/^[1-9]\d*$/.test(client)){
-      const target=readTarget('clientid='+client+' AND issuer_id IS NULL');
-      if(target)return target;
-    }
-    return readTarget('issuer_id IS NULL');
-  };
-  const invoiceTargetFromDirectTable=async(tableUrl,expectedClient=null)=>{
-    try {
-      const hidden=requestFields&&Object.keys(requestFields).length?requestFields:await page.locator('input[type="hidden"][name]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
-      const form={...hidden,draw:'1',start:'0',length:'100','search[value]':'','search[regex]':'false','order[0][column]':'3','order[0][dir]':'desc','order[1][column]':'0','order[1][dir]':'desc'};
-      const response=await page.context().request.post(tableUrl,{form,headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','Referer':tableUrl}});
-      if(!response.ok())return null;
-      return invoiceTargetFromTable(response,expectedClient);
-    } catch (_) { return null; }
-  };
-  const responses=navigationResponse?[response,navigationResponse]:[response];
-  const candidates=[];
-  const addRequest=request=>{
-    if(!request)return;
-    candidates.push(request.url());
-    try {
-      for(let current=request.redirectedFrom();current&&candidates.length<16;current=current.redirectedFrom())candidates.push(current.url());
-    } catch (_) {}
-  };
-  for(const candidateResponse of responses){
-    candidates.push(candidateResponse.url(),candidateResponse.headers()['location']);
-    try {
-      for(let request=candidateResponse.request();request&&candidates.length<16;request=request.redirectedFrom())candidates.push(request.url());
-    } catch (_) {}
-    try {
-      const body=await candidateResponse.text();
-      const match=body.match(/(?:https?:[^"'\s]+)?(\/admin\/invoices\/list_invoices\/[1-9][0-9]*)/);
-      if(match)candidates.push(match[1]);
-    } catch (_) {}
-  }
-  addRequest(navigationRequest);
-  try {
-    const entries=await page.evaluate(()=>[
-      ...performance.getEntriesByType('navigation'),
-      ...performance.getEntriesByType('resource'),
-    ].map(entry=>entry.name));
-    candidates.push(...entries);
-  } catch (_) {}
-  for(const candidate of candidates){
-    if(!candidate)continue;
-    try {
-      const target=new URL(candidate,url);
-      if(listPath.test(target.pathname))return target.href;
-    } catch (_) {}
-  }
-  // A service-worker navigation can follow the legacy 302 internally while
-  // Chromium exposes only the original form URL and response. The invoice is
-  // already committed, so recover its canonical id from the original table
-  // through the same authenticated browser session; never replay the POST.
-  // The synthetic fixture database is local to this smoke and already authenticated.
-  // Resolve the just-created legacy row with a read-only query before falling back
-  // to service-worker/DataTables recovery; this never replays the POST.
-  const databaseTarget=invoiceTargetFromDatabase(clientId);
-  if(databaseTarget)return databaseTarget;
-  if(clientId){
-    // The original PWA worker may serve the list page without allowing its
-    // DataTables bootstrap to reach the server. Read the same legacy table
-    // endpoint through the context request API, which shares the browser's
-    // authenticated cookies but bypasses service-worker navigation caching.
-    const profileTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table/'+encodeURIComponent(String(clientId)),url).href,clientId);
-    if(profileTarget)return profileTarget;
-    const globalTarget=await invoiceTargetFromDirectTable(new URL('/admin/invoices/table',url).href,clientId);
-    if(globalTarget)return globalTarget;
-    try {
-      const listUrl=new URL('/admin/invoices/list_invoices',url).href;
-      const tableResponsePromise=page.waitForResponse(candidateResponse=>{
-        try{return candidateResponse.request().method()==='POST'&&/^\/admin\/invoices\/table(?:\/[1-9][0-9]*)?$/.test(new URL(candidateResponse.url()).pathname);}catch(_){return false;}
-      },{timeout:90000}).catch(()=>null);
-      await page.goto(listUrl,{waitUntil:'domcontentloaded'});
-      const tableResponse=await tableResponsePromise;
-      if(tableResponse){
-        const target=await invoiceTargetFromTable(tableResponse,clientId);
-        if(target)return target;
-      }
-      const table=page.locator('table.table-invoices').first();
-      await table.waitFor({state:'visible',timeout:90000});
-      await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices tbody tr a[href]')).some(anchor=>{
-        try{return new URL(anchor.href,location.href).pathname.endsWith('/clients/client/'+expected);}catch(_){return false;}
-      }),String(clientId),{timeout:90000}).catch(()=>{});
-      const target=await invoiceTargetFromDom(clientId);
-      if(target)return target;
-    } catch (_) {}
-    try {
-      // The principal table can be slow or omit the client column while the
-      // legacy list is rebuilding. The official customer profile owns a
-      // client-scoped DataTable endpoint; use its authenticated GET/POST
-      // sequence as a second read-only recovery path.
-      const profileUrl=new URL('/admin/clients/client/'+encodeURIComponent(String(clientId))+'?group=statement',url).href;
-      const profileTableResponse=page.waitForResponse(candidateResponse=>{
-        try{return candidateResponse.request().method()==='POST'&&new URL(candidateResponse.url()).pathname==='/admin/invoices/table/'+String(clientId);}catch(_){return false;}
-      },{timeout:90000}).catch(()=>null);
-      await page.goto(profileUrl,{waitUntil:'domcontentloaded'});
-      const tableResponse=await profileTableResponse;
-      if(tableResponse){
-        const target=await invoiceTargetFromTable(tableResponse,clientId);
-        if(target)return target;
-      }
-      await page.waitForFunction(expected=>Array.from(document.querySelectorAll('table.table-invoices-single-client tbody tr a[href], table.table-invoices tbody tr a[href]')).some(anchor=>{
-        try{return new URL(anchor.href,location.href).pathname.includes('/admin/invoices/list_invoices/');}catch(_){return false;}
-      }),String(clientId),{timeout:90000}).catch(()=>{});
-      const target=await invoiceTargetFromDom(clientId);
-      if(target)return target;
-    } catch (_) {}
-  }
-  return null;
-}
 async function save(page,url) {
   const route=new URL(await page.locator('#invoice-form').getAttribute('action'),url).pathname;
-  await assertInvoiceFormReady(page);
-  const matches=r=>r.method()==='POST'&&new URL(r.url()).pathname===route;
-  const responseMatches=r=>matches(r.request());
-  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
-  const clientId=await page.locator('#clientid').inputValue().catch(()=>null);
-  const requestFields=await page.evaluate(()=>{
-    const fields=Object.fromEntries(Array.from(document.querySelectorAll('input[type="hidden"][name]')).map(input=>[input.name,input.value]));
-    const csrf=typeof csrfData==='object'&&csrfData?csrfData:null;
-    if(csrf&&csrf.token_name&&csrf.hash)fields[csrf.token_name]=csrf.hash;
-    return fields;
-  }).catch(()=>({}));
-  const observedNavigationRequests=[];
-  const observeNavigationRequest=request=>{
-    try {
-      if(request.method()==='GET'&&listPath.test(new URL(request.url()).pathname))observedNavigationRequests.push(request);
-    } catch (_) {}
-  };
-  page.context().on('request',observeNavigationRequest);
-  const navigationResponse=page.waitForResponse(r=>{
-    try{return r.request().method()==='GET'&&listPath.test(new URL(r.url()).pathname+'#'+new URL(r.url()).hash.replace(/^#/,''));}catch(_){return false;}
-  },{timeout:10000}).catch(()=>null);
-  const navigationRequest=page.waitForRequest(r=>{
-    try{return r.method()==='GET'&&listPath.test(new URL(r.url()).pathname);}catch(_){return false;}
-  },{timeout:10000}).catch(()=>null);
-  let observed;
-  try {
-    observed=await Promise.all([page.waitForRequest(matches),page.waitForResponse(responseMatches),navigationRequest,navigationResponse,page.locator('#invoice-form button.transaction-submit.btn-primary').click()]);
-  } finally {
-    page.context().off('request',observeNavigationRequest);
-  }
-  const [request,response,redirectedRequest,redirectedResponse]=observed;
-  assert.equal(request.method(),'POST','the original invoice POST is observed');
-  // Only the native command carries a durable request key. The principal
-  // keeps the original legacy writer, where replaying the same POST would
-  // legitimately collide with its already issued invoice number.
   const nativeRequestKey=await page.locator('#invoice-form input[name="_native_invoice_request_key"]').count();
+  await assertInvoiceFormReady(page);
+  // Capture the high-water mark BEFORE the only POST. An old invoice must never
+  // make a rejected command look successful, even if the worker hides redirects.
+  const {invoiceCheckpoint, persistedInvoiceTarget}=require('./persisted_invoice_target.cjs');
+  const checkpoint=nativeRequestKey?null:invoiceCheckpoint();
+  const matches=r=>r.method()==='POST'&&new URL(r.url()).pathname===route;
+  const listPath=/\/admin\/invoices\/list_invoices\/[1-9][0-9]*(?:#.*)?$/;
+  const targets=[];
+  const observe=request=>{
+    try { if(request.method()==='GET'&&listPath.test(new URL(request.url()).pathname))targets.push(request.url()); } catch (_) {}
+  };
+  page.context().on('request',observe);
+  let request,response;
+  try {
+    [request,response]=await Promise.all([
+      page.waitForRequest(matches),page.waitForResponse(r=>matches(r.request())),
+      page.locator('#invoice-form button.transaction-submit.btn-primary').click(),
+    ]);
+    await response.finished();
+  } finally { page.context().off('request',observe); }
+  assert.equal(request.method(),'POST','the original invoice POST is observed');
   if(nativeRequestKey)await assertRedirect(page,response,url);
-  else if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed legacy document');assert.equal(response.status(),200,'worker exposes a successful final legacy document');}
-  if(!listPath.test(page.url())){
-    // The legacy POST can be fulfilled by Chromium's navigation loader while
-    // the existing PWA worker leaves the address bar on the form. Recover the
-    // durable PRG target from the redirect GET/POST response pair and perform
-    // only its GET; never replay the legacy POST (the invoice number is already
-    // consumed).
-    const target=await legacyInvoiceTarget(page,response,url,redirectedResponse,redirectedRequest||observedNavigationRequests[0]||null,clientId,requestFields);
-    assert(target,'legacy invoice POST exposes its persisted list destination');
-    await page.goto(target);
+  else assert([200,302,303].includes(response.status()),'legacy invoice POST status '+response.status());
+  let target;
+  if(!nativeRequestKey&&checkpoint!==null) {
+    target=persistedInvoiceTarget(checkpoint,request.postData(),url);
+  } else {
+    // Without fixture DB access, accept only the observed redirect destination.
+    const candidates=[page.url(),response.headers().location,response.url(),...targets];
+    target=candidates.filter(Boolean).map(candidate=>new URL(candidate,url)).find(candidate=>candidate.origin===new URL(url).origin&&listPath.test(candidate.pathname))?.href;
   }
+  assert(target,'invoice POST did not persist its exact destination (status '+response.status()+'); check duplicate number validation and server logs');
+  if(page.url()!==target)await page.goto(target);
   await page.waitForURL(listPath);
   const id=new URL(page.url()).pathname.split('/').pop();
   await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});
-  return {id,request:response.request()};
+  return {id,request};
 }
 async function edit(page,url,id) {
   const response=await page.goto(url+'/admin/invoices/invoice/'+id);assert.equal(response.status(),200,'same original invoice form opens persisted values');

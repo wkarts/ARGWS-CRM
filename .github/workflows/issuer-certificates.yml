@@ -67,7 +67,7 @@ jobs:
       - name: Preparar extensões de teste
         run: |
           apt-get update && apt-get install -y --no-install-recommends libonig-dev libsqlite3-dev openssl util-linux
-          docker-php-ext-install pdo_mysql pdo_sqlite mbstring pcntl
+          docker-php-ext-install -j"$(nproc)" pdo_mysql pdo_sqlite mbstring pcntl
       - name: Sintaxe, parser offline, cifra autenticada, SQLite e controller
         run: |
           for path in application/services/issuers/IssuerCertificate*.php application/controllers/admin/Settings.php application/services/NativeCompanySettingsController.php application/services/NativeCompanySettingsForms.php application/views/admin/settings/includes/certificates.php tests/certificates/*.php; do php -l "$path"; done

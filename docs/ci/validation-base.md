@@ -85,3 +85,22 @@ Local: Docker/PHP indisponíveis. Build/smoke/publicação foram executados pelo
 no run documentado acima; testes estáticos locais não substituem essa evidência.
 Consumo anônimo e smoke de ambas versões passaram. A suíte completa final ainda precisa passar; a rodada d0075beb revelou overflow em uma fixture Settings e foi cancelada para diagnóstico, sem ocultar o erro.
 Nenhum deploy, release do produto ou merge foi executado.
+
+
+## Reutilização e atualização por necessidade (PR #52)
+
+`validation-base-plan.py` compara o hash exato de Dockerfile, package.json,
+package-lock.json, smoke.sh e smoke.cjs com os recibos publicados. Se os inputs
+forem idênticos, o workflow baixa o digest já publicado e executa o smoke
+novamente; não recompila a base por alteração apenas no workflow ou nos testes.
+Inputs novos, recibo ausente/ambíguo ou atualização manual com `publish: true`
+exigem build. Publicação continua restrita ao dispatch autorizado e passa por
+smoke antes do login. Alterações de segurança nos pacotes de sistema podem exigir
+esse refresh explícito mesmo sem alteração de arquivos.
+
+As matrizes de callback/contratos Asaas, privacidade de clientes, escopo de
+faturas, regras recorrentes, HTTP do PWA e aviso de atualização consomem os
+mesmos digests de PHP 8.1/8.5. Não há instalação de extensões nesses jobs quando
+a base já atende o contrato. Jobs PHP 8.2/8.3 e requisitos adicionais (como pcntl
+ou GD FreeType) conservam sua preparação própria; não se troca a versão do PHP
+para aproveitar outra imagem. Os testes da aplicação executam em cada job.
