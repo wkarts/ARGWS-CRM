@@ -40,7 +40,7 @@ node() {
         browser_completed=$((browser_completed+1))
     else
         { printf 'group=%s invocation=%s exit=%s command=%s\n' "$browser_group" "$index" "$status" "$*"; tail -c 16384 "$browser_log"; } | sanitize_smoke_failure_log > "$evidence/browser-failure-$index.log"
-        python3 -c 'import pathlib,sys; message=pathlib.Path(sys.argv[1]).read_text(); message=message.replace("%","%25").replace("\r","%0D").replace("\n","%0A"); print("::error title=Isolated browser failure::"+message)' "$evidence/browser-failure-$index.log"
+        python3 scripts/ci/browser-failure-annotation.py "$evidence/browser-failure-$index.log"
     fi
     rm -f "$browser_log"
     return "$status"

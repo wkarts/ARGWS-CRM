@@ -8,7 +8,7 @@
 
 ## Escopo e decisões
 
-Nova etapa: `settings_document_pdf_browser.cjs`, teste rápido `legacy_invoice_pdf_format.php`, manifest/runner de grupos e casos negativos, orquestração em `deployment-integrity.yml`, artefatos por grupo e Rust/Compose paralelo. Imagem construída uma vez e validada pela árvore em cada worker. Nenhuma alteração de código da aplicação nesta etapa.
+Nova etapa: monitor preserva os grupos diagnósticos do commit atual depois da primeira falha, mantendo a reprovação e o cancelamento de commits antigos; anotações públicas compactas retêm o stack trace. `settings_document_pdf_browser.cjs`, teste rápido `legacy_invoice_pdf_format.php`, manifest/runner de grupos e casos negativos, orquestração em `deployment-integrity.yml`, artefatos por grupo e Rust/Compose paralelo. Imagem construída uma vez e validada pela árvore em cada worker. Nenhuma alteração de código da aplicação nesta etapa.
 
 Duas consultas no controller; driver de testes; regressões rápidas; caches de ferramentas/compilação; compilação paralela das mesmas extensões; retirada de job sem teste; evidências de tempos e auditoria histórica. Fora do escopo: refatoração da aplicação, paralelização no mesmo banco, exclusão de testes ou publicação/merge. Detalhes e fontes em [pr52-validation.md](pr52-validation.md).
 
@@ -48,7 +48,7 @@ Novos: quatro cenários de formato legado atual versus snapshot nativo; 101 invo
 
 ## Testes executados
 
-Etapa atual: 55 testes Python de CI aprovados; testes de ambiente/provisionamento/empacotamento; quatro cenários dos renderers em PHP 8.1/8.5; parse YAML, sintaxe JS/shell e quatro inventários. Nenhum entrypoint anterior removido. Execução real dos oito grupos ainda precisa concluir no CI do commit final.
+Etapa atual: 57 testes Python de CI aprovados; testes de ambiente/provisionamento/empacotamento; quatro cenários dos renderers em PHP 8.1/8.5; parse YAML, sintaxe JS/shell e quatro inventários. Nenhum entrypoint anterior removido. Execução real dos oito grupos ainda precisa concluir no CI do commit final.
 
 - Teste PHP com doubles contra código anterior: falha reproduzida no caso `named`; contra código corrigido em PHP 8.3: 12 cenários aprovados.
 - `python3 -m unittest discover -s tests/ci -p 'test_*.py'`: 48 aprovados.

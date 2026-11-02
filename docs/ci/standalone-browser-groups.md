@@ -13,7 +13,7 @@ O workflow `deployment-integrity.yml` preserva o check obrigatório `validate` e
 3. `tooling`: Rust e Compose executam ao lado do HTTP, com os mesmos comandos originais.
 4. `validate`: exige sucesso de todos os grupos, preparação e ferramentas. Falha, cancelamento ou grupo inesperadamente pulado não passam. A prova de árvore idêntica já existente continua com suas verificações anteriores.
 
-O manifest `tests/ci/standalone-browser-plan.json` contém as **101 invocações Node originais**, incluindo os modos de instalação/upgrade e o `node --test` sem contexto de banco. Toda chamada possui um único grupo dono ou papel de preparação comum. Nenhuma chamada foi excluída. O seletor confere argumentos, contexto de banco quando aplicável, ordem e quantidade concluída em runtime. O fechamento do script reprova execução incompleta.
+O manifest `tests/ci/standalone-browser-plan.json` contém as **101 invocações Node originais**, incluindo os modos de instalação/upgrade e o `node --test` sem contexto de banco. Toda chamada possui um único grupo dono ou papel de preparação comum. Nenhuma chamada foi excluída. O seletor confere argumentos, contexto de banco quando aplicável, ordem e quantidade concluída em runtime. O fechamento do script reprova execução incompleta. O grupo de provedores não repete os navegadores Banco do Brasil: sua preparação usa os fixtures Asaas próprios; os testes bancários permanecem no grupo dono banking.
 
 | Grupo | Domínio |
 |---|---|
@@ -32,6 +32,8 @@ Essa divisão reduz o caminho serial do smoke para preparação + maior duraçã
 
 ## Diagnóstico e reprodução
 
+- Após falha de um grupo HTTP, o monitor continua reprovando a rodada e cancela os outros workflows, mas deixa os demais grupos HTTP do mesmo commit terminarem o diagnóstico. Commits obsoletos continuam sempre cancelados.
+- A anotação compacta mantém o cabeçalho e o final do stack trace abaixo do limite público de 4 KB; o log sanitizado mais amplo permanece no artefato.
 - Falhas também geram anotação pública com o trecho final sanitizado, empresa/documento/etapa quando fornecidos pelo teste, e status original propagado.
 - Artefatos: `issuer-native-browser-<grupo>`, incluindo `browser-timings.tsv` e os diagnósticos limitados de falha já existentes.
 - Modo original completo: variável ausente ou `ARGWS_BROWSER_GROUP=all`.

@@ -6,9 +6,9 @@ BAD={'failure','timed_out','action_required','startup_failure'}
 def same_pr(run, pr, repository):
     return (run.get('event')=='pull_request' and run.get('head_repository',{}).get('full_name')==repository
             and any(p.get('number')==pr['number'] for p in run.get('pull_requests',[])))
-def cancellation_plan(runs,pr,repository,own,failed=False):
+def cancellation_plan(runs,pr,repository,own,failed=False,preserve_ids=()):
     return [r['id'] for r in runs if r['id']!=own and same_pr(r,pr,repository)
-            and r['status'] in ACTIVE and (r['head_sha']!=pr['head']['sha'] or failed)]
+            and r['status'] in ACTIVE and (r['head_sha']!=pr['head']['sha'] or (failed and r['id'] not in preserve_ids))]
 def latest_workflow_runs(runs):
     latest={}
     for run in runs:
@@ -54,6 +54,7 @@ def main():
         own_workflow=next((r['workflow_id'] for r in runs if r['id']==own),None)
         current=latest_workflow_runs([r for r in runs if r['id']!=own and r['workflow_id']!=own_workflow and same_pr(r,pr,repo) and r['head_sha']==expected])
         failures=[r for r in current if r.get('conclusion') in BAD]
+        diagnostic_runs=set()
         # Detect the first failed job before other jobs in that workflow finish.
         busy=[r for r in current if r['status']=='in_progress']
         # Bound polling to fit the repository token's REST rate budget.
@@ -64,10 +65,15 @@ def main():
                 page=1
                 while True:
                     jobs=api.call('/actions/runs/'+str(run['id'])+'/jobs?filter=latest&per_page=100&page='+str(page))['jobs']
-                    failures += [j for j in jobs if j.get('conclusion') in BAD]
+                    job_failures=[j for j in jobs if j.get('conclusion') in BAD]
+                    failures += job_failures
+                    # Let independent HTTP groups finish diagnostic collection after their own failure.
+                    # Obsolete SHAs still cancel, and a failure in another workflow keeps the old policy.
+                    if job_failures and run.get('path','').split('@')[0]=='.github/workflows/deployment-integrity.yml':
+                        diagnostic_runs.add(run['id'])
                     if len(jobs)<100:break
                     page+=1
-        targets=[rid for rid in cancellation_plan(runs,pr,repo,own,bool(failures)) if rid not in canceled]
+        targets=[rid for rid in cancellation_plan(runs,pr,repo,own,bool(failures),diagnostic_runs) if rid not in canceled]
         for run_id in targets:
             if api.call('/pulls/'+str(number))['head']['sha']!=expected:return 0
             api.call('/actions/runs/'+str(run_id)+'/cancel','POST')
@@ -85,6 +91,7 @@ def main():
                 canceled.add(run_id)
         if failures:
             print('First failing validation(s):',json.dumps([{'name':r['name'],'url':r.get('html_url'),'conclusion':r['conclusion']} for r in failures]),flush=True)
+            if diagnostic_runs:print('Independent HTTP diagnostic groups continue without satisfying the failed PR round:',sorted(diagnostic_runs),flush=True)
             print('Logs remain available. A corrective commit starts a fresh round.');return 1
         if current and all(r['status']=='completed' for r in current):
             if stable_since is None:stable_since=time.monotonic()

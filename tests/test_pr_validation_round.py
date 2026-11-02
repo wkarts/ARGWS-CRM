@@ -15,4 +15,9 @@ class RoundTests(unittest.TestCase):
   runs=[{'id':1,'workflow_id':8,'conclusion':'cancelled'},{'id':2,'workflow_id':8,'conclusion':'success'},{'id':3,'workflow_id':9,'conclusion':'success'}]
   self.assertEqual([r['id'] for r in m.latest_workflow_runs(runs)],[2,3])
  def test_missing_identity_never(self):self.assertEqual(self.plan([self.run_row(pull_requests=[])],True),[])
+ def test_current_diagnostic_workflow_continues_but_other_failures_are_not_hidden(self):
+  rows=[self.run_row(1),self.run_row(2)]
+  self.assertEqual(m.cancellation_plan(rows,self.pr,self.repo,99,True,{1}),[2])
+ def test_superseded_diagnostics_are_always_cancelled(self):
+  self.assertEqual(m.cancellation_plan([self.run_row(1,head_sha='old')],self.pr,self.repo,99,True,{1}),[1])
 if __name__=='__main__':unittest.main()

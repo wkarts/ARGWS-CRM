@@ -725,11 +725,7 @@
         76,
         79
       ],
-      "prerequisites": [
-        46,
-        47,
-        48
-      ]
+      "prerequisites": []
     },
     "settings": {
       "owned": [
