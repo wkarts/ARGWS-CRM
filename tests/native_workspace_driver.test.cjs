@@ -79,8 +79,16 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     // Operational attachments/timers belong to the first selected-record panel.
     // Microsoft/Connect use ordinary settings, without generated workspace panels.
     // Sales attachments need their actual containing panel opened before role lookup.
+    // Native financial rows are in the original preview, tariff receipts require
+    // the payments tab, and ticket status actions are in the selected ticket.
     assert.deepEqual(found, {
+        'banco_brasil_api16_components_browser.cjs':1,
+        'banco_brasil_api_origin_cnab240_browser.cjs':1,
+        'banco_brasil_components_browser.cjs':1,
+        'banco_brasil_external_reversal_browser.cjs':1,
+        'banco_brasil_tariff_browser.cjs':1,
         'companies/operation_files_browser.cjs':1,
+        'companies/operations_subresources_browser.cjs':1,
         'companies_sales_extras_browser.cjs':1,
         'settings/resume_439_connect_browser.cjs':1,
         'settings/resume_439_microsoft_browser.cjs':2,
@@ -93,6 +101,19 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
     assert.ok(tab>=0&&visible>tab&&row>visible,'open actual panel and prove PDF visible before nested role lookup');
     assert.doesNotMatch(selected,/includeHidden:\s*true|force:\s*true/);
+    for (const name of ['api16_components','api_origin_cnab240','components','external_reversal']) {
+        const source=fs.readFileSync(__dirname+'/banco_brasil_'+name+'_browser.cjs','utf8');
+        const visible=source.indexOf("page.locator('[data-native-financial-position]').isVisible()");
+        const row=source.indexOf("filter({has:page.getByRole('rowheader'");
+        assert.ok(visible>=0&&row>visible,name+': prove the original financial panel visible before role filtering');
+        assert.doesNotMatch(source,/includeHidden:\s*true|force:\s*true/);
+    }
+    const tariff=fs.readFileSync(__dirname+'/banco_brasil_tariff_browser.cjs','utf8');
+    assert.ok(tariff.indexOf("a[href=\"#invoice_payments_received\"][role=tab]")>=0);
+    assert.ok(tariff.indexOf(".click();const receiptRow=")<tariff.indexOf("filter({has:page.getByRole('cell'"));
+    const tickets=fs.readFileSync(__dirname+'/companies/operations_subresources_browser.cjs','utf8');
+    const statusVisible=tickets.indexOf("page.getByRole('button',{name:closedName,exact:true}).isVisible()");
+    assert.ok(statusVisible>=0&&tickets.indexOf('const closedForm=')>statusVisible);
 });
 test('scoped native disclosure opens once and rejects ambiguous sidebar matches', async () => {
     const {openDisclosure}=require('./helpers/native_workspace_driver.cjs');
