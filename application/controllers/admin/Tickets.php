@@ -265,7 +265,7 @@ class Tickets extends AdminController
                 $this->nativeTicketLifecycle()->uploadFiles($id);
                 return;
             }
-            if (in_array($this->input->post('action', false), ['portal_permission','portal_publish'], true)) {
+            if (in_array($this->input->post('action', false), ['portal_permission','portal_publish','portal_support_reply','portal_support_state'], true)) {
                 try {
                     require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
                     (new NativeCompanyTicketDetailController($this))->portalAction($id);

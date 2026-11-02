@@ -19,3 +19,18 @@ foreach(['','0','-1','42/extra','https://example.invalid']as$id){$uri->segments[
 $uri->segments[3]='42';$check(false,'settings','pdf');$check(false,'invoices','unknown');$input->verb='POST';$check(false,'invoices','pdf');$check(false,'invoices','table');
 unset($ci->uri);$input->verb='GET';$check(false,'invoices','pdf');
 echo "Invoice source route: {$checks} bounded native/foreign/NULL/pre-migration/method scenarios passed.\n";
+// Expense records use the published namespace; explicit own collections still require native verb/ACL/CSRF checks.
+$expenseUri=new class{public array $segments=[];public function rsegment($n){return $this->segments[$n]??false;}};
+$expenseInput=new class{public string $verb='GET';public array $gets=[],$posts=[];public function method($upper){return $this->verb;}public function get($key,$filter){return $this->gets[$key]??null;}public function post($key,$filter){return $this->posts[$key]??null;}};
+$expenseCi=(object)['uri'=>$expenseUri,'input'=>$expenseInput];$expenseMethod=new ReflectionMethod(CompanyRequestScope::class,'ownedExpenseRoute');$expenseChecks=0;
+$expenseCheck=function(bool $expected,string $action,string $class='expenses')use($expenseMethod,$expenseCi,&$expenseChecks){if($expenseMethod->invoke(null,$expenseCi,$class,$action)!==$expected)throw new RuntimeException('Unexpected expense adapter '.$class.'/'.$action);++$expenseChecks;};
+$ownedExpense=NativeCompanyResourceId::encode('company_expense',42);
+foreach(['index','list_expenses','expense','pdf'] as $action){$expenseInput->gets=['expense'=>$ownedExpense];$expenseCheck(true,$action);foreach(['42','0','',[],NativeCompanyResourceId::encode('company_ticket',42)] as $bad){$expenseInput->gets=['expense'=>$bad];$expenseCheck(false,$action);}}
+$expenseInput->gets=['source'=>'company'];$expenseCheck(true,'index');$expenseInput->gets=['source'=>'company','expense'=>'42'];$expenseCheck(false,'index');
+$expenseInput->verb='POST';$expenseInput->posts=['expense_id'=>$ownedExpense];foreach(['expense','delete','convert_to_invoice','add_expense_attachment'] as $action)$expenseCheck(true,$action);
+$expenseCheck(false,'unknown');$expenseCheck(false,'expense','settings');$expenseInput->verb='DELETE';$expenseCheck(false,'expense');
+$expenseInput->posts=[];
+foreach(['GET','POST'] as $verb){$expenseInput->verb=$verb;$expenseUri->segments=[];$expenseInput->gets=['source'=>'company'];$expenseCheck(true,'copy');$expenseInput->gets=['expense'=>$ownedExpense];$expenseCheck(true,'copy');$expenseUri->segments=[3=>'42'];$expenseInput->gets=[];$expenseCheck(false,'copy');$expenseInput->gets=['source'=>'company'];$expenseCheck(false,'copy');}
+$expenseUri->segments=[];$expenseInput->gets=[];$expenseInput->verb='POST';$expenseInput->posts=['source_expense_id'=>$ownedExpense];$expenseCheck(true,'copy');$expenseCheck(false,'index');
+foreach(['',[],['42'],'42',NativeCompanyResourceId::encode('company_ticket',42)] as $malformed){$expenseInput->posts=['source_expense_id'=>$malformed];$expenseCheck(true,'copy');}
+echo "Expense source route: {$expenseChecks} typed/legacy/foreign-namespace/method scenarios passed.\n";

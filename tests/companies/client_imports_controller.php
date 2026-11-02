@@ -12,6 +12,8 @@ class CompanyRequestScope{
  public static function invalidateCaches($owner):void{}
 }
 function show_error($message,$status=500){$GLOBALS['CI']->output->status=$status;}
+function show_404(){$GLOBALS['CI']->output->status=404;}
+$GLOBALS['CI']->uri=new class{public array $segments=[];public function rsegment($n){return $this->segments[$n]??null;}};
 function redirect($url,$type='location',$status=302){$GLOBALS['CI']->output->status=$status;$GLOBALS['CI']->output->location=$url;}
 function _l($key,...$args){return $key;}
 require_once APPPATH.'services/NativeCompanyClientImportHttp.php';
@@ -21,6 +23,7 @@ $GLOBALS['CI']->load=new class{public array $views=[];public function view($view
 $http=$GLOBALS['CI']->input;$out=$GLOBALS['CI']->output;$controller=$GLOBALS['CI'];$adapter=new NativeCompanyClientImportHttp($controller);
 $reset=function(array $gets=[],string $verb='GET',array $posts=[])use($http,$out){$http->gets=$gets;$http->posts=$posts;$http->verb=$verb;$out->status=200;$out->body='';$out->location='';$out->mime='';$out->headers=[];$GLOBALS['CI']->load->views=[];CompanyRequestScope::$mutationAllowed=true;};
 $reset();$adapter->handle();[$view,$data]=end($GLOBALS['CI']->load->views);essentialCheck($out->status===200&&$view==='admin/clients/import'&&$data['native_customers_import']===true&&count($data['client_page']['items'])===100,'official client import route renders original view with bounded private export');
+$reset();$GLOBALS['CI']->uri->segments=[3=>'unsupported'];$adapter->handle();essentialCheck($out->status===404&&$GLOBALS['CI']->load->views===[],'unknown import suffix denies before private batch reader');$GLOBALS['CI']->uri->segments=[];
 $reset(['export'=>'clients']);$adapter->handle();essentialCheck($out->status===200&&$out->mime==='text/csv'&&str_contains($out->body,'First; imported private A')&&!str_contains($out->body,'New identity B')&&in_array('X-Content-Type-Options: nosniff',$out->headers,true),'official route exports only owner identities with audit and nosniff');
 $reset(['export'=>'clients'],'HEAD');$adapter->handle();essentialCheck($out->status===200&&$out->body==='','HEAD confirms export without disclosing protected bytes');
 $reset(['export'=>'clients']);$db->failOn='INSERT INTO '.$p.'issuers_audit';$adapter->handle();$db->failOn=null;essentialCheck($out->status===503&&$out->body==='','late export audit failure exposes no private bytes');

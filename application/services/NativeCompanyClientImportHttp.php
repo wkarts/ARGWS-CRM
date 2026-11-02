@@ -20,6 +20,10 @@ final class NativeCompanyClientImportHttp
             show_error('Contexto de empresa indisponível.', 503);
             return;
         }
+        if ((string) $this->ci->uri->rsegment(3) !== '') {
+            show_404();
+            return;
+        }
 
         $scope  = CompanyRequestScope::context();
         $issuer = $scope?->issuerId();

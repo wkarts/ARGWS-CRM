@@ -80,6 +80,8 @@ class Utilities extends AdminController
             NativeCompanyCalendarEndpoints::confirm($this,$data,$eventId);
             return $this->output->set_output($html);
         } catch(DomainException $error) {
+            $reason=preg_match('/^(?:native|company|issuer)_[a-z0-9_]{1,100}$/D',$error->getMessage())?$error->getMessage():'unclassified_domain';
+            $safeMessage='Native calendar view rejected ['.$reason.']; request values omitted.';error_log($safeMessage);log_message('error',$safeMessage);
             $status=in_array($error->getMessage(),['company_calendar_denied','native_event_denied'],true)?403:409;
             show_error('O calendário ou suas permissões mudaram. Reabra a página.', $status);
         } catch(Throwable $error) {

@@ -15,3 +15,8 @@ $staffController->input->verb='POST';unset($staffController->input->body['_nativ
 $staffController->input->body['_native_company_csrf']='synthetic-csrf';\NativeTaskHttpTest\CompanyRequestScope::$issuer=$b;
 try{$staffController->save_completed_checklist_visibility();throw new RuntimeException('Foreign task accepted');}catch(LogicException $e){essentialCheck($e->getMessage()==='HTTP 403','official Staff endpoint resolves the active company before the preference');}
 echo 'Original Staff checklist preference: actor, company and mutation boundaries passed.'.PHP_EOL;
+
+$failure=new ReflectionMethod(\NativeTaskHttpTest\Staff::class,'nativeStaffFailure');
+foreach(['issuer_staff_denied'=>403,'native_company_csrf_invalid'=>403,'issuer_master_protected'=>403,'issuer_staff_stale'=>409,'issuer_staff_conflict'=>409,'issuer_staff_invalid'=>422] as $code=>$status){try{$failure->invoke($staffController,new DomainException($code));throw new RuntimeException('Staff domain failure accepted');}catch(LogicException $e){essentialCheck($e->getMessage()==='HTTP '.$status,'native staff HTTP boundary maps '.$code.' without exposing the domain exception');}}
+try{$failure->invoke($staffController,new RuntimeException('synthetic private storage failure'));throw new RuntimeException('Storage failure accepted');}catch(LogicException $e){essentialCheck($e->getMessage()==='HTTP 503','native staff unconfirmed storage failure stays unavailable');}
+echo 'Native Staff HTTP errors: 7 additional denied/CSRF/protected/stale/conflict/invalid/storage status checks passed.'.PHP_EOL;

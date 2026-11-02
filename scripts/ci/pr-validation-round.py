@@ -4,8 +4,8 @@ import json, os, time, urllib.request, urllib.error
 ACTIVE={'queued','in_progress','pending','waiting','requested'}
 BAD={'failure','timed_out','action_required','startup_failure'}
 DIAGNOSTIC_WORKFLOWS={'.github/workflows/deployment-integrity.yml','.github/workflows/issuer-foundation.yml','.github/workflows/banco-brasil.yml','.github/workflows/native-company-experience.yml'}
-def retains_failed_shards(run,jobs):
-    return run.get('path','').split('@')[0] in DIAGNOSTIC_WORKFLOWS and any(job.get('conclusion') in BAD for job in jobs)
+def diagnostic_run(run):
+    return run.get('path','').split('@')[0] in DIAGNOSTIC_WORKFLOWS
 def same_pr(run, pr, repository):
     return (run.get('event')=='pull_request' and run.get('head_repository',{}).get('full_name')==repository
             and any(p.get('number')==pr['number'] for p in run.get('pull_requests',[])))
@@ -43,7 +43,8 @@ class Api:
 
 def main():
     repo=os.environ['GITHUB_REPOSITORY'];own=int(os.environ['GITHUB_RUN_ID'])
-    event=json.load(open(os.environ['GITHUB_EVENT_PATH']));pr=event['pull_request'];number=pr['number'];expected=pr['head']['sha']
+    with open(os.environ['GITHUB_EVENT_PATH']) as source:event=json.load(source)
+    pr=event['pull_request'];number=pr['number'];expected=pr['head']['sha']
     if pr['head']['repo']['full_name']!=repo:raise SystemExit('Fork PR: no cancellation authority')
     api=Api(repo,os.environ['GH_TOKEN']);started=time.monotonic();canceled=set();stable_since=None;cursor=0;first=True
     while time.monotonic()-started<90*60:
@@ -57,23 +58,23 @@ def main():
         own_workflow=next((r['workflow_id'] for r in runs if r['id']==own),None)
         current=latest_workflow_runs([r for r in runs if r['id']!=own and r['workflow_id']!=own_workflow and same_pr(r,pr,repo) and r['head_sha']==expected])
         failures=[r for r in current if r.get('conclusion') in BAD]
-        diagnostic_runs=set()
+        # Keep every independent diagnostic matrix on this head. Otherwise a
+        # failure in HTTP can cancel a queued SQL matrix with another failure,
+        # forcing a complete new round just to discover that second cause.
+        diagnostic_runs={r['id'] for r in current if diagnostic_run(r)}
         # Detect the first failed job before other jobs in that workflow finish.
-        busy=[r for r in current if r['status']=='in_progress']
+        # GitHub reports a matrix as queued while some of its legs are running.
+        busy=[r for r in current if r['status'] in ACTIVE]
         # Bound polling to fit the repository token's REST rate budget.
         selected=[busy[(cursor+i)%len(busy)] for i in range(min(4,len(busy)))] if busy else []
         cursor+=len(selected)
         for run in selected:
-            if run['status']=='in_progress':
+            if run['status'] in ACTIVE:
                 page=1
                 while True:
                     jobs=api.call('/actions/runs/'+str(run['id'])+'/jobs?filter=latest&per_page=100&page='+str(page))['jobs']
                     job_failures=[j for j in jobs if j.get('conclusion') in BAD]
                     failures += job_failures
-                    # Finish the failing workflow's current-head shards for one
-                    # complete diagnosis. Other workflows and obsolete SHAs cancel.
-                    if retains_failed_shards(run,jobs):
-                        diagnostic_runs.add(run['id'])
                     if len(jobs)<100:break
                     page+=1
         targets=[rid for rid in cancellation_plan(runs,pr,repo,own,bool(failures),diagnostic_runs) if rid not in canceled]

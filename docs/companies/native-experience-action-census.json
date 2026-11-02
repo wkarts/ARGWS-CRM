@@ -3097,127 +3097,127 @@
             "methods": [
                 {
                     "method": "hr",
-                    "line": 15,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "hr_file",
-                    "line": 16,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "hr_pdf",
-                    "line": 17,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "hr_export",
-                    "line": 18,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "hr_mine",
-                    "line": 19,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "hr_mine_file",
-                    "line": 20,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "index",
                     "line": 21,
                     "classification": "review_required"
                 },
                 {
+                    "method": "hr_file",
+                    "line": 22,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_pdf",
+                    "line": 23,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_export",
+                    "line": 24,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_mine",
+                    "line": 25,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_mine_file",
+                    "line": 26,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "index",
+                    "line": 27,
+                    "classification": "review_required"
+                },
+                {
                     "method": "member",
-                    "line": 43,
+                    "line": 51,
                     "classification": "review_required"
                 },
                 {
                     "method": "role_changed",
-                    "line": 166,
+                    "line": 176,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_dashboard_widgets_order",
-                    "line": 196,
+                    "line": 206,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_dashboard_widgets_visibility",
-                    "line": 210,
+                    "line": 220,
                     "classification": "review_required"
                 },
                 {
                     "method": "reset_dashboard",
-                    "line": 219,
+                    "line": 229,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_hidden_table_columns",
-                    "line": 228,
+                    "line": 238,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_language",
-                    "line": 240,
+                    "line": 250,
                     "classification": "review_required"
                 },
                 {
                     "method": "timesheets",
-                    "line": 251,
+                    "line": 261,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 281,
+                    "line": 291,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_profile",
-                    "line": 310,
+                    "line": 322,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_staff_profile_image",
-                    "line": 375,
+                    "line": 387,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_password_profile",
-                    "line": 404,
+                    "line": 416,
                     "classification": "review_required"
                 },
                 {
                     "method": "profile",
-                    "line": 429,
+                    "line": 441,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_staff_status",
-                    "line": 461,
+                    "line": 473,
                     "classification": "review_required"
                 },
                 {
                     "method": "notifications",
-                    "line": 477,
+                    "line": 489,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_two_factor",
-                    "line": 533,
+                    "line": 545,
                     "classification": "review_required"
                 },
                 {
                     "method": "verify_google_two_factor",
-                    "line": 576,
+                    "line": 588,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_completed_checklist_visibility",
-                    "line": 611,
+                    "line": 623,
                     "classification": "review_required"
                 }
             ]
@@ -3893,37 +3893,37 @@
                 },
                 {
                     "method": "calendar",
-                    "line": 92,
+                    "line": 94,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_calendar_data",
-                    "line": 124,
+                    "line": 126,
                     "classification": "review_required"
                 },
                 {
                     "method": "view_event",
-                    "line": 139,
+                    "line": 141,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_event",
-                    "line": 152,
+                    "line": 154,
                     "classification": "review_required"
                 },
                 {
                     "method": "media",
-                    "line": 179,
+                    "line": 181,
                     "classification": "review_required"
                 },
                 {
                     "method": "media_connector",
-                    "line": 196,
+                    "line": 198,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_pdf_exporter",
-                    "line": 322,
+                    "line": 324,
                     "classification": "review_required"
                 }
             ]

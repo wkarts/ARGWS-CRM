@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "9b225e234045396f57fa0b69f92edf0aff0663df2fd99684ab3132d798d8ffe5",
+    "source_manifest_sha256": "57f8b56d8cc438a1869f47746a0e84f344ac8b66ea609e1ed71970347bf3f6a3",
     "counts": {
         "modules": 38,
-        "source_files": 4688,
+        "source_files": 4690,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
@@ -12356,134 +12356,134 @@
         },
         {
             "path": "application/controllers/admin/Staff.php",
-            "source_sha256": "9bff376c0471b34018f910391512d9737fec16a9088869d27dd3e350822d6e3f",
+            "source_sha256": "6e50e1978a95cab5387b27c6e10f9e28881103d9229ec93944cef13ae87a6732",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "hr",
-                    "line": 15,
-                    "visibility": "public"
-                },
-                {
-                    "method": "hr_file",
-                    "line": 16,
-                    "visibility": "public"
-                },
-                {
-                    "method": "hr_pdf",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "hr_export",
-                    "line": 18,
-                    "visibility": "public"
-                },
-                {
-                    "method": "hr_mine",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "hr_mine_file",
-                    "line": 20,
-                    "visibility": "public"
-                },
-                {
-                    "method": "index",
                     "line": 21,
                     "visibility": "public"
                 },
                 {
+                    "method": "hr_file",
+                    "line": 22,
+                    "visibility": "public"
+                },
+                {
+                    "method": "hr_pdf",
+                    "line": 23,
+                    "visibility": "public"
+                },
+                {
+                    "method": "hr_export",
+                    "line": 24,
+                    "visibility": "public"
+                },
+                {
+                    "method": "hr_mine",
+                    "line": 25,
+                    "visibility": "public"
+                },
+                {
+                    "method": "hr_mine_file",
+                    "line": 26,
+                    "visibility": "public"
+                },
+                {
+                    "method": "index",
+                    "line": 27,
+                    "visibility": "public"
+                },
+                {
                     "method": "member",
-                    "line": 43,
+                    "line": 51,
                     "visibility": "public"
                 },
                 {
                     "method": "role_changed",
-                    "line": 166,
+                    "line": 176,
                     "visibility": "public"
                 },
                 {
                     "method": "save_dashboard_widgets_order",
-                    "line": 196,
+                    "line": 206,
                     "visibility": "public"
                 },
                 {
                     "method": "save_dashboard_widgets_visibility",
-                    "line": 210,
+                    "line": 220,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_dashboard",
-                    "line": 219,
+                    "line": 229,
                     "visibility": "public"
                 },
                 {
                     "method": "save_hidden_table_columns",
-                    "line": 228,
+                    "line": 238,
                     "visibility": "public"
                 },
                 {
                     "method": "change_language",
-                    "line": 240,
+                    "line": 250,
                     "visibility": "public"
                 },
                 {
                     "method": "timesheets",
-                    "line": 251,
+                    "line": 261,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 281,
+                    "line": 291,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_profile",
-                    "line": 310,
+                    "line": 322,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_staff_profile_image",
-                    "line": 375,
+                    "line": 387,
                     "visibility": "public"
                 },
                 {
                     "method": "change_password_profile",
-                    "line": 404,
+                    "line": 416,
                     "visibility": "public"
                 },
                 {
                     "method": "profile",
-                    "line": 429,
+                    "line": 441,
                     "visibility": "public"
                 },
                 {
                     "method": "change_staff_status",
-                    "line": 461,
+                    "line": 473,
                     "visibility": "public"
                 },
                 {
                     "method": "notifications",
-                    "line": 477,
+                    "line": 489,
                     "visibility": "public"
                 },
                 {
                     "method": "update_two_factor",
-                    "line": 533,
+                    "line": 545,
                     "visibility": "public"
                 },
                 {
                     "method": "verify_google_two_factor",
-                    "line": 576,
+                    "line": 588,
                     "visibility": "public"
                 },
                 {
                     "method": "save_completed_checklist_visibility",
-                    "line": 611,
+                    "line": 623,
                     "visibility": "public"
                 }
             ],
@@ -12986,7 +12986,7 @@
         },
         {
             "path": "application/controllers/admin/Tickets.php",
-            "source_sha256": "b6fc050ec4a84b5212cc185d7b17e3d8117d5d00b87c5d67b21f062989e56270",
+            "source_sha256": "9f9a50bcb86f8993cbac92592088f6dc3ea2d982f4a362322642793de1e5463e",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -13204,7 +13204,7 @@
         },
         {
             "path": "application/controllers/admin/Utilities.php",
-            "source_sha256": "0bca13a73d0069fbffc666e212b6e3363b2d1f414161d2d1a08463f2fd2cef01",
+            "source_sha256": "191c77e5c06669ff2c86b8817f87c0786c023eecfa08de7f2c084eaf07363216",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -13236,37 +13236,37 @@
                 },
                 {
                     "method": "calendar",
-                    "line": 92,
+                    "line": 94,
                     "visibility": "public"
                 },
                 {
                     "method": "get_calendar_data",
-                    "line": 124,
+                    "line": 126,
                     "visibility": "public"
                 },
                 {
                     "method": "view_event",
-                    "line": 139,
+                    "line": 141,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_event",
-                    "line": 152,
+                    "line": 154,
                     "visibility": "public"
                 },
                 {
                     "method": "media",
-                    "line": 179,
+                    "line": 181,
                     "visibility": "public"
                 },
                 {
                     "method": "media_connector",
-                    "line": 196,
+                    "line": 198,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_pdf_exporter",
-                    "line": 322,
+                    "line": 324,
                     "visibility": "public"
                 }
             ],
@@ -27195,7 +27195,7 @@
         {
             "name": "company_portal_support_origins",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 5
         },
         {
             "name": "company_portal_support_replies",
@@ -27585,7 +27585,7 @@
         {
             "name": "company_task_assignees",
             "state": "not_verified",
-            "reference_count": 8
+            "reference_count": 9
         },
         {
             "name": "company_task_billing_links",
@@ -27730,7 +27730,7 @@
         {
             "name": "company_ticket_replies",
             "state": "not_verified",
-            "reference_count": 28
+            "reference_count": 30
         },
         {
             "name": "company_ticket_reply_files",
@@ -27740,12 +27740,12 @@
         {
             "name": "company_ticket_requests",
             "state": "not_verified",
-            "reference_count": 8
+            "reference_count": 10
         },
         {
             "name": "company_tickets",
             "state": "not_verified",
-            "reference_count": 63
+            "reference_count": 65
         },
         {
             "name": "company_time_billing_batches",

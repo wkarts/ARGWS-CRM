@@ -17,14 +17,14 @@ O manifest `tests/ci/standalone-browser-plan.json` contém as **101 invocações
 
 | Grupo | Domínio |
 |---|---|
-| sales-pdf | Vendas, linhas de recuperação, formatos PDF e snapshots |
+| sales-pdf | Vendas, linhas de recuperação, formatos PDF, recorrência de tarefas, equipe e leads |
 | projects | Projetos, arquivos, faturamento, recuperação operacional e cópias |
 | support | Contratos, suporte e APIs de operações |
 | expenses | Despesas, importação, relatórios e livro |
 | banking | Portal de horas e sequência completa de navegadores Banco do Brasil |
 | providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA, provas TLS e RH |
 | settings | Marcos do portal, configurações, recuperação, recorrência e compras |
-| tasks-domains | Tarefas, calendário, timers, equipe e leads |
+| tasks-domains | Portal de projetos/tarefas, preferências, calendário e timers |
 
 Nove invocações comuns e os pré-requisitos explícitos são repetidos **para preparar bancos independentes**. Isso tem custo de preparação; não se presume que duplicar fixtures seja gratuito. Exemplos de dependências preservadas: vendas antes das conversões, portal antes dos escritores de suporte, publicação e escrita de tarefas de portal no próprio grupo tasks-domains antes do calendário sem responsável, compras antes dos testes HTTP e RH antes dos tokens. O grupo settings usa apenas a preparação comum: cada teste cria seu próprio fixture. Os testes 33/34 de publicação/escrita de tarefas pertencem somente a tasks-domains, sem repetição no grupo projects. A recuperação de linhas de vendas (63) pertence a sales-pdf e a recuperação operacional (64) a projects; esses cenários deixam de concentrar trabalho no grupo settings, preservando a ordem e usando seus próprios objetos. Os cenários independentes de marcos (35), horas (36) e Gantt (37) pertencem a settings, banking e providers, respectivamente. Cada um cria seus clientes/contatos e o próprio projeto; não depende de 33/34. Isso distribui três cenários extensos que antes se acumulavam em projects. Compras (96–98) e RH (99–100), com preparação própria, pertencem a settings e providers: suas sequências internas permanecem intactas e deixam de alongar tasks-domains. As provas TLS, fixtures não monetárias e adaptadores CLI têm dono de grupo e continuam no fluxo correto.
 
@@ -32,7 +32,7 @@ Essa divisão reduz o caminho serial do smoke para preparação + maior duraçã
 
 ## Diagnóstico e reprodução
 
-- Após falha em um dos quatro workflows de validação com shards (HTTP, núcleo, Banco do Brasil ou suíte focada), o monitor reprova a rodada e deixa os workers daquele workflow do mesmo commit terminarem o diagnóstico. Os outros workflows e commits obsoletos são cancelados. Shards SQL têm limite de 30 minutos; a suíte focada conserva seu limite de 20 minutos. Falha ou cancelamento nunca satisfaz o gate.
+- Após falha em um dos quatro workflows de validação com shards (HTTP, núcleo, Banco do Brasil ou suíte focada), o monitor reprova a rodada e deixa os quatro workflows de diagnóstico do mesmo commit terminarem seus shards. Isso evita perder uma segunda causa em uma matriz SQL ainda marcada como queued pelo GitHub. Workflows auxiliares e commits obsoletos são cancelados. Shards SQL têm limite de 30 minutos; a suíte focada conserva seu limite de 20 minutos. Falha ou cancelamento nunca satisfaz o gate.
 - A anotação compacta mantém o cabeçalho e o final do stack trace abaixo do limite público de 4 KB; o log sanitizado mais amplo permanece no artefato.
 - Falhas também geram anotação pública com o trecho final sanitizado, empresa/documento/etapa quando fornecidos pelo teste, e status original propagado.
 - Artefatos: `issuer-native-browser-<grupo>`, incluindo `browser-timings.tsv` e os diagnósticos limitados de falha já existentes.
@@ -46,3 +46,5 @@ A imagem carregada em cada worker passa novamente pela comparação da label da 
 
 
 A concorrência das suítes longas é limitada a quatro workers de núcleo e dois por variante SQL bancária, preservando os quatro shards por banco. Com oito grupos HTTP, duas versões PHP focadas, tooling e monitor, o patamar longo usa até 20 runners. Os grupos tasks-domains e support aparecem primeiro na matriz para reduzir sua espera. O contrato automatizado confere esse orçamento e a cobertura integral; filas externas do GitHub ainda podem acrescentar tempo.
+
+A rodada 2151777b levou 53min47s e reprovou antes de concluir todos os cenários. O grupo tasks-domains chegou ao caso84 depois de43 minutos. Os fixtures33/34 criam seus próprios clientes/contatos; Calendar cria suas próprias origens por GUI. Foram retirados os pré-requisitos12–16 desse grupo, conservando9 e a cadeia33/34/84/85/86/89/90/91. Os casos independentes92–95 passam para sales-pdf, que havia concluído em16min12s no worker. Todas as101 invocações e dependências verificadas continuam presentes. Duração integral aprovada ainda pendente.

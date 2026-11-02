@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 // Wait for real responsive initialization, then open through one real button click.
 async function ensureCompanySidebar(page) {
-    await page.waitForLoadState('load');
+    await page.locator('.company-selector[data-company-selector-ready="true"]').waitFor({state:'attached'});
     await page.waitForFunction(() => !document.querySelector('#header > .hide-menu') || innerWidth > 768 || document.body.classList.contains('page-small'));
     const toggle = page.locator('.company-selector [data-company-selector-toggle]');
     await toggle.waitFor({state:'attached'});

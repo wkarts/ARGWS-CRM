@@ -10,10 +10,11 @@ function fixture(collapsed, options = {}) {
     const choice = id => ({count: async () => ['1','2'].includes(id) ? 1 : 0,isEnabled:async()=>!options.disabled,
         waitFor: async args => {assert.equal(args.state,'visible');events.push('visible choice');},
         click: async () => {events.push('native choice POST');value=options.stale ? '1' : id;}});
-    const page = {waitForLoadState: async () => {},waitForFunction:async()=>{},
+    const page = {waitForFunction:async()=>{},
         waitForNavigation:async args=>{assert.equal(args.waitUntil,'domcontentloaded');events.push('wait navigation');return {status:()=>200};},
         locator:selector=>{
             if(selector==='.company-selector')return root;
+            if(selector==='.company-selector[data-company-selector-ready="true"]')return {waitFor:async args=>{assert.equal(args.state,'attached');events.push('selector ready');}};
             if(selector.includes('[data-company-selector-toggle]'))return toggle;
             if(selector.includes('#header'))return {click:async()=>{clicks++;events.push('open sidebar');}};
             const match=selector.match(/data-company-choice="(\d+)"/);if(match)return choice(match[1]);
@@ -24,7 +25,7 @@ function fixture(collapsed, options = {}) {
 test('desktop/mobile choice performs one visible native POST and awaits navigation',async()=>{
     for(const collapsed of [false,true]){
         const f=fixture(collapsed);await selectCompanyOption(f.page,2);
-        assert.deepEqual(f.events,[...(collapsed?['open sidebar']:[]),'open dropdown','visible choice','wait navigation','native choice POST']);
+        assert.deepEqual(f.events,['selector ready',...(collapsed?['open sidebar']:[]),'open dropdown','visible choice','wait navigation','native choice POST']);
         assert.equal(f.current(),'2');assert.equal(f.sidebarClicks(),collapsed?1:0);
     }
 });

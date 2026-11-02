@@ -87,6 +87,7 @@
                     <ul>
                     <?php $allAttachments=$ticket->attachments; foreach($ticket_replies as $reply) $allAttachments=array_merge($allAttachments,$reply['attachments']); foreach($allAttachments as $attachment) { ?>
                     <li><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                    <?php if(isset($native_support_authorship['files'][$attachment['id']])){ ?><span>Enviado pelo contato: <?php echo e($native_support_authorship['files'][$attachment['id']]['author_name']); ?></span><?php } ?>
                     <?php if ($native_ticket_presentation['can_delete_attachment']) { ?>
                     <?php echo form_open(admin_url($attachment['delete_url'])); ?>
                     <?php echo form_hidden('_company_context',$native_ticket_page['context_token']); echo form_hidden('_native_company_csrf',$native_ticket_page['csrf_token']); echo form_hidden('revision',$attachment['revision']); echo form_hidden('parent_revision',$ticket->revision_token); echo form_hidden('request_nonce',bin2hex(random_bytes(32))); echo form_hidden('return_to_ticket','1'); ?>
@@ -95,6 +96,7 @@
                     </ul>
                 </div></div>
 
+                <?php if(!empty($portal_support_staff))$this->load->view('admin/tickets/partials/portal-support-actions'); ?>
                 <?php if ($native_ticket_presentation['can_reply']) { ?>
                 <div class="panel_s">
                     <div class="panel-body">

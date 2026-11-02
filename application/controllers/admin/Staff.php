@@ -10,6 +10,12 @@ require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 class Staff extends AdminController
 {
     use NativeCompanySpecializedOperations;
+    private function nativeStaffFailure(Throwable $error): void
+    {
+        $status=503;
+        if($error instanceof DomainException){$code=$error->getMessage();$status=(str_contains($code,'denied')||str_contains($code,'csrf')||str_contains($code,'protected'))?403:((str_contains($code,'stale')||str_contains($code,'conflict'))?409:422);}
+        show_error('Não foi possível confirmar a operação da equipe nesta empresa.',$status);
+    }
     /* List all staff members */
 
     public function hr() { $this->nativeHr(); }
@@ -21,11 +27,13 @@ class Staff extends AdminController
     public function index()
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            try{
             require_once APPPATH.'services/NativeCompanyStaffTable.php';$this->output->set_header('Cache-Control: no-store');
             if($this->input->is_ajax_request()){$result=NativeCompanyStaffTable::endpoint($this);$this->output->set_content_type('application/json')->set_output(json_encode($result));return;}
             if(!in_array(strtoupper((string)$this->input->method()),['GET','HEAD'],true))throw new DomainException('issuer_staff_denied');$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$page=(new NativeCompanyStaffTable($this->db,db_prefix()))->read($c->issuerId(),$c->staffId());
             require_once APPPATH.'services/NativeCompanyStaffMembershipEndpoints.php';
             $this->load->view('admin/staff/manage',array_merge(['native_staff_manage'=>true,'native_staff_can_create'=>$page['can_create'],'native_staff_table_fields'=>$page['fields'],'staff_members'=>array_values(array_filter($page['rows'],static fn($r)=>(int)$r['active']===1)),'title'=>_l('staff_members')],NativeCompanyStaffMembershipEndpoints::linkForm($this)));return;
+            }catch(Throwable $error){$this->nativeStaffFailure($error);}return;
         }
 
         if (staff_cant('view', 'staff')) {
@@ -43,6 +51,7 @@ class Staff extends AdminController
     public function member($id = '')
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            try{
             require_once APPPATH.'services/NativeCompanyStaffMember.php';
             if(strtoupper((string)$this->input->method())==='POST'){
                 if($id===''&&$this->input->post('native_staff_operation',false)==='link'){
@@ -52,6 +61,7 @@ class Staff extends AdminController
                 set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('staff_member')));redirect(CompanyRequestScope::adminUrl($this,'staff/member/'.$saved));return;
             }
             $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/staff/member',NativeCompanyStaffMember::page($this,$id));return;
+            }catch(Throwable $error){$this->nativeStaffFailure($error);}return;
         }
 
         if (staff_cant('view', 'staff')) {
@@ -281,8 +291,10 @@ class Staff extends AdminController
     public function delete()
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            try{
             require_once APPPATH.'services/NativeCompanyStaffMembershipEndpoints.php';
             NativeCompanyStaffMembershipEndpoints::revoke($this);
+            }catch(Throwable $error){$this->nativeStaffFailure($error);return;}
             set_alert('success',_l('deleted',_l('staff_member')));
             redirect(CompanyRequestScope::adminUrl($this,'staff'),'location',303);return;
         }

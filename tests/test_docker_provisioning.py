@@ -13,6 +13,15 @@ def read(path):
 
 
 class DockerProvisioningContractTest(unittest.TestCase):
+    def test_http_servers_cache_code_but_revalidate_the_current_source(self):
+        import re
+        commands = re.findall(r'"\$ISSUER_SMOKE_IMAGE" php (.*?)-S 0\.0\.0\.0:8080', read("tests/issuers_standalone_http_smoke.sh"), re.S)
+        self.assertEqual(len(commands), 2, "fresh and upgraded HTTP servers are both covered")
+        for command in commands:
+            self.assertIn("-d opcache.enable_cli=1", command)
+            self.assertIn("-d opcache.validate_timestamps=1", command)
+            self.assertIn("-d opcache.revalidate_freq=0", command)
+
     def test_upload_subdirectories_match_server_info(self):
         import re
         paths = set(re.findall(r"is_writable\(FCPATH \. 'uploads/([^']+)'", read("application/views/admin/settings/includes/info.php")))

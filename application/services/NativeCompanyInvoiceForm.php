@@ -36,7 +36,9 @@ final class NativeCompanyInvoiceForm
   $data=$this->data($i,$a,$row['clientid'],$row);
   $data['native_invoice_formatted_number']=(new CompanyInvoices($this->db,$this->p))->document($i,$a,$ref['invoice_id'])->data()['number'];
   require_once __DIR__.'/NativeCompanyInvoiceMergeCandidates.php';require_once __DIR__.'/NativeCompanyInvoiceExpenseCandidates.php';require_once __DIR__.'/NativeCompanyResourceTags.php';
-  $data['invoices_to_merge']=(new NativeCompanyInvoiceMergeCandidates($this->db,$this->p))->forCustomer($i,$a,(int)$row['clientid'],(string)$row['id'])['items'];
+  // The primary issuer may edit its own canonical invoices, while the native
+  // merge command remains available only to secondary issuers.
+  $data['invoices_to_merge']=(new IssuerResourceAccess($this->db,$this->p))->primaryId()===$i?[]:(new NativeCompanyInvoiceMergeCandidates($this->db,$this->p))->forCustomer($i,$a,(int)$row['clientid'],(string)$row['id'])['items'];
   $data['expenses_to_bill']=(new NativeCompanyInvoiceExpenseCandidates($this->db,$this->p))->forCustomer($i,$a,(int)$row['clientid'])['items'];
   $row['items']=$data['native_invoice_editor_items']->rows();$row['project_id']=0;
   $relation=IssuerStorage::query($this->db,'SELECT source_kind,source_id FROM '.$this->p.CompanyInvoiceProjectSchema::TABLE.' WHERE issuer_id=? AND invoice_id=?',[$i,$row['id']])->row_array();

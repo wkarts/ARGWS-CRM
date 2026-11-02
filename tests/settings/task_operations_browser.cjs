@@ -90,17 +90,17 @@ async function fields(form) {
         const initial = fixture('snapshot');
 
         for (const [label, owner] of Object.entries(setup.owners)) {
-            await select(owner);
+            console.log('TASK_OPERATIONS_CASE_START',label);await select(owner);
             const priority = { a: '4', b: '1', primary: '3' }[label];
             const follow = label === 'b' ? '0' : '1';
             await policy(priority, follow);
             assert.equal(await page.locator('#company-setting-default_task_priority option').count(), 4);
-            assert.match(await page.locator('body').innerText(), /tarefas avulsas não possuem esse canal/);
+            assert.match(await page.locator('body').innerText(), /inclui somente o criador autorizado das novas tarefas de projeto/);
 
             await page.goto(url + '/admin/clients/client?source=company');
             await page.locator('input[name="company"]').fill('Priority native448 ' + label);
             await nav(page, page.locator('button.only-save'));
-            const client = new URL(page.url()).searchParams.get('client');
+            const client = new URL(page.url()).pathname.split('/').pop();
             assert.match(client || '', /^[1-9]\d*$/);
 
             const projectInfo = await createNativeProject(page, url, {
@@ -236,7 +236,7 @@ async function fields(form) {
         assert.equal((await context.request.post(settings, { form: stale, maxRedirects: 0 })).status(), 409);
         assert.equal(
             (await context.request.get(url + '/admin/tasks/list_tasks/' + canonicalIds['a-tasks'])).status(),
-            409,
+            403,
         );
         assert.equal(
             (await context.request.get(url + '/admin/tasks/standalone?task=' + created['a-standalone_tasks'])).status(),

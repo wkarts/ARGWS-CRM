@@ -59,7 +59,7 @@
                 <p>Até 100 linhas e 256 KiB em UTF-8. Use CSV com ponto e vírgula e cabeçalho <code>company;vat</code>, ou JSON com uma lista de objetos. O preview expira em uma hora e não cria clientes.</p>
                 <?= form_open_multipart($url(), ['id' => 'import_form']); ?><?php $hidden('preview'); ?>
                 <div class="row"><div class="col-md-3"><div class="form-group"><label for="client-import-format">Formato</label><select id="client-import-format" class="form-control" name="format"><option value="csv">CSV (;)</option><option value="json">JSON</option></select></div></div>
-                <div class="col-md-6"><div class="form-group"><label for="client-import-file">Arquivo privado</label><input id="client-import-file" class="form-control" type="file" name="source_file" accept=".csv,.json" required></div></div></div>
+                <div class="col-md-6"><div class="form-group"><label for="client-import-file">Arquivo privado</label><input id="client-import-file" class="form-control" type="file" name="source_file" accept=".csv,.json,text/csv,application/json,application/vnd.ms-excel" required></div></div></div>
                 <button class="btn btn-primary" type="submit">Validar e visualizar</button><?= form_close(); ?>
                 <?php if ($batches) { ?><hr><h5 class="tw-font-semibold">Lotes recentes nesta empresa</h5><ul><?php foreach ($batches as $row) { ?><li><a href="<?= $escape($url('?batch=' . $row['batch_id'])); ?>"><?= $escape($row['batch_id']); ?></a> · <?= (int) $row['row_count']; ?> linhas · <?= $escape($row['state'] === 'committed' ? 'Confirmado' : 'Preview'); ?> · <?= $escape($row['created_at']); ?> UTC</li><?php } ?></ul><?php } ?>
             </div></div><?php } ?>

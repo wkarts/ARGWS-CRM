@@ -96,7 +96,7 @@ mysql_root -e "CREATE DATABASE argws_legacy_ci; CREATE DATABASE argws_upgrade_ci
 cp -a install "$work/install"
 printf '\nALTER TABLE tblstaff AUTO_INCREMENT=17;\n' >> "$work/install/database.sql"
 docker create --name "$legacy" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
-    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
+    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=0 -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/install" "$legacy:/app/install"
 cat > "$work/router.php" <<'PHP'
 <?php
@@ -269,7 +269,7 @@ provider_proxy_url="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[
 docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
     -e HTTPS_PROXY="$provider_proxy_url" -e https_proxy="$provider_proxy_url" \
     -e NO_PROXY=127.0.0.1,localhost -e no_proxy=127.0.0.1,localhost \
-    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
+    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=0 -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
     -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/provider-ca/ca.pem" "$upgrade:/tmp/finance-provider-ca.pem"
 docker cp "$legacy:/var/lib/argws-crm/config/app-config.php" "$work/app-config.php"

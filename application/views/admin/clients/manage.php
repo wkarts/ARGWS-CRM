@@ -109,7 +109,7 @@ if (empty($native_customers) && class_exists('CompanyRequestScope', false)
                             <?= _l('new_client'); ?>
                         </a>
                         <?php } ?>
-                        <?php if (!$native_customers && staff_can('create', 'customers')) { ?>
+                        <?php if ($native_customers ? $native_customer_capabilities['create'] : staff_can('create', 'customers')) { ?>
                         <a href="<?= admin_url('clients/import'); ?>"
                             class="hidden-xs btn btn-default">
                             <i class="fa-solid fa-upload tw-mr-1"></i>

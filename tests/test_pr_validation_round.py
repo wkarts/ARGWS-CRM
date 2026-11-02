@@ -1,12 +1,12 @@
-import importlib.util,pathlib,unittest
+import importlib.util,pathlib,unittest,json,tempfile
+from unittest.mock import patch
 spec=importlib.util.spec_from_file_location('round',pathlib.Path(__file__).resolve().parents[1]/'scripts/ci/pr-validation-round.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class RoundTests(unittest.TestCase):
- def test_only_known_validation_families_finish_current_failed_shards(self):
+ def test_only_known_validation_families_finish_current_diagnostics(self):
   for path in m.DIAGNOSTIC_WORKFLOWS:
-   self.assertTrue(m.retains_failed_shards({'path':path+'@refs/pull/52/merge'},[{'conclusion':'failure'}]))
-   self.assertFalse(m.retains_failed_shards({'path':path},[{'conclusion':'success'}]))
-  self.assertFalse(m.retains_failed_shards({'path':'.github/workflows/release-packages.yml'},[{'conclusion':'failure'}]))
-  self.assertFalse(m.retains_failed_shards({'path':'.github/workflows/unreviewed.yml'},[{'conclusion':'failure'}]))
+   self.assertTrue(m.diagnostic_run({'path':path+'@refs/pull/52/merge'}))
+  self.assertFalse(m.diagnostic_run({'path':'.github/workflows/release-packages.yml'}))
+  self.assertFalse(m.diagnostic_run({'path':'.github/workflows/unreviewed.yml'}))
  def setUp(self):self.pr={'number':52,'head':{'sha':'new'}};self.repo='wkarts/ARGWS-CRM'
  def run_row(self,id=1,**kw):return dict({'id':id,'event':'pull_request','head_sha':'new','status':'in_progress','head_repository':{'full_name':self.repo},'pull_requests':[{'number':52}]},**kw)
  def plan(self,rows,failed=False):return m.cancellation_plan(rows,self.pr,self.repo,99,failed)
@@ -26,4 +26,26 @@ class RoundTests(unittest.TestCase):
   self.assertEqual(m.cancellation_plan(rows,self.pr,self.repo,99,True,{1}),[2])
  def test_superseded_diagnostics_are_always_cancelled(self):
   self.assertEqual(m.cancellation_plan([self.run_row(1,head_sha='old')],self.pr,self.repo,99,True,{1}),[1])
+ def test_http_failure_retains_queued_sql_diagnostics_and_cancels_obsolete(self):
+  rows=[self.run_row(1,path='.github/workflows/deployment-integrity.yml'),self.run_row(2,status='queued',path='.github/workflows/issuer-foundation.yml'),self.run_row(3,head_sha='old',path='.github/workflows/issuer-foundation.yml'),self.run_row(4,path='.github/workflows/unreviewed.yml')]
+  retained={r['id'] for r in rows if m.diagnostic_run(r)}
+  self.assertEqual(m.cancellation_plan(rows,self.pr,self.repo,99,True,retained),[3,4])
+ def test_main_detects_failed_child_of_queued_matrix(self):
+  pr={**self.pr,'state':'open','head':{'sha':'new','ref':'branch','repo':{'full_name':self.repo}}}
+  core=self.run_row(1,status='queued',path='.github/workflows/issuer-foundation.yml',workflow_id=7,conclusion=None)
+  class FakeApi:
+   calls=[]
+   def __init__(self,*args):pass
+   def runs(self,*args,**kwargs):return [core]
+   def call(self,path,method='GET'):
+    self.calls.append((path,method))
+    if path=='/pulls/52':return pr
+    if '/jobs?' in path:return {'jobs':[{'name':'SQL shard','conclusion':'failure'}]}
+    raise AssertionError('Unexpected request '+path)
+  with tempfile.NamedTemporaryFile(mode='w') as event:
+   json.dump({'pull_request':pr},event);event.flush()
+   with patch.dict(m.os.environ,{'GITHUB_REPOSITORY':self.repo,'GITHUB_RUN_ID':'99','GITHUB_EVENT_PATH':event.name,'GH_TOKEN':'synthetic'}),patch.object(m,'Api',FakeApi),patch('builtins.print'):
+    self.assertEqual(m.main(),1)
+  self.assertTrue(any('/actions/runs/1/jobs?' in path for path,_ in FakeApi.calls))
+  self.assertFalse(any(method=='POST' for _,method in FakeApi.calls),'failed queued diagnostic matrix must finish without cancellation')
 if __name__=='__main__':unittest.main()

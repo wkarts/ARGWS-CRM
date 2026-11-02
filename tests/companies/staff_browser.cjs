@@ -29,7 +29,8 @@ function grants(id,issuer) { return sql('SELECT feature,capability FROM tblissue
 function preference(id) { return sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id='+id); }
 function digest(value) { return createHash('sha256').update(value).digest('hex'); }
 async function submit(page, button) { return (await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]))[0]; }
-async function values(form) { return form.evaluate(node=>Object.fromEntries(new FormData(node).entries())); }
+// Empty file controls belong to multipart $_FILES, never to the URL-encoded replay body.
+async function values(form) { return form.evaluate(node=>Object.fromEntries([...new FormData(node)].filter(([,value])=>typeof value==='string'))); }
 async function hidden(form) { return form.locator('input[type=hidden][name]').evaluateAll(nodes=>Object.fromEntries(nodes.map(node=>[node.name,node.value]))); }
 async function selectCompany(page,id) {
   await page.goto(url+'/admin/');
@@ -44,7 +45,7 @@ async function login(page,email,password) {
   assert.equal((await page.goto(url+'/admin/authentication')).status(),200);
   await page.locator('input[name=email]').fill(email);
   await page.locator('input[name=password]').fill(password);
-  await submit(page,page.locator('button[type=submit]'));
+  await submit(page,page.locator('button[type=submit]:not([form])'));
   await page.waitForLoadState('networkidle');
   assert(!page.url().includes('/authentication'),'native authentication established');
 }
@@ -75,10 +76,16 @@ async function login(page,email,password) {
     await form.locator('input[name=password]').fill(password);
     const welcome=form.locator('#send_welcome_email');if(await welcome.count())await welcome.uncheck();
     await form.locator('a[href="#staff_permissions"]').click();
+    if(label==='primary')await form.locator('select[name=role]').selectOption('');
     for(const cap of capabilities)await form.locator('#staff_'+cap).check();
     await form.locator('#tasks_view').check();
-    await form.locator('#native-staff-make-default').check();
-    const response=await submit(page,form.locator('button[type=submit]'));
+    if(label==='primary'){
+      await form.locator('[name="issuer_memberships['+companies.primary+']"]').check();await form.locator('[name=issuer_default]').selectOption(companies.primary);
+      const panel=form.locator('#issuer-staff-access .panel').filter({has:page.locator('[name="issuer_memberships['+companies.primary+']"]')});await panel.locator('summary').click();
+      for(const cap of capabilities)await form.locator('[name="issuer_resource_permissions['+companies.primary+'][staff][]"][value="'+cap+'"]').check();
+      await form.locator('[name="issuer_resource_permissions['+companies.primary+'][tasks][]"][value="view"]').check();
+    }else await form.locator('#native-staff-make-default').check();
+    const response=await submit(page,form.locator('button[type=submit]:not([form])'));
     const match=new URL(page.url()).pathname.match(/\/staff\/member\/(\d+)$/);const id=match&&match[1];
     assert.match(id||'',/^[1-9]\d*$/,'creation redirects to actual committed identity; HTTP '+response.status());
     assert.equal(sql('SELECT CONCAT(admin,":",active,":",role,":",is_not_staff) FROM tblstaff WHERE staffid='+id),'0:1:0:0','no implicit native administrator or role');
@@ -88,7 +95,7 @@ async function login(page,email,password) {
   try {
     await login(master.page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
     for(const [label,issuer] of Object.entries(companies)) {
-      await selectCompany(master.page,issuer);
+      console.log('STAFF_CASE_START',label);await selectCompany(master.page,issuer);
       const made=await create(master.page,label);staff[label]=made.id;emails[label]=made.email;
       assert.equal(preference(made.id),issuer,'new employee has explicit selected default');
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id='+made.id),'1');
@@ -98,16 +105,20 @@ async function login(page,email,password) {
       const frameworkToken=Object.keys(payload).find(key=>key.toLowerCase().includes('csrf')&&key!==nativeToken);assert(frameworkToken,'framework CSRF field is present');
       const badOwn=await master.ctx.request.post(url+'/admin/staff/member/'+made.id,{form:{...payload,[frameworkToken]:'invalid'},maxRedirects:0});
       assert.equal(badOwn.status(),403,'framework CSRF');
-      assert.equal((await master.ctx.request.post(url+'/admin/staff/member/'+made.id,{form:{...payload,[nativeToken]:'invalid'},maxRedirects:0})).status(),403,'native company CSRF');
+      if(label==='primary'){
+        assert(payload.issuers_access_csrf,'original primary form has its dedicated issuer-access CSRF');const accessBefore={members:members(made.id),grants:grants(made.id,issuer),default:preference(made.id)};
+        const denied=await master.ctx.request.post(url+'/admin/staff/member/'+made.id,{form:{...payload,firstname:'Rejected invalid primary access CSRF',issuers_access_csrf:'invalid'},maxRedirects:0});assert.equal(denied.status(),303,'original primary form redirects on dedicated CSRF rejection');
+        assert.deepEqual({members:members(made.id),grants:grants(made.id,issuer),default:preference(made.id)},accessBefore,'dedicated primary CSRF rejection preserves all access rows');
+      }else assert.equal((await master.ctx.request.post(url+'/admin/staff/member/'+made.id,{form:{...payload,[nativeToken]:'invalid'},maxRedirects:0})).status(),403,'native company CSRF');
       assert.equal(identity(made.id),before,'both CSRF failures preserve native profile');
       if(label==='a')originalAForm=payload;
-      proof.push({company:label,issuer:Number(issuer),created:Number(made.id),explicit_default:true,native_admin:0,own_csrf:403,native_csrf:403});
+      proof.push({company:label,issuer:Number(issuer),created:Number(made.id),explicit_default:true,native_admin:0,own_csrf:403,native_csrf:label==='primary'?null:403,primary_access_csrf:label==='primary'?303:null});
     }
     assert.equal((await master.ctx.request.get(url+'/admin/staff/member/'+staff.a)).status(),200,'principal retains its historical official staff administration');
     assert.notEqual((await master.ctx.request.post(url+'/admin/staff/member/'+staff.a,{form:originalAForm,maxRedirects:0})).status(),200,'secondary stale form cannot execute after switching to principal');
     await selectCompany(master.page,companies.a);
     assert.equal((await master.ctx.request.get(url+'/admin/staff/member/'+staff.b)).status(),403,'A cannot hydrate B-only identity through the official controller');
-    assert.equal((await master.ctx.request.get(url+'/admin/staff')).status(),404,'retired parallel staff route is absent');
+    assert.equal((await master.page.goto(url+'/admin/staff')).status(),200,'original staff list is available through its native projection');assert.equal(await master.page.locator('#native-staff-link').count(),1,'existing list carries the scoped membership operation');
     await master.page.goto(url+'/admin/staff/member/17');
     assert.equal(await master.page.locator('#native-staff-revoke-membership').count(),0,'master cannot be revoked');
     manager=await surface();await login(manager.page,emails.a,password);await selectCompany(manager.page,companies.a);
@@ -116,15 +127,16 @@ async function login(page,email,password) {
     const ownEdit=manager.page.locator('form.staff-form');
     const stale=await values(ownEdit);
     await ownEdit.locator('#firstname').fill('Exclusive <script>literal</script>');
-    await submit(manager.page,ownEdit.locator('button[type=submit]'));
+    await submit(manager.page,ownEdit.locator('button[type=submit]:not([form])'));
     assert.equal(sql('SELECT firstname FROM tblstaff WHERE staffid='+shared.id),'Exclusive <script>literal</script>','exclusive identity profile is writable by company manager');
     assert.equal(await manager.page.locator('h4 script').count(),0,'identity text is escaped');
-    assert.match(await manager.page.locator('h4').first().innerText(),/Exclusive <script>literal<\/script>/);
+    assert.match(await manager.page.locator('h4').filter({hasText:'Exclusive <script>literal</script>'}).innerText(),/Exclusive <script>literal<\/script>/);
+    await master.page.goto(url+'/admin/tasks/list_tasks');assert.equal(await master.page.locator('#task_bulk_assignees script').count(),0,'bulk task staff options cannot execute literal staff markup');assert.match(await master.page.locator('#task_bulk_assignees option[value="'+shared.id+'"]').innerText(),/Exclusive <script>literal<\/script>/,'bulk staff label preserves exact literal text for its own identity');await manager.page.goto(url+'/admin/staff/member/'+shared.id);
     assert.equal((await manager.ctx.request.post(url+'/admin/staff/member/'+shared.id,{form:stale,maxRedirects:0})).status(),409,'old profile revision refuses overwrite');
     const beforeShared={identity:identity(shared.id),a:grants(shared.id,companies.a),default:preference(shared.id)};
     await selectCompany(master.page,companies.b);await master.page.goto(url+'/admin/staff');
     const link=master.page.locator('#native-staff-link');await master.page.locator('#native-staff-link-identity > summary').click();await link.locator('#existing_email').fill(shared.email);await link.locator('#native-link-tasks-view').check();await link.locator('#native-link-staff-view').check();
-    const linkPayload=await values(link);await submit(master.page,link.locator('button[type=submit]'));
+    const linkPayload=await values(link);await submit(master.page,link.locator('button[type=submit]:not([form])'));
     assert.match(new URL(master.page.url()).pathname,new RegExp('/staff/member/'+shared.id+'$'));
     assert.equal(identity(shared.id),beforeShared.identity,'link shares identity without rewriting global profile');
     assert.equal(grants(shared.id,companies.a),beforeShared.a,'A grants survive B link');
@@ -138,10 +150,11 @@ async function login(page,email,password) {
     const sharedPayload=await values(manager.page.locator('form.staff-form'));
     assert.notEqual((await manager.ctx.request.post(url+'/admin/staff/member/'+shared.id,{form:{...sharedPayload,firstname:'Forged shared overwrite'},maxRedirects:0})).status(),200,'forged shared profile denied');
     assert.equal(identity(shared.id),beforeShared.identity,'shared profile unchanged after rejected request');
-    const grantForm=manager.page.locator('form.staff-form');await grantForm.locator('a[href="#staff_permissions"]').click();await grantForm.locator('#tasks_view').uncheck();await submit(manager.page,grantForm.locator('button[type=submit]'));
+    const grantForm=manager.page.locator('form.staff-form');await grantForm.locator('a[href="#staff_permissions"]').click();await grantForm.locator('#tasks_view').uncheck();await submit(manager.page,grantForm.locator('button[type=submit]:not([form])'));
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_resource_permissions WHERE staff_id='+shared.id+' AND issuer_id='+companies.a+' AND feature="tasks"'),'0','manager changes only own company ACL of shared identity');
     assert.match(grants(shared.id,companies.b),/tasks\tview/,'B keeps its independent ACL');
     const beforeRevoke={identity:identity(shared.id),b:grants(shared.id,companies.b)};
+    manager.page.once('dialog',dialog=>dialog.accept());
     await submit(manager.page,manager.page.locator('button[form=native-staff-revoke-membership]'));
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id='+shared.id+' AND issuer_id='+companies.a),'0','A membership is revoked');
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id='+shared.id+' AND issuer_id='+companies.b),'1','B membership is retained');
@@ -152,10 +165,12 @@ async function login(page,email,password) {
     await manager.page.goto(url+'/admin/staff');
     await manager.page.screenshot({path:path.join(output,'staff-manager-desktop.png'),fullPage:true});
     await manager.page.setViewportSize({width:390,height:844});await manager.page.reload();
-    assert(await manager.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'own team page fits mobile viewport');
+    await manager.page.evaluate(async()=>{await document.fonts.ready;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+    const mobile=await manager.page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(node=>node.getBoundingClientRect().right>innerWidth+1).slice(0,12).map(node=>({tag:node.tagName,id:node.id,class:node.className,right:Math.round(node.getBoundingClientRect().right)}))}));
+    await manager.page.screenshot({path:path.join(output,'staff-manager-mobile.png'),fullPage:true});assert(mobile.scrollWidth<=mobile.width+1,'own team page fits mobile viewport '+JSON.stringify(mobile));
     await manager.page.screenshot({path:path.join(output,'staff-manager-mobile.png'),fullPage:true});
     await selectCompany(master.page,companies.a);await master.page.goto(url+'/admin/staff/member/'+staff.a);
-    const revokeManager=master.page.locator('form.staff-form');await revokeManager.locator('a[href="#staff_permissions"]').click();await revokeManager.locator('#staff_view').uncheck();await submit(master.page,revokeManager.locator('button[type=submit]'));
+    const revokeManager=master.page.locator('form.staff-form');await revokeManager.locator('a[href="#staff_permissions"]').click();await revokeManager.locator('#staff_view').uncheck();await submit(master.page,revokeManager.locator('button[type=submit]:not([form])'));
     assert.equal((await manager.ctx.request.get(url+'/admin/staff')).status(),403,'revocation applies to the next real request of an existing session');
     assert.equal(sql('SELECT admin FROM tblstaff WHERE staffid='+staff.a),'0','manager still has no native administration');
     // Native primary form remains functional, including the originally broken empty role.
@@ -168,7 +183,7 @@ async function login(page,email,password) {
     await native.locator('[name="issuer_memberships['+companies.primary+']"]').check();await native.locator('[name="issuer_memberships['+companies.a+']"]').check();
     await native.locator('[name=issuer_default]').selectOption(companies.a);
     await native.locator('select[name=role]').selectOption('');
-    await submit(master.page,native.locator('button[type=submit]'));
+    await submit(master.page,native.locator('button[type=submit]:not([form])'));
     await master.page.waitForLoadState('networkidle');
     const nativeId=sql("SELECT staffid FROM tblstaff WHERE email='"+nativeEmail+"'");assert.match(nativeId,/^[1-9]\d*$/,'native profile and ACL actually commit');
     assert.equal(sql('SELECT role FROM tblstaff WHERE staffid='+nativeId),'0','empty native role normalized to zero');

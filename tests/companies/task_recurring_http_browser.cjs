@@ -19,7 +19,7 @@ async function go(page,button){await Promise.all([page.waitForNavigation({waitUn
   for(const[label,o]of Object.entries(setup.owners)){
    const ownSettings=sql('SELECT settings_json FROM tblissuers_registry WHERE id='+Number(o.issuer)),operationPreferences=JSON.parse(ownSettings).task_operation_preferences,follow=operationPreferences?.new_task_auto_follower_current_member??'0';assert(['0','1'].includes(follow),'own auto-follow policy must be explicit or the documented OFF default');
    await select(o.issuer);const projectInfo=await createNativeProject(page,url,{client:o.client,name:'Recurrence native '+label,startDate:'01/01/2000',dueDate:'31/12/2099'}),project=Number(projectInfo.sourceId);
-   for(const kind of ['project','standalone']){
+   for(const kind of ['project','standalone']){console.log('TASK_RECURRING_CASE_START',label,kind);
     let source,taskCanonical=null;
     if(kind==='project'){
       const created=await createNativeProjectTask(page,url,{projectCanonical:projectInfo.canonical,name:'Recurrence source '+label+' '+kind+' <script>literal</script>',dueDate:'01/11/2099',assignee:setup.master});source=Number(created.sourceId);taskCanonical=created.canonical;await addNativeTaskChecklistItem(page,url,taskCanonical,'Reset original check');await openNativeTask(page,url,taskCanonical);await addNativeTaskComment(page,'History remains on original');await completeNativeTaskChecklistItem(page);await markNativeTaskDone(page);

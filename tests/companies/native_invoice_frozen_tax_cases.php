@@ -19,4 +19,22 @@ essentialThrows(fn()=>$form->update($b,7,$historyInvoice,$historyWire),'company_
 essentialCheck($historyWriter->document($a,7,$historyInvoice)->data()['totals']['total']==='210.00','all forged tax attempts preserve the committed amount');
 $forgedAlgorithm=$historyWire;$forgedAlgorithm['calculation_contract']='native_sales_v1';essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$forgedAlgorithm),'native_invoice_form_invalid','wire cannot select a new algorithm for a historical invoice');
 essentialThrows(fn()=>$form->update(1,7,42,[]),'native_invoice_editor_denied','primary NULL history remains outside the issuer-owned writer');
+// Populate the original primary catalogue tables from the shipped installation DDL.
+foreach(['taxes','items','items_groups','payment_modes','tasks'] as $legacyTable){
+ if($db->table_exists($p.$legacyTable))continue;
+ if(!preg_match('/CREATE TABLE `tbl'.preg_quote($legacyTable,'/').'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$native,$match))throw new RuntimeException('Missing native primary catalogue schema');
+ $ddl=str_replace('`tbl'.$legacyTable.'`','`'.$p.$legacyTable.'`',$match[0]);
+ if($db->driver()==='sqlite'){$ddl=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$ddl);$ddl=preg_replace('/enum\([^)]*\)/','varchar(50)',$ddl);}
+ $db->query($ddl);unset($db->data_cache['table_names']);
+}
+$settings->saveIdentity(1,7,['legal_name'=>'Synthetic primary invoice editor','tax_id'=>'39053344705','profile'=>['invoice_company_address'=>'Primary fixture address','invoice_company_city'=>'Synthetic city','company_state'=>'BA','invoice_company_country_code'=>'BR','invoice_company_postal_code'=>'00000-000','invoice_company_phonenumber'=>'']]);
+$primaryClient=(new CompanyClients($db,$p))->create(1,7,['company'=>'Primary own invoice editor regression']);
+$primaryPayload=$historyPayload;$primaryPayload['client_id']=$primaryClient;
+$primaryInvoice=$historyWriter->create(1,7,$primaryPayload,hash('sha256','primary-owned-editor-regression'));
+require_once APPPATH.'services/CompanyExpenseSchema.php';if($db->driver()==='mysql')CompanyExpenseSchema::ensure($db,$p);else foreach(CompanyExpenseSchema::definitions() as $table=>$fields){$parts=[];foreach($fields as $name=>$type)$parts[]='`'.$name.'` '.(str_contains($type,'AUTO_INCREMENT')?'INTEGER PRIMARY KEY AUTOINCREMENT':$type.' NOT NULL');if($table==='company_expense_requests')$parts[]='PRIMARY KEY(request_key)';$db->query('CREATE TABLE IF NOT EXISTS '.$p.$table.'('.implode(',',$parts).')');}
+require_once APPPATH.'services/NativeCompanyExpenseBillabilitySchema.php';NativeCompanyExpenseBillabilitySchema::ensure($db,$p);
+$primaryEdit=$form->editData(1,7,$primaryInvoice);
+essentialCheck((int)$primaryEdit['invoice']->id===$primaryInvoice&&$primaryEdit['invoices_to_merge']===[],'primary own invoice opens its original editor without offering secondary-only merge');
+essentialThrows(fn()=>(new NativeCompanyInvoiceMergeCandidates($db,$p))->forCustomer(1,7,$primaryClient,(string)$primaryInvoice),'native_invoice_merge_denied','primary editor does not grant secondary merge authority');
+essentialThrows(fn()=>$form->editData($a,7,$primaryInvoice),'company_invoice_access_denied','secondary cannot open the primary owned invoice editor');
 echo "Original invoice frozen tax/update boundaries: ".$GLOBALS['essentialChecks']." cumulative PASS.\n";

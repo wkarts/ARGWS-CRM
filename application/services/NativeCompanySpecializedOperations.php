@@ -387,8 +387,7 @@ trait NativeCompanySpecializedOperations
                 $sourceId = $detail === null ? $this->input->get('source', false) : null;
                 if ($sourceId !== null) {
                     $sourceId = IssuerPolicy::id($sourceId);
-                    $reader = $kind === 'project' ? new CompanyTasks($this->db, db_prefix()) : new CompanyStandaloneTasks($this->db, db_prefix());
-                    $source = $reader->get($issuer, $actor, $sourceId);
+                    $source = $service->sourceForReview($issuer, $actor, $kind, $sourceId);
                 }
                 $directory = $service->page($issuer, $actor, $kind, $this->input->get('after', false) ?? 0, $sourceId);
             } catch (DomainException $exception) {

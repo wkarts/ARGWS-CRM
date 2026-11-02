@@ -118,7 +118,9 @@ final class NativeCompanyDepartments
             }
             $reads[]=[$legacy.' ORDER BY d.departmentid',$legacyArgs];
         }
-        $frames=[];$rows=[];foreach($reads as[$statement,$bindings]){$frame=$this->rows($statement,$bindings);$frames[]=$frame;$rows=array_merge($rows,$frame);}$ids=[];
+        // Preserve raw frames for the final equality guard. Only the historical
+        // nullable field means an absent calendar; native declarations remain strict.
+        $frames=[];$rows=[];foreach($reads as$index=>[$statement,$bindings]){$frame=$this->rows($statement,$bindings);$frames[]=$frame;foreach($frame as$row){if($index===1&&$row['calendar_id']===null)$row['calendar_id']='';$rows[]=$row;}}$ids=[];
         foreach($rows as$row){$id=$row['calendar_id'];if(!is_string($id)||strlen($id)>65535||preg_match('/[\x00-\x20\x7f]/',$id))throw new DomainException('native_calendar_google_invalid');if($id!=='')$ids[]=$id;}
         $this->access($issuer,$actor);if(!$acl->can($issuer,$actor,'calendar','view')||$admin!==$acl->administrative($issuer,$actor)||$primary!==$acl->primaryId())throw new DomainException('native_department_denied');
         foreach($reads as$index=>[$statement,$bindings])if($frames[$index]!==$this->rows($statement,$bindings))throw new DomainException('native_department_denied');

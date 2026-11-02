@@ -60,6 +60,8 @@
                </div>
                <?= '<i class="fa-regular fa-circle-question" data-toggle="tooltip" data-title="' . _l('tasks_bull_actions_assign_notice') . '"></i>';
                    $staff_bulk_assigned = isset($native_task_index) ? $native_task_index['bulk_staff'] : $this->staff_model->get('', ['active' => 1]);
+                   // The shared select helper accepts HTML labels; staff names are literal text.
+                   $staff_bulk_assigned=array_map(static fn($member)=>array_replace($member,['firstname'=>e($member['firstname']),'lastname'=>e($member['lastname'])]),$staff_bulk_assigned);
                    echo render_select('task_bulk_assignees', $staff_bulk_assigned, ['staffid', ['firstname', 'lastname']], 'task_assigned', '', ['multiple' => true]);
                    if (isset($project)) {
                        echo render_select('task_bulk_milestone', $this->projects_model->get_milestones($project->id), [

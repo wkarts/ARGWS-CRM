@@ -26,6 +26,11 @@ assert(fixturePath && path.isAbsolute(fixturePath));
 assert.equal(env.ISSUERS_BROWSER_DB_NAME, 'argws_upgrade_ci');
 
 function fixture(...args) {
+    if(args[0]==='task'){
+        const canonical=BigInt(args[3]),namespace=args[2]==='tasks'?2n:3n;
+        assert.equal(canonical/4294967296n,namespace,'fixture receives the exact task namespace');
+        args[3]=String(canonical%4294967296n);
+    }
     return JSON.parse(execFileSync(php, [fixturePath, ...args.map(String)], {
         encoding: 'utf8',
         env,
@@ -42,7 +47,7 @@ async function hidden(form) {
     ));
 }
 
-const TASK_RADIX = 8589934592n;
+const STANDALONE_TASK_RADIX = 12884901888n;
 
 (async () => {
     const setup = fixture('inspect');
@@ -58,11 +63,12 @@ const TASK_RADIX = 8589934592n;
     await context.route('**/*', (route) =>
         new URL(route.request().url()).origin === base ? route.continue() : route.abort());
     const page = await workspacePage(context);
+    const creationPage = await workspacePage(context);
     const errors = [];
     const projects = {};
-    const taskCanonicals = {};
     const results = [];
     page.on('pageerror', (error) => errors.push(error.message));
+    creationPage.on('pageerror', (error) => errors.push(error.message));
 
     try {
         await page.goto(base + '/admin/authentication');
@@ -92,48 +98,52 @@ const TASK_RADIX = 8589934592n;
 
         async function create(owner, kind, label) {
             if (kind === 'tasks') {
-                const task = await createNativeProjectTask(page, base, {
+                const task = await createNativeProjectTask(creationPage, base, {
                     projectCanonical: projects[owner].canonical,
                     name: 'Auto-stop451 ' + label,
                     dueDate: '01/11/2026',
                     assignee: setup.actor,
+                    reuseProjectPage: true,
                 });
-                taskCanonicals[task.sourceId] = task.canonical;
-                const id = Number(task.sourceId);
+                const id = task.canonical;
                 assert.equal(fixture('task', owner, kind, id).timer_count, 0);
                 return id;
             }
 
-            await page.goto(base + '/admin/tasks/standalone');
-            await page.locator('#task-new-assignee').selectOption(String(setup.actor));
-            await page.locator('#task-new-status').selectOption('todo');
-            await page.locator('#task-new-name').fill('Auto-stop451 ' + label);
-            await page.locator('#task-new-due').fill('2026-11-01');
-            await nav(page, page.getByRole('button', { name: 'Criar tarefa avulsa', exact: true }));
-            const id = Number(new URL(page.url()).searchParams.get('task'));
-            assert(id > 0);
-            taskCanonicals[id] = String(TASK_RADIX + BigInt(id));
+            if(new URL(creationPage.url()).pathname!=='/admin/tasks/standalone'||await creationPage.locator('.company-selector').getAttribute('data-company-current')!==String(owner))await creationPage.goto(base + '/admin/tasks/standalone');
+            await creationPage.locator('#task-new-assignee').selectOption(String(setup.actor));
+            await creationPage.locator('#task-new-status').selectOption('todo');
+            await creationPage.locator('#task-new-name').fill('Auto-stop451 ' + label);
+            await creationPage.locator('#task-new-due').fill('2026-11-01');
+            await nav(creationPage, creationPage.getByRole('button', { name: 'Criar tarefa avulsa', exact: true }));
+            const raw = new URL(creationPage.url()).searchParams.get('task');assert.match(raw||'',/^[1-9]\d*$/);
+            const id = String(STANDALONE_TASK_RADIX + BigInt(raw));
             assert.equal(fixture('task', owner, kind, id).timer_count, 0);
             return id;
         }
 
         function detail(id) {
-            assert(taskCanonicals[id], 'native task canonical id is registered');
-            return base + '/admin/tasks/list_tasks/' + taskCanonicals[id];
+            assert.match(id,/^[1-9]\d*$/,'actual native task canonical id is registered');
+            return base + '/admin/tasks/list_tasks/' + id;
+        }
+
+        async function open(id) {
+            if(page.url()!==detail(id))await openNativeTask(page,base,id);
+            await page.locator('[data-native-task-detail][data-native-task-id="'+id+'"]').waitFor({state:'visible'});
         }
 
         async function start(id) {
-            await openNativeTask(page, base, taskCanonicals[id]);
+            await open(id);
             await toggleNativeTaskTimer(page);
         }
 
         async function stop(id) {
-            await openNativeTask(page, base, taskCanonicals[id]);
+            await open(id);
             await toggleNativeTaskTimer(page);
         }
 
         async function timerFields(id) {
-            await openNativeTask(page, base, taskCanonicals[id]);
+            await open(id);
             const detailNode = page.locator('[data-native-task-detail]').first();
             const attributes = await detailNode.evaluate((node) => ({
                 policy: node.dataset.policyHash,
@@ -144,7 +154,7 @@ const TASK_RADIX = 8589934592n;
             );
             return {
                 ...hiddenFields,
-                task_id: taskCanonicals[id],
+                task_id: id,
                 timer_id: '',
                 note: '',
                 native_request_key: 'a'.repeat(64),
@@ -158,20 +168,21 @@ const TASK_RADIX = 8589934592n;
         const initial = fixture('snapshot');
 
         for (const [label, owner] of Object.entries(setup.owners)) {
-            await select(owner);
+            console.log('TASK_AUTO_STOP_CASE_START',label);await select(owner);
+            await page.goto(base+'/admin/settings?group=task_defaults');const defaults=page.locator('form').filter({has:page.locator('#company-setting-default_task_status')});await defaults.locator('#company-setting-default_task_status').selectOption('todo');await nav(page,defaults.locator('button[type=submit]'));assert.equal(await page.locator('#company-setting-default_task_status').inputValue(),'todo','automatic-stop sources explicitly start A fazer');await page.goto(route);
             const prior = setup.own_timer_stop_policies[owner];
             assert.equal(
                 await page.locator(setting).inputValue(),
                 prior ? prior.auto_stop_tasks_timers_on_new_timer : '0',
             );
             assert.equal(await page.locator(setting + ' option').count(), 2);
-            assert.match(await page.locator('body').innerText(), /Um cronômetro de outra empresa precisa ser encerrado nela/);
+            assert.match(await page.locator('body').innerText(), /Não conclui tarefas nem altera outra empresa/);
             await policy('0');
 
             await page.goto(base + '/admin/clients/client?source=company');
             await page.locator('input[name="company"]').fill('Auto-stop451 client ' + label);
             await nav(page, page.locator('button.only-save'));
-            const client = new URL(page.url()).searchParams.get('client');
+            const client = new URL(page.url()).pathname.split('/').pop();
             assert.match(client || '', /^[1-9]\d*$/);
 
             projects[owner] = await createNativeProject(page, base, {
@@ -189,6 +200,7 @@ const TASK_RADIX = 8589934592n;
             ];
 
             for (const [oldKind, newKind] of pairs) {
+                console.log('TASK_AUTO_STOP_PAIR_START',label,oldKind,newKind);
                 const old = await create(owner, oldKind, label + ' old ' + oldKind + ' ' + newKind);
                 await start(old);
                 const oldBefore = fixture('task', owner, oldKind, old);

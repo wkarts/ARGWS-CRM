@@ -1,9 +1,18 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { formatDate } = require('./native_invoice_driver.cjs');
 
 const PROJECT_RADIX = 4294967296;
 const TASK_RADIX = PROJECT_RADIX * 2;
+
+async function fillNativeDate(page, input, value) {
+    if (value === '') { await input.fill(''); return; }
+    assert.match(value, /^\d{2}\/\d{2}\/\d{4}$/);
+    const [day, month, year] = value.split('/');
+    const format = await page.evaluate(() => window.app.options.date_format);
+    await input.fill(formatDate(year + '-' + month + '-' + day, format));
+}
 
 async function submitAndNavigate(page, button) {
     await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
@@ -16,15 +25,16 @@ async function createNativeProject(page, baseUrl, options) {
         startDate = '19/10/2026',
         dueDate = '19/11/2026',
         description = '',
+        billingType = '1',
     } = options;
     await page.goto(baseUrl + '/admin/projects/project?customer_id=' + encodeURIComponent(client));
     const form = page.locator('#project_form');
     await form.locator('#clientid').selectOption(String(client));
     await form.locator('#name').fill(name);
-    await form.locator('#start_date').fill(startDate);
-    await form.locator('#deadline').fill(dueDate);
+    await fillNativeDate(page, form.locator('#start_date'), startDate);
+    await fillNativeDate(page, form.locator('#deadline'), dueDate);
     if (description !== '') await form.locator('textarea[name="description"]').fill(description);
-    await form.locator('#billing_type').selectOption('1');
+    await form.locator('#billing_type').selectOption(String(billingType));
     if (options.portalTasks === false || options.disabledPortalFlags?.length || options.disabledPortalFeatures?.length) {
         await page.locator('a[href="#tab_settings"]').click();
         for (const flag of options.disabledPortalFlags || []) {
@@ -66,14 +76,22 @@ async function createNativeProjectTask(page, baseUrl, options) {
         priority,
     } = options;
 
-    await page.goto(baseUrl + '/admin/projects/view/' + projectCanonical + '?group=project_tasks');
+    const projectUrl = baseUrl + '/admin/projects/view/' + projectCanonical + '?group=project_tasks';
+    if (!options.reuseProjectPage || page.url() !== projectUrl) await page.goto(projectUrl);
+    else {
+        const detail = page.locator('#task-modal:visible');
+        if (await detail.count()) {
+            await detail.locator('[data-dismiss="modal"]').first().click();
+            await detail.waitFor({ state: 'hidden' });
+        }
+    }
     await page.locator('a[onclick*="new_task_from_relation"]').first().click();
     const form = page.locator('#task-form');
     await form.waitFor({ state: 'attached' });
     await page.locator('#_task_modal').waitFor({ state: 'visible' });
     await form.locator('input[name="name"]').fill(name);
-    await form.locator('input[name="startdate"]').fill(startDate);
-    await form.locator('input[name="duedate"]').fill(dueDate);
+    await fillNativeDate(page, form.locator('input[name="startdate"]'), startDate);
+    await fillNativeDate(page, form.locator('input[name="duedate"]'), dueDate);
     if (description !== '') await form.locator('textarea[name="description"]').fill(description);
     if (assignee !== undefined && assignee !== null) {
         await form.locator('#assignees').selectOption(String(assignee));

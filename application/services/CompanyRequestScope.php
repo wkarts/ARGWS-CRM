@@ -124,6 +124,22 @@ final class CompanyRequestScope
     }
 
     /** Preserve historical primary routes while resolving typed operational records identically. */
+    private static function ownedExpenseRoute($ci,string $class,string $method):bool
+    {
+        if($class!=='expenses'||!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        $argument=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
+        // Native copy protocol must fail in its bounded writer even for malformed
+        // source fields; it must never fall through to the legacy copy model.
+        if($method==='copy'&&$ci->input->post('source_expense_id',false)!==null)return true;
+        if($ci->input->get('source',false)==='company'&&$argument===''&&$ci->input->get('expense',false)===null&&in_array($method,['index','list_expenses','expense','categories','category','copy'],true))return true;
+        foreach([$argument,$ci->input->get('expense',false),$ci->input->post('expense_id',false)] as $id){
+            if(!is_string($id)&&!is_int($id))continue;
+            try{if(NativeCompanyResourceId::decode('expense',$id)['source_kind']==='company_expense')return true;}
+            catch(DomainException $error){}
+        }
+        return false;
+    }
+
     private static function ownedOperationalRoute($ci,string $class,string $method):bool
     {
         if(!in_array($class,['projects','tasks'],true))return false;
@@ -256,7 +272,7 @@ final class CompanyRequestScope
             $sharedOwnedInvoice=$native&&self::$context->isPrimary()&&self::ownedInvoiceRoute($ci,$class,$method);
             $sharedOwnedContract=$native&&self::ownedContractRoute($ci,$class,$method);
             $sharedOwnedClient = $native && self::ownedClientRoute($ci, $class, $method);
-            $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method));
+            $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method)||self::ownedExpenseRoute($ci,$class,$method));
             $sharedOwnedLead = $native && $class === 'leads'
                 && in_array($method, ['index', 'file', 'export'], true);
             // Credit notes already dispatch through the bounded native adapter
