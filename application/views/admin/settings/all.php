@@ -2,6 +2,9 @@
 <?php $isNativeSettings=!empty($native_settings)&&class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor(get_instance()); init_head(); ?>
 <div id="wrapper">
     <div class="content">
+        <?php if($isNativeSettings){$nativeSaved=$this->session->flashdata('native_settings_saved');$nativeContext=CompanyRequestScope::context();if($nativeSaved===['issuer'=>$nativeContext->issuerId(),'actor'=>$nativeContext->staffId(),'group'=>$group['id']??null]){ ?>
+        <div class="alert alert-success" role="status">Definições salvas para esta empresa.</div>
+        <?php }} ?>
         <?php if ($this->session->flashdata('debug')) { ?>
         <div class="alert alert-warning">
             <?= $this->session->flashdata('debug'); ?>

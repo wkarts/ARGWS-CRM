@@ -3,6 +3,12 @@
 <?php
 $esc=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
 $discussion_state=$discussion_state??null;
+$nativeBillingContext=CompanyRequestScope::context();$nativeBillingAcl=new IssuerResourceAccess($this->db,db_prefix());
+$nativeBillingAllowed=static function(array $grants)use($nativeBillingContext,$nativeBillingAcl):bool{foreach($grants as [$feature,$capability])if(!$nativeBillingAcl->can($nativeBillingContext->issuerId(),$nativeBillingContext->staffId(),$feature,$capability))return false;return true;};
+$nativeOwnProject=($native_project_overview['facts']['reference']['source_kind']??null)==='company_project';
+$nativeCanReviewRates=$nativeOwnProject&&$nativeBillingAllowed([['projects','view'],['customers','view'],['invoices','view']]);
+$nativeCanReviewFixed=$nativeOwnProject&&$nativeBillingAllowed([['tasks','view'],['tasks','edit'],['projects','view'],['projects','edit'],['customers','view'],['invoices','view'],['invoices','create']]);
+
 $url=function($suffix='',?string $action=null,$child=null)use($native_project_view,$discussion_state){
     $base='projects/view/'.$native_project_view['canonical_id'];$group=$native_project_view['group'];
     if($action!==null){$thread=$discussion_state['thread']['id']??null;
@@ -30,6 +36,8 @@ $url=function($suffix='',?string $action=null,$child=null)use($native_project_vi
             </div>
             <div><a class="btn btn-default" href="<?php echo admin_url('projects'); ?>"><?php echo _l('back_to_list'); ?></a>
             <?php if($native_project_view['can_create_task']??false){ ?><a class="btn btn-default" href="#" onclick="new_task_from_relation(undefined,'project',<?php echo e($native_project_view['canonical_id']); ?>);return false;"><?php echo _l('new_task'); ?></a><?php } ?>
+            <?php if($nativeCanReviewRates){ ?><a class="btn btn-default" href="<?= e(admin_url('projects/billing_rates?project='.(int)$native_project_overview['facts']['reference']['source_id'])); ?>">Revisar taxa horária do projeto</a><?php } ?>
+            <?php if($nativeCanReviewFixed){ ?><a class="btn btn-default" href="<?= e(admin_url('projects/fixed_billing?project='.(int)$native_project_overview['facts']['reference']['source_id'])); ?>">Revisar faturamento fixo do projeto</a><?php } ?>
             <?php if ($native_project_view['can_edit']) { ?><a class="btn btn-primary" href="<?php echo admin_url('projects/project/'.$native_project_view['canonical_id']); ?>"><?php echo _l('edit_project'); ?></a><?php } ?>
             <?php if(isset($native_project_pin)){echo form_open(admin_url('projects/pin_action/'.$native_project_view['canonical_id']),['class'=>'tw-inline']);echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('project_id',$native_project_view['canonical_id']);echo form_hidden('revision',$native_project_overview['facts']['project']['revision']);echo form_hidden('pin_revision',$native_project_pin['revision']);echo form_hidden('pinned',$native_project_pin['pinned']?'0':'1');echo form_hidden('request_key',bin2hex(random_bytes(32))); ?><button class="btn btn-default" type="submit"><?= $native_project_pin['pinned']?'Desafixar projeto':'Fixar projeto'; ?></button><?php echo form_close();} ?></div>
         </div>
@@ -41,6 +49,7 @@ $url=function($suffix='',?string $action=null,$child=null)use($native_project_vi
     <?php if (is_array($portal_controls)) { ?>
     <div class="panel_s" id="operation-portal-publication"><div class="panel-body">
         <h4 class="tw-font-bold tw-mt-0">Portal do cliente</h4>
+        <?php if ($native_project_view['can_edit']) { ?><p><a href="<?= e(admin_url('projects/portal_rules?project='.(int)$native_project_overview['facts']['project']['id'])); ?>">Regras e publicações de tarefas no portal do cliente</a></p><?php } ?>
         <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização.</p>
         <?php if (!$portal_controls['private_client']) { ?><div class="alert alert-warning">O cadastro não pertence a esta empresa.</div><?php } ?>
         <?php if ($portal_controls['can_contact_edit']) { foreach ($portal_controls['permissions'] as $contact => $permission) { ?>

@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "ca7ff5b01e5a1f9d627d600996ecabde104f3defed2682dbdfea7ad6c8b5dd80",
+    "source_manifest_sha256": "70e52b657905554a21794bd57ea76fb5b11fe8887f2f51514386c0bde40a1034",
     "counts": {
         "modules": 38,
-        "source_files": 4687,
+        "source_files": 4688,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
@@ -572,7 +572,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.3.5",
+            "version": "1.3.6",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -6504,7 +6504,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 431,
-            "source_sha256": "ffe6b0e8b94a6158563c8ea016142ad1e8312c94e2e4d9edc69d93cfbbd76b56",
+            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
             "call": "update_option",
             "expression": "'company_logo' . ($type == 'dark' ? '_dark' : '')",
             "state": "requires_call_site_review"
@@ -6512,7 +6512,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 449,
-            "source_sha256": "ffe6b0e8b94a6158563c8ea016142ad1e8312c94e2e4d9edc69d93cfbbd76b56",
+            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
             "call": "delete_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -6520,7 +6520,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 456,
-            "source_sha256": "ffe6b0e8b94a6158563c8ea016142ad1e8312c94e2e4d9edc69d93cfbbd76b56",
+            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
             "call": "delete_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -11431,7 +11431,7 @@
         },
         {
             "path": "application/controllers/admin/Payments.php",
-            "source_sha256": "88d951a4ae57bebce7b9c8b9504c18136b8e6c0e68fc6994faf0dc27f4aa4f33",
+            "source_sha256": "c63434f14b21713fe6c3684ebbd00eb014e2d14fa6f1c6fd449855d69b2c4755",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11448,52 +11448,52 @@
                 },
                 {
                     "method": "post_refund_manual",
-                    "line": 35,
+                    "line": 39,
                     "visibility": "public"
                 },
                 {
                     "method": "batch_payment_modal",
-                    "line": 45,
+                    "line": 53,
                     "visibility": "public"
                 },
                 {
                     "method": "add_batch_payment",
-                    "line": 55,
+                    "line": 63,
                     "visibility": "public"
                 },
                 {
                     "method": "index",
-                    "line": 76,
+                    "line": 84,
                     "visibility": "public"
                 },
                 {
                     "method": "list_payments",
-                    "line": 82,
+                    "line": 90,
                     "visibility": "public"
                 },
                 {
                     "method": "table",
-                    "line": 95,
+                    "line": 103,
                     "visibility": "public"
                 },
                 {
                     "method": "payment",
-                    "line": 110,
+                    "line": 118,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 168,
+                    "line": 176,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 219,
+                    "line": 227,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 291,
+                    "line": 299,
                     "visibility": "public"
                 }
             ],
@@ -12190,7 +12190,7 @@
         },
         {
             "path": "application/controllers/admin/Settings.php",
-            "source_sha256": "ffe6b0e8b94a6158563c8ea016142ad1e8312c94e2e4d9edc69d93cfbbd76b56",
+            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -16246,7 +16246,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "873d3697bcae7c735a90f0fe59d429f83dfa43c34e2c505aedbdd762fbc2cb5b",
+            "source_sha256": "6145b1e3b0a99f339bb0668adf8477280a273a835ce46bb1290c52d78cf26984",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -27585,7 +27585,7 @@
         {
             "name": "company_task_assignees",
             "state": "not_verified",
-            "reference_count": 1
+            "reference_count": 8
         },
         {
             "name": "company_task_billing_links",
@@ -28845,7 +28845,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 638
+            "reference_count": 640
         },
         {
             "name": "issuer_certificate_audit",
@@ -30015,7 +30015,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 502
+            "reference_count": 503
         },
         {
             "name": "staff_contract",

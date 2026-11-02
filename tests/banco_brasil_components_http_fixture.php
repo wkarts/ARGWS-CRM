@@ -3,7 +3,7 @@
 if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit(2);
 define('BASEPATH',dirname(__DIR__).'/system/');define('APPPATH',dirname(__DIR__).'/application/');define('APP_MODULES_PATH',dirname(__DIR__).'/modules/');
 require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit(2);
-require __DIR__.'/support/BbPdoDatabase.php';require APPPATH.'services/CompanyInvoices.php';require APPPATH.'services/CompanyClients.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleStore.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.php';
+require __DIR__.'/support/BbPdoDatabase.php';require_once APPPATH.'services/CompanyInvoices.php';require_once APPPATH.'services/CompanyClients.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleStore.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.php';
 function db_prefix(){return 'tbl';}function log_message($level,$message){}
 $case=$argv[1]??'';if(!in_array($case,['a','b'],true))exit(2);$pdo=new PDO('mysql:host='.APP_DB_HOSTNAME.';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);
 require __DIR__.'/support/BbHttpNativeRelease.php';$release=bbHttpNativeRelease();

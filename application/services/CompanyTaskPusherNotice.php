@@ -8,7 +8,7 @@ require_once __DIR__.'/CompanyTasks.php';
 final class CompanyTaskPusherNotice
 {
     public function __construct(private $db,private string $p){}
-    public function tables():array{return ['company_tasks','company_projects'];}
+    public function tables():array{return array_merge(['company_tasks','company_projects'],$this->db->table_exists($this->p.'company_task_assignees')?['company_task_assignees']:[]);}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     public function receiver(int $issuer,int $actor):void
     {
@@ -23,6 +23,19 @@ final class CompanyTaskPusherNotice
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge((new CompanyPusherProfile($this->db,$this->p))->tables(),$this->tables()));
         $acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);foreach([['pusher','publish'],['tasks','edit'],['tasks','view'],['projects','view']]as[$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new DomainException('company_pusher_denied');
         $row=$this->rows('SELECT t.id,t.issuer_id,t.project_id,t.assignee_id,t.name,t.description,t.status,t.due_date,t.checklist_json,t.revision,p.revision project_revision,p.status project_status FROM '.$this->p.'company_tasks t JOIN '.$this->p.'company_projects p ON p.id=t.project_id AND p.issuer_id=t.issuer_id WHERE t.issuer_id=? AND t.id=? FOR UPDATE',[$issuer,$task])[0]??null;if(!$row)throw new DomainException('company_pusher_denied');
-        $recipient=(int)$row['assignee_id'];$this->receiver($issuer,$recipient);foreach(['id','issuer_id','project_id','assignee_id','revision','project_revision']as$f)$row[$f]=(int)$row[$f];$row['actor_permissions']=$this->permissionStamp($issuer,$actor);$row['recipient_permissions']=$this->permissionStamp($issuer,$recipient);return ['row'=>$row,'recipient_id'=>$recipient,'source_hash'=>hash('sha256',json_encode($row,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
+        $recipient=(int)$row['assignee_id'];
+        if($this->db->table_exists($this->p.'company_task_assignees')){
+            $assignments=$this->rows('SELECT staff_id,active,revision,origin FROM '.$this->p.'company_task_assignees WHERE issuer_id=? AND task_id=? ORDER BY staff_id FOR UPDATE',[$issuer,$task]);
+            $explicit=array_filter($assignments,fn($assignment)=>$assignment['origin']==='explicit_membership');
+            if($assignments&&($recipient<1||$explicit)){
+                $active=array_values(array_filter($assignments,fn($assignment)=>(int)$assignment['active']===1));
+                // This source supports one recipient. Never select arbitrarily
+                // among several assignees or restore a removed legacy assignee.
+                if(count($active)!==1)throw new DomainException('company_pusher_denied');
+                $recipient=(int)$active[0]['staff_id'];$row['assignee_id']=$recipient;
+                $row['native_assignees_hash']=hash('sha256',json_encode(array_map(fn($assignment)=>['staff_id'=>(int)$assignment['staff_id'],'active'=>(int)$assignment['active'],'revision'=>(int)$assignment['revision'],'origin'=>$assignment['origin']],$assignments),JSON_THROW_ON_ERROR));
+            }
+        }
+        $this->receiver($issuer,$recipient);foreach(['id','issuer_id','project_id','assignee_id','revision','project_revision']as$f)$row[$f]=(int)$row[$f];$row['actor_permissions']=$this->permissionStamp($issuer,$actor);$row['recipient_permissions']=$this->permissionStamp($issuer,$recipient);return ['row'=>$row,'recipient_id'=>$recipient,'source_hash'=>hash('sha256',json_encode($row,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
     }
 }

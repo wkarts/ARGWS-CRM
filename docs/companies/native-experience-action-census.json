@@ -2272,52 +2272,52 @@
                 },
                 {
                     "method": "post_refund_manual",
-                    "line": 35,
+                    "line": 39,
                     "classification": "review_required"
                 },
                 {
                     "method": "batch_payment_modal",
-                    "line": 45,
+                    "line": 53,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_batch_payment",
-                    "line": 55,
+                    "line": 63,
                     "classification": "review_required"
                 },
                 {
                     "method": "index",
-                    "line": 76,
+                    "line": 84,
                     "classification": "review_required"
                 },
                 {
                     "method": "list_payments",
-                    "line": 82,
+                    "line": 90,
                     "classification": "review_required"
                 },
                 {
                     "method": "table",
-                    "line": 95,
+                    "line": 103,
                     "classification": "review_required"
                 },
                 {
                     "method": "payment",
-                    "line": 110,
+                    "line": 118,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 168,
+                    "line": 176,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 219,
+                    "line": 227,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 291,
+                    "line": 299,
                     "classification": "review_required"
                 }
             ]

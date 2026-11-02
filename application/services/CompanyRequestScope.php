@@ -107,12 +107,29 @@ final class CompanyRequestScope
         return !$row||$row['issuer_id']!==null;
     }
 
+    /** Persisted ownership selects the invoice adapter; NULL history stays on the legacy path. */
+    private static function ownedInvoiceRoute($ci,string $class,string $method):bool
+    {
+        if($class!=='invoices'||!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        $id='';
+        $routeId=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment($method==='delete_payment'?4:3):'';
+        if(in_array($method,['index','list_invoices','get_invoice_data_ajax','invoice','pdf','mark_as_cancelled','unmark_as_cancelled','send_to_email','mark_as_sent','record_invoice_payment_ajax','add_note','get_notes','pause_overdue_reminders','resume_overdue_reminders','send_overdue_notice','delete'],true))$id=$routeId;
+        elseif($method==='record_payment')$id=(string)$ci->input->post('invoiceid',false);
+        elseif($method==='delete_payment')$id=$routeId;
+        if(!preg_match('/^[1-9][0-9]*$/D',$id)||!IssuerStorage::fieldExists($ci->db,'issuer_id',db_prefix().'invoices'))return false;
+        $row=IssuerStorage::query($ci->db,'SELECT issuer_id FROM '.db_prefix().'invoices WHERE id=?',[$id])->row_array();
+        // Foreign non-NULL owners also enter the bounded adapter, which denies
+        // them under the selected company instead of hydrating legacy models.
+        return $row!==null&&array_key_exists('issuer_id',$row)&&$row['issuer_id']!==null;
+    }
+
     /** Preserve historical primary routes while resolving typed operational records identically. */
     private static function ownedOperationalRoute($ci,string $class,string $method):bool
     {
         if(!in_array($class,['projects','tasks'],true))return false;
         if(!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
-        if($class==='projects'&&in_array($method,['index','table','staff_projects'],true))return true;
+        if($class==='projects'&&$method==='staff_projects')return !self::$context->isPrimary();
+        if($class==='projects'&&in_array($method,['index','table'],true))return true;
         if($class==='tasks'&&in_array($method,['index','list_tasks','table','kanban','switch_kanban','update_order','tasks_kanban_load_more'],true))return true;
         $argument=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
         if($class==='projects'){
@@ -169,11 +186,12 @@ final class CompanyRequestScope
         $admin = trim((string) $ci->router->fetch_directory(), '/') === 'admin';
         $native = $admin && !$module;
         $companyScopedBbRoute = self::companyBbRoute($ci);
+        $specializedNativeRoute = ($native && (($class === 'projects' && in_array($method,['extras','portal_rules','billing_rates','fixed_billing','copies','time_billing'],true)) || ($class === 'tasks' && in_array($method,['copies','recurring','standalone','billing','time_batches'],true)) || ($class === 'tickets' && in_array($method,['ai','connect','connect_api'],true)) || ($class === 'invoices' && $method === 'standalone_billing') || ($class === 'expenses' && $method === 'purchases') || ($class === 'settings' && in_array($method,['pusher','asaas','imports','efi','microsoft_mail_oauth','google_mail_oauth','api_tokens'],true)) || ($class === 'staff' && in_array($method,['hr','hr_file','hr_pdf','hr_export','hr_mine','hr_mine_file'],true))))
+            || $companyScopedBbRoute;
         self::$isolated = ($native && $class === 'issuers' && in_array($method, ['lookup', 'select', 'onboarding'], true))
             || ($native && $class === 'clients' && in_array($method,['index','table','client','form_contact','contacts','all_contacts','consents','contact_email_exists','change_contact_status','lookup','check_duplicate_customer_name','change_client_status','delete_contact','confirm_registration','delete_contact_profile_image','upload_attachment','delete_attachment','add_external_attachment','update_file_share_visibility','assign_admins','delete_customer_admin','save_longitude_and_latitude','get_vault_entry','vault_entry_create','vault_entry_update','vault_entry_delete','vault_encrypt_password','share_identity','contact_invoice_access','groups','group','delete_group','import','get_customer_billing_and_shipping_details','contact_profile_image'],true))
             || ($native && $class === 'leads' && in_array($method,['index','file','export'],true))
-            || ($native && (($class === 'projects' && in_array($method,['extras','portal_rules','billing_rates','fixed_billing','copies','time_billing'],true)) || ($class === 'tasks' && in_array($method,['copies','recurring','standalone','billing','time_batches'],true)) || ($class === 'tickets' && in_array($method,['ai','connect','connect_api'],true)) || ($class === 'invoices' && $method === 'standalone_billing') || ($class === 'expenses' && $method === 'purchases') || ($class === 'settings' && in_array($method,['pusher','asaas','imports','efi','microsoft_mail_oauth','google_mail_oauth','api_tokens'],true)) || ($class === 'staff' && in_array($method,['hr','hr_file','hr_pdf','hr_export','hr_mine','hr_mine_file'],true))))
-            || $companyScopedBbRoute;
+            || $specializedNativeRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {
             // Only native, non-module admin routes may enter the recovery gate.
             // Company selection and every module route remain unavailable until
@@ -215,14 +233,27 @@ final class CompanyRequestScope
             // It is a shared native action for the principal and named companies alike;
             // the retired parallel invoice-recurring surface is deliberately not admitted.
             $sharedInvoiceRecurring = $native && $class === 'invoices' && $method === 'recurring';
+            $sharedInvoiceDrafts = $native && $class === 'invoices' && $method === 'drafts';
             // Settings uses the same bounded, issuer-owned forms for the
-            // principal and named companies, including asset actions.
+            // principal and named companies, including asset actions and the
+            // issuer-owned Google/Microsoft mail authorization forms.
             $sharedSettings = $native && $class === 'settings'
-                && in_array($method,['index','remove_company_logo','remove_signature_image','remove_fv','company_asset','delete_tag'],true);
+                && in_array($method,['index','remove_company_logo','remove_signature_image','remove_fv','company_asset','delete_tag','google_mail_oauth','microsoft_mail_oauth'],true);
+            // Global gateway profiles retain their original installation-company
+            // renderer; named companies still cannot enter this global form.
+            if ($sharedSettings && $method === 'index' && self::$context->isPrimary()
+                && $ci->input->get('group', false) === 'payment_gateways') {
+                $sharedSettings = false;
+            }
             // Customer import/export uses one owned writer and the original
             // Clients route in principal and named companies alike.
             $sharedClientImport = $native && $class === 'clients' && $method === 'import';
             $sharedClientLookup = $native && $class === 'clients' && $method === 'lookup';
+            // The original Tickets adapters compose historical primary tickets
+            // and issuer-owned tickets under the same finite routes and ACL.
+            $sharedTicketTools = $native && $class === 'tickets'
+                && NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true)));
+            $sharedOwnedInvoice=$native&&self::$context->isPrimary()&&self::ownedInvoiceRoute($ci,$class,$method);
             $sharedOwnedContract=$native&&self::ownedContractRoute($ci,$class,$method);
             $sharedOwnedClient = $native && self::ownedClientRoute($ci, $class, $method);
             $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method));
@@ -244,7 +275,7 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $ownedStaffDownload) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
@@ -252,6 +283,7 @@ final class CompanyRequestScope
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if($sharedInvoiceRecurring&&!self::$nativePresentation)self::deny($ci,'native_invoice_recurring_method_invalid',405);
+            if($sharedInvoiceDrafts&&!self::$nativePresentation)self::deny($ci,'native_invoice_drafts_method_invalid',405);
             if($sharedSettings&&!self::$nativePresentation)self::deny($ci,'native_settings_method_invalid',405);
             if($sharedClientImport&&!self::$nativePresentation)self::deny($ci,'native_client_import_method_invalid',405);
             if($sharedClientLookup&&!self::$nativePresentation)self::deny($ci,'native_client_lookup_method_invalid',405);
@@ -376,10 +408,30 @@ final class CompanyRequestScope
         self::$submittedToken = null;
         self::$submittedNativeCsrf = null;
     }
+    /** Shared by middleware and controller ACL denials; never exchanges protocol credentials. */
+    public static function scrubDeniedMailCallback($ci): void
+    {
+        $callbackMethod = strtolower((string) $ci->router->fetch_method());
+        if (trim((string) $ci->router->fetch_directory(), '/') === (defined('ADMIN_URI') ? ADMIN_URI : 'admin')
+            && (string) $ci->router->fetch_module() === ''
+            && strtolower((string) $ci->router->fetch_class()) === 'settings'
+            && in_array($callbackMethod, ['google_mail_oauth', 'microsoft_mail_oauth'], true)
+            && in_array($ci->input->method(true), ['GET', 'HEAD'], true)
+            && ($ci->input->get('state', false) !== null || $ci->input->get('code', false) !== null || $ci->input->get('error', false) !== null)) {
+            self::finish();
+            // Denial never exchanges a code or hydrates the application. Remove
+            // protocol query material even when the actor/context was revoked.
+            $ci->output->set_header('Cache-Control: no-store')->set_header('Referrer-Policy: no-referrer');
+            $ci->load->helper('url');
+            redirect(self::adminUrl($ci, 'settings/' . $callbackMethod), 'location', 303);
+            throw new CompanyRequestDenied('company_oauth_callback_denied', 403);
+        }
+    }
     private static function deny($ci, string $reason, int $status): void
     {
         if(PHP_SAPI!=='cli'&&strtolower((string)$ci->router->fetch_class())==='utilities'&&in_array(strtolower((string)$ci->router->fetch_method()),['calendar','get_calendar_data','view_event','delete_event'],true))error_log('Native calendar boundary rejected ['.(in_array($reason,['company_context_mismatch','native_calendar_method_invalid','native_company_csrf_invalid','native_company_csrf_mismatch','company_context_unavailable','company_context_route_not_isolated'],true)?$reason:'unclassified_boundary').']; no request values logged.');
         self::finish();
+        self::scrubDeniedMailCallback($ci);
         $message = $reason === 'company_context_mismatch'
             ? 'A empresa desta aba mudou. Recarregue a página antes de enviar novamente. Nenhuma operação foi executada.'
             : 'Esta operação não está disponível no contexto de empresa atual. Selecione uma empresa autorizada.';

@@ -47,6 +47,22 @@ async function preview(page, url, id) {
   assert.equal(response.status(),200,'original invoice preview is authorized');
   await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});
 }
+async function cancel(page,url,id) {
+  await preview(page,url,id);
+  const endpoint='/admin/invoices/mark_as_cancelled/'+id;
+  const action=page.locator('a[href="'+url+endpoint+'"]');
+  assert.equal(await action.count(),1,'original preview exposes its cancellation action');
+  if(!await action.isVisible())await action.locator('xpath=ancestor::div[contains(@class,"dropdown") or contains(@class,"btn-group")][1]').locator('.dropdown-toggle').first().click();
+  const [response]=await Promise.all([
+    page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),
+    page.waitForNavigation({waitUntil:'domcontentloaded'}),action.click(),
+  ]);
+  assert.equal(response.status(),200,'original cancellation POST is authorized');
+  await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});
+  assert.equal(new URL(page.url()).pathname,'/admin/invoices/list_invoices/'+id,'cancellation returns to the same persisted invoice');
+  assert.equal(await page.locator('a[href="'+url+'/admin/invoices/unmark_as_cancelled/'+id+'"]').count(),1,'server-rendered original preview confirms the cancelled lifecycle');
+  return response.request();
+}
 async function createForm(page,url,client) {
   const response=await page.goto(url+'/admin/invoices/invoice?customer_id='+client);
   assert.equal(response.status(),200,'original invoice create form opens');
@@ -78,6 +94,10 @@ async function assertRedirect(page,response,url) {
   // by replaying the exact idempotent POST with redirects disabled.
   const request=response.request();
   const direct=await page.context().request.post(request.url(),{data:request.postDataBuffer(),headers:{'Content-Type':request.headers()['content-type']},maxRedirects:0});
+  if(direct.status()!==303){
+    const safeBody=body=>body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ').replace(/<[^>]*>/g,' ').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[redacted]').replace(/[A-Za-z0-9_-]{24,}/g,'[redacted]').replace(/\s+/g,' ').trim().slice(0,700);
+    console.error('Original invoice POST diagnostics:',JSON.stringify({path:new URL(request.url()).pathname,original:{status:response.status(),body:safeBody(await response.text().catch(()=>''))},replay:{status:direct.status(),body:safeBody(await direct.text())}}));
+  }
   assert.equal(direct.status(),303,'original POST and durable replay use Post/Redirect/Get');
   assert.match(new URL(direct.headers().location,url).pathname,/^\/admin\/invoices\/list_invoices\/[1-9][0-9]*$/,'redirect targets the persisted original invoice');
   if(response.status()!==303){assert.equal(response.fromServiceWorker(),true,'only the existing PWA worker may expose the followed document');assert.equal(response.status(),200,'worker exposes a successful final document');}
@@ -174,4 +194,4 @@ async function payment(page,url,id,amount,reference,note='Synthetic evidence'){
   const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/invoices/record_payment'),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('button[type=submit]').click()]);
   await assertRedirect(page,response,url);await page.locator('#invoice .panel_s').first().waitFor({state:'visible'});return response.request();
 }
-module.exports={picker,security,postRecorded,preview,createForm,line,save,edit,assertRedirect,formatDate,date,payment};
+module.exports={picker,security,postRecorded,preview,cancel,createForm,line,save,edit,assertRedirect,formatDate,date,payment};

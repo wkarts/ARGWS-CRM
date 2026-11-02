@@ -502,7 +502,8 @@ class Banco_brasil extends AdminController
     }
     private function denied():void
     {
-        if(function_exists('access_denied'))access_denied('banco_brasil');
+        $isolated=class_exists('CompanyRequestScope',false)&&method_exists('CompanyRequestScope','sealedFor')&&\CompanyRequestScope::sealedFor($this);
+        if(!$isolated&&function_exists('access_denied'))access_denied('banco_brasil');
         show_error('Acesso negado para este recurso da empresa.',403);throw new RuntimeException('bb_access_denied');
     }
     private function allowed(int $issuer,string $permission):bool

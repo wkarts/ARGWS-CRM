@@ -27,6 +27,9 @@ async function login(page, email, password) {
   await navigate(page, page.locator('button[type=submit]'));
 }
 async function navigate(page, button) {
+  assert.equal(await button.count(),1,'one native navigation control required');
+  const invalid=await button.evaluate(element=>element.form?Array.from(element.form.elements).filter(input=>input.willValidate&&!input.validity.valid).map(input=>input.name):[]);
+  assert.deepEqual(invalid,[],'native form fields must satisfy browser validation before submission');
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
 }
 async function hidden(page) {
@@ -72,8 +75,9 @@ async function next(page) { await navigate(page, page.locator('section form butt
   // CPF is a source field of the invoice snapshot, never a remittance form override.
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");
   await page.goto(url+'/admin/clients/client/'+client);
-  const vat=page.locator('#edit_vat');await vat.fill('11144477735');
-  await navigate(page,vat.locator('xpath=ancestor::form').locator('button[type=submit]'));
+  const vat=page.locator('form.client-form input[name=vat]');await vat.fill('11144477735');
+  await navigate(page,page.locator('#profile-save-section .only-save'));
+  assert.equal(sql('SELECT vat FROM tblclients WHERE userid='+client),'11144477735','payer CPF persists through the native customer profile');
   await native.createForm(page,url,client);
   await native.date(page,'#date',new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await native.line(page,{description:'SYNTHETIC BB SERVICE',qty:'1',rate:'100.00'});
@@ -91,7 +95,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.locator('input[name="contract[interest_exempt]"]').check();await page.locator('input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
   const nativeContract=page.locator('form').filter({has:page.locator('#bb-contract-beneficiary_name')});
   assert.equal(await nativeContract.count(),1);
-  await navigate(page,nativeContract.getByRole('button',{name:'Registrar declaração do operador',exact:true}));
+  await navigate(page,nativeContract.getByRole('button',{name:'Registrar declaração do operador',exact:true,includeHidden:true}));
   await page.waitForFunction(()=>document.querySelector('#bb-remittance').getAttribute('aria-hidden')==='false');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_contract_declarations WHERE issuer_id='+a),'1');
   for(const [key,value]of Object.entries({invoice_id:invoice,payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA'}))await page.locator('#bb-title-'+key).fill(value);
@@ -163,7 +167,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();
   await page.locator('#bb_account_id').fill('001:00452-3:000000223873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('7654321');
   await page.locator('input[name=variation]').fill('019');await navigate(page,page.locator('input[name=variation]').locator('xpath=ancestor::form').locator('button'));
-  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
+  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('#bb-tab-auth').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
   for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC B API CONTRACT'}))await page.locator('#bb-api-'+key).fill(value);
   await page.locator('#bb-api-interest-policy').selectOption('exempt');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
   const profileB=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+b);await page.locator('#bb-api-credential-profile').selectOption(profileB);

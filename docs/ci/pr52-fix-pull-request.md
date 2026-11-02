@@ -1,102 +1,61 @@
-# Pull Request — complemento da #52
+# Complemento da PR #52
 
-**Branch:** `fix/native-company-experience` (desenvolvimento local em `fix/pr52-invoice-validation`).
+**Branch:** `fix/native-company-experience`.
 
-**Título:** `fix(ci): corrigir formato PDF legado e dividir smoke em oito stacks isoladas`
+**Título:** `fix(ci): corrigir falhas reais do smoke e reduzir preparação e validações repetidas`
 
-**Descrição / contexto / objetivo:** A última falha de dimensão vinha de exigir um formato congelado no renderer legado, que lê a opção global atual. A conferência agora exige o formato atual exato no legado e o snapshot imutável nos documentos nativos. O smoke de 101 chamadas Node é distribuído em oito stacks isoladas, com cobertura completa, dependências explícitas e gate agregado obrigatório. Detalhes em [standalone-browser-groups.md](standalone-browser-groups.md). Histórico anterior: O validador remoto permitia números pertencentes a outra empresa, mas o POST legado os rejeitava e o navegador procurava por minutos uma fatura inexistente. Alinhar criação/edição ao escopo legado e reduzir preparação repetida de toda a rodada, preservando cobertura.
+A PR ficava mais de uma hora validando e parava em erros sucessivos, deixando cenários posteriores sem diagnóstico. Esta alteração corrige a divergência da numeração legada e a expectativa incorreta de formato PDF; distribui os 101 comandos de navegador em oito bancos isolados; reutiliza ferramentas por digest/cache; e corrige as falhas adicionais reveladas pelos oito grupos. O gate agregado exige todos os grupos e as matrizes de domínio continuam obrigatórias.
 
-## Escopo e decisões
+## Alterações e motivos
 
-Nova etapa: monitor preserva os grupos diagnósticos do commit atual depois da primeira falha, mantendo a reprovação e o cancelamento de commits antigos; anotações públicas compactas retêm o stack trace. `settings_document_pdf_browser.cjs`, teste rápido `legacy_invoice_pdf_format.php`, manifest/runner de grupos e casos negativos, orquestração em `deployment-integrity.yml`, artefatos por grupo e Rust/Compose paralelo. Imagem construída uma vez e validada pela árvore em cada worker. Nenhuma alteração de código da aplicação nesta etapa.
+- Criação/edição de fatura legada usam o mesmo escopo de duplicidade do validador remoto. O driver comprova um ID novo do cliente/número exatos, sem repetir o POST legado nem aceitar uma linha antiga. Retirados waits fixos e fallbacks longos.
+- PDF legado exige a opção global atual; PDF nativo exige seu snapshot imutável. Dimensões continuam conferidas nos bytes reais, sem alargar tolerâncias.
+- Rotas exatas da API do núcleo têm precedência sobre o wildcard legado, com formato de argumentos limitado e autenticação preservada.
+- Asaas carrega a criptografia no contexto isolado. O formulário global de gateways permanece administrativo e exclusivo da principal. Google/Microsoft, chamados e os formulários nativos delimitados compartilham a apresentação autorizada da principal; callbacks negados removem protocolo da URL por 303 sem trocar códigos.
+- Restaurado o link das regras de publicação de projetos. O leitor do portal respeita atribuições nativas ativas, gates de equipe e ACL, incluindo remoções. O tab da equipe principal conserva o renderer legado.
+- Edição de faturas preserva o algoritmo registrado na emissão e os impostos históricos da própria linha; novos impostos continuam sujeitos ao catálogo. A criação legada da principal e as linhas `issuer_id IS NULL` preservam seu caminho anterior. Confirmações de Settings usam mensagem vinculada a empresa, ator e grupo.
+- Arquivos de chamados resolvem o status nativo pelo catálogo/projeção existente; fechado continua sem permitir upload. Rotas de revisão pós-devolução rejeitam sufixos desconhecidos.
+- Banco do Brasil corrige o fechamento excedente da view e a recusa isolada que chamava helper global. Versão 1.3.6 e nova migration nativa 136 NOOP.
+- Fixtures usam `require_once` para dependências transitivas. Navegadores usam os controles, campos CSRF, previews, PDFs e IDs tipados/raw atuais, preservando verificações financeiras e de segurança.
 
-Duas consultas no controller; driver de testes; regressões rápidas; caches de ferramentas/compilação; compilação paralela das mesmas extensões; retirada de job sem teste; evidências de tempos e auditoria histórica. Fora do escopo: refatoração da aplicação, paralelização no mesmo banco, exclusão de testes ou publicação/merge. Detalhes e fontes em [pr52-validation.md](pr52-validation.md).
+## CI, GHCR e desempenho
 
-## Alterações e arquivos
+A imagem do aplicativo é construída uma vez, exportada como artefato e conferida pela árvore Git em cada worker. Cada grupo provisiona seu banco; não há compartilhamento de snapshots nem paralelismo de testes no mesmo banco. Rust/Compose executam em paralelo. Configurações não repetem sete navegadores que criavam fixtures desnecessários; publicação/escrita de tarefas tem um único grupo dono. Todos os 101 comandos mantêm cobertura e ordem por grupo, com verificação de conclusão no shell.
 
-Modificados: `application/controllers/admin/Invoices.php`; workflows de CI em `.github/workflows`; `tests/helpers/native_invoice_driver.cjs`; os dois scripts de smoke; contrato de shards; inventários gerados em `docs/companies` e `docs/issuer-isolation-inventory.json`.
+Os 60 comandos SQL MySQL e os 72 MariaDB do Banco do Brasil são distribuídos em quatro bancos isolados por variante, com PHP/extensões e serviços originais. O verificador da cadeia e seu teste de checkout permanecem no mesmo worker e na mesma ordem. Os checks obrigatórios `mysql` e `mariadb` agregam os quatro comprovantes do commit atual e reprovam cobertura incompleta, falha ou cancelamento.
 
-Adicionados: `tests/legacy_invoice_number_scope.php`, `tests/helpers/persisted_invoice_target.cjs`, `tests/persisted_invoice_target.test.cjs`, `tests/ci/test_ci_runtime_reuse.py` e documentação/auditoria em `docs/ci`.
+Sete workflows adicionais reutilizam as bases GHCR PHP 8.1/8.5 existentes por digest. Bases só são reconstruídas quando os inputs mudam ou há atualização manual explícita; o smoke das ferramentas sempre executa. Caches npm/Chromium/Rust/Buildx e compilação paralela das mesmas extensões reduzem preparação. Removido apenas o job `registry-plan`, que imprimia mensagem sem executar teste; seu preflight e oito shards permanecem.
 
-Removidos: nenhum arquivo. O job `registry-plan` não executava testes e foi removido do caminho crítico; seu preflight e os oito shards permanecem obrigatórios.
+O monitor mantém os grupos de diagnóstico do commit atual após a primeira falha e cancela trabalho obsoleto. Stack traces compactos ficam acessíveis em anotações; logs e tempos por teste permanecem nos artefatos. Ganho global só pode ser declarado após aprovação integral do commit final: a rodada de diagnóstico ainda falhou.
 
-## Banco de dados
+## Banco, contratos e compatibilidade
 
-Sem DDL, migration nova ou alteração de dados. Consultas de duplicidade agora exigem `issuer_id IS NULL` quando o schema existe; compatibilidade anterior à migration mantida. A prova de persistência lê somente o banco descartável.
+Sem DDL ou migração de dados nesta correção. A migration 136 é NOOP e preserva todas as anteriores. Núcleo 4.8.4 e passos 474–484 já existentes nesta mesma PR são mantidos em relação à main 473. Sem dependências da aplicação, secrets ou endpoints externos novos. Contexto, CSRF, permissões, retries, snapshots e isolamento A/B/principal continuam verificados. Sem operação bancária/SMTP real ou homologação financeira.
 
-## APIs, contratos e integrações
+## Validação
 
-Métodos, rotas, formulários e resposta PRG preservados. Criação/edição principal deixam de conflitar com numeração de empresas nomeadas; duplicidades no legado continuam bloqueadas. Sem chamadas a bancos/SMTP externos.
+- 71 testes Python dos contratos de CI e 19 testes Node direcionados aprovados; manifest confere 101 invocações e oito grupos.
+- Novos contratos rápidos: 12 cenários de numeração, quatro de formato PDF, 47 de roteamento API, 45 de seleção do leitor por origem persistida e 21 de callback negado.
+- MySQL real: 110 checks do leitor do portal, 133 de arquivos, 250 de subrecursos operacionais, 228 de tracking bancário até 136.
+- Chromium/MySQL direcionados aprovados: relatórios/API; Google/portal/política de arquivos; publicação e escrita de tarefas; arquivos operacionais inclusive rejeição de upload em chamado fechado; vendas e conversão com PDF/impostos; Asaas, ciclo pós-devolução A/B, IA A/B/principal e origem/componentes/reversão bancários.
+- Bases GHCR reais PHP 8.1/8.5: Chromium, numeração, 4.023 checks de recorrências, 33 de idioma, 88 do painel e quatro testes de persistência passaram em ambas.
+- Quatro inventários gerados são reconciliados e conferidos em conjunto antes do push, preservando a classificação de prontidão operacional.
 
-## Dependências, configuração e ambiente
+Execuções direcionadas não equivalem ao smoke completo. O grupo de provedores concluiu os 18 comandos em instalação limpa, com as provas TLS originais. Os 14 alvos bancários passaram em execuções direcionadas. Marcos, horas, Gantt, arquivos do portal e preferências de suporte passaram em execuções completas dos respectivos navegadores. Faturamento de tarefas comprovou edição histórica para 55,11 e cancelamento, mas a execução direcionada foi interrompida no helper após a navegação; a leitura da resposta foi antecipada. O cenário completo de faturamento e o CI do commit final permanecem obrigatórios. Evidências e limites em [pr52-validation.md](pr52-validation.md); arquitetura e reprodução em [standalone-browser-groups.md](standalone-browser-groups.md).
 
-Sem novas dependências da aplicação. Sete workflows adicionais usam as bases PHP 8.1/8.5 já publicadas por digest; o workflow da base só recompila por mudança de inputs ou atualização manual explícita. Actions de cache/Buildx já usados no repositório; mesma toolchain, lockfiles, matrizes PHP e bancos. Nova flag de teste `ARGWS_SMOKE_PREBUILT_IMAGE=1`: exige imagem local com label da árvore Git exata. Sem flag, mantém build local padrão. Sem novos secrets.
+## Auditoria histórica
 
-## Segurança e privacidade
+A coleta diária encontrou **7.506 registros de workflows**, de 25/10/2026 19:43:59 UTC até 02/11/2026 07:19 UTC. São registros de workflows, não testes ou minutos faturados. PR aberta em 25/10 às 21:02:18 UTC. Fontes e contagem por dia em [pr52-validation-audit.json](pr52-validation-audit.json).
 
-Sem credenciais nos argumentos SQL ou no relatório. Cache não substitui teste nem autoriza publicar imagem. Driver não repete o POST legado e não aceita ID antigo/de outra empresa como comprovação. Caches não contêm snapshots de banco de produção.
+## Riscos, rollback e entrega
 
-## Desempenho e observabilidade
+Filas, cache frio e capacidade dos runners variam; não há promessa de duração fixa. Cada banco independente tem custo comum explícito. Reverter estes commits desfaz a correção; caches são descartáveis e a migration 136 não modifica dados. Atualização apenas da PR existente; merge, release e implantação permanecem fora desta entrega.
 
-Removidos waits fixos de dez segundos por save e sucessivos fallbacks de 90 segundos; cache de camadas/npm/Chromium/Rust; extensões PHP compiladas com os mesmos alvos em paralelo; removida uma alocação serial sem teste. Logs `BROWSER_START`/`BROWSER_END` registram duração e saída por comando. Ganho global ainda não medido no CI remoto.
-
-## Testes implementados
-
-Novos: quatro cenários de formato legado atual versus snapshot nativo; 101 invocações com dono único; oito execuções simuladas usando os blocos reais do shell; ordem, dependências, falhas propagadas, execução incompleta, modo Node sem banco e gate obrigatório rejeitando falha/cancelamento/skip.
-
-12 cenários do controller: criação/edição, número em empresa nomeada, duplicidade legada, rascunho, próprio ID, ano e schema anterior. Quatro testes Node de identidade exata/ambiguidade/entrada/banco indisponível. Três contratos Python para imagem incorreta, cache sem omitir execução e gate sem job vazio.
-
-## Testes executados
-
-Etapa atual: 57 testes Python de CI aprovados; testes de ambiente/provisionamento/empacotamento; quatro cenários dos renderers em PHP 8.1/8.5; parse YAML, sintaxe JS/shell e quatro inventários. Nenhum entrypoint anterior removido. Execução real dos oito grupos ainda precisa concluir no CI do commit final.
-
-- Teste PHP com doubles contra código anterior: falha reproduzida no caso `named`; contra código corrigido em PHP 8.3: 12 cenários aprovados.
-- `python3 -m unittest discover -s tests/ci -p 'test_*.py'`: 48 aprovados.
-- `node --test tests/ci_preflight_order.test.cjs tests/persisted_invoice_target.test.cjs tests/native_invoice_transport.test.cjs`: 19 aprovados.
-- `python3 -m unittest tests/test_ci_validation_base.py tests/test_docker_provisioning.py tests/test_issuer_browser_environment.py tests/test_pr_validation_round.py tests/test_company_boundary_inventory.py`: 39 aprovados.
-- Parse YAML, sintaxe PHP/JS/shell e comparação dos entrypoints anteriores/atuais: sem comandos de teste removidos.
-
-Também executados após o pull das bases reais GHCR, em PHP 8.1 e 8.5, sem rede: smoke Chromium; 12 cenários do controller; 4.023 checks de datas recorrentes; 33 de idioma; 88 do painel; quatro testes Node de persistência. Ambos aprovados.
-
-## Testes recomendados / pendentes
-
-Smoke HTTP completo em MySQL/Chromium e matrizes remotas do commit final; comparar execução com cache frio/quente. Sem alegação de redução medida ou CI completo aprovado neste ambiente.
-
-## Validação manual
-
-Na empresa nomeada, criar fatura com número N. Na principal, criar fatura legada N no mesmo ano: deve salvar e abrir o ID novo. Repetir N no legado: deve rejeitar. Editar o próprio número sem mudança: deve permitir. No CI, imagem de árvore divergente deve falhar antes de provisionar; cache hit não deve eliminar testes.
-
-## Compatibilidade, impactos, riscos e mitigação
-
-Sem breaking changes previstos. Caches frios e variação dos runners impedem prometer duração fixa. A prova com doubles não substitui SQL/navegador. Workflows preservam dependências de sucesso, matrizes e fixtures isolados; ordem dos testes de navegador preservada.
-
-## Deploy
-
-Atualizar a PR #52 e aguardar checks do commit final. Esta alteração não autoriza merge, release ou implantação.
-
-## Rollback
-
-Reverter o commit desta correção. Os caches são descartáveis; o smoke mantém build padrão. Sem rollback de dados.
-
-## Build, release e distribuição
-
-Imagem de smoke carregada apenas localmente, `push: false`. A PR #52 já carrega os incrementos nativos 474–484 em relação à main 473; esta correção permanece na mesma PR e não altera migrations históricas. Nenhuma tag/release nova criada.
-
-## Documentação
-
-Auditoria com contagens diárias não truncadas e links de fontes públicas, limitações, causa reproduzida e validações pendentes.
-
-## Checklist
-
-- [x] Causa reproduzida e corrigida no POST.
-- [x] Duplicidade real, ano, rascunho e próprio ID preservados.
-- [x] Entry points de testes preservados; matrizes mantidas.
-- [x] Testes direcionados aprovados; inventários regenerados.
+- [x] Causas reproduzidas; cobertura e matrizes preservadas.
+- [x] Histórico de execuções e limites documentados.
 - [ ] CI completo do commit final aprovado.
-- [ ] Redução global medida com cache frio/quente.
+- [ ] Ganho global medido em rodada aprovada.
 
-**Commit:** `fix(ci): align legacy invoice numbers and reuse validation tooling`.
+Pusher: a origem privada resolve a atribuição nativa explícita de um único responsável, preservando o marcador armazenado e as atribuições legadas. Remoção, ambiguidade e troca de época vetam o envio; novos casos PDO exercitam esses limites. Carregamentos de classes em fixtures/bootstraps HTTP são idempotentes, sem excluir cenários ou assertivas.
 
-**Merge sugerido:** manter estratégia já adotada pela PR #52, após checks e autorização.
-
-**Versão:** núcleo 4.8.4 já previsto pela PR; sem bump adicional nesta correção da mesma PR.
+Regressões novas: formulário e writer completos com 236 checks SQLite e 232 MySQL; contexto/bootstrap com 132; Pusher com 35 adicionais em cada banco sobre os 78 básicos; portal com 110 checks MySQL. O teste de impostos cobre preservação, retry, falsificação de nome/taxa/linha, nova linha sem autorização de catálogo, empresa estrangeira, algoritmo forjado e proteção do legado NULL.

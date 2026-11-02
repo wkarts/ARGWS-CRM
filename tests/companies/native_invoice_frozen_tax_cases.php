@@ -1,0 +1,22 @@
+<?php
+/** Included by the real original-form writer fixture; no catalogue grants or copied tax rows. */
+$historyPayload=$draftInput;$historyPayload['items']=[['description'=>'Preserved billing tax','qty'=>'1.00','rate'=>'100.00','taxes'=>[['name'=>'Billing historical tax','rate'=>'5.00']]]];
+$historyWriter=new CompanyInvoices($db,$p);$historyInvoice=$historyWriter->create($a,7,$historyPayload,hash('sha256','frozen-source-invoice'));
+$historyRow=$db->query('SELECT * FROM '.$p.'invoices WHERE id=?',[$historyInvoice])->row_array();$historyLine=$historyWriter->previewItems($a,7,$historyInvoice)[0];
+$historyWire=$wire;unset($historyWire['newitems']);$historyWire['items']=['1'=>['itemid'=>(string)$historyLine['id'],'order'=>'1','description'=>'Preserved billing tax','long_description'=>'','qty'=>'1','rate'=>'200','unit'=>'','taxname'=>['Billing historical tax|5.0000']]];
+$historyWire['_native_invoice_id']=(string)$historyInvoice;$historyWire['merge_current_invoice']=(string)$historyInvoice;$historyWire['isedit']='true';$historyWire['number']=(string)$historyRow['number'];$historyWire['_native_invoice_revision']=$historyWriter->revision($a,7,$historyInvoice);$historyWire['_native_invoice_tags_revision']=(new NativeCompanyResourceTags($db,$p))->read($a,7,'invoice',$historyInvoice)['revision'];$historyWire['_native_invoice_request_key']=hash('sha256','preserve-frozen-tax-edit');$historyWire['discount_type']=$historyRow['discount_type'];$historyWire['subtotal']='200.00';$historyWire['total']='210.00';
+$historyReceipt=$form->update($a,7,$historyInvoice,$historyWire);
+essentialCheck(CompanyInvoiceCalculationContract::options($db,$p,$a,7,$historyInvoice)===[],'edit preserves the attested historical calculation contract instead of adopting the new-form algorithm');
+essentialCheck($historyWriter->document($a,7,$historyInvoice)->data()['totals']['total']==='210.00','real form edits rate while retaining its own historical tax absent from catalogue');
+essentialCheck($historyWriter->previewItems($a,7,$historyInvoice)[0]['taxes']===$historyLine['taxes'],'edit preserves the exact frozen tax name/rate');
+essentialCheck($form->update($a,7,$historyInvoice,$historyWire)===$historyReceipt,'same original issued edit and tax snapshot remain durably retryable');
+$changed=$historyWire;$changed['_native_invoice_revision']=$historyWriter->revision($a,7,$historyInvoice);$changed['_native_invoice_tags_revision']=$historyReceipt['result']['tags_revision'];$changed['_native_invoice_request_key']=hash('sha256','forged-frozen-tax-rate');$changed['items']['1']['taxname']=['Billing historical tax|6.0000'];$changed['total']='212.00';
+essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$changed),'company_catalog_invalid_tax_selection','historical name cannot authorize an invented rate');
+$changed['items']['1']['taxname']=['Foreign invented tax|5.0000'];$changed['total']='210.00';essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$changed),'company_catalog_invalid_tax_selection','historical line cannot authorize another name');
+$changed['items']['1']['taxname']=['Billing historical tax|5.0000'];$changed['items']['1']['itemid']=(string)($historyLine['id']+1000000);essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$changed),'company_catalog_invalid_tax_selection','unowned line ID cannot borrow a frozen tax');
+$changed['items']=[];$changed['newitems']=['1'=>$historyWire['items']['1']];unset($changed['newitems']['1']['itemid']);essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$changed),'company_catalog_invalid_tax_selection','new line cannot borrow the old line tax without catalogue authority');
+essentialThrows(fn()=>$form->update($b,7,$historyInvoice,$historyWire),'company_invoice_access_denied','foreign issuer cannot borrow line snapshots');
+essentialCheck($historyWriter->document($a,7,$historyInvoice)->data()['totals']['total']==='210.00','all forged tax attempts preserve the committed amount');
+$forgedAlgorithm=$historyWire;$forgedAlgorithm['calculation_contract']='native_sales_v1';essentialThrows(fn()=>$form->update($a,7,$historyInvoice,$forgedAlgorithm),'native_invoice_form_invalid','wire cannot select a new algorithm for a historical invoice');
+essentialThrows(fn()=>$form->update(1,7,42,[]),'native_invoice_editor_denied','primary NULL history remains outside the issuer-owned writer');
+echo "Original invoice frozen tax/update boundaries: ".$GLOBALS['essentialChecks']." cumulative PASS.\n";

@@ -1,5 +1,6 @@
 'use strict';
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const nativeInvoice=require('../helpers/native_invoice_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 const { createNativeProject, createNativeProjectTask, openNativeTask, toggleNativeTaskTimer } = require('../helpers/native_browser_forms.cjs');
 // Rebuilt recovery proof. Business objects and declarations are created through the CRM UI.
@@ -33,6 +34,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   const b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   assert.match(a,/^[1-9]\d*$/);assert.match(b,/^[1-9]\d*$/);
   const cashBefore=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords');
+  const actor=sql('SELECT master_staff_id FROM tblissuers_installation_identity WHERE id=1');
   async function select(issuer){await page.goto(base+'/admin/');await selectCompanyOption(page, issuer);}
   async function makeTimer(table,task,seconds){
    const nativeProjectTask=table==='tblcompany_task_timers';
@@ -43,9 +45,10 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    return sql('SELECT id FROM '+table+' WHERE task_id='+task+' ORDER BY id DESC LIMIT 1');
   }
   async function cancelAndRetain(invoice,sourceUrl,table,field,source){
-   await page.goto(base+'/admin/invoices?invoice='+invoice);
-   await page.getByRole('tab',{name:'Editar fatura sem movimento',exact:true}).click();
-   await submit(page,page.getByRole('button',{name:'Cancelar fatura sem movimento',exact:true}));
+   await nativeInvoice.preview(page,base,invoice);
+   const action=page.locator('a[href*="/invoices/mark_as_cancelled/"]');assert.equal(await action.count(),1,'original invoice preview exposes its existing cancellation action');
+   if(!await action.isVisible())await action.locator('xpath=ancestor::div[contains(@class,"dropdown") or contains(@class,"btn-group")][1]').locator('.dropdown-toggle').first().click();
+   await submit(page,action);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'5');
    await page.goto(sourceUrl);
    assert.equal(sql('SELECT state FROM '+table+' WHERE '+field+'='+source),'converted');
@@ -103,7 +106,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    const download=await context.request.post(base+'/admin/projects/portal_rules',{form:await hidden(fileForm)});
    assert.equal(download.status(),200);assert.match(download.headers()['content-type'],/application\/pdf/);assert((await download.body()).equals(pdf));
    // A task with two independently closed timers exercises whole-timer selection and cross-project batch forms.
-   const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'01/11/2026',assignee:7});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
+   const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'01/11/2026',assignee:actor});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
    const timer1=await makeTimer('tblcompany_task_timers',task,1800);
    const timer2=await makeTimer('tblcompany_task_timers',task,1800);
    await page.goto(base+'/admin/projects/time_billing?project='+project);
@@ -145,8 +148,8 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   const unavailable=await foreignProject.text();assert.ok(unavailable.includes('Referências, publicação ou permissões indisponíveis. Nenhuma alteração foi confirmada.'));
   for(const privateText of ['Recovery439 project a '+stamp,'Private recovery thread a','Original internal response a','Revised internal response a','proof.pdf'])assert.ok(!unavailable.includes(privateText),'foreign editor emits no A source text/file: '+privateText);
   assert.ok(!unavailable.includes('id="project-discussion-posts"')&&!unavailable.includes('id="project-discussion-open"'),'foreign editor renders no discussion state or controls');
-  assert.equal((await page.goto(base+'/admin/invoices?invoice='+results[1].wholeInvoice)).status(),200,'current B invoice is accessible before cross-owner PDF request');
-  const foreignPdf=await context.request.get(base+'/admin/invoices?invoice='+results[0].wholeInvoice+'&pdf=1');
+  await nativeInvoice.preview(page,base,results[1].wholeInvoice);
+  const foreignPdf=await context.request.get(base+'/admin/invoices/pdf/'+results[0].wholeInvoice+'?output_type=I');
   assert.equal(foreignPdf.status(),403,'foreign private invoice PDF has the explicit403 ownership contract');
   assert.ok(!String(foreignPdf.headers()['content-type']||'').includes('application/pdf'));
   assert.ok(!(await foreignPdf.body()).subarray(0,5).equals(Buffer.from('%PDF-')),'foreign PDF request emits no PDF bytes');

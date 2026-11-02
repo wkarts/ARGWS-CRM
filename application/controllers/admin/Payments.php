@@ -24,6 +24,10 @@ class Payments extends AdminController
 
     public function post_refund()
     {
+        if ((string) $this->uri->rsegment(3) !== '') {
+            show_404();
+            return;
+        }
         if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor($this)) {
             show_404();
             return;
@@ -34,6 +38,10 @@ class Payments extends AdminController
 
     public function post_refund_manual()
     {
+        if ((string) $this->uri->rsegment(3) !== '') {
+            show_404();
+            return;
+        }
         if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor($this)) {
             show_404();
             return;

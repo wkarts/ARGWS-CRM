@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyContractsStorage.php';require_once __DIR__.'/CompanyOperationFileContent.php';require_once __DIR__.'/CompanyOperationFilesSchema.php';require_once __DIR__.'/CompanyAssets.php';
+require_once __DIR__.'/NativeCompanyTicketPortalProjection.php';
 /** Private contract/support blobs. Kind is a closed domain choice, never an SQL resource name. */
 final class CompanyOperationFiles extends CompanyContractsStorage
 {
@@ -11,12 +12,16 @@ final class CompanyOperationFiles extends CompanyContractsStorage
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);CompanyOperationFilesSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),array_keys(CompanyOperationFilesSchema::definitions($this->p)),$this->apiTables(),$this->feature==='tickets'?NativeCompanyTicketVisibility::tables($this->db,$this->p):[]),$this->guardedWork($work));
+        $ticketTables=$this->feature==='tickets'?array_merge(NativeCompanyTicketVisibility::tables($this->db,$this->p),(new NativeCompanyTicketPortalProjection($this->db,$this->p))->tables()):[];
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),array_keys(CompanyOperationFilesSchema::definitions($this->p)),$this->apiTables(),$ticketTables),$this->guardedWork($work));
     }
     private function parent(int $issuer,string $kind,int $id,bool $editable=false):array
     {
         [, $table]=$this->target($kind);if($kind==='ticket'){NativeCompanyTicketVisibility::assertTicket($this->db,$this->p,$issuer,$id);if($editable)NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,$id);}$row=$this->rows('SELECT * FROM '.$this->p.$table.' WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;
-        if(!$row)throw new DomainException('company_operation_access_denied');if($editable&&(($kind==='contract'&&!in_array($row['status'],['draft','active'],true))||($kind==='ticket'&&$row['status']!=='open')))throw new DomainException('company_operation_file_closed');return $row;
+        if(!$row)throw new DomainException('company_operation_access_denied');
+        $status=$row['status'];
+        if($editable&&$kind==='ticket')$status=(new NativeCompanyTicketPortalProjection($this->db,$this->p))->ticket($issuer,['id'=>$id,'issuer_id'=>$issuer,'status'=>$status])['status'];
+        if($editable&&(($kind==='contract'&&!in_array($status,['draft','active'],true))||($kind==='ticket'&&$status!=='open')))throw new DomainException('company_operation_file_closed');return $row;
     }
     private function bump(int $issuer,string $kind,int $id,int $revision):void
     {

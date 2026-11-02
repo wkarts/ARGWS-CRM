@@ -3,7 +3,7 @@
 if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit(2);
 define('BASEPATH',dirname(__DIR__).'/system/');define('APPPATH',dirname(__DIR__).'/application/');define('APP_MODULES_PATH',dirname(__DIR__).'/modules/');
 require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit(2);
-require __DIR__.'/support/BbPdoDatabase.php';require APPPATH.'services/CompanyInvoices.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ApiService.php';require BASEPATH.'libraries/Encryption.php';
+require __DIR__.'/support/BbPdoDatabase.php';require_once APPPATH.'services/CompanyInvoices.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ApiService.php';require BASEPATH.'libraries/Encryption.php';
 function db_prefix(){return 'tbl';}function log_message($level,$message){}
 $pdo=new PDO('mysql:host='.APP_DB_HOSTNAME.';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);
 $monthly=true;$case=$argv[1]??'a';if(!in_array($case,['a','b'],true))exit(2);$issuerTax=$case==='a'?'11222333000181':'52998224725';

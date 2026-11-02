@@ -34,7 +34,7 @@ class Settings extends AdminController
         }
 
         $group = $this->input->get('group');
-        if (CompanySettingsRuntime::active() && in_array($group, ['update', 'info'], true)
+        if (CompanySettingsRuntime::active() && in_array($group, ['update', 'info', 'payment_gateways'], true)
             && !CompanySettingsRuntime::canInfrastructure()) { access_denied('settings'); }
         $nativeUpgradeSuccess = false;
         if ($group === 'update' && $this->input->method(true) === 'GET'

@@ -4,6 +4,8 @@
         if (!array_key_exists($key, $native_task_detail)) throw new RuntimeException('native_task_detail_projection_incomplete');
     }
     $nativeItem=$native_task_detail['detail']['item'];$nativeRow=$nativeItem['row'];$nativeFields=$nativeItem['fields'];$nativePermissions=$native_task_detail['detail']['permissions'];$nativeCanonical=(string)$nativeItem['id'];$nativeRunning=$native_task_detail['running_timer'];$nativeCanEdit=$nativePermissions['edit'];$nativeKey=static fn()=>bin2hex(random_bytes(32));
+    $nativeBillingContext=CompanyRequestScope::context();$nativeBillingAcl=new IssuerResourceAccess($this->db,db_prefix());$nativeCanReviewBilling=$nativeItem['source_kind']==='company_task';
+    foreach([['tasks','view'],['tasks','edit'],['projects','view'],['customers','view'],['invoices','view'],['invoices','create']] as [$feature,$capability])if(!$nativeBillingAcl->can($nativeBillingContext->issuerId(),$nativeBillingContext->staffId(),$feature,$capability))$nativeCanReviewBilling=false;
     $nativeOriginalHidden=static function()use($nativeCanonical,$nativeRow,$native_task_context,$native_task_csrf,$nativeKey):void{echo form_hidden('_company_context',$native_task_context);echo form_hidden('_native_company_csrf',$native_task_csrf);echo form_hidden('taskid',$nativeCanonical);echo form_hidden('native_revision',$nativeRow['revision']);echo form_hidden('native_fields_revision',$nativeRow['native_fields_revision']??'');echo form_hidden('native_request_key',$nativeKey());};
 ?>
 <div id="native-task-detail-<?php echo e($nativeCanonical); ?>" data-native-task-detail="1"
@@ -36,6 +38,7 @@
         <div class="row">
             <div class="col-md-8 task-single-col-left">
                 <div class="tw-flex tw-flex-wrap tw-gap-2 tw-mb-4">
+                    <?php if($nativeCanReviewBilling){ ?><a class="btn btn-default" href="<?= e(admin_url('tasks/billing?task='.(int)$nativeItem['source_id'])); ?>">Revisar faturamento da tarefa</a><?php } ?>
                     <?php if($nativeCanEdit){ ?><a class="btn btn-default" href="#" onclick="edit_task('<?php echo e($nativeCanonical); ?>');return false;"><i class="fa-regular fa-pen-to-square"></i> <?php echo _l('edit'); ?></a><?php } ?>
                     <?php if($native_task_detail['can_track_time']){ ?>
                     <textarea id="timesheet_note" class="form-control" rows="2" maxlength="4000" placeholder="<?php echo e(_l('note')); ?>"></textarea>

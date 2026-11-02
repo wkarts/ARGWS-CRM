@@ -215,6 +215,7 @@ final class NativeCompanySettingsController
                 $encrypt=null;$decrypt=null;if(in_array($group,['email','google'],true)){$ci->load->library('encryption');$encrypt=fn($v)=>$ci->encryption->encrypt($v);$decrypt=fn($v)=>$ci->encryption->decrypt($v);}
                 $forms->save($issuer,$actor,$group,$post['settings'],$custom['company']??[],$post['native_settings_revision'],$uploads,$encrypt,$decrypt);require_once __DIR__.'/NativePwaIdentity.php';NativePwaIdentity::publish($ci);
                 CompanyRequestScope::invalidateCaches($ci);
+                $ci->session->set_flashdata('native_settings_saved',['issuer'=>$issuer,'actor'=>$actor,'group'=>$group]);
                 set_alert('success','Definições salvas para esta empresa.');
                 redirect(admin_url('settings?group='.rawurlencode($group)),'location',303);return;
             }

@@ -25,6 +25,26 @@ async function createNativeProject(page, baseUrl, options) {
     await form.locator('#deadline').fill(dueDate);
     if (description !== '') await form.locator('textarea[name="description"]').fill(description);
     await form.locator('#billing_type').selectOption('1');
+    if (options.portalTasks === false || options.disabledPortalFlags?.length || options.disabledPortalFeatures?.length) {
+        await page.locator('a[href="#tab_settings"]').click();
+        for (const flag of options.disabledPortalFlags || []) {
+            assert.match(flag, /^(?:view_[a-z_]+|upload_files)$/);
+            await form.locator('#' + flag).uncheck();
+        }
+        if (options.disabledPortalFeatures?.length) {
+            const features = form.locator('#available_features');
+            const selected = await features.locator('option:checked:not(:disabled)').evaluateAll(xs => xs.map(x => x.value));
+            for (const feature of options.disabledPortalFeatures) {
+                assert.match(feature, /^project_[a-z_]+$/);
+                assert.equal(await features.locator('option[value="' + feature + '"]').count(), 1);
+            }
+            await features.selectOption(selected.filter(value => !options.disabledPortalFeatures.includes(value)));
+        }
+    }
+    if (options.portalTasks === false) {
+        await form.locator('#view_team_members').uncheck();
+        await form.locator('#view_tasks').uncheck();
+    }
     await submitAndNavigate(page, form.locator('button[type=submit]'));
 
     const path = new URL(page.url()).pathname.split('/').filter(Boolean);

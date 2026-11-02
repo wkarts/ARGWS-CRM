@@ -7,7 +7,7 @@ define('APPPATH', FCPATH . 'application/');
 require APPPATH . 'config/app-config.php';
 if (APP_DB_NAME !== getenv('ISSUERS_BROWSER_DB_NAME') || !preg_match('/^(127\.0\.0\.1|argws-crm-provision-db-[0-9]+)(:[0-9]+)?$/D', APP_DB_HOSTNAME)) exit(2);
 require dirname(__DIR__) . '/support/BbPdoDatabase.php';
-require APPPATH . 'services/CompanyHrApi.php';
+require_once APPPATH . 'services/CompanyHrApi.php';
 function db_prefix() { return 'tbl'; }
 $pdo = new PDO('mysql:host=' . str_replace(':', ';port=', APP_DB_HOSTNAME) . ';dbname=' . APP_DB_NAME . ';charset=utf8mb4', APP_DB_USERNAME, APP_DB_PASSWORD, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $db = new BbPdoDatabase($pdo);

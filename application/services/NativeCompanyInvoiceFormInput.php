@@ -17,9 +17,9 @@ final class NativeCompanyInvoiceFormInput
  }
  public static function create(array $input,string $dateFormat):array
  {return self::parse($input,$dateFormat,false);}
- public static function edit(array $input,string $dateFormat):array
- {return self::parse($input,$dateFormat,true);}
- private static function parse(array $input,string $dateFormat,bool $editing):array
+ public static function edit(array $input,string $dateFormat,array $calculationOptions=['calculation_contract'=>'native_sales_v1']):array
+ {return self::parse($input,$dateFormat,true,$calculationOptions);}
+ private static function parse(array $input,string $dateFormat,bool $editing,array $calculationOptions=['calculation_contract'=>'native_sales_v1']):array
  {
   $allowed=['_native_invoice_id','_native_invoice_revision','_native_invoice_request_key','_native_invoice_number_revision','clientid','project_id','number','date','duedate','currency','clientnote','tags','newitems','custom_fields','subtotal','total','discount_percent','discount_total','discount_type','adjustment','cancel_overdue_reminders','allowed_payment_modes','recurring','repeat_every_custom','repeat_type_custom','recurring_due_mode','cycles','save_as_draft','save_and_send','save_and_record_payment','save_and_send_later','item_select','task_select','task_id','expense_id','description','long_description','quantity','unit','rate','taxname','merge_invoices','invoices_to_merge','cancel_merged_invoices','bill_expenses','items','removed_items'];
   $allowed=array_merge($allowed,array_keys(CompanyInvoiceNativeFields::TEXT),array_keys(CompanyInvoiceNativeFields::INTEGER));
@@ -49,7 +49,8 @@ final class NativeCompanyInvoiceFormInput
    $line=array_intersect_key($row,array_flip(['description','long_description','qty','rate','unit','is_optional','is_selected']));$line['taxes']=$normalizedTaxes;$items[(int)$row['order']]=$line;$lineFields[(int)$row['order']]=self::fields($row['custom_fields']??[],'items');
   }
   ksort($items);ksort($lineFields);if(array_keys($items)!==range(1,count($items)))throw new DomainException('native_invoice_form_invalid');
-  $percent=$input['discount_percent']??'0';$fixed=$input['discount_total']??'0';$mode=CompanyInvoiceAmounts::minor($percent)>0?'percent':'fixed';$options=['calculation_contract'=>'native_sales_v1','discount_mode'=>$mode,'discount_value'=>$mode==='percent'?$percent:$fixed,'discount_type'=>$input['discount_type']??'','adjustment'=>($input['adjustment']??'')===''?'0':$input['adjustment']];
+  if($calculationOptions!==[]&&$calculationOptions!==['calculation_contract'=>'native_sales_v1'])throw new DomainException('native_invoice_form_invalid');
+  $percent=$input['discount_percent']??'0';$fixed=$input['discount_total']??'0';$mode=CompanyInvoiceAmounts::minor($percent)>0?'percent':'fixed';$options=$calculationOptions+['discount_mode'=>$mode,'discount_value'=>$mode==='percent'?$percent:$fixed,'discount_type'=>$input['discount_type']??'','adjustment'=>($input['adjustment']??'')===''?'0':$input['adjustment']];
   $amounts=CompanyInvoiceLines::calculate(array_values($items),$options);
   foreach(['subtotal','total','discount_total']as$key)if(!isset($input[$key])||CompanyInvoiceAmounts::minor($input[$key])!==CompanyInvoiceAmounts::minor($amounts[$key]))throw new DomainException('native_invoice_form_amount_mismatch');
   $fields=array_intersect_key($input,array_flip(array_merge(array_keys(CompanyInvoiceNativeFields::TEXT),array_keys(CompanyInvoiceNativeFields::INTEGER))));foreach(['include_shipping','show_shipping_on_invoice']as$key)$fields[$key]=self::checkbox($input,$key);if(($fields['sale_agent']??null)==='')$fields['sale_agent']='0';

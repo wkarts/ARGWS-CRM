@@ -17,16 +17,16 @@ O manifest `tests/ci/standalone-browser-plan.json` contém as **101 invocações
 
 | Grupo | Domínio |
 |---|---|
-| sales-pdf | Vendas, formatos PDF e snapshots |
-| projects | Projetos, horas, faturamento e cópias |
+| sales-pdf | Vendas, linhas de recuperação, formatos PDF e snapshots |
+| projects | Projetos, arquivos, faturamento, recuperação operacional e cópias |
 | support | Contratos, suporte e APIs de operações |
 | expenses | Despesas, importação, relatórios e livro |
-| banking | Sequência completa de navegadores Banco do Brasil |
-| providers | Sequência Asaas, ciclo pós-devolução, IA e provas TLS |
-| settings | Configurações, recuperação e modos de recorrência |
+| banking | Portal de horas e sequência completa de navegadores Banco do Brasil |
+| providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA e provas TLS |
+| settings | Marcos do portal, configurações, recuperação e modos de recorrência |
 | tasks-domains | Tarefas, calendário, timers, equipe, leads, compras e RH |
 
-Nove invocações comuns e os pré-requisitos explícitos são repetidos **para preparar bancos independentes**. Isso tem custo de preparação; não se presume que duplicar fixtures seja gratuito. Exemplos de dependências preservadas: vendas antes das conversões, portal antes dos escritores de suporte, tarefas de portal antes do calendário sem responsável, compras antes dos testes HTTP e RH antes dos tokens. As provas TLS, fixtures não monetárias e adaptadores CLI têm dono de grupo e continuam no fluxo correto.
+Nove invocações comuns e os pré-requisitos explícitos são repetidos **para preparar bancos independentes**. Isso tem custo de preparação; não se presume que duplicar fixtures seja gratuito. Exemplos de dependências preservadas: vendas antes das conversões, portal antes dos escritores de suporte, publicação e escrita de tarefas de portal no próprio grupo tasks-domains antes do calendário sem responsável, compras antes dos testes HTTP e RH antes dos tokens. O grupo settings usa apenas a preparação comum: cada teste cria seu próprio fixture. Os testes 33/34 de publicação/escrita de tarefas pertencem somente a tasks-domains, sem repetição no grupo projects. A recuperação de linhas de vendas (63) pertence a sales-pdf e a recuperação operacional (64) a projects; esses cenários deixam de concentrar trabalho no grupo settings, preservando a ordem e usando seus próprios objetos. Os cenários independentes de marcos (35), horas (36) e Gantt (37) pertencem a settings, banking e providers, respectivamente. Cada um cria seus clientes/contatos e o próprio projeto; não depende de 33/34. Isso distribui três cenários extensos que antes se acumulavam em projects. As provas TLS, fixtures não monetárias e adaptadores CLI têm dono de grupo e continuam no fluxo correto.
 
 Essa divisão reduz o caminho serial do smoke para preparação + maior duração de grupo/ferramentas, somada às filas do GitHub. Não há previsão numérica de ganho até uma execução real completa. As matrizes de domínio dos outros workflows permanecem. Banco do Brasil e Empresas no núcleo continuam sendo outros possíveis limites do tempo global.
 

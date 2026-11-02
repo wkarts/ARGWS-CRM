@@ -20,3 +20,5 @@ $bad=$wire;$bad['task_id']='123';essentialThrows(fn()=>$form->create($a,12,$bad)
 $draftWire=$wire;$draftWire['_native_invoice_request_key']=hash('sha256','original-form-draft');$draftWire['save_as_draft']='true';$draft=$form->create($a,12,$draftWire);essentialCheck($draft['action']==='save_as_draft'&&isset($draft['result']['canonical_id']),'actual original save-as-draft reaches durable draft command');
 foreach(['invoices','issuers_sequences']as$table)essentialCheck($db->query('SELECT * FROM '.$p.$table)->result_array()===$before[$table],'native draft does not issue or reserve '.$table);
 echo 'Original invoice form POST actual writer: '.$GLOBALS['essentialChecks']." cumulative PASS; HTTP boundary/browser pending.\n";
+
+require __DIR__.'/native_invoice_frozen_tax_cases.php';

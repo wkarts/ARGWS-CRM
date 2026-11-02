@@ -28,5 +28,26 @@ $stale439=hash('sha256','resume439-pusher-stale');$notify439->queue(41,12,41,1,1
 $uncertain439=hash('sha256','resume439-pusher-uncertain');$notify439->queue(41,12,41,2,1,$uncertain439);$mock439->append(new \GuzzleHttp\Exception\ConnectException('synthetic connection lost',new \GuzzleHttp\Psr7\Request('POST','https://api-sa1.pusher.com')));settingThrows(fn()=>$notify439->dispatch(41,12,$uncertain439,$open439),'company_pusher_unavailable','unknown remote outcome is sanitized');$before439=count($history439);essentialCheck($notify439->dispatch(41,12,$uncertain439,$open439)==='uncertain'&&count($history439)===$before439,'uncertain delivery is not blindly resent');
 $revoked439=hash('sha256','resume439-pusher-revoked');$notify439->queue(82,12,82,1,1,$revoked439);$db->query("DELETE FROM {$p}issuers_resource_permissions WHERE issuer_id=82 AND staff_id=12 AND feature='pusher' AND capability='publish'");$before439=count($history439);$result439=$notify439->work($open439);essentialCheck(count($result439)===1&&$result439[0]['status']==='blocked'&&count($history439)===$before439,'queued actor revocation prevents background publication');
 $before439=$db->query('SELECT * FROM '.$p.'company_pusher_profiles WHERE issuer_id=41')->row_array();$db->failOn='INSERT INTO '.$p.'issuers_audit';settingThrows(fn()=>$profile439->revoke(41,12,1),'issuer_storage_failed','late audit failure rolls back profile revoke');$db->failOn=null;essentialCheck($db->query('SELECT * FROM '.$p.'company_pusher_profiles WHERE issuer_id=41')->row_array()===$before439,'failed audit preserves profile epoch and ciphertext');
+// Native assignments compose the same single-recipient pulse without rewriting its source row.
+$assignment439=$p.'company_task_assignees';$createdAssignment439=!$db->table_exists($assignment439);
+if($createdAssignment439)$db->query('CREATE TABLE '.$assignment439.' (issuer_id INT NOT NULL,task_id INT NOT NULL,staff_id INT NOT NULL,active INT NOT NULL,revision INT NOT NULL,origin VARCHAR(32) NOT NULL,PRIMARY KEY(issuer_id,task_id,staff_id))');
+$db->data_cache=[];
+$snapshot439=fn()=>IssuerTransaction::run($db,$p,$notify439->tables(),fn()=>(new CompanyTaskPusherNotice($db,$p))->snapshotInOwned(41,12,41));
+try{
+ $legacy439=$snapshot439();$db->query('INSERT INTO '.$assignment439.'(issuer_id,task_id,staff_id,active,revision,origin) VALUES(41,41,13,1,1,?)',['native457_backfill']);
+ essentialCheck($snapshot439()===$legacy439,'migration-only history preserves the current legacy assignee and exact pulse hash');
+ $db->query('DELETE FROM '.$assignment439.' WHERE issuer_id=41 AND task_id=41');
+ $storageAssignee439=$db->query('SELECT assignee_id FROM '.$p.'company_tasks WHERE issuer_id=41 AND id=41')->row_array()['assignee_id'];
+ $db->query('INSERT INTO '.$assignment439.'(issuer_id,task_id,staff_id,active,revision,origin) VALUES(41,41,12,1,1,?)',['explicit_membership']);
+ $native439=$snapshot439();essentialCheck($native439['recipient_id']===12,'one active native assignment receives the explicit pulse');
+ essentialCheck($db->query('SELECT assignee_id FROM '.$p.'company_tasks WHERE issuer_id=41 AND id=41')->row_array()['assignee_id']===$storageAssignee439,'projection leaves the original source assignee untouched');
+ $db->query('UPDATE '.$assignment439.' SET active=0,revision=2 WHERE issuer_id=41 AND task_id=41');
+ $db->query('UPDATE '.$p.'company_tasks SET assignee_id=12 WHERE issuer_id=41 AND id=41');
+ settingThrows($snapshot439,'company_pusher_denied','explicit removal cannot resurrect the historical single assignee');
+ $db->query('UPDATE '.$assignment439.' SET active=1,revision=3 WHERE issuer_id=41 AND task_id=41');
+ essentialCheck($snapshot439()['source_hash']!==$native439['source_hash'],'remove/re-add assignment epoch invalidates a saved pulse source');
+ $db->query('INSERT INTO '.$assignment439.'(issuer_id,task_id,staff_id,active,revision,origin) VALUES(41,41,13,1,1,?)',['explicit_membership']);
+ settingThrows($snapshot439,'company_pusher_denied','several active assignees never silently choose a recipient');
+}finally{$db->query('DELETE FROM '.$assignment439.' WHERE issuer_id=41 AND task_id=41');$db->query('UPDATE '.$p.'company_tasks SET assignee_id=12 WHERE issuer_id=41 AND id=41');if($createdAssignment439)$db->query('DROP TABLE '.$assignment439);$db->data_cache=[];}
 $profile439->revoke(41,12,1);settingThrows(fn()=>$notify439->descriptor(41,12),'company_pusher_disabled','revoked profile stops descriptor/auth and never falls back');essentialCheck($profile439->page(82,12)['status']==='enabled','A revoke preserves B profile');
 echo 'Reconstructed439 private Pusher: '.($GLOBALS['essentialChecks']-$start).' additional checks passed ('.$db->driver().'); captured Guzzle transport only.'.PHP_EOL;

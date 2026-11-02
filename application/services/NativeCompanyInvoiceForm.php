@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyInvoiceEditorItems.php';
+require_once __DIR__.'/NativeCompanyInvoiceIdentity.php';
 require_once __DIR__.'/NativeCompanyInvoiceSequencePreferences.php';
 require_once __DIR__.'/NativeCompanyInvoicePreferences.php';
 require_once __DIR__.'/NativeCompanyInvoiceAgents.php';
@@ -12,7 +13,7 @@ require_once __DIR__.'/NativeCompanyInvoiceCommunicationState.php';
 final class NativeCompanyInvoiceForm
 {
  public function __construct(private $db,private string $p){}
- private function authorize(int $i,int $a,string $cap):void{$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$i||!$acl->can($i,$a,'invoices','view')||!$acl->can($i,$a,'invoices',$cap))throw new DomainException('native_invoice_editor_denied');}
+ private function authorize(int $i,int $a,string $cap):void{$acl=new IssuerResourceAccess($this->db,$this->p);if(($acl->primaryId()===$i&&$cap!=='edit')||!$acl->can($i,$a,'invoices','view')||!$acl->can($i,$a,'invoices',$cap))throw new DomainException('native_invoice_editor_denied');}
  private function options(int $i,array $selection):array
  {
   $store=new CompanySettingsStorage($this->db,$this->p);$defaults=NativeCompanyInvoicePreferences::defaults();
@@ -64,10 +65,17 @@ final class NativeCompanyInvoiceForm
  public function update(int $i,int $a,$id,array $input):array
  {
   $this->authorize($i,$a,'edit');require_once __DIR__.'/NativeCompanyInvoiceFormInput.php';require_once __DIR__.'/NativeCompanyInvoiceCommands.php';
-  $store=new CompanySettingsStorage($this->db,$this->p);$format=$store->exists($i,'dateformat')?$store->get($i,'dateformat'):CompanySettingsCatalog::defaultValue('localization','dateformat');$request=NativeCompanyInvoiceFormInput::edit($input,$format);
+  $identity=(new NativeCompanyInvoiceIdentity($this->db,$this->p))->resolve($i,$a,$id,'edit');if($identity['lineage']!=='named_company')throw new DomainException('native_invoice_editor_denied');
+  $store=new CompanySettingsStorage($this->db,$this->p);$format=$store->exists($i,'dateformat')?$store->get($i,'dateformat'):CompanySettingsCatalog::defaultValue('localization','dateformat');require_once __DIR__.'/CompanyInvoiceCalculationContract.php';$request=NativeCompanyInvoiceFormInput::edit($input,$format,CompanyInvoiceCalculationContract::options($this->db,$this->p,$i,$a,$identity['invoice_id']));
   if($request['invoice_id']!==IssuerPolicy::id($id))throw new DomainException('native_invoice_form_invalid');
   if(in_array($request['action'],['save_and_send','save_and_send_later'],true))throw new DomainException('native_invoice_form_mail_required');
-  $catalog=new NativeCompanyCatalogUi($this->db,$this->p,$i,$a);foreach($request['payload']['items']as$line)$catalog->validateTaxSelections(array_map(static fn($tax)=>$tax['name'].'|'.$tax['rate'],$line['taxes']));
+  $catalog=new NativeCompanyCatalogUi($this->db,$this->p,$i,$a);$historical=[];
+  foreach((new CompanyInvoices($this->db,$this->p))->previewItems($i,$a,$request['invoice_id'])as$stored){$pairs=[];foreach($stored['taxes']as$tax){$fields=NativeCompanyCatalog::simpleFields(['name'=>$tax['name'],'taxrate'=>$tax['rate']],true);$pairs[$fields['name'].'|'.$fields['taxrate']]=true;}$historical[$stored['id']]=$pairs;}
+  foreach($request['payload']['items']as$position=>$line){$source=$request['metadata']['line_sources'][$position]??null;$frozen=$source===null?[]:($historical[$source]??[]);$pending=[];$seen=[];
+   foreach($line['taxes']as$tax){$fields=NativeCompanyCatalog::simpleFields(['name'=>$tax['name'],'taxrate'=>$tax['rate']],true);$pair=$fields['name'].'|'.$fields['taxrate'];if(isset($seen[$pair]))throw new DomainException('company_catalog_invalid_tax_selection');$seen[$pair]=true;if(!isset($frozen[$pair]))$pending[]=$pair;}
+   if($pending)$catalog->validateTaxSelections($pending);
+  }
+
   $row=IssuerStorage::query($this->db,'SELECT number FROM '.$this->p.'invoices WHERE id=? AND issuer_id=?',[$request['invoice_id'],$i])->row_array();if(!$row)throw new DomainException('company_invoice_access_denied');if((string)$row['number']!==$request['number'])throw new DomainException('native_invoice_form_number_immutable');
   $request['payload']['native_project']=null;
   if($request['project']!==''){
