@@ -12,7 +12,7 @@ Duas consultas no controller; driver de testes; regressões rápidas; caches de 
 
 ## Alterações e arquivos
 
-Modificados: `application/controllers/admin/Invoices.php`; workflows de CI em `.github/workflows`; `tests/helpers/native_invoice_driver.cjs`; os dois scripts de smoke; contrato de shards; inventários gerados em `docs/companies`.
+Modificados: `application/controllers/admin/Invoices.php`; workflows de CI em `.github/workflows`; `tests/helpers/native_invoice_driver.cjs`; os dois scripts de smoke; contrato de shards; inventários gerados em `docs/companies` e `docs/issuer-isolation-inventory.json`.
 
 Adicionados: `tests/legacy_invoice_number_scope.php`, `tests/helpers/persisted_invoice_target.cjs`, `tests/persisted_invoice_target.test.cjs`, `tests/ci/test_ci_runtime_reuse.py` e documentação/auditoria em `docs/ci`.
 
@@ -49,6 +49,8 @@ Removidos waits fixos de dez segundos por save e sucessivos fallbacks de 90 segu
 - `node --test tests/ci_preflight_order.test.cjs tests/persisted_invoice_target.test.cjs tests/native_invoice_transport.test.cjs`: 19 aprovados.
 - `python3 -m unittest tests/test_ci_validation_base.py tests/test_docker_provisioning.py tests/test_issuer_browser_environment.py tests/test_pr_validation_round.py tests/test_company_boundary_inventory.py`: 39 aprovados.
 - Parse YAML, sintaxe PHP/JS/shell e comparação dos entrypoints anteriores/atuais: sem comandos de teste removidos.
+
+Também executados após o pull das bases reais GHCR, em PHP 8.1 e 8.5, sem rede: smoke Chromium; 12 cenários do controller; 4.023 checks de datas recorrentes; 33 de idioma; 88 do painel; quatro testes Node de persistência. Ambos aprovados.
 
 ## Testes recomendados / pendentes
 

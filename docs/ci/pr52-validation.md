@@ -42,3 +42,9 @@ Foi comparado o inventário de entrypoints `tests/*` dos workflows alterados com
 Executados: 48 testes Python de CI; 19 contratos Node direcionados; 12 cenários PHP do controller com PHP 8.3; testes de provisionamento/isolamento/monitor/inventário; parse de todos os YAMLs e sintaxe shell/JS/PHP. O teste novo reproduz a falha contra o controller anterior. Inventários de superfície e fronteira regenerados pelo gerador oficial, preservando a classificação de prontidão existente.
 
 O smoke completo com navegador/MySQL e as matrizes remotas permanecem necessários no commit final. O teste PHP com doubles prova o comportamento do controller, não a persistência MySQL nem o PDF em Chromium. A melhoria total de duração só pode ser afirmada após essas execuções; resultados antigos não são prova do código novo.
+
+## Primeira rodada enviada e reconciliação
+
+O commit `009972e1` disparou a rodada de 02/11 às 04h26 de Brasília. O workflow das bases GHCR passou reutilizando os digests, assim como PWA, recorrências e versão do núcleo. O inventário `docs/issuer-isolation-inventory.json` ainda tinha o hash anterior do controller; esse gate falhou, e o monitor cancelou as suítes longas. O terceiro inventário foi reconciliado pelo gerador `audit-issuer-isolation.py --write`, sem desbloquear a prontidão operacional. As verificações dos três inventários foram repetidas antes do envio corretivo. Os resultados dessa rodada cancelada não são comprovação de aprovação integral.
+
+Os pulls e smokes locais de ambas as bases PHP 8.1/8.5 passaram com Chromium real. Em cada base passaram também 12 cenários do controller, 4.023 verificações de datas, 33 de idioma, 88 do painel e os quatro testes de persistência. Nenhuma imagem GHCR nova foi necessária ou publicada.
