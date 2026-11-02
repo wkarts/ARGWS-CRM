@@ -1448,67 +1448,67 @@
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 670,
+                    "line": 673,
                     "classification": "review_required"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 768,
+                    "line": 771,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 790,
+                    "line": 793,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 827,
+                    "line": 830,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_payment",
-                    "line": 855,
+                    "line": 858,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 891,
+                    "line": 894,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 950,
+                    "line": 953,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 982,
+                    "line": 985,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1001,
+                    "line": 1004,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1029,
+                    "line": 1032,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 1051,
+                    "line": 1054,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1120,
+                    "line": 1123,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1141,
+                    "line": 1144,
                     "classification": "review_required"
                 }
             ]
