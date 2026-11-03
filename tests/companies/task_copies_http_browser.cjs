@@ -25,7 +25,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
    const autoFollow=page.locator('#company-setting-new_task_auto_follower_current_member');
    if(await autoFollow.inputValue()!=='0'){
     await autoFollow.selectOption('0');
-    await go(page,page.locator('form').filter({has:autoFollow}).locator('button[type=submit]'));
+    await go(page,page.locator('form').filter({has:page.locator('#company-setting-new_task_auto_follower_current_member')}).locator('button[type=submit]'));
     assert.match(await page.locator('body').innerText(),/Definições salvas/);
    }
    assert.equal(await autoFollow.inputValue(),'0','new copies cannot get an incidental automatic follower');

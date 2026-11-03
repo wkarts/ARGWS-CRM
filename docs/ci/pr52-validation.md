@@ -195,3 +195,6 @@ A continuação73 chegou à principal e encontrou auto-follow ativado pelo teste
 
 
 Cópia individual73: execução integral Chromium/MySQL aprovada em754,4s após o pré-requisito explícito de auto-follow, nas três empresas e nos dois namespaces, com origem/arquivo/seguidor reais, target numérico, zero adoção de relações, CSRF403, rollback503+retry, replay, ownership403, bytes da origem e todas as fotografias financeiras preservados. Os quatro alvos64/72/73/89 passaram integralmente antes do envio seguinte. Os marcadores por empresa/namespace nos logs não modificam suas assertivas.
+
+
+O envio c369fb9d foi recusado em49s pela auditoria estática de locators: o novo filter({has:autoFollow}) usava um alias indireto não auditado. Foi substituído pelo mesmo seletor CSS explícito dentro do filtro, sem alterar a auditoria ou a ação de GUI. Os38 testes Node do gate de interface passaram; PHP/layout/surface inventory também passaram. O ramoON→OFF da principal foi executado novamente emChromium com o seletor explícito e fotografia financeira exata preservada. A execução completa73 de754,4s continua como prova das mesmas operações/assertivas de cópia; a nova rodada remota prova a árvore exata com a forma explícita do seletor.
