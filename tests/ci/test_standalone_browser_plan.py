@@ -35,7 +35,7 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaises(ValueError):m.validate(self.plan,self.source+'\nnode tests/new-browser.cjs\n')
   with self.assertRaises(ValueError):m.selected(self.plan,'typo')
  def test_shared_state_dependencies_replay_the_real_original_browsers(self):
-  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],89:[84,85,86],97:[96],98:[96],100:[99]}
+  dependencies={17:[16],30:[13,14],34:[9,33],75:list(range(46,55)),76:list(range(55,62)),79:[76],86:[33,34,85],97:[96],98:[96],100:[99]}
   for group in self.plan['groups']:
    selected=m.selected(self.plan,group)
    for child,parents in dependencies.items():
@@ -70,6 +70,23 @@ class BrowserPlanTests(unittest.TestCase):
     self.assertEqual(shim.exists(),prepared)
     if prepared:
      self.assertTrue(os.access(shim,os.X_OK));self.assertIn('ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',shim.read_text());self.assertIn('task_timer_http_fixture.php',log.read_text())
+ def test_independent_recovery_ticket_and_task_policy_have_balanced_owners(self):
+  for index,owner in [(29,'expenses'),(32,'settings'),(64,'providers'),(72,'settings'),(73,'providers'),(83,'settings'),(84,'banking'),(89,'providers')]:
+   self.assertIn(index,self.plan['groups'][owner]['owned'])
+  self.assertFalse(set([33,34,84,85,86])&m.selected(self.plan,'providers'))
+  section=self.source.split('#448_SHARD_FIXTURE_BEGIN\n',1)[1].split('#448_SHARD_FIXTURE_END',1)[0]
+  owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))
+  for group in [*self.plan['groups'],'all']:
+   with tempfile.TemporaryDirectory()as folder:
+    root=pathlib.Path(folder);log=root/'docker.log'
+    body='set -euo pipefail\nwork='+shlex.quote(folder)+'\nupgrade=argws-crm-upgrade-42\nbrowser_group='+shlex.quote(group)+'\n'+owns+'\n'
+    body+='docker(){ printf "%s\\n" "$*" >> '+shlex.quote(str(log))+'; }\n'+section
+    result=subprocess.run(['bash','-c',body],cwd=ROOT,capture_output=True,text=True)
+    self.assertEqual(result.returncode,0,result.stderr)
+    prepared=group in {'providers','all'};shim=root/'task448-php'
+    self.assertEqual(shim.exists(),prepared)
+    if prepared:
+     self.assertTrue(os.access(shim,os.X_OK));self.assertIn('task_operations_http_fixture.php',log.read_text())
  def test_real_timer_fixture_preparation_runs_in_every_partition_worker(self):
   section=self.source.split('#451_SHARD_FIXTURE_BEGIN\n',1)[1].split('#451_SHARD_FIXTURE_END',1)[0]
   owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))

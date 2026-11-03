@@ -18,6 +18,13 @@ fs.mkdirSync(output,{recursive:true});
 function sql(query){return execFileSync('docker',['exec','-e','MYSQL_PWD',db,'mysql','--protocol=tcp','--host=127.0.0.1','--user='+process.env.ISSUERS_BROWSER_DB_USER,'argws_upgrade_ci','--batch','--skip-column-names','-e',query],{env:{...process.env,MYSQL_PWD:process.env.ISSUERS_BROWSER_DB_PASSWORD},encoding:'utf8'}).trim();}
 async function submit(page,button){await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 async function hidden(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
+// Native billing displays hours to two decimal places, half up. At 100/hour
+// each hundredth of an hour costs exactly 1.00. Read the closed duration;
+// the GUI stop also takes real time after the synthetic start adjustment.
+function expectedAt100(seconds){return String((BigInt(seconds)*100n+1800n)/3600n)+'.00';}
+assert.equal(expectedAt100(1800),'50.00');
+assert.equal(expectedAt100(1836),'51.00');
+assert.equal(expectedAt100(3600),'100.00');
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});
  const context=await browser.newContext();
@@ -42,7 +49,11 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    assert.equal(sql('SELECT COUNT(*) FROM '+table+' WHERE task_id='+task+' AND stopped_at IS NULL'),'1');
    sql('UPDATE '+table+' SET started_at=DATE_SUB(started_at,INTERVAL '+seconds+' SECOND) WHERE task_id='+task+' AND stopped_at IS NULL');
    if(nativeProjectTask)await toggleNativeTaskTimer(page);else await submit(page,page.getByRole('button',{name:'Parar meu cronômetro',exact:true}));
-   return sql('SELECT id FROM '+table+' WHERE task_id='+task+' ORDER BY id DESC LIMIT 1');
+   const [id,duration,elapsed]=sql('SELECT id,seconds,TIMESTAMPDIFF(SECOND,started_at,stopped_at) FROM '+table+' WHERE task_id='+task+' AND stopped_at IS NOT NULL ORDER BY id DESC LIMIT 1').split('\t');
+   assert.match(id,/^[1-9]\d*$/);assert.match(duration,/^[1-9]\d*$/);
+   assert.equal(duration,elapsed,'closed timer duration agrees with its immutable timestamps');
+   assert(Number(duration)>=seconds,'closed timer includes all requested synthetic work');
+   return {id,seconds:duration,total:expectedAt100(duration)};
   }
   async function cancelAndRetain(invoice,sourceUrl,table,field,source){
    await nativeInvoice.preview(page,base,invoice);
@@ -55,6 +66,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    assert.equal(await page.locator('#billing-invoice-status').innerText(),'Cancelada');
   }
   for(const [issuer,letter] of [[a,'a'],[b,'b']]){
+   console.log('RECOVERY439_CASE_START',letter);
    await select(issuer);
    const client=sql("SELECT c.userid FROM tblclients c JOIN tblissuers_clients o ON o.client_id=c.userid WHERE o.owner_issuer_id="+issuer+" AND c.company='Synthetic portal client "+letter+"' ORDER BY c.userid LIMIT 1");
    assert.match(client,/^[1-9]\d*$/);
@@ -63,7 +75,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    await page.locator('#task-new-due').fill('2026-11-19');
    await submit(page,page.locator('form').filter({has:page.locator('#task-new-name')}).locator('button[type=submit]'));
    const standalone=new URL(page.url()).searchParams.get('task');assert.match(standalone||'',/^[1-9]\d*$/);
-   await makeTimer('tblcompany_standalone_timers',standalone,3600);
+   const standaloneTimer=await makeTimer('tblcompany_standalone_timers',standalone,3600);
    await page.locator('#task-status').selectOption('done');
    await submit(page,page.locator('form').filter({has:page.locator('#task-edit-name')}).locator('button[type=submit]'));
    const standaloneUrl=base+'/admin/invoices/standalone_billing?task='+standalone;
@@ -74,12 +86,12 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    await page.locator('#standalone-billing-due').fill('2026-11-19');
    await page.locator('#standalone-billing-confirm').check();
    await submit(page,page.locator('#standalone-billing-review'));
-   assert.match(await page.locator('#standalone-billing-total').innerText(),/100\.00/);
+   assert.equal((await page.locator('#standalone-billing-total').innerText()).trim().split(' · ').at(-1),standaloneTimer.total);
    const conversion=await hidden(page.locator('form').filter({has:page.locator('#standalone-billing-issue')}));
    if(letter==='a')staleA=conversion;
    await submit(page,page.locator('#standalone-billing-issue'));
    const wholeInvoice=sql('SELECT invoice_id FROM tblcompany_standalone_billing_links WHERE task_id='+standalone);
-   assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+wholeInvoice),'100.00');
+   assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+wholeInvoice),standaloneTimer.total);
    assert.equal((await context.request.post(base+'/admin/invoices/standalone_billing',{form:conversion})).status(),200);
    assert.equal(sql('SELECT invoice_id FROM tblcompany_standalone_billing_links WHERE task_id='+standalone),wholeInvoice);
    await cancelAndRetain(wholeInvoice,standaloneUrl,'tblcompany_standalone_billing_links','task_id',standalone);
@@ -107,8 +119,8 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    assert.equal(download.status(),200);assert.match(download.headers()['content-type'],/application\/pdf/);assert((await download.body()).equals(pdf));
    // A task with two independently closed timers exercises whole-timer selection and cross-project batch forms.
    const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'01/11/2026',assignee:actor});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
-   const timer1=await makeTimer('tblcompany_task_timers',task,1800);
-   const timer2=await makeTimer('tblcompany_task_timers',task,1800);
+   const firstTimer=await makeTimer('tblcompany_task_timers',task,1800),timer1=firstTimer.id;
+   const secondTimer=await makeTimer('tblcompany_task_timers',task,1800),timer2=secondTimer.id;
    await page.goto(base+'/admin/projects/time_billing?project='+project);
    await page.locator('#time-billing-selection').selectOption('selected_timers');
    await page.locator('input[name="billing[timer_ids][]"][value="'+timer1+'"]').check();
@@ -119,7 +131,9 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    const timeOrigin=new URL(page.url()).searchParams.get('origin');assert.match(timeOrigin||'',/^[1-9]\d*$/);
    await submit(page,page.locator('#time-billing-issue'));
    const timeInvoice=sql('SELECT invoice_id FROM tblcompany_time_billing_batches WHERE origin_id='+timeOrigin);
-   assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+timeInvoice),'50.00');
+   assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+timeInvoice),firstTimer.total);
+   assert.equal(sql('SELECT timer_id FROM tblcompany_time_billing_claims WHERE origin_id='+timeOrigin),timer1,'only the selected whole timer is claimed');
+   assert.equal(sql('SELECT COUNT(*) FROM tblcompany_time_billing_claims WHERE timer_id='+timer2),'0','second timer stays available');
    await cancelAndRetain(timeInvoice,base+'/admin/projects/time_billing?project='+project+'&origin='+timeOrigin,'tblcompany_time_billing_batches','origin_id',timeOrigin);
    await page.goto(base+'/admin/tasks/time_batches?kind=projects&client='+client);
    const timerField=page.locator('input[name="billing[timers][]"]').filter({visible:true});
@@ -131,9 +145,10 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    await submit(page,page.locator('#time-batch-review'));
    const batchOrigin=new URL(page.url()).searchParams.get('origin');assert.match(batchOrigin||'',/^[1-9]\d*$/);
    await submit(page,page.locator('#time-batch-issue'));
-   const batchInvoice=sql('SELECT invoice_id FROM tblcompany_task_time_batches WHERE origin_id='+batchOrigin);assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+batchInvoice),'50.00');
+   const batchInvoice=sql('SELECT invoice_id FROM tblcompany_task_time_batches WHERE origin_id='+batchOrigin);assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+batchInvoice),secondTimer.total);
+   assert.equal(sql('SELECT timer_id FROM tblcompany_task_time_batch_claims WHERE origin_id='+batchOrigin),timer2,'batch claims exactly the remaining timer');
    await cancelAndRetain(batchInvoice,base+'/admin/tasks/time_batches?origin='+batchOrigin,'tblcompany_task_time_batches','origin_id',batchOrigin);
-   results.push({issuer,standalone,wholeInvoice,project,thread,post,task,timeInvoice,batchInvoice,private_file:true,claims_retained_after_cancellation:true});
+   results.push({issuer,standalone,wholeInvoice,project,thread,post,task,timeInvoice,batchInvoice,timers:{standalone:standaloneTimer,first:firstTimer,second:secondTimer},private_file:true,claims_retained_after_cancellation:true});
   }
   assert.equal((await context.request.post(base+'/admin/invoices/standalone_billing',{form:staleA})).status(),409,'saved A form cannot act while B active');
   // Refresh B deliberately: foreign ownership and stale A context are distinct native contracts.

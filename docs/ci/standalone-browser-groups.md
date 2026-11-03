@@ -18,18 +18,18 @@ O manifest `tests/ci/standalone-browser-plan.json` conserva a cobertura das **10
 | Grupo | Domínio |
 |---|---|
 | sales-pdf | Vendas, linhas de recuperação, formatos PDF, recorrência de tarefas, equipe e leads |
-| projects | Projetos, arquivos, faturamento, recuperação operacional e cópias |
+| projects | Projetos, arquivos e faturamento |
 | support | Contratos, suporte e APIs de operações |
-| expenses | Despesas, importação, relatórios e livro |
+| expenses | Despesas, importação, relatórios, livro e sub-recursos da API |
 | banking | Portal de horas e sequência completa de navegadores Banco do Brasil |
-| providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA, provas TLS e RH |
-| settings | Marcos do portal, configurações, recuperação, recorrência e compras |
+| providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA, provas TLS, recuperação operacional, cópia individual, prioridade/seguidores e RH |
+| settings | Marcos do portal, configurações, recuperação, recorrência, cópia de projetos e compras |
 | tasks-domains | Portal de projetos/tarefas, preferências, calendário e timers |
 | timers-a | Quatro pares de modalidades em A; recusas entre empresas, CSRF e política desatualizada |
 | timers-b | Quatro pares de modalidades em B e snapshots financeiros |
 | timers-primary | Quatro pares de modalidades na principal e snapshots financeiros |
 
-Nove invocações comuns e os pré-requisitos explícitos são repetidos **para preparar bancos independentes**. Isso tem custo de preparação; não se presume que duplicar fixtures seja gratuito. Exemplos de dependências preservadas: vendas antes das conversões, portal antes dos escritores de suporte, publicação e escrita de tarefas de portal no próprio grupo tasks-domains antes do calendário sem responsável, compras antes dos testes HTTP e RH antes dos tokens. O grupo settings usa apenas a preparação comum: cada teste cria seu próprio fixture. Os testes 33/34 de publicação/escrita de tarefas pertencem somente a tasks-domains, sem repetição no grupo projects. A recuperação de linhas de vendas (63) pertence a sales-pdf e a recuperação operacional (64) a projects; esses cenários deixam de concentrar trabalho no grupo settings, preservando a ordem e usando seus próprios objetos. Os cenários independentes de marcos (35), horas (36) e Gantt (37) pertencem a settings, banking e providers, respectivamente. Cada um cria seus clientes/contatos e o próprio projeto; não depende de 33/34. Isso distribui três cenários extensos que antes se acumulavam em projects. Compras (96–98) e RH (99–100), com preparação própria, pertencem a settings e providers: suas sequências internas permanecem intactas e deixam de alongar tasks-domains. As provas TLS, fixtures não monetárias e adaptadores CLI têm dono de grupo e continuam no fluxo correto.
+Nove invocações comuns e os pré-requisitos explícitos são repetidos **para preparar bancos independentes**. Isso tem custo de preparação; não se presume que duplicar fixtures seja gratuito. Exemplos de dependências preservadas: vendas antes das conversões, portal antes dos escritores de suporte, publicação e escrita de tarefas de portal no próprio grupo tasks-domains antes do calendário sem responsável, compras antes dos testes HTTP e RH antes dos tokens. O grupo settings usa apenas a preparação comum: cada teste cria seu próprio fixture. Os testes 33/34 de publicação/escrita de tarefas pertencem somente a tasks-domains, sem repetição no grupo projects. A recuperação de linhas de vendas (63) pertence a sales-pdf e a recuperação operacional (64) a providers; esses cenários deixam de concentrar trabalho no grupo settings, preservando a ordem e usando seus próprios objetos. Os cenários independentes de marcos (35), horas (36) e Gantt (37) pertencem a settings, banking e providers, respectivamente. Cada um cria seus clientes/contatos e o próprio projeto; não depende de 33/34. Isso distribui três cenários extensos que antes se acumulavam em projects. Compras (96–98) e RH (99–100), com preparação própria, pertencem a settings e providers: suas sequências internas permanecem intactas e deixam de alongar tasks-domains. As provas TLS, fixtures não monetárias e adaptadores CLI têm dono de grupo e continuam no fluxo correto.
 
 Essa divisão reduz o caminho serial do smoke para preparação + tooling + maior duração de grupo, somada às filas do GitHub. Não há previsão numérica de ganho até uma execução real completa. As matrizes de domínio dos outros workflows permanecem. Banco do Brasil e Empresas no núcleo continuam sendo outros possíveis limites do tempo global.
 
@@ -64,3 +64,17 @@ O navegador90 também cria todas as próprias origens e seu leitor inspeciona ap
 
 
 Cada job HTTP tem limite explícito de60 minutos, conservando falha para timeout/cobertura incompleta. SQL mantém30 e cada job focado mantém20. O limite evita gastar o padrão de seis horas em um worker preso; não é medição de duração nem substitui a execução completa.
+
+
+A rodada3a4c25e0 aprovou núcleo em47min e Banco do Brasil em43min24s, mas reprovou no navegador64: o fixture adicionava1800 segundos ao início de um timer ativo, e a navegação acrescentava tempo até a parada. O teste agora lê a duração fechada, confere os timestamps e calcula independentemente a expectativa exata a100/h, com horas a duas casas e arredondamento half-up. Não altera os timers fechados nem o preço de produção. As claims continuam verificadas individualmente, inclusive o segundo timer que deve permanecer livre.
+
+O64 cria seus próprios objetos por GUI e passa de projects para providers. O83 de preferências de chamados usa apenas o onboarding comum e passa de support para settings. O89 de prioridade/seguidores cria seus próprios clientes, projetos e tarefas e passa de tasks-domains para providers; seu leitor/task448-php é preparado apenas nesse worker, com teste Bash para todos os grupos. Não consome dados de84/85/86. O calendário mantém sua cadeia33/34/85/86 no banco original. As103 invocações continuam presentes uma vez por dono; nenhum novo worker ou replay dessa cadeia foi adicionado. A nova duração integral depende da próxima rodada completa.
+
+
+As cópias72/73 também criam todas as origens por GUI e seus leitores apenas inspecionam ou preparam clientes sintéticos: não dependem do faturamento39–42. Para não acumular ambas depois desses cenários longos,72 passa a settings e73 a providers. Seus scripts copiam os próprios leitores e as assertivas de origem, rollback503, replay, arquivos, isolamento e finanças permanecem. O contrato de ownership verifica os donos64/72/73/83/84/89.
+
+
+Preferências de criação84 também são autossuficientes e usam apenas o onboarding comum; passam para banking. Calendar85 cria suas próprias origens e86 conserva os pré-requisitos reais de publicação33/34 e85, sem consumir objetos do84. Isso retira mais trabalho do worker de calendário sem repetir preparações do portal. O84 continua integral, nas três empresas e nos dois namespaces, incluindo campos omitidos/ explícitos, CSRF, stale, rollback503 e snapshots.
+
+
+Suporte ainda somava60min15s no worker antes da redistribuição. Os cenários29 de sub-recursos e32 de discussão contratual também criam todas as origens e os tokens pela GUI, usando apenas clientes/contatos do onboarding comum. Passam integralmente para expenses e settings, respectivamente. Os casos30/31 conservam arquivos/publicação13/14 no suporte. Não há novos pré-requisitos repetidos nem workers adicionais. Esse reequilíbrio de oito cenários independentes reduz os trechos seriais identificados; o ganho só é confirmado pela rodada remota completa.

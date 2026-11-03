@@ -18,16 +18,38 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
   async function select(issuer){await page.goto(url+'/admin/');await selectCompanyOption(page, String(issuer));}
   async function newProject(o,name){return createNativeProject(page,url,{client:o.client,name,startDate:'19/10/2026',dueDate:'19/11/2026'});}
   for(const[label,o]of Object.entries(setup.owners)){
-   await select(o.issuer);const projectInfo=await newProject(o,'Individual source '+label),project=projectInfo.sourceId,targetInfo=await newProject(o,'Individual explicit target '+label),target=targetInfo.sourceId;
+   await select(o.issuer);
+   // Separate source-follower inheritance from the current creation policy.
+   // Establish that policy through Settings, then explicitly follow the source.
+   await page.goto(url+'/admin/settings?group=task_operations');
+   const autoFollow=page.locator('#company-setting-new_task_auto_follower_current_member');
+   if(await autoFollow.inputValue()!=='0'){
+    await autoFollow.selectOption('0');
+    await go(page,page.locator('form').filter({has:autoFollow}).locator('button[type=submit]'));
+    assert.match(await page.locator('body').innerText(),/Definições salvas/);
+   }
+   assert.equal(await autoFollow.inputValue(),'0','new copies cannot get an incidental automatic follower');
+   const projectInfo=await newProject(o,'Individual source '+label),project=projectInfo.sourceId,targetInfo=await newProject(o,'Individual explicit target '+label),target=Number(targetInfo.sourceId);assert(Number.isSafeInteger(target)&&target>0);
    for(const kind of ['project','standalone']){
-    let source,taskCanonical=null;
+    console.log('TASK_COPY_CASE_START',label,kind);
+    let source,taskCanonical=null,file=null;
     if(kind==='project'){
       const created=await createNativeProjectTask(page,url,{projectCanonical:projectInfo.canonical,name:'Individual source '+kind+' '+label+' <script>literal</script>',dueDate:'01/11/2026',assignee:setup.master});source=Number(created.sourceId);taskCanonical=created.canonical;await addNativeTaskChecklistItem(page,url,taskCanonical,'Reset this completed check');await openNativeTask(page,url,taskCanonical);await addNativeTaskComment(page,'Preserve original comment');await toggleNativeTaskTimer(page);await toggleNativeTaskTimer(page);
+      await page.goto(url+'/admin/projects/extras?kind=task&id='+source);
+      const follow=page.getByRole('button',{name:'Seguir este recurso',exact:true});
+      if(await follow.count())await go(page,follow);
+      assert.equal(await page.getByRole('button',{name:'Deixar de seguir',exact:true}).count(),1);
+      const pdf=Buffer.from('%PDF-1.4\nSynthetic individual source-only document\n%%EOF\n');
+      await page.locator('#project-private-file').setInputFiles({name:'individual-source-only.pdf',mimeType:'application/pdf',buffer:pdf});
+      await go(page,page.getByRole('button',{name:'Adicionar anexo privado',exact:true}));
+      file=sql('SELECT file_key FROM tblcompany_project_files WHERE issuer_id='+o.issuer+' AND task_id='+source);
+      assert.match(file,/^[a-f0-9]{64}$/);
+      await openNativeTask(page,url,taskCanonical);
     }else{
       await page.goto(url+'/admin/tasks/standalone');await page.locator('#task-new-name').fill('Individual source '+kind+' '+label+' <script>literal</script>');await page.locator('#task-new-due').fill('2026-11-01');await page.locator('#task-new-lines').fill('Reset this completed check');await go(page,page.getByRole('button',{name:'Criar tarefa avulsa',exact:true}));source=Number(new URL(page.url()).searchParams.get('task'));
     }if(kind==='standalone'){await page.locator('#task-comment').fill('Preserve original comment');await go(page,page.getByRole('button',{name:'Registrar comentário',exact:true}));await go(page,page.getByRole('button',{name:'Iniciar meu cronômetro',exact:true}));await go(page,page.getByRole('button',{name:'Parar meu cronômetro',exact:true}));await page.locator('#task-edit-check-0').selectOption('1');await page.locator('#task-status').selectOption('done');await go(page,page.getByRole('button',{name:'Salvar tarefa',exact:true}));}else{await completeNativeTaskChecklistItem(page);await markNativeTaskDone(page);}
     const beforeCopyFinancial=fixture('financial');lastFinancialBefore=beforeCopyFinancial;
-    const before=fixture('inspect',o.issuer,kind,source);assert.equal(before.status,'done');if(kind==='project')await page.goto(url+'/admin/tasks/copies?kind=project&source='+source);else await go(page,page.getByRole('link',{name:'Revisar nova cópia privada desta tarefa',exact:true}));const form=page.locator('#task-copy-review');assert.equal(await form.count(),1);assert.equal(await page.locator('#task-copy-assignee').inputValue(),'','assignee selection is explicit even for an authorized source');await page.locator('#task-copy-name').fill('Reviewed individual '+label+' '+kind);await page.locator('#task-copy-due').fill('2026-11-01');await page.locator('#task-copy-assignee').selectOption(String(setup.master));if(kind==='project')await page.locator('#task-copy-project').fill(String(target));
+    const before=fixture('inspect',o.issuer,kind,source);assert.equal(before.status,'done');if(kind==='project'){assert.equal(before.counts.files,1);assert.equal(before.counts.followers,1);}if(kind==='project')await page.goto(url+'/admin/tasks/copies?kind=project&source='+source);else await go(page,page.getByRole('link',{name:'Revisar nova cópia privada desta tarefa',exact:true}));const form=page.locator('#task-copy-review');assert.equal(await form.count(),1);assert.equal(await page.locator('#task-copy-assignee').inputValue(),'','assignee selection is explicit even for an authorized source');await page.locator('#task-copy-name').fill('Reviewed individual '+label+' '+kind);await page.locator('#task-copy-due').fill('2026-11-01');await page.locator('#task-copy-assignee').selectOption(String(setup.master));if(kind==='project')await page.locator('#task-copy-project').fill(String(target));
     const posted=await fields(form),missing={...posted};delete missing.company_task_copies_csrf;assert.equal((await context.request.post(url+'/admin/tasks/copies',{form:missing,maxRedirects:0})).status(),403);assert.equal(fixture('inspect',o.issuer,kind,source).hash,before.hash);
     if(label==='a'&&kind==='project'){
      const trigger='qa_individual_copy_'+Date.now();sql("CREATE TRIGGER "+trigger+" BEFORE INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_task_copied' AND NEW.issuer_id="+o.issuer+" THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic late individual copy'; END IF; END");try{assert.equal((await context.request.post(url+'/admin/tasks/copies',{form:posted,maxRedirects:0})).status(),503);}finally{sql('DROP TRIGGER '+trigger);}assert.equal(sql("SELECT COUNT(*) FROM tblcompany_task_copy_requests WHERE request_key='"+posted.request_key+"'"),'0');assert.equal(fixture('inspect',o.issuer,kind,source).hash,before.hash);const retry=await context.request.post(url+'/admin/tasks/copies',{form:posted,maxRedirects:0});assert.equal(retry.status(),303);await page.goto(retry.headers().location);

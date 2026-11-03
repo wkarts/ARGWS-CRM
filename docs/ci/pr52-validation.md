@@ -171,3 +171,27 @@ O navegador90 completo passou em295,7s com A/B/principal e os mesmos nomes de fu
 
 
 Cada worker HTTP tem limite explícito de60 minutos para impedir navegador/processo preso consumindo o padrão de seis horas do GitHub. Timeout continua reprovando o check obrigatório; nenhuma cobertura incompleta passa. O limite não representa a duração esperada nem é utilizado como comprovação de ganho.
+
+
+## Diagnóstico3a4c25e0 e recuperação de horas
+
+A rodada iniciada02/11/2026 às23:53:31UTC aprovou as duas versões PHP do núcleo (47min), o Banco do Brasil nas duas variantes (43min24s) e o foco nativo (26min32s). O grupo de PDFs passou, incluindo as dimensões reais. A rodada ainda reprovou no navegador64, que esperava50.00 mesmo com mais de1800 segundos registrados pelo timer real. A expectativa agora usa os segundos imutáveis e a regra documentada de horas a duas casas; mantém comparação exata, claims individuais, replay, cancelamento, isolamento e ausência de pagamentos. O caso1836 segundos exige51.00.
+
+A inspeção do cenário73 revelou ainda uma variável de arquivo sem definição: a preparação agora cria o anexo e o seguidor pela GUI e confere ambos na origem antes da prova de não adoção pela cópia. Os casos64,72 e73 são executados localmente por inteiro antes do próximo envio. Preferências83 e89 e recuperação64 foram redistribuídas entre workers existentes, preservando cobertura e preparação de leitores. Ganho global permanece pendente de rodada completa aprovada.
+
+Auditoria externa atualizada03/11/2026 às00:05:16UTC:7.818 registros de workflows na branch, desde25/10/2026 às19:43:59UTC. Contagem de registros de workflow, não testes únicos, reruns ou horas faturadas. A evidência original acima conserva sua data de coleta.
+
+
+Provas locais do ajuste seguinte:64 completo passou em404,8s e89 em293,4s emChromium/MySQL. Os segundos fechados1818/1820 exigiram51.00;1817 exigiu50.00. Ambos mantêm errors[] vazio e todos os checks financeiros/contexto. O89 passou em banco diferente do64, sem preparação de calendário. Os83 contratos deCI passaram. A rodada3a terminou com22 workflows aprovados e2 reprovados (HTTP e monitor);10/11 gruposHTTP passaram. Suporte terminou em60min15s e tarefas em59min53s no worker, justificando redistribuir os cenários independentes. A duração publicada do workflowHTTP reprovado foi1h09min34s; não representa validação completa aprovada.
+
+
+No cenário72, a execução local revelou que os responsáveis das tarefas não podem ser presumidos a partir do campo legado: o teste agora seleciona responsáveis autorizados no formulário de revisão antes de capturar o POST. O84 foi deslocado integralmente para banking; não fornece origens a Calendar, que mantém33/34/85/86. Nenhuma validação foi suprimida.
+
+
+Cópias de projetos72: execução integral Chromium/MySQL aprovada em842,0s, nas três empresas, com interface/API, seleção explícita autorizada, CSRF403, rollback503 e retry idempotente, isolamento401/403, ausência de adoção de arquivos/tempo/finanças e origem imutável. Cópia individual73 também normaliza o ID esperado de projeto para número antes da comparação estrita, coerente com o contrato numérico do leitor; a variável do arquivo e sua preparação pela GUI permanecem corrigidas.
+
+
+A continuação73 chegou à principal e encontrou auto-follow ativado pelo teste89 no banco local: a nova cópia corretamente recebe um seguidor novo pela política atual. Para provar não adoção dos seguidores antigos com contagem exata zero,73 estabelece auto-follow0 pela GUI de Settings de cada empresa, segue explicitamente apenas a origem e confere origem1/cópia0. A comparação de todas as relações permanece estrita; nenhuma alteração no comportamento de produção ou SQL de configuração foi necessária. A prova completa é repetida com esse pré-requisito explícito.
+
+
+Cópia individual73: execução integral Chromium/MySQL aprovada em754,4s após o pré-requisito explícito de auto-follow, nas três empresas e nos dois namespaces, com origem/arquivo/seguidor reais, target numérico, zero adoção de relações, CSRF403, rollback503+retry, replay, ownership403, bytes da origem e todas as fotografias financeiras preservados. Os quatro alvos64/72/73/89 passaram integralmente antes do envio seguinte. Os marcadores por empresa/namespace nos logs não modificam suas assertivas.

@@ -14,6 +14,7 @@ A validação demorava mais de uma hora e interrompia cenários posteriores em f
 - Leitura de equipes respeita atribuições nativas ativas, revogação e ACL. Upload de chamado usa o status nativo existente. Pusher considera atribuições explícitas e invalida notificações após remoção ou mudança de época.
 - Editor de fatura preserva o algoritmo de emissão e os impostos históricos da própria linha; novas seleções continuam verificadas no catálogo. Confirmação de Settings é vinculada a empresa, ator e grupo.
 - Banco do Brasil corrige o fechamento excedente da view e a recusa isolada que chamava helper global. Versão 1.3.6, nova migration nativa 136 NOOP; histórico preservado.
+- Recuperação de horas calcula a expectativa exata a partir da duração fechada e verifica as claims individuais; cópia de tarefa prepara de fato o arquivo e seguidor cuja não adoção é conferida, estabelecendo auto-follow0 pela GUI para distinguir herança da política de criação. Cenários independentes64/83/89 usam workers existentes com menor carga.
 - Fixtures carregam classes transitivas com `require_once`, fornecem a sessão e o PDO reais de seus transportes simulados e restauram exatamente os dados modificados pelos novos casos. Navegadores conferem os controles e links atuais, com as assertivas financeiras e de segurança preservadas.
 
 - Importação privada aceita os tipos MIME CSV/JSON reais, conserva a extensão e a validação de conteúdo e recusa sufixos desconhecidos com 404. O botão existente da lista de Clientes também fica disponível com a permissão nativa de criação.
@@ -58,7 +59,10 @@ Os dois servidores HTTP PHP usam o OPcache já incluído na imagem, com verifica
 - Preferências83 completas emChromium/MySQL passaram em167,3s, com ator exclusivoB, revogação atual, rollback e todos os snapshots intactos.
 - Preço horário41 completo passou em77,4s e faturamento fixo42 em121,9s, com as recusas404 e todas as assertivas de PDF/retry/recuperação/isolamento.
 - Os seletores de seguidores da tarefa e administradores do cliente escapam nomes como texto antes do helper que aceita HTML, preservando IDs e os dados originais. A regressão do renderer falha antes da correção e passa nos14 checks depois; o perfil de cliente tem três checks adicionais emSQLite/MySQL.
+- Recuperação64 completa passou em404,8s, inclusive valores exatos51.00/50.00 calculados dos segundos fechados, claims individuais, cancelamento/replay e PDFs negados; prioridade/seguidores89 completo passou em293,4s nas três empresas sem cadeia de calendário.
 - Temporizador90 completo passou em295,7s, nas três empresas, com os mesmos nomes sintéticos que causavam erro, errors[] intacto e todos os checks de recibo/CSRF/stale/finanças.
+- Cópias de projetos72 completas passaram em842,0s, com revisão explícita dos responsáveis, interface/API A/B/principal, rollback503, replay, isolamento e fotografias financeiras exatas.
+- Cópia individual73 completa passou em754,4s, nos dois namespaces e três empresas, com preparação pela GUI, relações não herdadas, rollback/retry/replay, isolamento e finanças intactas.
 - Os quatro inventários gerados são reconciliados e conferidos, preservando a classificação de prontidão operacional.
 
 Execuções locais direcionadas não equivalem ao CI completo. A matriz remota do commit final e o ganho global ainda precisam concluir. Evidências, rodadas e limites em [pr52-validation.md](pr52-validation.md); arquitetura em [standalone-browser-groups.md](standalone-browser-groups.md).
