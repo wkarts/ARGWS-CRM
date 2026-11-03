@@ -3,6 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync('assets/pwa/worker.js','utf8');
+const pwaEndpoint = fs.readFileSync('pwa.php','utf8');
+const pwaIdentity = fs.readFileSync('application/services/NativePwaIdentity.php','utf8');
+const pwaHelper = fs.readFileSync('application/helpers/pwa_helper.php','utf8');
 function worker(offline = false) {
   const handlers = {}, calls = [];
   const self = {registration:{scope:'https://crm.test/sub/'}, clients:{claim:async()=>{}}, addEventListener:(n,fn)=>handlers[n]=fn};
@@ -47,27 +50,61 @@ test('PNG fallback dimensions, masks and native views',()=>{
     assert.match(fs.readFileSync(`application/views/${file}`,'utf8'),/load->view\('includes\/pwa'\)/);
   }
 });
-test('insecure origin does not register; install UI uses user gesture; update never reloads',async()=>{
+
+test('PWA identity is a dynamic, atomic projection with installation/company/V2 precedence',()=>{
+  assert.match(pwaIdentity,/pwa_installation_name/);
+  assert.match(pwaIdentity,/pwa_icon_maskable_512/);
+  assert.match(pwaIdentity,/CompanySettingsIdentity/);
+  assert.match(pwaIdentity,/CompanyAssets/);
+  assert.match(pwaIdentity,/name_source/);
+  assert.match(pwaIdentity,/icon_source/);
+  assert.match(pwaIdentity,/if\(\$maskable===null\)\$maskable=self::readFile/);
+  assert.match(pwaIdentity,/if\(self::projectionExists\(\)\)return null/);
+  assert.match(pwaIdentity,/format'=>2/);
+  assert.match(pwaIdentity,/hashes/);
+  assert.match(pwaIdentity,/rename\(\$tmp,\$dir\.'\/identity\.json'/);
+  assert.match(pwaEndpoint,/identity\.json/);
+  assert.match(pwaEndpoint,/in_array\(\$doc\['format'\]\?\?null,\[1,2\]/);
+  assert.match(pwaEndpoint,/hash_file\('sha256'/);
+  assert.match(pwaHelper,/runtime\/identity\.json/);
+  assert.match(fs.readFileSync('application/views/includes/pwa.php','utf8'),/data-pwa-revision/);
+});
+test('V2 identity assets are wired without replacing company custom branding',()=>{
+  const pngs=[['assets/images/argws/favicon-16.png',16],['assets/images/argws/favicon-32.png',32],['assets/pwa/apple-touch-icon-180.png',180]];
+  for(const [file,size] of pngs){const png=fs.readFileSync(file);assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);}
+  for(const file of ['logo-horizontal-colorido.svg','logo-horizontal-negativo.svg','simbolo-colorido.svg','simbolo-negativo.svg']) assert.match(fs.readFileSync(`assets/images/argws/identity-v2/svg/${file}`,'utf8'),/^<svg/);
+  const helper=fs.readFileSync('application/helpers/assets_helper.php','utf8');assert.match(helper,/apple-touch-icon-180\.png/);assert.match(helper,/favicon-16\.png/);
+  const pdf=fs.readFileSync('application/services/CompanyDocumentBranding.php','utf8');assert.match(pdf,/assets\/images\/argws\/logo-dark\.png/);
+});
+
+test('browser owns install eligibility, dismissal and standalone; duplicate includes register once',async()=>{
   const source=fs.readFileSync('assets/pwa/install.js','utf8');
-  function harness(secure) {
-    const events={}, nodes=[], registrations=[];
-    const element=()=>({style:{},children:[],setAttribute(){},appendChild(x){this.children.push(x)},replaceChildren(){this.children=[]},addEventListener(n,fn){this[n]=fn},remove(){this.removed=true}});
-    const document={currentScript:{dataset:{pwaRoot:'https://crm.test/sub/'}},body:{appendChild:e=>nodes.push(e)},createElement:element};
-    const registration={waiting:null,addEventListener(n,f){this[n]=f}};
-    const navigator={serviceWorker:{register:async(url,options)=>{registrations.push({url,options});return registration}}};
-    vm.runInNewContext(source,{window:{isSecureContext:secure,addEventListener:(n,f)=>events[n]=f},document,navigator,location:{href:'https://crm.test/sub/admin',origin:'https://crm.test'},URL});
-    return {events,nodes,registrations,registration};
+  function harness({secure=true,root='https://crm.test/sub/',worker=true,standalone=false}={}) {
+    const events={}, registrations=[];
+    const registration={waiting:{state:'installed'}};
+    const document={currentScript:{dataset:{pwaRoot:root}},createElement(){assert.fail('must not create install/update panels')},body:{appendChild(){assert.fail('must not add per-route UI')}}};
+    const window={isSecureContext:secure,matchMedia:()=>({matches:standalone}),addEventListener:(n,f)=>events[n]=f};
+    const navigator=worker?{standalone,serviceWorker:{register:async(url,options)=>{registrations.push({url,options});return registration}}}:{};
+    const context=vm.createContext({window,document,navigator,location:{href:'https://crm.test/sub/admin',origin:'https://crm.test'},URL});
+    const run=()=>vm.runInContext(source,context);run();
+    return {events,registrations,run};
   }
-  assert.equal(harness(false).registrations.length,0);
-  const h=harness(true); await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(h.registrations[0].url,'https://crm.test/sub/pwa.php?resource=worker');
-  assert.equal(h.registrations[0].options.scope,'/sub/');
-  let prompted=0;
-  h.events.beforeinstallprompt({preventDefault(){},prompt:async()=>prompted++,userChoice:Promise.resolve({outcome:'accepted'})});
-  assert.equal(prompted,0); await h.nodes[0].children[1].click(); assert.equal(prompted,1);
-  const worker={state:'installing',addEventListener(n,f){this[n]=f}};
-  h.registration.installing=worker; h.registration.updatefound();
-  assert.equal(typeof worker.statechange,'function');
+  for (const options of [{secure:false},{root:'https://foreign.test/'},{root:'http://['},{worker:false}]) assert.equal(harness(options).registrations.length,0);
+  for (const standalone of [false,true]) {
+    const h=harness({standalone});h.run();h.run();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(h.registrations.length,1,'one registration even if a layout repeats the script');
+    assert.equal(h.registrations[0].url,'https://crm.test/sub/pwa.php?resource=worker');
+    assert.equal(h.registrations[0].options.scope,'/sub/');
+    assert.equal(h.registrations[0].options.updateViaCache,'none');
+    assert.deepEqual(Object.keys(h.events),[],'no installation interception or update invitations');
+  }
+});
+
+test('PWA worker registration carries the committed identity revision',()=>{
+  const install=fs.readFileSync('assets/pwa/install.js','utf8');
+  assert.match(install,/pwaRevision/);
+  assert.match(install,/searchParams\.set\('v', revision\)/);
+  assert.doesNotMatch(install,/addEventListener\(['"]beforeinstallprompt|\.prompt\(/);
 });
 
 test('real HTTP browser gate is mandatory, pinned and has no dependency installation or mocked fetch',()=>{
@@ -91,6 +128,10 @@ test('PWA evidence covers both widths, masks controls, preserves post-merge vali
 
 test('HTTP fixture has native mobile viewport and accessible synthetic field',()=>{
  const router=fs.readFileSync('tests/native_pwa_router.php','utf8');
+ const pwaView=fs.readFileSync('application/views/includes/pwa.php','utf8');
  assert.match(router,/<meta name="viewport" content="width=device-width,initial-scale=1">/);
+ assert.match(router,/define\('APPPATH',\s*\$root\s*\.\s*'\/application\/'\)/);
+ assert.match(router,/application\/views\/includes\/pwa\.php/);
+ assert.match(pwaView,/<link rel="manifest"/);
  assert.match(router,/<label for="synthetic">Synthetic unsaved fixture field<\/label><input id="synthetic"/);
 });

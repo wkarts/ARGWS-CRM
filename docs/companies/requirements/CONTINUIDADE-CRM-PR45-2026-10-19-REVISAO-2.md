@@ -93,7 +93,7 @@ Limite atual: a autorização inicial da designação legada exige PHP CLI. A GU
 
 ### Clientes e portal
 
-- `admin/company_clients` invoca `CompanyClients` em renderer isolado. Criar, ler, editar, buscar, paginar, compartilhar explicitamente a identidade e revogar já têm fluxo positivo.
+- `admin/clients?source=company` invoca `CompanyClients` em renderer isolado. Criar, ler, editar, buscar, paginar, compartilhar explicitamente a identidade e revogar já têm fluxo positivo.
 - Criação tem recibo durável; retry retorna a mesma identidade e chave com conteúdo/ator/empresa divergente conflita. Edição/compartilhamento usam revisão e lock.
 - Somente o proprietário edita. O master não pode editar pela empresa destinatária um cliente que ela apenas recebe por compartilhamento.
 - Compartilhar exige autorização de inclusão no destino; revogar pelo dono não depende de novo grant no destino.

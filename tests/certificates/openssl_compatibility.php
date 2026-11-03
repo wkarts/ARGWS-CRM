@@ -36,7 +36,7 @@ try {
     a1reject(fn()=>IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181',strtotime($modern['valid_to'].' UTC')),'issuer_certificate_expired','opt-in retains validity checks');
     a1reject(fn()=>IssuerCertificateLegacyImport::read($legacy,"line\nsecret"),'issuer_certificate_legacy_unavailable','newline password is never silently truncated');
     a1check(openssl_error_string()===false,'fallback parser drains crypto errors after success and failure');
-    $partsMethod=new ReflectionMethod(IssuerCertificateLegacyImport::class,'parts'); $partsMethod->setAccessible(true);
+    $partsMethod=new ReflectionMethod(IssuerCertificateLegacyImport::class,'parts');
     $other=a1fixture('22333444000155');
     $selected=$partsMethod->invoke(null,$other['certificate'].$fixture['certificate'].$fixture['private']);
     a1check($selected['cert']===trim($fixture['certificate']),'chain selects certificate matching private key, not first certificate');

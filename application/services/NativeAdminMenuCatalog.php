@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+/** Shared static native menu definitions. No queries, hooks or module execution. */
+final class NativeAdminMenuCatalog
+{
+    public static function entries(): array
+    {
+        return [
+            'sidebar_menu:support' => ['kind'=>'sidebar_menu','parent'=>'support','slug'=>'support','label'=>'support','route'=>'tickets','icon'=>'fa-regular fa-life-ring','position'=>40,'feature'=>'tickets','collapse'=>false],
+            'sidebar_menu:dashboard' => ['kind' => 'sidebar_menu', 'parent' => 'dashboard', 'slug' => 'dashboard', 'label' => 'als_dashboard', 'route' => '', 'icon' => 'fa-regular fa-object-group', 'position' => 1, 'feature' => '', 'collapse' => false],
+            'sidebar_menu:customers' => ['kind' => 'sidebar_menu', 'parent' => 'customers', 'slug' => 'customers', 'label' => 'als_clients', 'route' => 'clients', 'icon' => 'fa-regular fa-user', 'position' => 5, 'feature' => 'customers', 'collapse' => false],
+            'sidebar_menu:sales' => ['kind' => 'sidebar_menu', 'parent' => 'sales', 'slug' => 'sales', 'label' => 'als_sales', 'route' => null, 'icon' => 'fa-solid fa-bolt', 'position' => 10, 'feature' => '', 'collapse' => true],
+            'sidebar_children:proposals' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'proposals', 'label' => 'proposals', 'route' => 'proposals', 'icon' => '', 'position' => 5, 'feature' => 'proposals', 'collapse' => false],
+            'sidebar_children:estimates' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'estimates', 'label' => 'estimates', 'route' => 'estimates', 'icon' => '', 'position' => 10, 'feature' => 'estimates', 'collapse' => false],
+            'sidebar_children:invoices' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'invoices', 'label' => 'invoices', 'route' => 'invoices', 'icon' => '', 'position' => 15, 'feature' => 'invoices', 'collapse' => false],
+            'sidebar_children:payments' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'payments', 'label' => 'payments', 'route' => 'payments', 'icon' => '', 'position' => 20, 'feature' => 'payments', 'collapse' => false],
+            'sidebar_children:credit_notes' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'credit_notes', 'label' => 'credit_notes', 'route' => 'credit_notes', 'icon' => '', 'position' => 25, 'feature' => 'credit_notes', 'collapse' => false],
+            'sidebar_children:items' => ['kind' => 'sidebar_children', 'parent' => 'sales', 'slug' => 'items', 'label' => 'items', 'route' => 'invoice_items', 'icon' => '', 'position' => 30, 'feature' => 'items', 'collapse' => false],
+            'sidebar_menu:subscriptions' => ['kind' => 'sidebar_menu', 'parent' => 'subscriptions', 'slug' => 'subscriptions', 'label' => 'subscriptions', 'route' => 'subscriptions', 'icon' => 'fa fa-repeat', 'position' => 15, 'feature' => 'subscriptions', 'collapse' => false],
+            'sidebar_menu:expenses' => ['kind' => 'sidebar_menu', 'parent' => 'expenses', 'slug' => 'expenses', 'label' => 'expenses', 'route' => 'expenses', 'icon' => 'fa-regular fa-file-lines', 'position' => 20, 'feature' => 'expenses', 'collapse' => false],
+            'sidebar_menu:contracts' => ['kind' => 'sidebar_menu', 'parent' => 'contracts', 'slug' => 'contracts', 'label' => 'contracts', 'route' => 'contracts', 'icon' => 'fa-regular fa-note-sticky', 'position' => 25, 'feature' => 'contracts', 'collapse' => false],
+            'sidebar_menu:projects' => ['kind' => 'sidebar_menu', 'parent' => 'projects', 'slug' => 'projects', 'label' => 'projects', 'route' => 'projects', 'icon' => 'fa-solid fa-chart-gantt', 'position' => 30, 'feature' => 'projects', 'collapse' => false],
+            'sidebar_menu:tasks' => ['kind' => 'sidebar_menu', 'parent' => 'tasks', 'slug' => 'tasks', 'label' => 'als_tasks', 'route' => 'tasks', 'icon' => 'fa-regular fa-circle-check', 'position' => 35, 'feature' => 'tasks', 'collapse' => false],
+            'sidebar_menu:leads' => ['kind' => 'sidebar_menu', 'parent' => 'leads', 'slug' => 'leads', 'label' => 'als_leads', 'route' => 'leads', 'icon' => 'fa-solid fa-crosshairs', 'position' => 45, 'feature' => 'leads', 'collapse' => false],
+            'sidebar_menu:estimate_request' => ['kind' => 'sidebar_menu', 'parent' => 'estimate_request', 'slug' => 'estimate_request', 'label' => 'estimate_request', 'route' => 'estimate_request', 'icon' => 'fa-regular fa-file', 'position' => 46, 'feature' => 'estimate_request', 'collapse' => false],
+            'sidebar_menu:knowledge-base' => ['kind' => 'sidebar_menu', 'parent' => 'knowledge-base', 'slug' => 'knowledge-base', 'label' => 'als_kb', 'route' => 'knowledge_base', 'icon' => 'fa-regular fa-question-circle', 'position' => 50, 'feature' => 'knowledge_base', 'collapse' => false],
+            'sidebar_menu:utilities' => ['kind' => 'sidebar_menu', 'parent' => 'utilities', 'slug' => 'utilities', 'label' => 'als_utilities', 'route' => null, 'icon' => 'fa-regular fa-circle-dot', 'position' => 55, 'feature' => '', 'collapse' => true],
+            'sidebar_children:media' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'media', 'label' => 'als_media', 'route' => 'utilities/media', 'icon' => '', 'position' => 5, 'feature' => '', 'collapse' => false],
+            'sidebar_children:bulk-pdf-exporter' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'bulk-pdf-exporter', 'label' => 'bulk_pdf_exporter', 'route' => 'utilities/bulk_pdf_exporter', 'icon' => '', 'position' => 10, 'feature' => '', 'collapse' => false],
+            'sidebar_children:calendar' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'calendar', 'label' => 'als_calendar_submenu', 'route' => 'utilities/calendar', 'icon' => '', 'position' => 15, 'feature' => 'calendar', 'collapse' => false],
+            'sidebar_children:announcements' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'announcements', 'label' => 'als_announcements_submenu', 'route' => 'announcements', 'icon' => '', 'position' => 20, 'feature' => '', 'collapse' => false],
+            'sidebar_children:activity-log' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'activity-log', 'label' => 'als_activity_log_submenu', 'route' => 'utilities/activity_log', 'icon' => '', 'position' => 25, 'feature' => '', 'collapse' => false],
+            'sidebar_children:ticket-pipe-log' => ['kind' => 'sidebar_children', 'parent' => 'utilities', 'slug' => 'ticket-pipe-log', 'label' => 'ticket_pipe_log', 'route' => 'utilities/pipe_log', 'icon' => '', 'position' => 30, 'feature' => '', 'collapse' => false],
+            'sidebar_menu:reports' => ['kind' => 'sidebar_menu', 'parent' => 'reports', 'slug' => 'reports', 'label' => 'als_reports', 'route' => 'reports', 'icon' => 'fa-solid fa-chart-line', 'position' => 60, 'feature' => 'reports', 'collapse' => true],
+            'sidebar_children:timesheets-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'timesheets-reports', 'label' => 'timesheets_overview', 'route' => 'staff/timesheets?view=all', 'icon' => '', 'position' => 25, 'feature' => 'reports', 'collapse' => false],
+            'sidebar_children:sales-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'sales-reports', 'label' => 'als_reports_sales_submenu', 'route' => 'reports/sales', 'icon' => '', 'position' => 5, 'feature' => 'reports', 'collapse' => false],
+            'sidebar_children:expenses-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'expenses-reports', 'label' => 'als_reports_expenses', 'route' => 'reports/expenses', 'icon' => '', 'position' => 10, 'feature' => 'reports', 'collapse' => false],
+            'sidebar_children:expenses-vs-income-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'expenses-vs-income-reports', 'label' => 'als_expenses_vs_income', 'route' => 'reports/expenses_vs_income', 'icon' => '', 'position' => 15, 'feature' => 'reports', 'collapse' => false],
+            'sidebar_children:leads-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'leads-reports', 'label' => 'als_reports_leads_submenu', 'route' => 'reports/leads', 'icon' => '', 'position' => 20, 'feature' => 'reports', 'collapse' => false],
+            'sidebar_children:knowledge-base-reports' => ['kind' => 'sidebar_children', 'parent' => 'reports', 'slug' => 'knowledge-base-reports', 'label' => 'als_kb_articles_submenu', 'route' => 'reports/knowledge_base_articles', 'icon' => '', 'position' => 30, 'feature' => 'reports', 'collapse' => false],
+            'setup_menu:issuers' => ['kind' => 'setup_menu', 'parent' => 'issuers', 'slug' => 'issuers', 'label' => 'issuers_title', 'route' => 'issuers', 'icon' => '', 'position' => 4, 'feature' => '', 'collapse' => false],
+            'setup_menu:staff' => ['kind' => 'setup_menu', 'parent' => 'staff', 'slug' => 'staff', 'label' => 'als_staff', 'route' => 'staff', 'icon' => '', 'position' => 5, 'feature' => 'staff', 'collapse' => false],
+            'setup_menu:customers' => ['kind' => 'setup_menu', 'parent' => 'customers', 'slug' => 'customers', 'label' => 'clients', 'route' => null, 'icon' => '', 'position' => 10, 'feature' => 'customers', 'collapse' => true],
+            'setup_children:customer-groups' => ['kind' => 'setup_children', 'parent' => 'customers', 'slug' => 'customer-groups', 'label' => 'customer_groups', 'route' => 'clients/groups', 'icon' => '', 'position' => 5, 'feature' => 'customers', 'collapse' => false],
+            'setup_menu:support' => ['kind' => 'setup_menu', 'parent' => 'support', 'slug' => 'support', 'label' => 'support', 'route' => null, 'icon' => '', 'position' => 15, 'feature' => 'tickets', 'collapse' => true],
+            'setup_children:departments' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'departments', 'label' => 'acs_departments', 'route' => 'departments', 'icon' => '', 'position' => 5, 'feature' => 'tickets', 'collapse' => false],
+            'setup_children:tickets-predefined-replies' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'tickets-predefined-replies', 'label' => 'acs_ticket_predefined_replies_submenu', 'route' => 'tickets/predefined_replies', 'icon' => '', 'position' => 10, 'feature' => 'tickets', 'collapse' => false],
+            'setup_children:tickets-priorities' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'tickets-priorities', 'label' => 'acs_ticket_priority_submenu', 'route' => 'tickets/priorities', 'icon' => '', 'position' => 15, 'feature' => 'tickets', 'collapse' => false],
+            'setup_children:tickets-statuses' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'tickets-statuses', 'label' => 'acs_ticket_statuses_submenu', 'route' => 'tickets/statuses', 'icon' => '', 'position' => 20, 'feature' => 'tickets', 'collapse' => false],
+            'setup_children:tickets-services' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'tickets-services', 'label' => 'acs_ticket_services_submenu', 'route' => 'tickets/services', 'icon' => '', 'position' => 25, 'feature' => 'tickets', 'collapse' => false],
+            'setup_children:tickets-spam-filters' => ['kind' => 'setup_children', 'parent' => 'support', 'slug' => 'tickets-spam-filters', 'label' => 'spam_filters', 'route' => 'spam_filters/view/tickets', 'icon' => '', 'position' => 30, 'feature' => 'tickets', 'collapse' => false],
+            'setup_menu:leads' => ['kind' => 'setup_menu', 'parent' => 'leads', 'slug' => 'leads', 'label' => 'acs_leads', 'route' => null, 'icon' => '', 'position' => 20, 'feature' => 'leads', 'collapse' => true],
+            'setup_children:leads-sources' => ['kind' => 'setup_children', 'parent' => 'leads', 'slug' => 'leads-sources', 'label' => 'acs_leads_sources_submenu', 'route' => 'leads/sources', 'icon' => '', 'position' => 5, 'feature' => 'leads', 'collapse' => false],
+            'setup_children:leads-statuses' => ['kind' => 'setup_children', 'parent' => 'leads', 'slug' => 'leads-statuses', 'label' => 'acs_leads_statuses_submenu', 'route' => 'leads/statuses', 'icon' => '', 'position' => 10, 'feature' => 'leads', 'collapse' => false],
+            'setup_children:leads-email-integration' => ['kind' => 'setup_children', 'parent' => 'leads', 'slug' => 'leads-email-integration', 'label' => 'leads_email_integration', 'route' => 'leads/email_integration', 'icon' => '', 'position' => 15, 'feature' => 'leads', 'collapse' => false],
+            'setup_children:web-to-lead' => ['kind' => 'setup_children', 'parent' => 'leads', 'slug' => 'web-to-lead', 'label' => 'web_to_lead', 'route' => 'leads/forms', 'icon' => '', 'position' => 20, 'feature' => 'leads', 'collapse' => false],
+            'setup_menu:finance' => ['kind' => 'setup_menu', 'parent' => 'finance', 'slug' => 'finance', 'label' => 'acs_finance', 'route' => null, 'icon' => '', 'position' => 25, 'feature' => 'finance', 'collapse' => true],
+            'setup_children:taxes' => ['kind' => 'setup_children', 'parent' => 'finance', 'slug' => 'taxes', 'label' => 'acs_sales_taxes_submenu', 'route' => 'taxes', 'icon' => '', 'position' => 5, 'feature' => 'taxes', 'collapse' => false],
+            'setup_children:currencies' => ['kind' => 'setup_children', 'parent' => 'finance', 'slug' => 'currencies', 'label' => 'acs_sales_currencies_submenu', 'route' => 'currencies', 'icon' => '', 'position' => 10, 'feature' => 'currencies', 'collapse' => false],
+            'setup_children:payment-modes' => ['kind' => 'setup_children', 'parent' => 'finance', 'slug' => 'payment-modes', 'label' => 'acs_sales_payment_modes_submenu', 'route' => 'paymentmodes', 'icon' => '', 'position' => 15, 'feature' => 'payment-modes', 'collapse' => false],
+            'setup_children:expenses-categories' => ['kind' => 'setup_children', 'parent' => 'finance', 'slug' => 'expenses-categories', 'label' => 'acs_expense_categories', 'route' => 'expenses/categories', 'icon' => '', 'position' => 20, 'feature' => 'expenses-categories', 'collapse' => false],
+            'setup_menu:contracts' => ['kind' => 'setup_menu', 'parent' => 'contracts', 'slug' => 'contracts', 'label' => 'acs_contracts', 'route' => null, 'icon' => '', 'position' => 30, 'feature' => 'contracts', 'collapse' => true],
+            'setup_children:contracts-types' => ['kind' => 'setup_children', 'parent' => 'contracts', 'slug' => 'contracts-types', 'label' => 'acs_contract_types', 'route' => 'contracts/types', 'icon' => '', 'position' => 5, 'feature' => 'contracts', 'collapse' => false],
+            'setup_menu:custom-fields' => ['kind' => 'setup_menu', 'parent' => 'custom-fields', 'slug' => 'custom-fields', 'label' => 'asc_custom_fields', 'route' => 'custom_fields', 'icon' => '', 'position' => 45, 'feature' => 'custom-fields', 'collapse' => false],
+            'setup_menu:gdpr' => ['kind' => 'setup_menu', 'parent' => 'gdpr', 'slug' => 'gdpr', 'label' => 'gdpr_short', 'route' => 'gdpr', 'icon' => '', 'position' => 50, 'feature' => 'gdpr', 'collapse' => false],
+            'setup_menu:roles' => ['kind' => 'setup_menu', 'parent' => 'roles', 'slug' => 'roles', 'label' => 'acs_roles', 'route' => 'roles', 'icon' => '', 'position' => 55, 'feature' => 'roles', 'collapse' => false],
+            'setup_menu:settings' => ['kind' => 'setup_menu', 'parent' => 'settings', 'slug' => 'settings', 'label' => 'acs_settings', 'route' => 'settings', 'icon' => '', 'position' => 200, 'feature' => 'settings', 'collapse' => false],
+            'setup_menu:email-templates' => ['kind' => 'setup_menu', 'parent' => 'email-templates', 'slug' => 'email-templates', 'label' => 'acs_email_templates', 'route' => 'emails', 'icon' => '', 'position' => 40, 'feature' => 'email_templates', 'collapse' => false],
+            'setup_menu:estimate_request' => ['kind' => 'setup_menu', 'parent' => 'estimate_request', 'slug' => 'estimate_request', 'label' => 'acs_estimate_request', 'route' => null, 'icon' => '', 'position' => 34, 'feature' => 'estimate_request', 'collapse' => true],
+            'setup_children:estimate-request-forms' => ['kind' => 'setup_children', 'parent' => 'estimate_request', 'slug' => 'estimate-request-forms', 'label' => 'acs_estimate_request_forms', 'route' => 'estimate_request/forms', 'icon' => '', 'position' => 5, 'feature' => 'estimate_request', 'collapse' => false],
+            'setup_children:estimate-request-statuses' => ['kind' => 'setup_children', 'parent' => 'estimate_request', 'slug' => 'estimate-request-statuses', 'label' => 'acs_estimate_request_statuses_submenu', 'route' => 'estimate_request/statuses', 'icon' => '', 'position' => 10, 'feature' => 'estimate_request', 'collapse' => false],
+        ];
+    }
+    public static function legacy(string $key): array
+    {
+        $e = self::entries()[$key] ?? null;
+        if (!$e) { throw new LogicException('Unknown native menu entry'); }
+        $item = ['name'=>_l($e['label']), 'position'=>$e['position'], 'badge'=>[]];
+        if ($e['route'] !== null) { $item['href'] = admin_url($e['route']); }
+        if ($e['icon'] !== '') { $item['icon'] = $e['icon']; }
+        if ($e['collapse']) { $item['collapse'] = true; }
+        if (in_array($e['kind'], ['sidebar_children','setup_children'], true)) { $item['slug'] = $e['slug']; }
+        return $item;
+    }
+}

@@ -7,7 +7,7 @@ if(($argv[1]??'')==='worker'){
  try{(new CompanyAssets($db,$p))->save($input['issuer'],12,'signature',base64_decode($input['bytes']),$input['revision']);echo 'saved';}
  catch(DomainException $e){if(!in_array($e->getMessage(),['company_asset_access_denied','company_asset_stale'],true))throw $e;echo $e->getMessage();}exit(0);
 }
-require dirname(__DIR__).'/settings/company_assets.php';$observer=assetDb($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
+require dirname(__DIR__).'/settings/native_assets.php';$observer=assetDb($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
 $newImage=imagecreatetruecolor(4,4);imagefill($newImage,0,0,imagecolorallocate($newImage,220,80,50));ob_start();imagepng($newImage);$changedBytes=ob_get_clean();unset($newImage);
 foreach([false,true] as $revoke){
  $revision=$service->view($a,12)['revision'];$db->trans_begin();$db->query("SELECT id FROM {$p}issuers_lock WHERE id=1 FOR UPDATE");$workers=[];

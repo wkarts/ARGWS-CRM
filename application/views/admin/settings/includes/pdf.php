@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_settings)){if(!is_array($native_settings_pdf_values??null))throw new DomainException('native_settings_invalid');$this->load->view('admin/settings/includes/native_pdf',['values'=>$native_settings_pdf_values,'assets'=>$native_settings_assets]);return;} ?>
 <div class="horizontal-scrollable-tabs panel-full-width-tabs">
     <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
     <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>

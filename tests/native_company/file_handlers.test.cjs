@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('assets/js/native-admin-files.js','utf8');assert.doesNotMatch(fs.readFileSync('assets/js/main.js','utf8'),/function toggle_file_visibility\(/);
+let native=true,legacy=0,calls=[];const attrs={'data-native-file-source':'invoice','data-native-file-revision':'3','data-native-file-visible':'0'};let icon='';const parentAttrs={};
+const node={closest(selector){assert.equal(selector,'[data-attachment-id]');return{attr(k,v){parentAttrs[k]=v;return this;}};},attr(k,v){if(v===undefined)return attrs[k];attrs[k]=v;return this;},find(){return{removeClass(){return this;},addClass(v){icon=v;return this;}};}};
+const transport={request(path,method,data,options){calls.push({path,method,data,options});return{done(fn){fn({visible:1,revision:4});return this;}};}};
+const context={$:v=>v==='body'?{hasClass(){return native;}}:node,window:{NativeCompanyTransport:transport},NativeCompanyTransport:transport,requestGet(){legacy++;return{done(fn){fn(1);}};}};vm.createContext(context);vm.runInContext(source,context);
+context.toggle_file_visibility(17,42,{});assert.equal(calls[0].method,'POST');assert.equal(calls[0].data.native_file_revision,'3');assert.equal(attrs['data-native-file-revision'],'4');assert.match(icon,/toggle-on/);assert.equal(parentAttrs['data-native-file-revision'],'4');assert.equal(legacy,0);
+delete attrs['data-native-file-revision'];assert.throws(()=>context.toggle_file_visibility(17,42,{}),/native_file_identity_required/);assert.equal(calls.length,1);assert.equal(legacy,0);
+native=false;context.toggle_file_visibility(17,42,{});assert.equal(legacy,1);
+console.log('Shared native file handler: POST/CAS, no fallback, original legacy behavior PASS');

@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_company_sales_workspace)){init_head(); ?><div id="wrapper"><div class="content"><div class="row"><div class="col-md-12"><div class="panel_s"><div class="panel-body"><?php require APPPATH.'views/admin/includes/native_sales_workspace.php'; ?></div></div></div></div></div></div><?php init_tail(); ?></body></html><?php return;} ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

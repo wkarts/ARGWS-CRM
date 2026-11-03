@@ -13,14 +13,16 @@
                 <div class="row">
                     <div class="padding-10">
                         <div class="col-md-12">
+                            <?php if(empty($native_company_consent)||$native_consent_url!==''){ ?>
                             <h4 class="no-mtop">
-                                <a href="<?= contact_consent_url($contact_id); ?>"
-                                    target="_blank">
+                                <a href="<?= e(!empty($native_company_consent)?$native_consent_url:contact_consent_url($contact_id)); ?>"
+                                    target="_blank" rel="noopener noreferrer">
                                     <small>
                                         <?= _l('view_consent'); ?>
                                     </small>
                                 </a>
                             </h4>
+                            <?php } ?>
                         </div>
                         <?php $this->load->view('admin/gdpr/consent_user_info', ['form_url' => 'gdpr/contact_consent_opt_action']); ?>
                     </div>

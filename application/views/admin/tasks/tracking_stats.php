@@ -21,5 +21,6 @@
 </div>
 <!-- /.modal -->
 <script>
+    init_task_tracking_stats_events();
     taskTrackingStatsData = <?= $stats; ?> ;
 </script>

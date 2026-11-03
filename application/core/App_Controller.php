@@ -15,6 +15,20 @@ class App_Controller extends CI_Controller
     {
         parent::__construct();
 
+        // The autoloader admitted only the exact public routes and loaded DB/session.
+        // Resolve their issuer before any legacy hooks/options/auth models can hydrate.
+        if (class_exists('PortalRequestScope', false) && PortalRequestScope::candidate()) {
+            try {
+                if (!PortalRequestScope::resolve($this) || !PortalRequestScope::sealedFor($this)) {
+                    throw new DomainException('native_portal_context_invalid');
+                }
+            } catch (Throwable $error) {
+                show_error('Não foi possível validar o acesso à empresa solicitada.', $error instanceof DomainException ? 403 : 503);
+                return;
+            }
+            return;
+        }
+
         require_once APPPATH . 'services/CompanyRequestScope.php';
         CompanyRequestScope::beforeHydration($this);
         if (CompanyRequestScope::isolated()) {

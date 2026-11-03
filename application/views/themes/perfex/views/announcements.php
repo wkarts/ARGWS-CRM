@@ -21,7 +21,7 @@
                 <tr>
                     <td>
                         <a
-                            href="<?= site_url('clients/announcement/' . $announcement['announcementid']); ?>">
+                            href="<?= (!empty($native_portal)?NativePortalPresentation::url('clients/announcement/'.$announcement['announcementid']):site_url('clients/announcement/' . $announcement['announcementid'])); ?>">
                             <?= e($announcement['name']); ?>
                         </a>
                     </td>

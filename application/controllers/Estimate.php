@@ -6,6 +6,7 @@ class Estimate extends ClientsController
 {
     public function index($id = '', $hash = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($this)){require_once APPPATH.'services/NativePortalEstimateHttp.php';try{(new NativePortalEstimateHttp($this))->index($id,$hash);}catch(DomainException$denied){show_404();}return;}
         check_estimate_restrictions($id, $hash);
 
         $estimate = $this->estimates_model->get($id);

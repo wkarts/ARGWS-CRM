@@ -1,0 +1,121 @@
+{
+  "continuation": {
+    "checkpoint_after_each_increment": true,
+    "checkpoint_before_long_operation": true,
+    "continue_within_current_turn": true,
+    "handoff_before_long_operation": true,
+    "max_cycles": 100,
+    "max_cycles_without_progress": 3,
+    "preemption_handoff_enabled": true,
+    "recover_interrupted_runtime": true,
+    "require_checkpoint_before_stop": true,
+    "resume_command": "@continua-ai Retome pelo checkpoint mais recente, recupere qualquer execução interrompida, reconcilie com o estado real e execute o próximo incremento verificável.",
+    "same_conversation_for_ephemeral_workspace": true,
+    "workspace_scope": "auto"
+  },
+  "contract": {
+    "allow_unverified_completion": false,
+    "require_complete_acceptance": true,
+    "sources": [
+      "CONTINUA_CONTRACT.md"
+    ]
+  },
+  "permissions": {
+    "destructive_operations": "require-user",
+    "external_credentials": "require-user",
+    "filesystem": "workspace-only",
+    "git_push": "require-user",
+    "merge": "require-user",
+    "network": "deny-by-default",
+    "publish": "require-user",
+    "pull_request": "require-user",
+    "schedule_creation": "require-user"
+  },
+  "portable": {
+    "include_contracts": true,
+    "include_evidence": true,
+    "include_tracked_files": false,
+    "max_file_bytes": 26214400,
+    "max_files": 5000,
+    "max_total_bytes": 262144000
+  },
+  "safety": {
+    "deny_shell_execution": true,
+    "require_evidence": true,
+    "stop_on_irreversible_decision": true,
+    "stop_on_missing_target": true,
+    "stop_on_repeated_failure": true
+  },
+  "scheduling": {
+    "assume_file_access": false,
+    "auto_create_for_watchdog_after_user_opt_in": true,
+    "confirmed_scheduler_does_not_imply_workspace_access": true,
+    "ephemeral_workspace_policy": "monitor-only-same-conversation",
+    "fallback": "pending-native",
+    "minimum_interval_minutes": 60,
+    "native_when_available": true,
+    "require_explicit_user_request": true,
+    "reuse_existing_native_task": true
+  },
+  "schema_version": 1,
+  "skill_version": "3.2.2",
+  "state": {
+    "checkpoint_directory": ".continua-ai/checkpoints",
+    "evidence_directory": ".continua-ai/evidence",
+    "file": ".continua-ai/state.json",
+    "history_limit": 200,
+    "import_directory": ".continua-ai/imports",
+    "lock_file": ".continua-ai/.lock",
+    "recovery_file": ".continua-ai/recovery.json",
+    "report": ".continua-ai/STATUS.md",
+    "schedule_directory": ".continua-ai/schedules",
+    "stop_file": ".continua-ai/STOP",
+    "watchdog_directory": ".continua-ai/watchdog",
+    "watchdog_file": ".continua-ai/watchdog/state.json"
+  },
+  "supervisor": {
+    "enabled": true,
+    "language": "pt-BR",
+    "mode": "standalone",
+    "profile": "software-project"
+  },
+  "target": {
+    "canonical_conversation": true,
+    "path": ".",
+    "type": "local_workspace"
+  },
+  "validation": {
+    "allow_execution": false,
+    "commands": [
+      {
+        "argv": [
+          "npm",
+          "run",
+          "build"
+        ],
+        "name": "npm-build",
+        "required": true
+      },
+      {
+        "argv": [
+          "python",
+          "-m",
+          "pytest"
+        ],
+        "name": "pytest",
+        "required": true
+      }
+    ],
+    "timeout_seconds": 900
+  },
+  "watchdog": {
+    "auto_prepare_task": true,
+    "enabled": false,
+    "ignore_external_tooling_when_local_work_exists": true,
+    "interval_minutes": 60,
+    "maximum_result_bytes": 2097152,
+    "pause_on_human_blocker": true,
+    "require_new_result": true,
+    "stop_when_complete": true
+  }
+}

@@ -1,6 +1,6 @@
 # Diretório de clientes privados no núcleo
 
-O renderer isolado `admin/company_clients` utiliza `CompanyClients` para criar, consultar,
+O renderer isolado `admin/clients?source=company` utiliza `CompanyClients` para criar, consultar,
 editar a identidade própria, buscar e paginar, compartilhar explicitamente e revogar.
 Ele exige `customers/view` e a capacidade específica de cada ação. O master continua
 sujeito ao proprietário: nem ele edita um cliente compartilhado pela empresa destino.

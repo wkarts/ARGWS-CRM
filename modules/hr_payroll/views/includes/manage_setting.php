@@ -114,7 +114,7 @@ $viewuri = $_SERVER['REQUEST_URI'];
 }elseif(!(strpos($viewuri,'admin/hr_payroll/setting?group=salary_deductions_list') === false)){
 	require 'modules/hr_payroll/assets/js/settings/salary_deductions_list_js.php';
 }elseif(!(strpos($viewuri,'admin/hr_payroll/setting?group=company_contributions_list') === false)){
-	require 'modules/hr_payroll/assets/js/settings/company_contributions_list_js.php';
+	require 'modules/hr_payroll/assets/js/settings/contributions_list_js.php';
 }elseif(!(strpos($viewuri,'admin/hr_payroll/setting?group=data_integration') === false)){
 	require 'modules/hr_payroll/assets/js/settings/data_integration_js.php';
 }elseif(!(strpos($viewuri,'admin/hr_payroll/setting?group=hr_records_earnings_list') === false)){

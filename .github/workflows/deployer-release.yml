@@ -17,8 +17,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: argws-crm-deployer-assets
-  cancel-in-progress: false
+  group: argws-crm-deployer-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'assets' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   validate:
     if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
@@ -56,7 +56,7 @@ jobs:
        (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
        (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[rebuild deployer]')))
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         include:
           - asset: win-x64
@@ -102,7 +102,11 @@ jobs:
         run: rustup target add --toolchain 1.90.0 "$TARGET"
       - name: Instalar linker musl
         if: matrix.os == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
+        timeout-minutes: 6
+        run: |
+          bash scripts/ci/prepare-apt-mirrors.sh
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
       - name: Testar e compilar para Windows x64
         if: matrix.os == 'windows'
         shell: pwsh
@@ -172,7 +176,7 @@ jobs:
        (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
        (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[rebuild deployer]')))
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         include:
           - asset: gui-win-x64
@@ -212,9 +216,11 @@ jobs:
           path: cli-stage
       - name: Preparar Python e Tkinter no Linux
         if: matrix.os == 'linux'
+        timeout-minutes: 8
         shell: bash
         run: |
           set -euo pipefail
+          bash scripts/ci/prepare-apt-mirrors.sh
           sudo apt-get update
           sudo apt-get install -y python3-tk python3-venv xvfb
           python3 -c 'import tkinter'

@@ -7,14 +7,16 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @param string  $name        table name
  * @param boolean $bulk_action include checkboxes on the left side for bulk actions
  */
-function AdminTicketsTableStructure($name = '', $bulk_action = false)
+function AdminTicketsTableStructure($name = '', $bulk_action = false, ?array $native = null)
 {
-    $table = '<table class="table customizable-table number-index-' . ($bulk_action ? '2' : '1') . ' dt-table-loading ' . ($name == '' ? 'tickets-table' : $name) . ' table-tickets" id="tickets" data-last-order-identifier="tickets" data-default-order="' . get_table_last_order('tickets') . '">';
+    if ($native !== null && (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor(get_instance()) || !CompanyRequestScope::sealedFor(get_instance()))) throw new DomainException('native_ticket_projection_denied');
+    if ($native !== null) $bulk_action = $bulk_action && !empty($native['can_edit']);
+    $table = '<table class="table customizable-table number-index-' . ($bulk_action ? '2' : '1') . ' dt-table-loading ' . ($name == '' ? 'tickets-table' : $name) . ' table-tickets" id="tickets" data-last-order-identifier="tickets" data-default-order="' . ($native !== null ? e($native['order']) : get_table_last_order('tickets')) . '">';
     $table .= '<thead>';
     $table .= '<tr>';
 
     $table .= '<th class="' . ($bulk_action == true ? '' : 'not_visible') . '">';
-    $table .= '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="tickets"><label></label></div>';
+    if ($native === null || !empty($native['can_edit'])) $table .= '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="tickets"><label></label></div>';
     $table .= '</th>';
 
     $table .= '<th class="toggleable" id="th-number">' . _l('the_number_sign') . '</th>';
@@ -22,7 +24,7 @@ function AdminTicketsTableStructure($name = '', $bulk_action = false)
     $table .= '<th class="toggleable" id="th-tags">' . _l('tags') . '</th>';
     $table .= '<th class="toggleable" id="th-department">' . _l('ticket_dt_department') . '</th>';
     $services_th_attrs = '';
-    if (get_option('services') == 0) {
+    if (($native !== null ? $native['services'] : get_option('services')) == 0) {
         $services_th_attrs = ' class="not_visible"';
     }
     $table .= '<th' . $services_th_attrs . '>' . _l('ticket_dt_service') . '</th>';
@@ -32,10 +34,10 @@ function AdminTicketsTableStructure($name = '', $bulk_action = false)
     $table .= '<th class="toggleable" id="th-last-reply">' . _l('ticket_dt_last_reply') . '</th>';
     $table .= '<th class="toggleable ticket_created_column" id="th-created">' . _l('ticket_date_created') . '</th>';
 
-    $custom_fields = get_table_custom_fields('tickets');
+    $custom_fields = $native !== null ? $native['custom_fields'] : get_table_custom_fields('tickets');
 
     foreach ($custom_fields as $field) {
-        $table .= '<th>' . $field['name'] . '</th>';
+        $table .= '<th>' . ($native !== null ? e($field['name']) : $field['name']) . '</th>';
     }
 
     $table .= '</tr>';
@@ -43,8 +45,8 @@ function AdminTicketsTableStructure($name = '', $bulk_action = false)
     $table .= '<tbody></tbody>';
     $table .= '</table>';
 
-    $table .= '<script id="hidden-columns-table-tickets" type="text/json">';
-    $table .= get_staff_meta(get_staff_user_id(), 'hidden-columns-table-tickets');
+    $table .= '<script id="' . ($native !== null ? 'hidden-columns-tickets' : 'hidden-columns-table-tickets') . '" type="text/json">';
+    $table .= $native !== null ? $native['hidden_columns'] : get_staff_meta(get_staff_user_id(), 'hidden-columns-table-tickets');
     $table .= '</script>';
 
     return $table;
@@ -203,9 +205,9 @@ function can_change_ticket_status_in_clients_area($status = null)
  * This function is used for the tickets form attachments
  * @return string
  */
-function get_ticket_form_accepted_mimes()
+function get_ticket_form_accepted_mimes(?string $ticket_allowed_extensions = null)
 {
-    $ticket_allowed_extensions = get_option('ticket_attachments_file_extensions');
+    $ticket_allowed_extensions ??= get_option('ticket_attachments_file_extensions');
 
     $_ticket_allowed_extensions = array_map(function ($ext) {
         return trim($ext);

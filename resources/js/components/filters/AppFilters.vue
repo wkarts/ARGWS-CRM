@@ -360,8 +360,8 @@ const isApplyDisabled = computed(
 
 function castFilterValues(f) {
   f.id = parseInt(f.id);
-  f.is_shared = String(f.is_shared) === "1";
-  f.is_default = String(f.is_default) === "1";
+  f.is_shared = f.is_shared === true || String(f.is_shared) === "1";
+  f.is_default = f.is_default === true || String(f.is_default) === "1";
 
   return f;
 }
@@ -391,6 +391,7 @@ function applyHandler() {
   }
 
   $.post(admin_url + endpoint, {
+    revision: activeFilter.value ? activeFilter.value.revision : undefined,
     name: filterName.value,
     is_shared: filterIsShared.value,
     is_default: filterIsDefault.value,
@@ -408,7 +409,7 @@ function applyHandler() {
     },
   }).done(function (response) {
     hideModal();
-    let responseFilter = castFilterValues(JSON.parse(response));
+    let responseFilter = castFilterValues(typeof response === "string" ? JSON.parse(response) : response);
     let filterIndex = fIdx(responseFilter.id);
 
     if (filterIndex !== -1) {
@@ -514,7 +515,7 @@ function deleteFilter(filterId) {
     return;
   }
 
-  $.post(`${admin_url}filters/delete/${filterId}`).done(() => {
+  $.post(`${admin_url}filters/delete/${filterId}`, { identifier: props.id, view: viewName.value, revision: localSavedFilters.value[fIdx(filterId)]?.revision }).done(() => {
     clearActiveFilter();
 
     let filterIndex = fIdx(filterId);

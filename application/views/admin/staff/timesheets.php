@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_staff_timesheets)){$this->load->view('admin/staff/native_timesheets',get_defined_vars());return;} ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

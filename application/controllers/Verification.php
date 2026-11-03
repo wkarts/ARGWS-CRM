@@ -4,8 +4,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Verification extends ClientsController
 {
+    private function nativePortal():?NativePortalAuthentication
+    {if(!class_exists('PortalRequestScope',false)||!PortalRequestScope::sealedFor($this))return null;require_once APPPATH.'services/NativePortalAuthentication.php';return new NativePortalAuthentication($this);}
     public function index()
     {
+        if($native=$this->nativePortal()){$native->verification();return;}
         if (is_contact_email_verified()) {
             redirect(site_url('clients'));
         }
@@ -19,6 +22,7 @@ class Verification extends ClientsController
 
     public function verify($id, $key)
     {
+        if($native=$this->nativePortal()){$native->verify($id,$key);return;}
         $contact = $this->clients_model->get_contact($id);
 
         if (!$contact) {
@@ -61,6 +65,7 @@ class Verification extends ClientsController
 
     public function resend()
     {
+        if($native=$this->nativePortal()){$native->resendVerification();return;}
         if (is_contact_email_verified() || !is_client_logged_in()) {
             redirect(site_url('clients'));
         }

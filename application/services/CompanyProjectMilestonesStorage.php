@@ -23,7 +23,7 @@ abstract class CompanyProjectMilestonesStorage extends CompanyProjectPortalRules
     }
     protected function validateDates(int $issuer,int $project,array $source):void
     {
-        $d=$source['details'];$r=$source['milestone'];if(!$d)throw new DomainException('company_project_portal_unavailable');$dates=$this->rows('SELECT start_date,due_date FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$project])[0]??[];self::date($d['start_date']);self::date($r['due_date']);if($d['start_date']<($dates['start_date']??'9999')||$d['start_date']>$r['due_date']||$r['due_date']>($dates['due_date']??''))throw new DomainException('company_project_portal_unavailable');
+        $d=$source['details'];$r=$source['milestone'];if(!$d)throw new DomainException('company_project_portal_unavailable');$dates=$this->rows('SELECT start_date,due_date FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$project])[0]??[];if(!$dates)throw new DomainException('company_project_portal_unavailable');self::date($d['start_date']);self::date($r['due_date']);if($d['start_date']<($dates['start_date']??'9999')||$d['start_date']>$r['due_date']||($dates['due_date']!==null&&$r['due_date']>$dates['due_date']))throw new DomainException('company_project_portal_unavailable');
     }
     protected static function date($v):string{if(!is_string($v)||!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D',$v)||!checkdate((int)substr($v,5,2),(int)substr($v,8,2),(int)substr($v,0,4)))throw new DomainException('company_project_portal_invalid');return $v;}
     protected function put(string $table,array $identity,array $fields):void

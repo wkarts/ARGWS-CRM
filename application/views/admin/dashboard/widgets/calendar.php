@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); if(isset($company_dashboard)&&!$company_dashboard['permissions']['calendar'])return; ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('calendar'); ?>">
   <div class="clearfix"></div>
   <div class="panel_s">

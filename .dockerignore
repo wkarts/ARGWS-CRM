@@ -26,6 +26,12 @@ scripts
 !/modules/*/uploads/**/.htaccess
 !/modules/*/uploads/**/index.html
 
+# Discarded screenshots, backup copies and local work state are never build inputs.
+/upload/**
+**/*.bak
+/.continua-ai/
+/.codex/
+
 # Bundled generic import templates and stock placeholders.
 !/modules/accounting/uploads/file_sample/**
 !/modules/hr_profile/uploads/sample_file/**
@@ -51,3 +57,4 @@ install/*
 !install/sqlparser.php
 !install/phpass.php
 container.env.example
+

@@ -1,0 +1,9 @@
+    // This native contextual endpoint is a mutation: never issue it as GET.
+    var clearRequest;
+    if (document.body.classList.contains("native-company-admin")) {
+      if (typeof NativeCompanyTransport === "undefined") throw new Error("native_transport_unavailable");
+      clearRequest = NativeCompanyTransport.request("misc/clear_system_popup", "POST", {});
+    } else {
+      clearRequest = requestGet("misc/clear_system_popup");
+    }
+    clearRequest.done(function (response) {

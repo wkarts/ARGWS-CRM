@@ -112,6 +112,99 @@ class Issuers extends AdminController
         }
         redirect(admin_url('issuers' . ($issuer ? '/index/' . $issuer : '')));
     }
+
+    /** Technical company switch; the canonical Issuers controller owns the POST. */
+    public function select(): void
+    {
+        if ($this->input->method(true) !== 'POST') { show_error('A troca de empresa exige POST.', 405); return; }
+        $stage = 'context';
+        try {
+            $context = CompanyRequestScope::context();
+            if (!($context instanceof CompanyContext)) { throw new LogicException('company_context_unavailable'); }
+            $stage = 'authorization';
+            $context->select(
+                $this->input->post('company_id', false),
+                $this->input->post('_company_switch_csrf', false),
+                CompanyRequestScope::submittedToken()
+            );
+            $stage = 'cache_invalidation';
+            CompanyRequestScope::invalidateCaches($this);
+            $destination = CompanyRequestScope::adminUrl($this);
+            $stage = 'request_release';
+            CompanyRequestScope::finish();
+            $stage = 'redirect';
+            redirect($destination, 'location', 303);
+        } catch (DomainException $error) {
+            show_error('Não foi possível trocar a empresa. Recarregue a página e confirme seu acesso.', 403);
+        } catch (Throwable $error) {
+            $errorClass = get_class($error);
+            if (!preg_match('/^[A-Za-z0-9_\\\\]{1,128}$/D', $errorClass)) { $errorClass = 'Throwable'; }
+            $sourceFile = basename((string) $error->getFile());
+            if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
+            $safeMessage = 'Native company selection failed [' . $stage . ']: ' . $errorClass
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine() . '.';
+            error_log($safeMessage);
+            log_message('error', $safeMessage);
+            show_error('Não foi possível trocar a empresa. Recarregue a página e tente novamente.', 500);
+        }
+    }
+
+    /** Canonical issuer onboarding route; the modal is an Issuers presentation. */
+    public function onboarding($key = null): void
+    {
+        if (!CompanyRequestScope::sealedFor($this)) { show_error('Contexto de empresa indisponível.', 503); return; }
+        require_once APPPATH.'services/CompanyOnboarding.php';
+        require_once APPPATH.'services/CompanySettingsFormats.php';
+        require_once APPPATH.'services/CompanyResourceCatalog.php';
+        $resources = CompanyResourceCatalog::definitions();
+        $service = new CompanyOnboarding($this->db, db_prefix(), array_map(static fn($r) => array_keys($r['capabilities']), $resources));
+        $actor = CompanyRequestScope::context()->staffId(); $error = null; $draft = null;
+        $this->output->set_header('Cache-Control: no-store')->set_header('X-Frame-Options: SAMEORIGIN');
+        $token = $this->session->userdata('company_onboarding_csrf');
+        if (!is_string($token) || strlen($token) !== 64) { $token = bin2hex(random_bytes(32)); $this->session->set_userdata('company_onboarding_csrf', $token); }
+        try {
+            $draft = $key === null ? $service->pending($actor) : $service->read($actor, $key);
+            if ($this->input->method(true) === 'POST' && $this->input->post('action', false) !== 'show') {
+                $submitted = $this->input->post('company_onboarding_csrf', false);
+                if (!is_string($submitted) || !hash_equals($token, $submitted)) { show_error('Recarregue o formulário antes de salvar.', 403); return; }
+                $action = $this->input->post('action', false);
+                if ($action === 'begin' && $key === null) {
+                    $requestKey = $this->session->userdata('company_onboarding_request_key');
+                    if (!is_string($requestKey) || !preg_match('/^[a-f0-9]{64}$/D', $requestKey)) { throw new DomainException('issuer_wizard_invalid_draft'); }
+                    $draft = $service->begin($actor, $requestKey);
+                } elseif ($action === 'advance' && $draft) {
+                    $input = $this->input->post('wizard', false); if (!is_array($input)) { throw new DomainException('issuer_wizard_invalid_input'); }
+                    if ($this->input->post('step', false) === '3') {
+                        $selected = $input['selected_staff'] ?? []; unset($input['selected_staff']); $assignments = $input['staff'] ?? [];
+                        if ($assignments === '') { $assignments = []; }
+                        if (!is_array($selected) || !is_array($assignments) || array_diff_key($selected, $assignments)) { throw new DomainException('issuer_wizard_invalid_staff'); }
+                        foreach ($selected as $enabled) { if ($enabled !== '1') { throw new DomainException('issuer_wizard_invalid_staff'); } }
+                        $input = ['staff' => array_intersect_key($assignments, $selected)];
+                    }
+                    $draft = $service->advance($actor, $draft['draft_key'], $this->input->post('revision', false), $this->input->post('step', false), $input);
+                } elseif ($action === 'complete' && $draft) {
+                    $service->complete($actor, $draft['draft_key'], $this->input->post('revision', false));
+                    $draft = $service->read($actor, $draft['draft_key']);
+                } else { throw new DomainException('issuer_wizard_invalid_input'); }
+                CompanyRequestScope::invalidateCaches($this);
+                redirect(CompanyRequestScope::adminUrl($this, 'issuers/onboarding/'.$draft['draft_key'].'?modal=1'), 'location', 303); return;
+            } elseif (!in_array($this->input->method(true), ['GET','HEAD'], true) && !($this->input->method(true) === 'POST' && $this->input->post('action', false) === 'show')) { show_error('Método não permitido.', 405); return; }
+        } catch (DomainException $exception) {
+            if ($exception->getMessage() === 'issuer_access_denied') { show_error('Somente o responsável ativo da instalação pode criar empresas.', 403); return; }
+            $this->output->set_status_header($exception->getMessage() === 'issuer_wizard_stale' ? 409 : 422);
+            $error = $exception->getMessage() === 'issuer_wizard_stale' ? 'Este rascunho mudou em outra aba. Recarregue antes de salvar. Nenhum dado desta tentativa foi aplicado.' : 'Não foi possível salvar. Confira os dados, o documento fiscal e as permissões. O rascunho salvo foi preservado.';
+        } catch (Throwable $exception) {
+            log_message('error', 'Issuer onboarding failed; no draft values logged.'); $this->output->set_status_header(503);
+            $error = 'Não foi possível confirmar a gravação. Recarregue e tente novamente; a empresa só é criada quando toda a transação é confirmada.';
+        }
+        if ($error === null && $this->input->get('modal', false) !== '1' && in_array($this->input->method(true), ['GET','HEAD'], true)) {
+            redirect(CompanyRequestScope::adminUrl($this, 'issuers?new_company=1'.($draft ? '&draft='.rawurlencode($draft['draft_key']) : '')), 'location', 303); return;
+        }
+        $step = $draft ? (int)$draft['step'] : 0; $requested = $this->input->get('step', false);
+        if ($draft && $step < 6 && is_string($requested) && preg_match('/^[1-5]$/D', $requested) && (int)$requested <= $step) { $step = (int)$requested; }
+        if (!$draft) { $this->session->set_userdata('company_onboarding_request_key', bin2hex(random_bytes(32))); }
+        $this->load->view('admin/issuers/onboarding', ['draft'=>$draft,'step'=>$step,'error'=>$error,'company_onboarding_csrf'=>$token,'staff_catalog'=>$draft && $step === 3 ? $service->staffCatalog($actor) : [],'resources'=>$resources]);
+    }
     /** Explicit preview only: no registry writes or provider-controlled destinations. */
     public function lookup(): void
     {
@@ -166,7 +259,7 @@ class Issuers extends AdminController
             $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read($id);
             $token=$this->session->userdata('issuers_csrf');
             if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('issuers_csrf',$token);}
-            $this->load->view('admin/companies/identity_modal',[
+            $this->load->view('admin/issuers/identity_modal',[
                 'selected'=>$selected,'identity_values'=>$identity,'identity_revision'=>$revision,
                 'issuers_csrf'=>$token,'notice'=>$this->session->flashdata('company_identity_notice'),
             ]);
@@ -187,6 +280,7 @@ class Issuers extends AdminController
                 'legal_name'=>$this->input->post('legal_name',false),'tax_id'=>$this->input->post('tax_id',false),
                 'profile'=>$this->input->post('company_profile',false)??[],
             ],$id,$revision);
+            require_once APPPATH.'services/NativePwaIdentity.php';NativePwaIdentity::publish($this);
             CompanyRequestScope::invalidateCaches($this);
             $this->session->set_flashdata('company_identity_notice','Identificação da empresa atualizada.');
         } catch(DomainException $error){
@@ -221,7 +315,7 @@ class Issuers extends AdminController
             $active = $this->input->post('active', false);
             $this->registry->setActive($actor, $id, $active);
             CompanyRequestScope::invalidateCaches($this);
-            if ($context && $context->issuerId() === $id && (int)$active === 0) { $destination = 'company_context'; }
+            if ($context && $context->issuerId() === $id && (int)$active === 0) { $destination = ''; }
             $notice = ['type'=>'success', 'text'=>'Situação da empresa atualizada.'];
         } catch (DomainException $error) {
             $notice = ['type'=>'danger', 'text'=>'Não foi possível alterar a situação. Confira a empresa e suas permissões.'];
@@ -243,6 +337,9 @@ class Issuers extends AdminController
         if (!in_array($this->input->method(true), ['GET','HEAD'], true)) { show_error('Use GET para consultar empresas.',405); return; }
         $actor=CompanyRequestScope::context()->staffId();
         try {
+            // Keep the existing CRM company registry route and shell. Company
+            // context changes the data and permissions, never the destination.
+            $available=$this->registry->available($actor);
             $catalog=$this->registry->catalog($actor);
             $selected=null;
             if ($issuerId !== null) {
@@ -257,7 +354,8 @@ class Issuers extends AdminController
             }
             $token=$this->session->userdata('issuers_csrf');
             if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('issuers_csrf',$token);}
-            $this->load->view('admin/companies/registry',[
+            $this->load->view('admin/issuers/manage',[
+                'title'=>_l('issuers_title'),'available'=>$available,
                 'catalog'=>$catalog,'selected'=>$selected,'profile'=>$profile,'issuers_csrf'=>$token,
                 'status_permissions'=>$this->statusPermissions($catalog,$actor),
                 'edit_permissions'=>$this->editPermissions($catalog,$actor),

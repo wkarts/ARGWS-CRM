@@ -1,0 +1,22 @@
+  if (document.body.classList.contains("native-company-admin") && (Number(task_id) >= 4294967296 || Number(timer_id) >= 4294967296 || (String(task_id) === "0" && String(timer_id) === ""))) {
+    var $localTimer = $(e).closest("[data-native-timer-id]");
+    var $localTask = $(e).closest("[data-native-task-id]");
+    var $row = timer_id !== "" ? ($localTimer.attr("data-native-timer-id") === String(timer_id) ? $localTimer : $("#timer-" + String(timer_id))) : ($localTask.attr("data-native-task-id") === String(task_id) ? $localTask : $(e));
+    var $selected = $("#timer_add_task_id option:selected");
+    var $modal = $(".task-single-header[data-task-single-id='" + String(task_id) + "']");
+    var frame = {
+      policy: $row.attr("data-policy-hash") || $modal.attr("data-policy-hash"),
+      timerRevision: $row.attr("data-timer-revision"),
+      noteRevision: $row.attr("data-note-revision"),
+      taskRevision: $timerSelectTask.is(":visible") ? $selected.attr("data-native-task-revision") : ($row.attr("data-timer-revision") || $modal.attr("data-task-revision")),
+    };
+    var requestKey = $(e).data("native-timer-request-key");
+    if (!requestKey) {
+      if (!window.crypto || !window.crypto.getRandomValues) throw new Error("native_timer_entropy_unavailable");
+      var bytes = new Uint8Array(32); window.crypto.getRandomValues(bytes);
+      requestKey = Array.from(bytes, function (v) { return v.toString(16).padStart(2, "0"); }).join("");
+      $(e).data("native-timer-request-key", requestKey);
+    }
+    try { data = native_task_timer_request(data, frame, requestKey); }
+    catch (error) { $(e).removeClass("disabled"); throw error; }
+  }

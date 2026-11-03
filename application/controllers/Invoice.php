@@ -6,6 +6,15 @@ class Invoice extends ClientsController
 {
     public function index($id = '', $hash = '')
     {
+        if (class_exists('PortalRequestScope', false) && PortalRequestScope::sealedFor($this)) {
+            require_once APPPATH . 'services/NativePortalInvoiceDetailHttp.php';
+            try {
+                (new NativePortalInvoiceDetailHttp($this))->index($id, $hash);
+            } catch (DomainException $denied) {
+                show_404();
+            }
+            return;
+        }
         check_invoice_restrictions($id, $hash);
         $invoice = $this->invoices_model->get($id);
 

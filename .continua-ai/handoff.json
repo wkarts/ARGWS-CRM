@@ -1,0 +1,15 @@
+{
+  "consumed_at": "2026-10-27T18:05:37Z",
+  "created_at": "2026-10-27T18:04:36Z",
+  "current_step": "Convergência do adapter de clientes próprios da empresa principal",
+  "digest": "17356e984cfbffe674200202d22a3e2820cb994862b09ade870249f54203fd7d",
+  "evidence": [],
+  "last_checkpoint": ".continua-ai/checkpoints/checkpoint-r000000-20261027T180433Z.md",
+  "next_action": "Executar validações estáticas e fechar o checkpoint local do incremento",
+  "reason": "platform-limit",
+  "runtime_revision": 0,
+  "schema_version": 1,
+  "skill_version": "3.2.2",
+  "status": "consumed",
+  "updated_at": "2026-10-27T18:05:37Z"
+}

@@ -2,7 +2,11 @@
     <?= _l('contracts_tickets_tab'); ?>
 </h4>
 <?php
-if (isset($client)) {
+if (isset($client) && !empty($native_customers)) {
+    echo '<div class="row mtop15"><div class="col-md-12">';
+    echo AdminTicketsTableStructure('table-tickets-single',false,$native_ticket_structure);
+    echo '</div></div>';
+} elseif (isset($client)) {
     $total_active_contacts = total_rows(db_prefix() . 'contacts', ['active' => 1, 'userid' => $client->userid]);
     if (($total_active_contacts > 0)
         && ((get_option('access_tickets_to_none_staff_members') == 1 && ! is_staff_member()) || is_staff_member())) {

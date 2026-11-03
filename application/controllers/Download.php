@@ -14,6 +14,7 @@ class Download extends App_Controller
     {
         $path      = FCPATH . $this->input->get('path');
         $file_type = $this->input->get('type');
+        if ($this->nativeInvoicePreview($path, true)) { return; }
         $this->assert_legacy_preview_path($path);
 
         $allowed_extensions = get_html5_video_extensions();
@@ -52,6 +53,7 @@ class Download extends App_Controller
     {
         $path      = FCPATH . $this->input->get('path');
         $file_type = $this->input->get('type');
+        if ($this->nativeInvoicePreview($path, false)) { return; }
         $this->assert_legacy_preview_path($path);
 
         $allowed_extensions = [
@@ -94,6 +96,105 @@ class Download extends App_Controller
 
     public function file($folder_indicator, $attachmentid = '')
     {
+        if (class_exists('PortalRequestScope', false) && PortalRequestScope::sealedFor($this)) {
+            if (!in_array($folder_indicator, ['client','sales_attachment','project'], true) || !in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_404(); return; }
+            try {
+                require_once APPPATH . 'services/NativePortalIdentity.php';
+                $issuer = PortalRequestScope::issuerId();
+                $secret = $this->config->item('encryption_key');
+                $identityReader = new NativePortalIdentity($this->db, db_prefix(), $secret);
+                $identity = $identityReader->current($this->session, $issuer);
+                if (!$identity || !is_string($attachmentid)) { throw new DomainException('native_portal_files_denied'); }
+                $portal=new CompanyPortal($this->db, db_prefix(), $secret);
+                if($folder_indicator==='client'){
+                    require_once APPPATH . 'services/NativePortalCustomerFiles.php';
+                    $file=(new NativePortalCustomerFiles($this->db,db_prefix(),$portal,$identity['binding'],$issuer))->read($attachmentid);
+                }elseif($folder_indicator==='project'){
+                    $project=$this->input->get('project_id',false);$audience=$this->input->get('file_audience',false)??'published';if((!is_int($project)&&!is_string($project))||!preg_match('/^[1-9][0-9]*$/D',(string)$project)||!is_string($audience)||!in_array($audience,['published','own'],true)||!preg_match('/^[a-f0-9]{64}$/D',$attachmentid))throw new DomainException('native_portal_files_denied');
+                    if($audience==='own'){require_once APPPATH.'services/CompanyProjectContactFileReceipts.php';$file=(new CompanyProjectContactFileReceipts($this->db,db_prefix(),$secret))->file($identity['binding'],$issuer,$project,$attachmentid);}
+                    else{require_once APPPATH.'services/CompanyPortalOperations.php';$file=(new CompanyPortalOperations($this->db,db_prefix(),$portal))->file($identity['binding'],$issuer,'projects',$project,$attachmentid);}
+                }else{
+                    require_once APPPATH . 'services/CompanyPortalInvoices.php';require_once APPPATH . 'services/CompanyInvoiceAttachments.php';
+                    $estimate=$this->input->get('estimate_id',false);$invoice=$this->input->get('invoice_id',false);$proposal=$this->input->get('proposal_id',false);
+                    if(count(array_filter([$estimate,$invoice,$proposal],static fn($value)=>$value!==null))!==1)throw new DomainException('native_portal_files_denied');
+                    if($estimate!==null){if((!is_int($estimate)&&!is_string($estimate))||!preg_match('/^[1-9][0-9]*$/D',(string)$estimate))throw new DomainException('native_portal_files_denied');$estimateHash=$this->input->get('estimate_hash',false);if(!is_string($estimateHash)||!preg_match('/^[A-Za-z0-9]{32}$/D',$estimateHash))throw new DomainException('native_portal_files_denied');if(preg_match('/^[a-f0-9]{32}$/D',$attachmentid)){require_once APPPATH.'services/NativePortalLegacyEstimates.php';$file=(new NativePortalLegacyEstimates($this->db,db_prefix(),$portal))->file($identity['binding'],$issuer,(int)$estimate,$estimateHash,$attachmentid);}else{require_once APPPATH.'services/CompanyPortalSales.php';require_once APPPATH.'services/CompanySalesFiles.php';$record=(new CompanyPortalSales($this->db,db_prefix(),$portal))->document($identity['binding'],$issuer,$estimate);if($record['kind']!=='estimates'||!hash_equals($record['link_hash'],$estimateHash))throw new DomainException('native_portal_files_denied');$file=(new CompanySalesFiles($this->db,db_prefix()))->portalDownload($portal,$identity['binding'],$issuer,$estimate,$attachmentid);}}
+                    elseif($proposal!==null){if((!is_int($proposal)&&!is_string($proposal))||!preg_match('/^[1-9][0-9]*$/D',(string)$proposal))throw new DomainException('native_portal_files_denied');$proposalHash=$this->input->get('proposal_hash',false);if(!is_string($proposalHash)||!preg_match('/^[A-Za-z0-9]{32}$/D',$proposalHash))throw new DomainException('native_portal_files_denied');require_once APPPATH.'services/CompanyPortalSales.php';require_once APPPATH.'services/CompanySalesFiles.php';$record=(new CompanyPortalSales($this->db,db_prefix(),$portal))->document($identity['binding'],$issuer,$proposal);if($record['kind']!=='proposals'||!hash_equals($record['link_hash'],$proposalHash))throw new DomainException('native_portal_files_denied');$file=(new CompanySalesFiles($this->db,db_prefix()))->portalDownload($portal,$identity['binding'],$issuer,$proposal,$attachmentid);}
+                    elseif((!is_int($invoice)&&!is_string($invoice))||!preg_match('/^[1-9][0-9]*$/D',(string)$invoice))throw new DomainException('native_portal_files_denied');
+                    elseif(preg_match('/^[a-f0-9]{32}$/D',$attachmentid)){
+                        $invoiceHash=$this->input->get('invoice_hash',false);if(!is_string($invoiceHash)||!preg_match('/^[A-Za-z0-9]{32}$/D',$invoiceHash))throw new DomainException('native_portal_files_denied');
+                        require_once APPPATH.'services/NativePortalLegacyInvoice.php';$file=(new NativePortalLegacyInvoice($this->db,db_prefix(),$portal))->file($identity['binding'],$issuer,(int)$invoice,$invoiceHash,$attachmentid);
+                    }else $file=(new CompanyInvoiceAttachments($this->db,db_prefix()))->portalDownload(new CompanyPortalInvoices($this->db,db_prefix(),$portal),$identity['binding'],$issuer,$invoice,$attachmentid);
+                }
+                $verified=IssuerStorage::query($this->db,'SELECT email_verified_at FROM '.db_prefix().'contacts WHERE id=? AND userid=?',[$identity['binding']['contact_id'],$identity['binding']['client_id']])->result_array();
+                if($identityReader->current($this->session,$issuer)!==$identity||count($verified)!==1||$verified[0]['email_verified_at']===null)throw new DomainException('native_portal_files_denied');
+                $inline = $this->input->get('inline') === '1' && in_array($file['mime'], ['image/png', 'image/jpeg'], true);
+                $this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')
+                    ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
+                    ->set_header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . "; filename=\"download\"; filename*=UTF-8''" . rawurlencode($file['filename']))
+                    ->set_content_type($file['mime'])->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
+            } catch (Throwable $error) { show_404(); }
+            return;
+        }
+
+        if (in_array($folder_indicator, ['project','taskattachment'], true) && class_exists('CompanyRequestScope', false)
+            && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor($this)) {
+            $ctx=CompanyRequestScope::context();
+            if(!$ctx||!in_array($this->input->method(true),['GET','HEAD'],true)){show_404();return;}
+            try{
+                $parameter=$folder_indicator==='project'?'project_id':'task_id';$resource=$this->input->get($parameter,false);
+                if((!is_string($resource)&&!is_int($resource))||!preg_match('/^[1-9][0-9]{0,15}$/D',(string)$resource)||!is_string($attachmentid)||!preg_match('/^[a-f0-9]{64}$/D',$attachmentid))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/NativeCompanyProjectFileDownload.php';$reader=new NativeCompanyProjectFileDownload($this->db,db_prefix());
+                $file=$folder_indicator==='project'?$reader->read($ctx->issuerId(),$ctx->staffId(),$resource,$attachmentid):$reader->readTask($ctx->issuerId(),$ctx->staffId(),$resource,$attachmentid);
+                $this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')->set_header("Content-Security-Policy: default-src 'none'; sandbox")
+                    ->set_header('Content-Disposition: attachment; filename="download"; filename*=UTF-8\'\''.rawurlencode($file['filename']))->set_content_type($file['mime'])->set_output($this->input->method(true)==='HEAD'?'':$file['content']);
+            }catch(Throwable$error){show_404();}
+            return;
+        }
+
+        if ($folder_indicator === 'ticket' && class_exists('CompanyRequestScope', false)
+            && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor($this)) {
+            $ctx = CompanyRequestScope::context();
+            if (!$ctx || !in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_404(); return; }
+            try {
+                $ticket = $this->input->get('ticket_id', false);
+                if ((!is_string($ticket) && !is_int($ticket)) || !preg_match('/^[1-9][0-9]{0,15}$/D', (string) $ticket)
+                    || !is_string($attachmentid) || !preg_match('/^[a-f0-9]{64}$/D', $attachmentid)) { throw new DomainException('native_ticket_file_denied'); }
+                require_once APPPATH . 'services/NativeCompanyTicketFiles.php';
+                $file = (new NativeCompanyTicketFiles($this->db, db_prefix()))->read($ctx->issuerId(), $ctx->staffId(), (int) $ticket, $attachmentid);
+                $inline = $this->input->get('preview', false) === '1' && $file['mime'] === 'image/png';
+                $this->output->set_header('Cache-Control: private, no-store')
+                    ->set_header('X-Content-Type-Options: nosniff')
+                    ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
+                    ->set_header('Content-Disposition: '.($inline?'inline':'attachment').'; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
+                    ->set_content_type($file['mime'])
+                    ->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
+            } catch (Throwable $error) { show_404(); }
+            return;
+        }
+
+        if($folder_indicator==='client'&&class_exists('CompanyRequestScope',false)&&method_exists('CompanyRequestScope','nativeFor')&&CompanyRequestScope::nativeFor($this)&&CompanyRequestScope::context()&&!CompanyRequestScope::context()->isPrimary()){
+            if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_404();return;}
+            try{require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$ctx=CompanyRequestScope::context();$file=(new NativeCompanyCustomerFiles($this->db,db_prefix()))->readKey($ctx->issuerId(),$ctx->staffId(),(string)$attachmentid);$inline=$this->input->get('inline')==='1'&&$file['mime']==='image/png';$this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')->set_header("Content-Security-Policy: default-src 'none'; sandbox")->set_header('Content-Disposition: '.($inline?'inline':'attachment')."; filename=\"download\"; filename*=UTF-8''".rawurlencode($file['filename']))->set_content_type($file['mime'])->set_output($this->input->method(true)==='HEAD'?'':$file['content']);}catch(Throwable$error){show_404();}return;
+        }
+
+        if ($folder_indicator === 'sales_attachment' && class_exists('CompanyRequestScope', false)
+            && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor($this)) {
+            $ctx = CompanyRequestScope::context();
+            if (!$ctx || !in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_404(); return; }
+            try {
+                require_once APPPATH . 'services/NativeCompanyInvoiceFiles.php';
+                $file = (new NativeCompanyInvoiceFiles($this->db, db_prefix()))->readKey($ctx->issuerId(), $ctx->staffId(), (string) $attachmentid);
+                $disposition=$this->input->get('inline')==='1'&&$file['mime']==='image/png'?'inline':'attachment';
+                $this->output->set_header('Cache-Control: private, no-store')
+                    ->set_header('X-Content-Type-Options: nosniff')
+                    ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
+                    ->set_header('Content-Disposition: '.$disposition.'; filename="download"; filename*=UTF-8\'\'' . rawurlencode($file['filename']))
+                    ->set_content_type($file['mime'])
+                    ->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
+            } catch (Throwable $error) { show_404(); }
+            return;
+        }
+
         $this->load->model('tickets_model');
         if ($folder_indicator == 'ticket') {
             $ticket_key = $this->input->get('ticket_key');
@@ -175,6 +276,7 @@ class Download extends App_Controller
                 show_404();
             }
 
+            if ($attachment->rel_type === 'invoice' && $this->nativeInvoiceProjectionPresent()) { show_404(); return; } // Owned projections require the explicit staff/portal branch, never this legacy shortcut.
             if ($attachment->rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $attachment->rel_id)) { show_404(); }
             $path = get_upload_path_by_type($attachment->rel_type) . $attachment->rel_id . '/' . $attachment->file_name;
         } elseif ($folder_indicator == 'expense') {
@@ -256,6 +358,43 @@ class Download extends App_Controller
 
         force_download($path, null);
     }
+    private function nativeInvoiceProjectionPresent(): bool
+    {
+        require_once APPPATH . 'services/issuers/IssuerStorage.php';
+        $pdo = $this->db->pdo ?? $this->db->conn_id ?? null;
+        $sql = $pdo instanceof PDO && $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+            ? "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+            : 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?';
+        return (bool) IssuerStorage::query($this->db, $sql, [db_prefix().'company_invoice_file_projection'])->result_array();
+    }
+
+    /** Original preview URL, but the supplied path only selects an exact native file record. */
+    private function nativeInvoicePreview(string $path, bool $video): bool
+    {
+        $root = realpath(defined('INVOICE_ATTACHMENTS_FOLDER') ? INVOICE_ATTACHMENTS_FOLDER : get_upload_path_by_type('invoice'));
+        $resolved = realpath($path);
+        if (!$root || !$resolved || !str_starts_with($resolved, rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR)) { return false; }
+        if (!$this->nativeInvoiceProjectionPresent()) { return false; }
+        try {
+            $relative = substr($resolved, strlen(rtrim($root, DIRECTORY_SEPARATOR))+1);
+            $parts = explode(DIRECTORY_SEPARATOR, $relative);
+            if (count($parts)!==2 || !preg_match('/^[1-9][0-9]*$/D', $parts[0])
+                || !in_array($this->input->method(true), ['GET','HEAD'], true)
+                || !class_exists('CompanyRequestScope', false) || !method_exists('CompanyRequestScope','nativeFor')
+                || !CompanyRequestScope::nativeFor($this) || !($ctx=CompanyRequestScope::context())) { throw new DomainException('native_invoice_file_denied'); }
+            $rows=IssuerStorage::query($this->db, 'SELECT f.attachment_key FROM '.db_prefix().'files f JOIN '.db_prefix().'company_invoice_file_projection s ON s.file_id=f.id WHERE f.rel_type=? AND f.rel_id=? AND f.file_name=? AND s.issuer_id=? AND s.active=1', ['invoice',$parts[0],$parts[1],$ctx->issuerId()])->result_array();
+            if(count($rows)!==1) { throw new DomainException('native_invoice_file_denied'); }
+            require_once APPPATH.'services/NativeCompanyInvoiceFiles.php';
+            $file=(new NativeCompanyInvoiceFiles($this->db,db_prefix()))->readKey($ctx->issuerId(),$ctx->staffId(),$rows[0]['attachment_key']);
+            $allowed=$video?['video/mp4','video/x-m4v','video/webm','video/ogg','video/x-flv']:['image/png','image/jpeg','image/gif','image/bmp','image/tiff'];
+            if(!in_array($file['mime'],$allowed,true)) { throw new DomainException('native_invoice_file_denied'); }
+            $this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')
+                ->set_header("Content-Security-Policy: default-src 'none'; sandbox")->set_content_type($file['mime'])
+                ->set_output($this->input->method(true)==='HEAD'?'':$file['content']);
+            return true;
+        } catch (Throwable $error) { show_404(); return true; }
+    }
+
     private function assert_legacy_preview_path(string $path): void
     {
         $resolved = realpath($path);

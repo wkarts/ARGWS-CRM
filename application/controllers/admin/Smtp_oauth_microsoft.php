@@ -13,6 +13,7 @@ class Smtp_oauth_microsoft extends AdminController
 {
     public function token()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyMailOAuthController.php';return NativeCompanyMailOAuthController::token($this,'microsoft');}
         $providerName = 'Microsoft';
         $clientId     = get_option('microsoft_mail_client_id');
         $clientSecret = $this->encryption->decrypt(get_option('microsoft_mail_client_secret'));

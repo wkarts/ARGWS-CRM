@@ -1,0 +1,323 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/NativeCompanyTicketRead.php';
+/** Existing owned ticket rows, native catalog references and original durable command receipts. */
+final class NativeCompanyTicketUpdates
+{
+    public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
+    private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
+    private function authorize(int $issuer,int $actor):void
+    {if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'tickets','edit'))throw new DomainException('native_ticket_update_denied');}
+    private function run(int $issuer,int $actor,$id,string $expected,string $nonce,string $operation,array $input,callable $write,array $extraTables=[],?callable $verify=null):array
+    {
+        $d=NativeCompanyResourceId::decode('ticket',$id);if($d['source_kind']!=='company_ticket'||!preg_match('/^[a-f0-9]{64}$/D',$expected)||!preg_match('/^[a-f0-9]{64}$/D',$nonce))throw new DomainException('native_ticket_update_invalid');
+        $reader=new NativeCompanyTicketRead($this->db,$this->p);$this->authorize($issuer,$actor);
+        NativeCompanyDepartmentSchema::assertValid($this->db,$this->p);NativeCompanyTicketCatalogSchema::assertValid($this->db,$this->p);
+        return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge($reader->tables(),['company_ticket_requests'],$extraTables))),function()use($issuer,$actor,$id,$d,$expected,$nonce,$operation,$input,$write,$reader,$verify){
+            (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);
+            $before=$reader->getInOwnedTransaction($issuer,$actor,$id);NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,$d['source_id']);
+            $hash=hash('sha256',json_encode([$d,$expected,$input],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+            $receipt=$this->rows('SELECT * FROM '.$this->p.'company_ticket_requests WHERE request_key=? FOR UPDATE',[$nonce])[0]??null;
+            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$operation||!hash_equals($hash,$receipt['input_hash'])||(int)$receipt['result_id']!==$d['source_id'])throw new DomainException('native_ticket_request_conflict');if($verify)$verify($d['source_id']);return['ticketid'=>$before['ticketid'],'revision'=>$before['revision_token'],'replayed'=>true];}
+            if(!hash_equals($before['revision_token'],$expected))throw new DomainException('native_ticket_stale');
+            $row=$this->rows('SELECT revision FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$d['source_id']])[0]??null;
+            if(!$row||(int)$row['revision']<1||(int)$row['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');
+            $write($d['source_id'],$before);
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[date('Y-m-d H:i:s'),$issuer,$d['source_id'],(int)$row['revision']]);
+            $revision=$this->rows('SELECT revision FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$issuer,$d['source_id']])[0]??null;if(!$revision||(int)$revision['revision']!==(int)$row['revision']+1)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $this->authorize($issuer,$actor);$after=$reader->getInOwnedTransaction($issuer,$actor,$id);
+            $audit=['actor_id'=>(string)$actor,'event'=>$operation,'issuer_id'=>(string)$issuer,'subject_id'=>(string)$d['source_id'],'created_at'=>date('Y-m-d H:i:s'),'metadata_json'=>json_encode(['request_nonce'=>$nonce,'before_revision'=>$expected,'after_revision'=>$after['revision_token']],JSON_THROW_ON_ERROR)];
+            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',array_values($audit));$auditId=(int)$this->db->insert_id();$stored=$this->rows('SELECT actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$auditId])[0]??[];
+            if($auditId<1||array_map('strval',$stored)!==$audit)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $receipt=['request_key'=>$nonce,'issuer_id'=>$issuer,'actor_id'=>$actor,'input_hash'=>$hash,'operation'=>$operation,'result_id'=>$d['source_id'],'created_at'=>date('Y-m-d H:i:s')];
+            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_requests(request_key,issuer_id,actor_id,input_hash,operation,result_id,created_at) VALUES(?,?,?,?,?,?,?)',array_values($receipt));$stored=$this->rows('SELECT * FROM '.$this->p.'company_ticket_requests WHERE request_key=?',[$nonce])[0]??[];
+            foreach($receipt as$key=>$value)if(!array_key_exists($key,$stored)||(string)$stored[$key]!== (string)$value)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $this->authorize($issuer,$actor);if($reader->getInOwnedTransaction($issuer,$actor,$id)!==$after)throw new DomainException('native_ticket_changed');
+            if($verify)$verify($d['source_id']);return['ticketid'=>$after['ticketid'],'revision'=>$after['revision_token'],'replayed'=>false];
+        });
+    }
+    private function catalogReference(int $issuer,int $actor,int $ticket,string $kind,array $reference):void
+    {
+        $old=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND ticket_id=? AND kind=? FOR UPDATE',[$issuer,$ticket,$kind])[0]??null;$now=date('Y-m-d H:i:s');
+        if($old){if((int)$old['revision']<1||(int)$old['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' SET source_kind=?,source_id=?,revision=revision+1,actor_id=?,updated_at=? WHERE issuer_id=? AND ticket_id=? AND kind=? AND revision=?',[$reference['source_kind'],$reference['source_id'],$actor,$now,$issuer,$ticket,$kind,(int)$old['revision']]);}
+        else IssuerStorage::query($this->db,'INSERT INTO '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.'(issuer_id,ticket_id,kind,source_kind,source_id,revision,actor_id,created_at,updated_at) VALUES(?,?,?,?,?,1,?,?,?)',[$issuer,$ticket,$kind,$reference['source_kind'],$reference['source_id'],$actor,$now,$now]);
+        $saved=$this->rows('SELECT source_kind,source_id,revision,actor_id FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND ticket_id=? AND kind=?',[$issuer,$ticket,$kind])[0]??null;if(!$saved||$saved['source_kind']!==$reference['source_kind']||(int)$saved['source_id']!==$reference['source_id']||(int)$saved['revision']!==($old?(int)$old['revision']+1:1)||(int)$saved['actor_id']!==$actor)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+    }
+    /** Advisory lease, not authorization to edit. Volatile fields never change the content CAS. */
+    public function replying(int$issuer,int$actor,$ticket):array
+    {
+        $reader=new NativeCompanyTicketRead($this->db,$this->p);return IssuerTransaction::run($this->db,$this->p,$reader->tables(),function()use($reader,$issuer,$actor,$ticket){$t=$reader->getInOwnedTransaction($issuer,$actor,$ticket);$result=$this->leaseProjection($issuer,$actor,$t);if($reader->getInOwnedTransaction($issuer,$actor,$ticket)!==$t)throw new DomainException('native_ticket_changed');return$result;});
+    }
+    private function leaseProjection(int$issuer,int$actor,array$t):array
+    {
+        if(!$t['metadata'])throw new DomainException('native_ticket_metadata_required');$m=$t['metadata'];$owner=$m['staff_replying'];$stamp=$m['staff_replying_at'];
+        if(($owner===null)!==($stamp===null))throw new DomainException('native_ticket_lease_invalid');
+        if($owner===null)return['is_other_staff_replying'=>false,'staff_id'=>null,'name'=>'','state'=>'vacant'];
+        $date=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',(string)$stamp);if(!$date||$date->format('Y-m-d H:i:s')!==$stamp||$date->getTimestamp()>time()+5)throw new DomainException('native_ticket_lease_invalid');
+        // A crashed tab cannot reserve a ticket permanently. No read clears or renews the stored lease.
+        if(time()-$date->getTimestamp()>=120)return['is_other_staff_replying'=>false,'staff_id'=>null,'name'=>'','state'=>'expired'];
+        $acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,(int)$owner,'tickets','view')||!$acl->can($issuer,(int)$owner,'tickets','edit')||!$acl->member($issuer,(int)$owner))return['is_other_staff_replying'=>false,'staff_id'=>null,'name'=>'','state'=>'revoked'];
+        $staff=$this->rows('SELECT firstname,lastname FROM '.$this->p.'staff WHERE staffid=? AND active=1',[(int)$owner])[0]??null;if(!$staff)throw new DomainException('native_ticket_lease_invalid');
+        return['is_other_staff_replying'=>(int)$owner!==$actor,'staff_id'=>(int)$owner,'name'=>trim($staff['firstname'].' '.$staff['lastname']),'state'=>'active'];
+    }
+    public function updateReplying(int$issuer,int$actor,$ticket,string$expected,bool$start):array
+    {
+        NativeCompanyDepartmentSchema::assertValid($this->db,$this->p);if(!preg_match('/^[a-f0-9]{64}$/D',$expected))throw new DomainException('native_ticket_stale');$this->authorize($issuer,$actor);$reader=new NativeCompanyTicketRead($this->db,$this->p);
+        return IssuerTransaction::run($this->db,$this->p,$reader->tables(),function()use($reader,$issuer,$actor,$ticket,$expected,$start){
+            (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);$t=$reader->getInOwnedTransaction($issuer,$actor,$ticket);NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,$t['source_id']);if($t['source_kind']!=='company_ticket'||!hash_equals($t['revision_token'],$expected))throw new DomainException('native_ticket_stale');$lease=$this->leaseProjection($issuer,$actor,$t);
+            if($lease['state']==='active'&&$lease['staff_id']!==$actor)throw new DomainException('native_ticket_lease_conflict');
+            $owner=$start?$actor:null;$stamp=$start?date('Y-m-d H:i:s'):null;
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' SET staff_replying=?,staff_replying_at=? WHERE issuer_id=? AND ticket_id=?',[$owner,$stamp,$issuer,$t['source_id']]);
+            $after=$reader->getInOwnedTransaction($issuer,$actor,$ticket);if($after['revision_token']!==$expected||$after['metadata']['staff_replying_at']!==$stamp||($owner===null?$after['metadata']['staff_replying']!==null:(int)$after['metadata']['staff_replying']!==$owner))throw new RuntimeException('issuer_ticket_write_unconfirmed');$this->authorize($issuer,$actor);return['success'=>true,'revision'=>$expected]+$this->leaseProjection($issuer,$actor,$after);
+        });
+    }
+    /** Attach private evidence without manufacturing a reply or publishing it. */
+    public function uploadFiles(int $issuer,int $actor,$ticket,array $files,string $expected,string $nonce):array
+    {
+        require_once __DIR__.'/NativeCompanyTicketMultipart.php';
+        require_once __DIR__.'/CompanyOperationFilesSchema.php';
+        CompanyOperationFilesSchema::assertValid($this->db,$this->p);
+        $files=NativeCompanyTicketMultipart::normalize($files);
+        if(!$files)throw new DomainException('native_ticket_attachments_invalid');
+        $input=array_map(static fn($f)=>[$f['name'],$f['mime'],$f['hash'],$f['extension']],$files);$new=false;
+        return $this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_files_uploaded',$input,function(int $id,array $before)use($issuer,$actor,$files,$nonce,&$new){
+            $new=true;
+            if(in_array($before['catalog']['status']['code']??$before['historical_status'],['closed','resolved'],true))throw new DomainException('native_ticket_closed');
+            NativeCompanyTicketMultipart::assertPolicy($files,$before['policy']['values']);
+            $usage=$this->rows('SELECT COUNT(*) n,COALESCE(SUM(byte_size),0) bytes FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=?',[$issuer,$id])[0];
+            $count=(int)$usage['n'];$bytes=(int)$usage['bytes'];$now=date('Y-m-d H:i:s');
+            foreach($files as $n=>$file){
+                CompanyOperationFileContent::quota($count++,$bytes,strlen($file['bytes']));$bytes+=strlen($file['bytes']);
+                $key=hash('sha256','native-ticket-file|'.$issuer.'|'.$nonce.'|'.$n);
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_files(file_key,issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active,created_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,$issuer,$id,$actor,$file['name'],$file['mime'],$file['hash'],strlen($file['bytes']),$file['bytes'],$now]);
+            }
+        },['company_ticket_files'],function(int $id)use($issuer,$actor,$files,$nonce,&$new){
+            $policy=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);
+            NativeCompanyTicketMultipart::assertPolicy($files,$policy['values']);
+            foreach($files as $n=>$file){
+                $key=hash('sha256','native-ticket-file|'.$issuer.'|'.$nonce.'|'.$n);
+                $saved=$this->rows('SELECT issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active FROM '.$this->p.'company_ticket_files WHERE file_key=?',[$key])[0]??null;
+                if(!$saved||$new&&(int)$saved['active']!==1||(int)$saved['issuer_id']!==$issuer||(int)$saved['ticket_id']!==$id||(int)$saved['actor_id']!==$actor||$saved['filename']!==$file['name']||$saved['mime']!==$file['mime']||$saved['content_hash']!==$file['hash']||(int)$saved['byte_size']!==strlen($file['bytes'])||!hash_equals($file['hash'],hash('sha256',$saved['content'])))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            }
+        });
+    }
+    public function hideFile(int$issuer,int$actor,$ticket,string$key,string$fileExpected,string$expected,string$nonce):array
+    {
+        require_once __DIR__.'/NativeCompanyTicketFiles.php';if(!preg_match('/^[a-f0-9]{64}$/D',$key)||!preg_match('/^[a-f0-9]{64}$/D',$fileExpected))throw new DomainException('native_ticket_file_denied');CompanyOperationFilesSchema::assertValid($this->db,$this->p);
+        $permission=function()use($issuer,$actor){$acl=new IssuerResourceAccess($this->db,$this->p);$policy=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);if(!$acl->administrative($issuer,$actor)&&$policy['values']['allow_non_admin_staff_to_delete_ticket_attachments']!=='1')throw new DomainException('native_ticket_file_delete_denied');};
+        return$this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_file_hidden',[$key,$fileExpected],function(int$id)use($issuer,$key,$fileExpected,$expected,$permission){
+            $permission();$row=$this->rows('SELECT file_key,filename,mime,content_hash,byte_size,active,actor_id,created_at FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=? AND file_key=? AND active=1 FOR UPDATE',[$issuer,$id,$key])[0]??null;
+            if(!$row||!hash_equals($fileExpected,NativeCompanyTicketFiles::revision($row,$expected)))throw new DomainException('native_ticket_file_stale');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_ticket_files SET active=0 WHERE issuer_id=? AND ticket_id=? AND file_key=? AND active=1',[$issuer,$id,$key]);
+            $saved=$this->rows('SELECT file_key,filename,mime,content_hash,byte_size,active,actor_id,created_at FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=? AND file_key=?',[$issuer,$id,$key])[0]??null;$row['active']=0;if(!$saved||array_map('strval',$saved)!==array_map('strval',$row))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+        },['company_ticket_files'],function(int$id)use($issuer,$key,$permission,$expected,$fileExpected){$permission();$r=$this->rows('SELECT file_key,filename,mime,content_hash,byte_size,active,actor_id,created_at FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=? AND file_key=?',[$issuer,$id,$key])[0]??null;if(!$r||(int)$r['active']!==0)throw new RuntimeException('issuer_ticket_write_unconfirmed');$r['active']=1;if(!hash_equals($fileExpected,NativeCompanyTicketFiles::revision($r,$expected)))throw new RuntimeException('issuer_ticket_write_unconfirmed');});
+    }
+    /** Read-only proof for a human-reviewed merge; no fresh revision is guessed during mutation. */
+    public function mergePreview(int$i,int$a,$primary,array$children):array
+    {
+        if(!$children||count($children)>100||count(array_unique($children,SORT_STRING))!==count($children))throw new DomainException('native_ticket_merge_input_invalid');
+        foreach(array_merge([$primary],$children)as$id)if((!is_string($id)&&!is_int($id))||NativeCompanyResourceId::decode('ticket',$id)['source_kind']!=='company_ticket')throw new DomainException('native_ticket_merge_input_invalid');
+        if(in_array((string)$primary,array_map('strval',$children),true))throw new DomainException('native_ticket_merge_input_invalid');$reader=new NativeCompanyTicketRead($this->db,$this->p);$this->authorize($i,$a);
+        return IssuerTransaction::run($this->db,$this->p,$reader->tables(),function()use($i,$a,$primary,$children,$reader){
+            $main=$reader->getInOwnedTransaction($i,$a,$primary);NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$i,$main['source_id']);$out=[];$snapshots=[];
+            foreach($children as$id){$child=$reader->getInOwnedTransaction($i,$a,$id);NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$i,$child['source_id']);if($child['userid']!==$main['userid']||($child['userid']===null&&(string)$child['ticket_email']!==(string)$main['ticket_email']))throw new DomainException('native_ticket_merge_audience_transfer_denied');$snapshots[]=$child;$out[]=['id'=>$child['ticketid'],'subject'=>$child['subject'],'revision'=>$child['revision_token']];}
+            foreach($snapshots as$child)if($reader->getInOwnedTransaction($i,$a,$child['ticketid'])!==$child)throw new DomainException('native_ticket_changed');if($reader->getInOwnedTransaction($i,$a,$primary)!==$main)throw new DomainException('native_ticket_changed');$this->authorize($i,$a);
+            return['ticketid'=>$main['ticketid'],'revision'=>$main['revision_token'],'children'=>$out];
+        });
+    }
+    /** Preserve original merge semantics while refusing a transfer of customer/mailbox audience. */
+    public function merge(int$i,int$a,$primary,array$children,$status,string$expected,string$nonce):array{
+        return $this->mergeCommand($i,$a,$primary,$children,$status,$expected,$nonce,null);
+    }
+    private function mergeCommand(int$i,int$a,$primary,array$children,$status,string$expected,string$nonce,?array$settings):array{
+        require_once __DIR__.'/NativeCompanyTicketMergeSchema.php';require_once __DIR__.'/NativeCompanyTicketReplySchema.php';require_once __DIR__.'/NativeCompanyTicketFiles.php';
+        if(!NativeCompanyTicketMergeSchema::active($this->db,$this->p))throw new DomainException('native_ticket_merge_schema_required');
+        NativeCompanyTicketMergeSchema::assertValid($this->db,$this->p);NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);CompanyOperationFilesSchema::assertValid($this->db,$this->p);
+        if(!$children||count($children)>100)throw new DomainException('native_ticket_merge_input_invalid');$normalized=[];
+        foreach($children as$id=>$revision){$ref=NativeCompanyResourceId::decode('ticket',(string)$id);if($ref['source_kind']!=='company_ticket'||(string)$id===(string)$primary||!is_string($revision)||!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('native_ticket_merge_input_invalid');$normalized[(string)$id]=$revision;}ksort($normalized,SORT_STRING);
+        $catalog=new NativeCompanyTicketCatalog($this->db,$this->p);$chosen=$catalog->get($i,$a,'status',$status);$closed=null;foreach($catalog->list($i,$a,'status')as$row)if(($row['code']??null)==='closed'){$closed=$row;break;}if(!$closed)throw new DomainException('native_ticket_closed_status_missing');
+        $extra=array_merge(array_keys(NativeCompanyTicketMergeSchema::definitions($this->p)),array_keys(NativeCompanyTicketReplySchema::definitions($this->p)),['company_ticket_files','company_portal_support_replies']);
+        if($settings!==null)$extra=array_merge($extra,$this->settingsTables());
+        return$this->run($i,$a,$primary,$expected,$nonce,$settings===null?'native_tickets_merged':'native_ticket_settings_and_merge',($settings===null?[$normalized,$status]:[$normalized,$status,$settings]),function(int$target,array$before)use($i,$a,$primary,$normalized,$chosen,$closed,$nonce,$settings){
+            if($this->rows('SELECT child_id FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$target]))throw new DomainException('native_ticket_merge_target_merged');$reader=new NativeCompanyTicketRead($this->db,$this->p);
+            if($settings!==null){$this->applySettings($i,$a,$primary,$target,$before,$settings['input'],$settings['tags'],$settings['fields']);$before=$reader->getInOwnedTransaction($i,$a,$primary);}
+            foreach($normalized as$id=>$revision){$child=$reader->getInOwnedTransaction($i,$a,$id);$source=$child['source_id'];if(!hash_equals($child['revision_token'],$revision)||!$child['metadata'])throw new DomainException('native_ticket_stale');
+                if($child['userid']!==$before['userid']||($child['userid']===null&&(string)$child['ticket_email']!==(string)$before['ticket_email']))throw new DomainException('native_ticket_merge_audience_transfer_denied');
+                if($this->rows('SELECT child_id FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$source]))throw new DomainException('native_ticket_already_merged');
+                $replies=$reader->repliesInOwnedTransaction($i,$a,$id);$author=$this->rows('SELECT firstname,lastname FROM '.$this->p.'staff WHERE staffid=?',[(int)$child['metadata']['opened_by']])[0]??null;if(!$author)throw new DomainException('native_ticket_author_unavailable');
+                $history=array_merge([['source_kind'=>'ticket','source_id'=>$source,'admin'=>(int)$child['metadata']['opened_by'],'contactid'=>null,'userid'=>$child['userid'],'submitter'=>trim($author['firstname'].' '.$author['lastname']),'message'=>$child['message'],'message_format'=>$child['message_format'],'date'=>$child['date'],'revision_token'=>$child['revision_token']]],array_map(fn($r)=>['source_kind'=>'reply']+$r,$replies));
+                $now=date('Y-m-d H:i:s');$link=['child_id'=>$source,'issuer_id'=>$i,'primary_id'=>$target,'actor_id'=>$a,'source_hash'=>$revision,'request_key'=>$nonce,'manifest_json'=>'[]','created_at'=>$now];$this->insertConfirmed(NativeCompanyTicketMergeSchema::LINKS,$link,['child_id'=>$source]);$copied=[];$manifest=['replies'=>[],'files'=>[]];
+                foreach($history as$r){IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_replies(issuer_id,ticket_id,actor_id,body,created_at) VALUES(?,?,?,?,?)',[$i,$target,$r['admin']??0,$r['message'],$r['date']]);$reply=(int)$this->db->insert_id();if($reply<1)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                    $saved=$this->rows('SELECT issuer_id,ticket_id,actor_id,body,created_at FROM '.$this->p.'company_ticket_replies WHERE id=?',[$reply])[0]??null;if(!$saved||(int)$saved['issuer_id']!==$i||(int)$saved['ticket_id']!==$target||(int)$saved['actor_id']!==(int)($r['admin']??0)||$saved['body']!==$r['message']||$saved['created_at']!==$r['date'])throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                    $proof=['reply_id'=>$reply,'issuer_id'=>$i,'primary_id'=>$target,'child_id'=>$source,'source_kind'=>$r['source_kind'],'source_id'=>$r['source_id'],'author_staff_id'=>$r['admin'],'author_contact_id'=>$r['contactid'],'client_id'=>$r['userid'],'author_name'=>$r['submitter'],'body_format'=>$r['message_format'],'content_hash'=>hash('sha256',$r['message']),'source_revision'=>$r['revision_token'],'source_date'=>$r['date']];$this->insertConfirmed(NativeCompanyTicketMergeSchema::REPLIES,$proof,['reply_id'=>$reply]);$copied[$r['source_kind'].':'.$r['source_id']]=$reply;$manifest['replies'][]=['id'=>$reply,'proof_hash'=>hash('sha256',json_encode($proof,JSON_THROW_ON_ERROR)),'body_hash'=>hash('sha256',$r['message'])];
+                }
+                $files=$this->rows('SELECT * FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=? AND active=1 ORDER BY file_key',[$i,$source]);
+                foreach($files as$f){$metadata=$f;unset($metadata['issuer_id'],$metadata['ticket_id'],$metadata['content']);NativeCompanyTicketFiles::revision($metadata,$revision);if(!is_string($f['content'])||strlen($f['content'])!==(int)$f['byte_size']||!hash_equals($f['content_hash'],hash('sha256',$f['content'])))throw new DomainException('native_ticket_file_corrupt');
+                    $oldMap=$this->rows('SELECT reply_id FROM '.$this->p.NativeCompanyTicketMergeSchema::FILES.' WHERE issuer_id=? AND primary_id=? AND file_key=?',[$i,$source,$f['file_key']])[0]??null;$reply=$copied[$oldMap?'reply:'.$oldMap['reply_id']:'ticket:'.$source]??null;if($reply===null)throw new DomainException('native_ticket_file_provenance_invalid');
+                    $key=hash('sha256','native-ticket-merge-file|'.$nonce.'|'.$target.'|'.$source.'|'.$f['file_key']);$copy=$f;$copy['file_key']=$key;$copy['ticket_id']=$target;$this->insertConfirmed('company_ticket_files',$copy,['file_key'=>$key]);
+                    $fileProof=['file_key'=>$key,'issuer_id'=>$i,'primary_id'=>$target,'reply_id'=>$reply,'child_id'=>$source,'source_file_key'=>$f['file_key'],'content_hash'=>$f['content_hash']];$this->insertConfirmed(NativeCompanyTicketMergeSchema::FILES,$fileProof,['file_key'=>$key]);$fileMeta=$copy;unset($fileMeta['content']);$manifest['files'][]=['key'=>$key,'content_hash'=>$f['content_hash'],'proof_hash'=>hash('sha256',json_encode(array_map('strval',$fileProof),JSON_THROW_ON_ERROR)),'metadata_hash'=>hash('sha256',json_encode(array_map('strval',$fileMeta),JSON_THROW_ON_ERROR))];
+                }
+                $manifestJson=json_encode($manifest,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' SET manifest_json=? WHERE child_id=? AND manifest_json=?',[$manifestJson,$source,'[]']);$savedManifest=$this->rows('SELECT manifest_json FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$source])[0]??null;if(!$savedManifest||$savedManifest['manifest_json']!==$manifestJson)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                $this->catalogReference($i,$a,$source,'status',$closed);$subject=str_contains($child['subject'],'[MERGED]')?$child['subject']:$child['subject'].' [MERGED]';if(strlen($subject)>191)throw new DomainException('native_ticket_merge_subject_too_long');
+                IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET subject=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=?',[$subject,$now,$i,$source]);$changed=$reader->getInOwnedTransaction($i,$a,$id);if($changed['subject']!==$subject||$changed['status']!==$closed['native_id'])throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            }
+            $this->catalogReference($i,$a,$target,'status',$chosen);
+        },$extra,function(int$target)use($i,$a,$normalized,$nonce){foreach($normalized as$id=>$revision){$source=NativeCompanyResourceId::decode('ticket',$id)['source_id'];$link=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$source])[0]??null;if(!$link||(int)$link['issuer_id']!==$i||(int)$link['primary_id']!==$target||(int)$link['actor_id']!==$a||$link['request_key']!==$nonce||!hash_equals($revision,$link['source_hash']))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $manifest=json_decode($link['manifest_json'],true,16,JSON_THROW_ON_ERROR);if(!is_array($manifest)||array_keys($manifest)!==['replies','files']||!is_array($manifest['replies'])||!$manifest['replies']||!is_array($manifest['files']))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            foreach($manifest['replies']as$m){$proof=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::REPLIES.' WHERE reply_id=?',[$m['id']])[0]??null;$row=$this->rows('SELECT body,ticket_id,issuer_id FROM '.$this->p.'company_ticket_replies WHERE id=?',[$m['id']])[0]??null;if(!$proof||!$row||(int)$row['ticket_id']!==$target||(int)$row['issuer_id']!==$i||!hash_equals($m['body_hash'],hash('sha256',$row['body'])))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                foreach(['reply_id','issuer_id','primary_id','child_id','source_id','author_staff_id','author_contact_id','client_id']as$column)if($proof[$column]!==null)$proof[$column]=(int)$proof[$column];if(!hash_equals($m['proof_hash'],hash('sha256',json_encode($proof,JSON_THROW_ON_ERROR))))throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+            foreach($manifest['files']as$m){$row=$this->rows('SELECT * FROM '.$this->p.'company_ticket_files WHERE file_key=?',[$m['key']])[0]??null;if(!$row||(int)$row['active']!==1||(int)$row['issuer_id']!==$i||(int)$row['ticket_id']!==$target||!hash_equals($m['content_hash'],hash('sha256',$row['content']))||!hash_equals($m['content_hash'],$row['content_hash']))throw new RuntimeException('issuer_ticket_write_unconfirmed');$proof=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::FILES.' WHERE file_key=?',[$m['key']])[0]??null;$meta=$row;unset($meta['content']);if(!$proof||!hash_equals($m['proof_hash'],hash('sha256',json_encode(array_map('strval',$proof),JSON_THROW_ON_ERROR)))||!hash_equals($m['metadata_hash'],hash('sha256',json_encode(array_map('strval',$meta),JSON_THROW_ON_ERROR))))throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+        }});
+    }
+    private function insertConfirmed(string$table,array$row,array$key):void{
+        IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$table.'('.implode(',',array_keys($row)).') VALUES('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));$saved=$this->rows('SELECT * FROM '.$this->p.$table.' WHERE '.implode(' AND ',array_map(fn($k)=>$k.'=?',array_keys($key))),array_values($key))[0]??null;
+        if(!$saved)throw new RuntimeException('issuer_ticket_write_unconfirmed');foreach($row as$k=>$v)if($v===null?$saved[$k]!==null:(string)$saved[$k]!==(string)$v)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+    }
+    public function settings(int$i,int$a,$ticket,array$input,string$expected,string$tagsExpected,string$fieldsExpected,string$nonce):array
+    {
+        require_once __DIR__.'/NativeCompanyTicketCommands.php';foreach([$tagsExpected,$fieldsExpected]as$v)if(!preg_match('/^[a-f0-9]{64}$/D',$v))throw new DomainException('native_ticket_stale');
+        return$this->run($i,$a,$ticket,$expected,$nonce,'native_ticket_settings_updated',[$input,$tagsExpected,$fieldsExpected],function(int$id,array$before)use($i,$a,$ticket,$input,$tagsExpected,$fieldsExpected){
+            $this->applySettings($i,$a,$ticket,$id,$before,$input,$tagsExpected,$fieldsExpected);
+        },$this->settingsTables());
+    }
+    private function settingsTables():array
+    {
+        require_once __DIR__.'/NativeCompanyTicketCommands.php';
+        return array_values(array_unique(array_merge((new NativeCompanyTicketContacts($this->db,$this->p))->tables(),NativeCompanyResourceTags::tableNames(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames())));
+    }
+    private function applySettings(int$i,int$a,$ticket,int$id,array$before,array$input,string$tagsExpected,string$fieldsExpected):void
+    {
+        $fields=new NativeCompanyCustomFields($this->db,$this->p);$tags=new NativeCompanyResourceTags($this->db,$this->p);
+            $values=$fields->values($i,$a,'tickets',$ticket,'edit');$definitions=$fields->definitions($i,$a,'tickets',[],'edit');
+            if(!hash_equals(hash('sha256',json_encode([$definitions,$values],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)),$fieldsExpected))throw new DomainException('native_ticket_custom_fields_stale');
+            $prepared=(new NativeCompanyTicketCommands($this->db,$this->p))->settingsInputInOwnedTransaction($i,$a,$before,$input);$data=$prepared['data'];$refs=$prepared['refs'];
+            // Tags/custom fields use their real resource writers and own CAS inside this same issuer transaction.
+            $tags->replaceInOwnedTransaction($i,$a,'ticket',$ticket,$tagsExpected,$data['tags']);$fields->saveInOwnedTransaction($i,$a,'tickets',$ticket,$data['custom_fields']);
+            $old=$before['metadata'];if((int)$old['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');
+            $next=['department_source_kind'=>$refs['department']['source_kind'],'department_source_id'=>$refs['department']['source_id'],'contact_id'=>$data['contactid'],'project_source_kind'=>$refs['project']['source_kind']??'','project_source_id'=>$refs['project']['source_id']??null,'sender_name'=>$refs['name'],'sender_email'=>$refs['email'],'sender_origin'=>$refs['origin'],'revision'=>(int)$old['revision']+1,'actor_id'=>$a,'updated_at'=>date('Y-m-d H:i:s')];
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' SET '.implode(',',array_map(fn($k)=>$k.'=?',array_keys($next))).' WHERE issuer_id=? AND ticket_id=? AND revision=?',array_merge(array_values($next),[$i,$id,(int)$old['revision']]));
+            $saved=$this->rows('SELECT * FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$i,$id])[0]??null;if(!$saved)throw new RuntimeException('issuer_ticket_write_unconfirmed');foreach($next as$k=>$v)if($v===null?$saved[$k]!==null:(string)$saved[$k]!== (string)$v)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET subject=?,client_id=?,assignee_id=? WHERE issuer_id=? AND id=?',[$data['subject'],$refs['client'],$data['assigned'],$i,$id]);$parent=$this->rows('SELECT subject,client_id,assignee_id FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$i,$id])[0]??null;
+            if(!$parent||$parent['subject']!==$data['subject']||($refs['client']===null?$parent['client_id']!==null:(int)$parent['client_id']!==$refs['client'])||(int)$parent['assignee_id']!==$data['assigned'])throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $this->catalogReference($i,$a,$id,'priority',$refs['priority']);if($refs['service']!==null)$this->catalogReference($i,$a,$id,'service',$refs['service']);else{IssuerStorage::query($this->db,'DELETE FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND ticket_id=? AND kind=?',[$i,$id,'service']);if($this->rows('SELECT id FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND ticket_id=? AND kind=?',[$i,$id,'service']))throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+            $after=(new NativeCompanyTicketRead($this->db,$this->p))->getInOwnedTransaction($i,$a,$ticket);
+            $again=(new NativeCompanyTicketCommands($this->db,$this->p))->settingsInputInOwnedTransaction($i,$a,$after,$input);
+            if($again!==$prepared)throw new DomainException('native_ticket_references_changed');
+    }
+    /** One durable command: settings, copy provenance, source closure, tags and fields roll back together. */
+    public function settingsAndMerge(int$i,int$a,$primary,array$input,array$children,$status,string$expected,string$tagsExpected,string$fieldsExpected,string$nonce):array
+    {
+        foreach([$tagsExpected,$fieldsExpected]as$v)if(!preg_match('/^[a-f0-9]{64}$/D',$v))throw new DomainException('native_ticket_stale');
+        return $this->mergeCommand($i,$a,$primary,$children,$status,$expected,$nonce,['input'=>$input,'tags'=>$tagsExpected,'fields'=>$fieldsExpected]);
+    }
+    /** Existing native bulk fields; source authority and every selected CAS are checked inside one transaction. */
+    public function bulkUpdate(int$i,int$a,array$selected,array$changes,array$tagRevisions,string$nonce):array
+    {
+        require_once __DIR__.'/NativeCompanyResourceTags.php';
+        if(!$selected||count($selected)>100||array_diff(array_keys($changes),['status','department','priority','service','tags']))throw new DomainException('native_ticket_bulk_invalid');ksort($selected,SORT_STRING);
+        $normalized=[];foreach($selected as$id=>$revision){if(NativeCompanyResourceId::decode('ticket',(string)$id)['source_kind']!=='company_ticket'||!is_string($revision)||!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('native_ticket_bulk_invalid');$normalized[(string)$id]=$revision;}
+        $refs=[];foreach(['status','department','priority','service']as$kind){$value=$changes[$kind]??'';if(!is_string($value)&&!is_int($value))throw new DomainException('native_ticket_bulk_invalid');if($value!==''){$type=$kind==='department'?'ticket_department':'ticket_'.$kind;$ref=NativeCompanyResourceId::decode($type,$value);if($ref['source_kind']!=='company_'.$type)throw new DomainException('native_ticket_bulk_invalid');$refs[$kind]=(string)$value;}}
+        $labels=$changes['tags']??[];if(!is_array($labels)||!array_is_list($labels)||count($labels)>100)throw new DomainException('native_ticket_bulk_invalid');foreach($labels as$label)if(!is_string($label)||trim($label)===''||mb_strlen($label)>100)throw new DomainException('native_ticket_bulk_invalid');
+        if(!$refs&&!$labels)throw new DomainException('native_ticket_bulk_invalid');if($labels){if(array_diff(array_keys($normalized),array_keys($tagRevisions))||array_diff(array_keys($tagRevisions),array_keys($normalized)))throw new DomainException('native_ticket_bulk_invalid');foreach($tagRevisions as$v)if(!is_string($v)||!preg_match('/^[a-f0-9]{64}$/D',$v))throw new DomainException('native_ticket_bulk_invalid');}elseif($tagRevisions)throw new DomainException('native_ticket_bulk_invalid');
+        $primary=(string)array_key_first($normalized);$expected=$normalized[$primary];$extra=$labels?NativeCompanyResourceTags::tableNames():[];
+        $result=$this->run($i,$a,$primary,$expected,$nonce,'native_ticket_bulk_updated',[$normalized,$refs,$labels,$tagRevisions],function(int$primarySource)use($i,$a,$primary,$normalized,$refs,$labels,$tagRevisions,$nonce){
+            $reader=new NativeCompanyTicketRead($this->db,$this->p);$catalog=new NativeCompanyTicketCatalog($this->db,$this->p);$departments=new NativeCompanyDepartments($this->db,$this->p);$acl=new IssuerResourceAccess($this->db,$this->p);$resolved=[];$snapshots=[];
+            foreach($refs as$kind=>$id)$resolved[$kind]=$kind==='department'?$departments->get($i,$a,$id):$catalog->get($i,$a,$kind,$id);
+            foreach($normalized as$id=>$revision){$before=$reader->getInOwnedTransaction($i,$a,(string)$id);$source=$before['source_id'];NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$i,$source);if(!hash_equals($before['revision_token'],$revision))throw new DomainException('native_ticket_stale');
+                foreach($resolved as$kind=>$reference){if($kind==='department'){
+                    if(!$before['metadata'])throw new DomainException('native_ticket_metadata_required');if(!$acl->administrative($i,$a)&&$before['policy']['values']['staff_access_only_assigned_departments']==='1'&&!in_array($reference['departmentid'],array_column($departments->forStaff($i,$a),'departmentid'),true))throw new DomainException('native_ticket_department_denied');
+                    $old=$before['metadata'];if((int)$old['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' SET department_source_kind=?,department_source_id=?,revision=revision+1,actor_id=?,updated_at=? WHERE issuer_id=? AND ticket_id=? AND revision=?',[$reference['source_kind'],$reference['source_id'],$a,date('Y-m-d H:i:s'),$i,$source,(int)$old['revision']]);$saved=$this->rows('SELECT department_source_kind,department_source_id,revision FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$i,$source])[0]??null;if(!$saved||$saved['department_source_kind']!==$reference['source_kind']||(int)$saved['department_source_id']!==$reference['source_id']||(int)$saved['revision']!==(int)$old['revision']+1)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                }else$this->catalogReference($i,$a,$source,$kind,$reference);}
+                if($labels)(new NativeCompanyResourceTags($this->db,$this->p))->replaceInOwnedTransaction($i,$a,'ticket',(string)$id,$tagRevisions[$id],$labels);
+                if($source!==$primarySource){$row=$this->rows('SELECT revision FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=? FOR UPDATE',[$i,$source])[0]??null;if(!$row||(int)$row['revision']<1||(int)$row['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[date('Y-m-d H:i:s'),$i,$source,(int)$row['revision']]);$saved=$this->rows('SELECT revision FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$i,$source])[0]??null;if(!$saved||(int)$saved['revision']!==(int)$row['revision']+1)throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+                $after=$reader->getInOwnedTransaction($i,$a,(string)$id);foreach($refs as$kind=>$wanted)if((string)$after[$kind]!==$wanted)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+                $meta=json_encode(['request_nonce'=>$nonce,'batch_primary'=>$primary,'before_revision'=>$revision,'state_after_fields'=>$after['revision_token']],JSON_THROW_ON_ERROR);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$a,'native_ticket_bulk_item_updated',$i,$source,date('Y-m-d H:i:s'),$meta]);$audit=(int)$this->db->insert_id();if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND actor_id=? AND issuer_id=? AND subject_id=? AND event=? AND metadata_json=?',[$audit,$a,$i,$source,'native_ticket_bulk_item_updated',$meta]))throw new RuntimeException('issuer_ticket_write_unconfirmed');$this->authorize($i,$a);$snapshots[(string)$id]=$after;
+            }
+            foreach($snapshots as$id=>$snapshot)if($reader->getInOwnedTransaction($i,$a,(string)$id)!==$snapshot)throw new DomainException('native_ticket_changed');
+            foreach($refs as$kind=>$id)if(($kind==='department'?$departments->get($i,$a,$id):$catalog->get($i,$a,$kind,$id))!==$resolved[$kind])throw new DomainException('native_ticket_references_changed');
+        },$extra);
+        return $result+['success'=>true,'updated'=>count($normalized)];
+    }
+    public function changeStatus(int $issuer,int $actor,$ticket,$status,string $expected,string $nonce):array
+    {
+        $d=NativeCompanyResourceId::decode('ticket_status',$status);if($d['source_kind']!=='company_ticket_status')throw new DomainException('native_ticket_status_denied');
+        return $this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_status_updated',[$status],function(int $id)use($issuer,$actor,$status){
+            $catalog=new NativeCompanyTicketCatalog($this->db,$this->p);$ref=$catalog->get($issuer,$actor,'status',$status);$this->catalogReference($issuer,$actor,$id,'status',$ref);
+            // Keep the historical row marker/body provenance intact. The explicit owned catalog reference is authoritative.
+            if($catalog->get($issuer,$actor,'status',$status)!==$ref)throw new RuntimeException('issuer_ticket_write_unconfirmed');
+        });
+    }
+    /** Edit the original ticket body without reclassifying historical text or changing sender provenance. */
+    public function editMessage(int $issuer,int $actor,$ticket,string $message,string $expected,string $nonce):array
+    {
+        if(strlen($message)>64000||preg_match('//u',$message)!==1||preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/',$message))throw new DomainException('native_ticket_message_invalid');
+        $message=NativeCompanyContentHtml::purify($message);if(trim(strip_tags($message))==='')throw new DomainException('native_ticket_message_invalid');
+        NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);
+        $permission=function()use($issuer,$actor){$acl=new IssuerResourceAccess($this->db,$this->p);$policy=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);if(!$acl->administrative($issuer,$actor)&&$policy['values']['allow_non_admin_members_to_edit_ticket_messages']!=='1')throw new DomainException('native_ticket_message_edit_denied');};
+        return $this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_message_edited',[$message],function(int$id)use($issuer,$actor,$message,$permission){
+            $permission();$now=date('Y-m-d H:i:s');$table=$this->p.NativeCompanyTicketReplySchema::BODY;
+            $old=$this->rows('SELECT * FROM '.$table.' WHERE ticket_id=? FOR UPDATE',[$id])[0]??null;
+            if($old&&((int)$old['issuer_id']!==$issuer||(int)$old['revision']<1||(int)$old['revision']>=2147483647))throw new DomainException('native_ticket_body_provenance_invalid');
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET body=? WHERE issuer_id=? AND id=?',[$message,$issuer,$id]);
+            $proof=['ticket_id'=>$id,'issuer_id'=>$issuer,'body_format'=>'native_html','content_hash'=>hash('sha256',$message),'revision'=>$old?(int)$old['revision']+1:1,'actor_id'=>$actor,'created_at'=>$old?$old['created_at']:$now,'updated_at'=>$now];
+            if($old)IssuerStorage::query($this->db,'UPDATE '.$table.' SET body_format=?,content_hash=?,revision=?,actor_id=?,updated_at=? WHERE ticket_id=? AND issuer_id=? AND revision=?',[$proof['body_format'],$proof['content_hash'],$proof['revision'],$actor,$now,$id,$issuer,$old['revision']]);
+            else IssuerStorage::query($this->db,'INSERT INTO '.$table.'('.implode(',',array_keys($proof)).') VALUES(?,?,?,?,?,?,?,?)',array_values($proof));
+            $saved=$this->rows('SELECT * FROM '.$table.' WHERE ticket_id=?',[$id])[0]??null;if(!$saved||array_map('strval',$saved)!==array_map('strval',$proof))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+        },[NativeCompanyTicketReplySchema::BODY],function(int$id)use($issuer,$message,$permission){
+            $permission();$row=$this->rows('SELECT t.body,m.body_format,m.content_hash FROM '.$this->p.'company_tickets t JOIN '.$this->p.NativeCompanyTicketReplySchema::BODY.' m ON m.ticket_id=t.id AND m.issuer_id=t.issuer_id WHERE t.issuer_id=? AND t.id=?',[$issuer,$id])[0]??null;
+            if(!$row||$row['body']!==$message||$row['body_format']!=='native_html'||!hash_equals(hash('sha256',$message),$row['content_hash']))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+        });
+    }
+    public function editReply(int $issuer,int $actor,$ticket,$reply,string $message,string $expected,string $replyExpected,string $nonce):array
+    {
+        $decoded=NativeCompanyResourceId::decode('ticket_reply',$reply);if($decoded['source_kind']!=='company_ticket_reply'||!preg_match('/^[a-f0-9]{64}$/D',$replyExpected)||strlen($message)>64000||preg_match('//u',$message)!==1||preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/',$message))throw new DomainException('native_ticket_message_invalid');
+        $message=NativeCompanyContentHtml::purify($message);if(trim(strip_tags($message))==='')throw new DomainException('native_ticket_message_invalid');NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);
+        $reader=new NativeCompanyTicketRead($this->db,$this->p);
+        $select=function()use($reader,$issuer,$actor,$ticket,$reply){$matches=array_values(array_filter($reader->repliesInOwnedTransaction($issuer,$actor,$ticket),fn($r)=>(string)$r['id']===(string)$reply));if(count($matches)!==1)throw new DomainException('native_ticket_reply_denied');return$matches[0];};
+        $permission=function()use($issuer,$actor){$acl=new IssuerResourceAccess($this->db,$this->p);$p=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);if(!$acl->administrative($issuer,$actor)&&$p['values']['allow_non_admin_members_to_edit_ticket_messages']!=='1')throw new DomainException('native_ticket_message_edit_denied');};
+        return$this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_reply_edited',[$reply,$message,$replyExpected],function(int$id)use($issuer,$actor,$decoded,$message,$replyExpected,$select,$permission){
+            $permission();$before=$select();if(!hash_equals($before['revision_token'],$replyExpected))throw new DomainException('native_ticket_stale');$table=$this->p.NativeCompanyTicketReplySchema::EDIT;$now=date('Y-m-d H:i:s');$replyId=$decoded['source_id'];
+            $old=$this->rows('SELECT * FROM '.$table.' WHERE reply_id=? FOR UPDATE',[$replyId])[0]??null;if($old&&((int)$old['revision']<1||(int)$old['revision']>=2147483647))throw new DomainException('native_ticket_revision_invalid');
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_ticket_replies SET body=? WHERE issuer_id=? AND ticket_id=? AND id=?',[$message,$issuer,$id,$replyId]);
+            $proof=['reply_id'=>$replyId,'issuer_id'=>$issuer,'ticket_id'=>$id,'content_hash'=>hash('sha256',$message),'revision'=>$old?(int)$old['revision']+1:1,'actor_id'=>$actor,'created_at'=>$old?$old['created_at']:$now,'updated_at'=>$now];
+            if($old)IssuerStorage::query($this->db,'UPDATE '.$table.' SET content_hash=?,revision=?,actor_id=?,updated_at=? WHERE issuer_id=? AND ticket_id=? AND reply_id=? AND revision=?',[$proof['content_hash'],$proof['revision'],$actor,$now,$issuer,$id,$replyId,$old['revision']]);else IssuerStorage::query($this->db,'INSERT INTO '.$table.'('.implode(',',array_keys($proof)).') VALUES(?,?,?,?,?,?,?,?)',array_values($proof));
+            $saved=$this->rows('SELECT * FROM '.$table.' WHERE reply_id=?',[$replyId])[0]??null;if(!$saved||array_map('strval',$saved)!==array_map('strval',$proof))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $after=$select();foreach(['admin','userid','contactid','submitter','date']as$key)if($after[$key]!==$before[$key])throw new RuntimeException('issuer_ticket_write_unconfirmed');
+        },[NativeCompanyTicketReplySchema::TABLE,NativeCompanyTicketReplySchema::EDIT,'company_portal_support_replies'],function(int$id)use($permission,$select,$message){$permission();$r=$select();if($r['message']!==$message||$r['message_format']!=='native_html')throw new RuntimeException('issuer_ticket_write_unconfirmed');});
+    }
+    public function reply(int $issuer,int $actor,$ticket,string $message,$status,string $expected,string $nonce,array $options=[],array $files=[]):array
+    {
+        require_once __DIR__.'/NativeCompanyTicketReplySchema.php';
+        if(strlen($message)>64000||preg_match('//u',$message)!==1||preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/',$message))throw new DomainException('native_ticket_message_invalid');
+        $message=NativeCompanyContentHtml::purify($message);if(trim(strip_tags($message))==='')throw new DomainException('native_ticket_message_invalid');
+        if($status!==null){$decoded=NativeCompanyResourceId::decode('ticket_status',$status);if($decoded['source_kind']!=='company_ticket_status')throw new DomainException('native_ticket_status_denied');}
+        if(array_diff(array_keys($options),['cc','assign_to_current_user'])||isset($options['cc'])&&!is_string($options['cc'])||isset($options['assign_to_current_user'])&&!is_bool($options['assign_to_current_user']))throw new DomainException('native_ticket_input_invalid');
+        $cc=null;if(array_key_exists('cc',$options)){$cc=[];foreach(explode(',',$options['cc'])as$email){$email=trim($email);if($email==='')continue;if(strlen($email)>191||!filter_var($email,FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$email))throw new DomainException('native_ticket_input_invalid');$cc[]=$email;}if(count($cc)>20||count(array_unique(array_map('strtolower',$cc)))!==count($cc))throw new DomainException('native_ticket_input_invalid');}
+        $assign=$options['assign_to_current_user']??false;
+        NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);require_once __DIR__.'/NativeCompanyTicketMultipart.php';$normalized=NativeCompanyTicketMultipart::normalize($files);$extra=[NativeCompanyTicketReplySchema::TABLE];
+        if($normalized){require_once __DIR__.'/NativeCompanyTicketReplyFileSchema.php';require_once __DIR__.'/CompanyOperationFilesSchema.php';NativeCompanyTicketReplyFileSchema::assertValid($this->db,$this->p);CompanyOperationFilesSchema::assertValid($this->db,$this->p);$extra[]='company_ticket_files';$extra[]=NativeCompanyTicketReplyFileSchema::TABLE;}
+        $input=[$message,$status,$cc,$assign];if($normalized)$input[]=array_map(static fn($f)=>[$f['name'],$f['mime'],$f['hash'],$f['extension']],$normalized);
+        return$this->run($issuer,$actor,$ticket,$expected,$nonce,'native_ticket_replied',$input,function(int$id,array$before)use($issuer,$actor,$message,$status,$nonce,$cc,$assign,$normalized){
+            // A terminal ticket must be explicitly reopened. A reply cannot silently
+            // reopen it through its optional status field; exact durable retries still work.
+            if(in_array($before['catalog']['status']['code']??$before['historical_status'],['closed','resolved'],true))throw new DomainException('native_ticket_closed');
+            NativeCompanyTicketReplySchema::assertValid($this->db,$this->p);$now=date('Y-m-d H:i:s');
+            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_replies(issuer_id,ticket_id,actor_id,body,created_at) VALUES(?,?,?,?,?)',[$issuer,$id,$actor,$message,$now]);$reply=(int)$this->db->insert_id();
+            $row=$this->rows('SELECT issuer_id,ticket_id,actor_id,body,created_at FROM '.$this->p.'company_ticket_replies WHERE id=?',[$reply])[0]??null;
+            if($reply<1||!$row||array_map('strval',$row)!==array_map('strval',['issuer_id'=>$issuer,'ticket_id'=>$id,'actor_id'=>$actor,'body'=>$message,'created_at'=>$now]))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            $meta=['reply_id'=>$reply,'issuer_id'=>$issuer,'ticket_id'=>$id,'body_format'=>'native_html','request_key'=>$nonce,'revision'=>1,'actor_id'=>$actor,'created_at'=>$now,'updated_at'=>$now];
+            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.NativeCompanyTicketReplySchema::TABLE.'('.implode(',',array_keys($meta)).') VALUES(?,?,?,?,?,?,?,?,?)',array_values($meta));
+            $saved=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketReplySchema::TABLE.' WHERE reply_id=?',[$reply])[0]??null;if(!$saved||array_map('strval',$saved)!==array_map('strval',$meta))throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            NativeCompanyTicketMultipart::assertPolicy($normalized,$before['policy']['values']);
+            foreach($normalized as$n=>$file){$key=hash('sha256','native-ticket-reply-file|'.$issuer.'|'.$nonce.'|'.$n);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_files(file_key,issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active,created_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,$issuer,$id,$actor,$file['name'],$file['mime'],$file['hash'],strlen($file['bytes']),$file['bytes'],$now]);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.NativeCompanyTicketReplyFileSchema::TABLE.'(file_key,issuer_id,ticket_id,reply_id,content_hash,actor_id,created_at) VALUES(?,?,?,?,?,?,?)',[$key,$issuer,$id,$reply,$file['hash'],$actor,$now]);}
+            if($status!==null){$catalog=new NativeCompanyTicketCatalog($this->db,$this->p);$ref=$catalog->get($issuer,$actor,'status',$status);$this->catalogReference($issuer,$actor,$id,'status',$ref);if($catalog->get($issuer,$actor,'status',$status)!==$ref)throw new DomainException('native_ticket_changed');}
+            if($assign||($before['assigned']===0&&$before['policy']['values']['automatically_assign_ticket_to_first_staff_responding']==='1'&&(int)($this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_ticket_replies WHERE issuer_id=? AND ticket_id=? AND actor_id>0',[$issuer,$id])[0]['n']??0)===1)){IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tickets SET assignee_id=? WHERE issuer_id=? AND id=? AND assignee_id=?',[$actor,$issuer,$id,$before['assigned']]);$a=$this->rows('SELECT assignee_id FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$issuer,$id])[0]??null;if(!$a||(int)$a['assignee_id']!==$actor)throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+            if($cc!==null){if(!$before['metadata'])throw new DomainException('native_ticket_metadata_required');$json=json_encode($cc,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' SET cc_json=? WHERE issuer_id=? AND ticket_id=?',[$json,$issuer,$id]);$c=$this->rows('SELECT cc_json FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$issuer,$id])[0]??null;if(!$c||$c['cc_json']!==$json)throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+            if($before['metadata']){if((int)$before['metadata']['revision']<1||(int)$before['metadata']['revision']>=2147483647)throw new DomainException('native_ticket_revision_invalid');IssuerStorage::query($this->db,'UPDATE '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' SET last_reply_at=?,staff_replying=NULL,staff_replying_at=NULL,revision=revision+1 WHERE issuer_id=? AND ticket_id=? AND revision=?',[$now,$issuer,$id,$before['metadata']['revision']]);$m=$this->rows('SELECT last_reply_at,staff_replying,staff_replying_at,revision FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$issuer,$id])[0]??null;if(!$m||$m['last_reply_at']!==$now||$m['staff_replying']!==null||$m['staff_replying_at']!==null||(int)$m['revision']!==(int)$before['metadata']['revision']+1)throw new RuntimeException('issuer_ticket_write_unconfirmed');}
+        },$extra,function(int$id)use($issuer,$actor,$message,$nonce,$normalized){
+            $rows=$this->rows('SELECT r.*,m.body_format,m.revision AS metadata_revision,m.actor_id AS metadata_actor,m.created_at AS metadata_created FROM '.$this->p.'company_ticket_replies r JOIN '.$this->p.NativeCompanyTicketReplySchema::TABLE.' m ON m.reply_id=r.id AND m.issuer_id=r.issuer_id AND m.ticket_id=r.ticket_id WHERE m.issuer_id=? AND m.request_key=?',[$issuer,$nonce]);
+            if(count($rows)!==1)throw new RuntimeException('issuer_ticket_write_unconfirmed');$r=$rows[0];NativeCompanyTicketVisibility::assertReply($this->db,$this->p,$issuer,(int)$r['id']);if((int)$r['ticket_id']!==$id||(int)$r['actor_id']!==$actor||(int)$r['metadata_actor']!==$actor||$r['body']!==$message||$r['body_format']!=='native_html'||(int)$r['metadata_revision']<1||$r['created_at']!==$r['metadata_created'])throw new RuntimeException('issuer_ticket_write_unconfirmed');
+            if($normalized){$expectedFiles=[];foreach($normalized as$n=>$file)$expectedFiles[hash('sha256','native-ticket-reply-file|'.$issuer.'|'.$nonce.'|'.$n)]=$file;$linked=$this->rows('SELECT l.file_key,l.issuer_id,l.ticket_id,l.reply_id,l.content_hash,l.actor_id,f.issuer_id AS file_issuer,f.ticket_id AS file_ticket,f.actor_id AS file_actor,f.filename,f.mime,f.byte_size,f.content,f.content_hash AS actual_hash FROM '.$this->p.NativeCompanyTicketReplyFileSchema::TABLE.' l JOIN '.$this->p.'company_ticket_files f ON f.file_key=l.file_key WHERE l.issuer_id=? AND l.ticket_id=? AND l.reply_id=? ORDER BY l.file_key',[$issuer,$id,$r['id']]);if(count($linked)!==count($expectedFiles))throw new RuntimeException('issuer_ticket_write_unconfirmed');foreach($linked as$file){$expected=$expectedFiles[$file['file_key']]??null;if($expected===null||(int)$file['actor_id']!==$actor||(int)$file['file_issuer']!==$issuer||(int)$file['file_ticket']!==$id||(int)$file['file_actor']!==$actor||$file['filename']!==$expected['name']||$file['mime']!==$expected['mime']||$file['content_hash']!==$expected['hash']||$file['actual_hash']!==$expected['hash']||(int)$file['byte_size']!==strlen($expected['bytes'])||!hash_equals($expected['hash'],hash('sha256',$file['content'])))throw new RuntimeException('issuer_ticket_write_unconfirmed');}}
+        });
+    }
+
+}

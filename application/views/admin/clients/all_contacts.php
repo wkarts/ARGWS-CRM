@@ -28,7 +28,7 @@
                         <div class="clearfix"></div>
                         <?php
         $table_data = [_l('client_firstname'), _l('client_lastname')];
-if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') {
+if ((!empty($native_customers) ? !empty($native_contact_consent_enabled) : (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'))) {
     array_push($table_data, [
         'name'     => _l('gdpr_consent') . ' (' . _l('gdpr_short') . ')',
         'th_attrs' => ['id' => 'th-consent', 'class' => 'not-export'],
@@ -42,7 +42,7 @@ $table_data = array_merge($table_data, [
     _l('clients_list_last_login'),
     ['name' => _l('contact_active'), 'th_attrs' => ['class' => 'text-center']],
 ]);
-$custom_fields = get_custom_fields('contacts', ['show_on_table' => 1]);
+$custom_fields = !empty($native_customers) ? $native_contact_table_fields : get_custom_fields('contacts', ['show_on_table' => 1]);
 
 foreach ($custom_fields as $field) {
     array_push($table_data, [
@@ -68,13 +68,13 @@ render_datatable($table_data, 'all-contacts');
         var allContactsServerParams = {
             "custom_view": "[name='custom_view']",
         }
-        <?php if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') { ?>
+        <?php if ((!empty($native_customers) ? !empty($native_contact_consent_enabled) : (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'))) { ?>
         optionsHeading.push($('#th-consent').index());
         <?php } ?>
         _table_api = initDataTable('.table-all-contacts', window.location.href, optionsHeading, optionsHeading,
             allContactsServerParams, [0, 'asc']);
         if (_table_api) {
-            <?php if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') { ?>
+            <?php if ((!empty($native_customers) ? !empty($native_contact_consent_enabled) : (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'))) { ?>
             _table_api.on('draw', function() {
                 var tableData = $('.table-all-contacts').find('tbody tr');
                 $.each(tableData, function() {

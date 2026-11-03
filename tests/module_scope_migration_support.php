@@ -101,7 +101,7 @@ final class ScopeMigrationDb {
     public function table_exists($table) { return $this->query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$table])->row() !== null; }
     public function field_exists($field, $table) { return in_array($field, array_column($this->query('PRAGMA table_info(' . $table . ')')->result_array(), 'name'), true); }
 }
-$target = $moduleName === 'api' ? '2.0.2' : '1.0.1';
+$target = $moduleName === 'api' ? '2.0.2' : ($moduleName === 'einvoice' ? '1.0.2' : '1.0.1');
 $baseline = $moduleName === 'api' ? '2.0.1' : '1.0.0';
 $GLOBALS['scopeChecks'] = 0;
 $GLOBALS['scopeHooks'] = new ScopeMigrationHooks();

@@ -9,10 +9,19 @@ final class CompanyPortalSupportWrite extends CompanyPortalSupportStorage
  {
   $issuer=IssuerPolicy::id($issuer);if(array_diff(array_keys($input),['subject','body','priority']))throw new DomainException('company_portal_support_invalid');$subject=self::text($input['subject']??null,191);$body=self::text($input['body']??null,12000);$priority=$input['priority']??null;if(!in_array($priority,['low','normal','high'],true))throw new DomainException('company_portal_support_invalid');
   return $this->operation($session,$issuer,'open',$key,[$subject,$body,$priority],function(array $who)use($issuer,$subject,$body,$priority):array{
-   $recent=$this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_portal_support_requests WHERE issuer_id=? AND contact_id=? AND operation=? AND created_at>=?',[$issuer,$who['contact_id'],'open',gmdate('Y-m-d H:i:s',time()-3600)])[0];$active=$this->rows("SELECT COUNT(*) n FROM {$this->p}company_tickets WHERE issuer_id=? AND client_id=? AND status='open'",[$issuer,$who['client_id']])[0];if((int)$recent['n']>=10||(int)$active['n']>=100)throw new DomainException('company_portal_support_limit');
+   $recent=$this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_portal_support_requests WHERE issuer_id=? AND contact_id=? AND operation=? AND created_at>=?',[$issuer,$who['contact_id'],'open',gmdate('Y-m-d H:i:s',time()-3600)])[0];$active=$this->activeCount($issuer,(int)$who['client_id']);if((int)$recent['n']>=10||$active>=100)throw new DomainException('company_portal_support_limit');
    $now=gmdate('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_tickets(issuer_id,client_id,assignee_id,subject,body,status,priority,revision,created_at,updated_at) VALUES(?,?,0,?,?,?, ?,1,?,?)',[$issuer,$who['client_id'],$subject,$body,'open',$priority,$now,$now]);$id=(int)$this->db->insert_id();if($id<1||$id>2147483647)throw new RuntimeException('issuer_portal_operation_unconfirmed');
    $author=trim($who['firstname'].' '.$who['lastname']);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_portal_support_origins(issuer_id,ticket_id,client_id,contact_id,author_name,created_at) VALUES(?,?,?,?,?,?)',[$issuer,$id,$who['client_id'],$who['contact_id'],$author,$now]);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_portal_tickets(issuer_id,ticket_id,visible,actor_id,updated_at) VALUES(?,?,1,0,?)',[$issuer,$id,$now]);$stored=$this->owned($who,$issuer,$id);if((int)$stored['assignee_id']!==0||(int)$stored['revision']!==1||$stored['subject']!==$subject||$stored['body']!==$body||$stored['priority']!==$priority||!$this->rows('SELECT ticket_id FROM '.$this->p.'company_portal_support_origins WHERE issuer_id=? AND ticket_id=? AND client_id=? AND contact_id=? AND author_name=?',[$issuer,$id,$who['client_id'],$who['contact_id'],$author]))throw new RuntimeException('issuer_portal_operation_unconfirmed');return [$id,null];
   });
+ }
+ private function activeCount(int $issuer,int $client):int
+ {
+  $projection=new NativeCompanyTicketPortalProjection($this->db,$this->p);$after=0;$active=0;
+  do{
+   $rows=$this->rows('SELECT id,issuer_id,status FROM '.$this->p.'company_tickets WHERE issuer_id=? AND client_id=? AND id>? AND '.NativeCompanyTicketVisibility::predicate($this->db,$this->p,'issuer_id','id').' ORDER BY id LIMIT 200',[$issuer,$client,$after]);
+   foreach($rows as$row){$after=(int)$row['id'];if($projection->ticket($issuer,$row)['status']==='open'&&++$active>=100)return$active;}
+  }while(count($rows)===200);
+  return$active;
  }
  public function reply(array $session,$issuer,$id,$revision,string $body,string $key):int
  {

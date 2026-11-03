@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/support/TestPdo.php';
 define('BASEPATH',dirname(__DIR__).'/system/');
 require_once __DIR__.'/../application/services/InvoiceIssuerScope.php';
 require_once __DIR__.'/../application/services/ClientIssuerScope.php';
@@ -118,7 +119,7 @@ $checks=0;
 function same($expected,$actual,$label) { global $checks;$checks++;if($expected!==$actual)throw new RuntimeException($label.': '.var_export($actual,true)); }
 function denied(callable $fn,$code) { try{$fn();}catch(DomainException $e){same($code,$e->getMessage(),$code);return;}throw new RuntimeException('Expected rejection'); }
 $dsn=getenv('ISSUERS_TEST_DSN')?:'sqlite::memory:';
-$pdo=new PDO($dsn,getenv('ISSUERS_TEST_USER')?:null,getenv('ISSUERS_TEST_PASSWORD')?:null);
+$pdo=TestPdo::connect($dsn,getenv('ISSUERS_TEST_USER')?:null,getenv('ISSUERS_TEST_PASSWORD')?:null);
 $db=new CoreIssuerDb($pdo);$prefix='scope_'.bin2hex(random_bytes(4)).'_';$GLOBALS['prefix']=$prefix;$GLOBALS['hooks']=new CoreIssuerHooks();
 same(false,$db->field_exists('master_staff_id',$prefix.'issuers_installation_identity'),'legacy fixture without company identity reports missing master field');
 $db->query("CREATE TABLE {$prefix}invoices (id INT PRIMARY KEY, issuer_id INT NULL, currency INT, number INT, date VARCHAR(10), clientid INT, total INT, project_id INT, deleted_customer_name VARCHAR(50),hash VARCHAR(50))");

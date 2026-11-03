@@ -3,7 +3,7 @@
 if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit(2);
 define('FCPATH',dirname(__DIR__,2).'/');define('BASEPATH',FCPATH.'system/');define('APPPATH',FCPATH.'application/');
 require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit(2);
-require dirname(__DIR__).'/support/BbPdoDatabase.php';require APPPATH.'services/CompanyGoogleMailOAuth.php';require BASEPATH.'libraries/Encryption.php';
+require dirname(__DIR__).'/support/BbPdoDatabase.php';require_once APPPATH.'services/CompanyGoogleMailOAuth.php';require BASEPATH.'libraries/Encryption.php';
 function db_prefix(){return'tbl';}function log_message($l,$m){}
 $pdo=new PDO('mysql:host='.str_replace(':',';port=',APP_DB_HOSTNAME).';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);CompanyGoogleMailOAuthSchema::ensure($db,'tbl');
 $mode=$argv[1]??'prepare';$identity=$db->query('SELECT master_staff_id,primary_issuer_id FROM tblissuers_installation_identity WHERE id=1')->row_array();$actor=(int)$identity['master_staff_id'];$primary=(int)$identity['primary_issuer_id'];$a=(int)$db->query("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'")->row()->id;$b=(int)$db->query("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'")->row()->id;$cipher=new CI_Encryption(['driver'=>'openssl','key'=>APP_ENC_KEY]);

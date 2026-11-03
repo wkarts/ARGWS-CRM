@@ -3,14 +3,27 @@
 import argparse
 import hashlib
 import json
+import importlib.util
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / 'tests/ci/company-registry-commands.json'
 PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
-SHARDS = 4
+SHARDS = 5
+
+
+def execute_logged(command, **kwargs):
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors='replace', **kwargs)
+    sys.stdout.write(result.stdout)
+    if result.returncode:
+        spec = importlib.util.spec_from_file_location('focused_failure', ROOT / 'scripts/ci/run-native-company-focused.py')
+        focused = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(focused)
+        print(focused.failure_annotation('registry', command, result.stdout), flush=True)
+    return result
 
 
 def load_commands(path=MANIFEST):
@@ -35,7 +48,7 @@ def load_commands(path=MANIFEST):
 def load_assignment(commands, path=PLAN):
     plan = json.loads(Path(path).read_text())
     digest = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
-    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-plus-unmeasured-count-v1':
+    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-retired-plus-unmeasured-count-v3' or plan.get('shards') != SHARDS:
         raise ValueError('Frozen shard plan does not match command manifest/model')
     assignments = plan.get('assignments')
     if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments) or sorted(assignments.count(s) for s in range(1, SHARDS + 1)) != sorted(len(commands) // SHARDS + (s < len(commands) % SHARDS) for s in range(SHARDS)):
@@ -45,7 +58,7 @@ def load_assignment(commands, path=PLAN):
 
 def select_commands(commands, shard, assignments=None):
     if shard not in range(1, SHARDS + 1):
-        raise ValueError('Shard must be 1..4')
+        raise ValueError('Shard must be 1..5')
     if assignments is None:
         assignments = load_assignment(commands)
     if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments):
@@ -54,7 +67,7 @@ def select_commands(commands, shard, assignments=None):
     return [(index, command) for index, command in enumerate(commands) if assignments[index] == shard]
 
 
-def run(commands, shard, timings, execute=subprocess.run, assignments=None):
+def run(commands, shard, timings, execute=execute_logged, assignments=None):
     selected = select_commands(commands, shard, assignments)
     Path(timings).parent.mkdir(parents=True, exist_ok=True)
     with Path(timings).open('w') as evidence:

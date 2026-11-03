@@ -23,18 +23,18 @@ jobs:
           php tests/efi/intent_contract.php
           php tests/efi_adoption_http.php
           php tests/efi_checkout_preflight.php
-          php tests/efi/company_accounts_contract.php
-          php tests/efi/company_controller_contract.php
-          php tests/efi/company_proof_contract.php
+          php tests/efi/native_accounts_contract.php
+          php tests/efi/native_controller_contract.php
+          php tests/efi/native_proof_contract.php
           php tests/issuers_original_administrator.php
-          php tests/company_settings_layout.php
+          php tests/native_settings_layout.php
       - name: PWA em Chromium e HTTP reais descartáveis
         env:
           PWA_BROWSER_ARTIFACTS: /tmp/remediation-pwa-fixture
         run: |
           node tests/native_pwa.browser.cjs
-          SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/company_settings_layout.browser.cjs
-          COMPANY_SHELL_SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/efi/company_ui.browser.cjs
+          SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/native_settings_layout.browser.cjs
+          COMPANY_SHELL_SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/efi/native_ui.browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -88,9 +88,9 @@ jobs:
           php tests/efi_csrf_config.php
           php tests/efi_adoption_http.php
           php tests/efi_checkout_preflight.php
-          php tests/efi/company_accounts_contract.php
-          php tests/efi/company_controller_contract.php
-          php tests/efi/company_proof_contract.php
+          php tests/efi/native_accounts_contract.php
+          php tests/efi/native_controller_contract.php
+          php tests/efi/native_proof_contract.php
           php tests/efi/operational_contract.php
           php tests/efi/controller_contract.php
           php tests/efi/certificate_contract.php

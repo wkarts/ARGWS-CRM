@@ -22,7 +22,7 @@ trait CompanyTaskTimerTransitions
  }
  private function rememberTimerStart(int $issuer,int $actor,int $id,array $before,string $status,string $now,int $timer,array $policy,array $prior):void
  {
-  $expected=$prior['task'];$native=array_map('strval',array_intersect_key($before,$expected['native']));if($native!==$expected['native'])throw new RuntimeException('issuer_task_timer_unconfirmed');$expected['native']['status']=$status;$expected['native']['revision']=(string)((int)$before['revision']+1);$expected['native']['updated_at']=$now;
+  $expected=$prior['task'];$native=array_map(static fn($v)=>$v===null?null:(string)$v,array_intersect_key($before,$expected['native']));if($native!==$expected['native'])throw new RuntimeException('issuer_task_timer_unconfirmed');$expected['native']['status']=$status;$expected['native']['revision']=(string)((int)$before['revision']+1);$expected['native']['updated_at']=$now;
   if(CompanyTaskPriority::frame($this->db,$this->p,$this->taskKind(),$issuer,$id,false)!==$expected)throw new RuntimeException('issuer_task_timer_unconfirmed');
   $known=['id'=>(string)$timer,'issuer_id'=>(string)$issuer,'task_id'=>(string)$id,'actor_id'=>(string)$actor,'started_at'=>$now,'stopped_at'=>null,'seconds'=>'0'];$history=$prior['timers'];$history[]=$known;
   if($this->timerHistory($issuer,$id)!==$history)throw new RuntimeException('issuer_task_timer_unconfirmed');$this->confirmActorActiveTimer($actor,$known);CompanyTaskTimerPreferences::confirmInOwnedTransaction($this->db,$this->p,$issuer,$policy);

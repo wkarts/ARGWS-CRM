@@ -65,7 +65,7 @@ abaixo é apresentado como homologação bancária.
 ## Validação
 
 - `python3 tests/test_efi_company_checkout_contract.py`: apenas contrato estático.
-- `php tests/efi/company_proof_contract.php`: projeções sintéticas, sem rede.
+- `php tests/efi/native_proof_contract.php`: projeções sintéticas, sem rede.
 - `ISSUERS_TEST_DSN=mysql:... php tests/companies/efi_company_checkout.php`:
   MySQL descartável, serviços reais, escritor/journal reais, provider fake contado;
   A/B, legado preservado, replay, rollback, revogação durante POST/GET com retenção técnica em quarentena,

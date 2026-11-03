@@ -1,0 +1,26 @@
+<?php
+require __DIR__.'/native_settings.php';
+require_once APPPATH.'services/NativeCompanyGdprSettings.php';
+$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
+$service=new NativeCompanyGdprSettings($db,$p);$before=essentialLegacy($f);
+$service->save(41,7,'general',['enable_gdpr'=>'1','show_gdpr_in_customers_menu'=>'1']);
+essentialCheck($store->get(41,'enable_gdpr')==='1'&&$store->get(82,'enable_gdpr')==='','GDPR settings owned A never hydrate B');
+essentialCheck(essentialLegacy($f)===$before,'named GDPR preferences preserve historical options');
+settingThrows(fn()=>$service->save(41,12,'general',['enable_gdpr'=>'0']),'native_gdpr_denied','settings edit alone cannot replace native admin policy');
+settingThrows(fn()=>$service->save(41,7,'general',['smtp_password'=>'x']),'native_gdpr_invalid','no unrelated option overpost');
+settingThrows(fn()=>$service->save(41,7,'../../general',[]),'native_gdpr_invalid','page is exact allowlist');
+settingThrows(fn()=>$service->save(41,7,'general',['enable_gdpr'=>'true']),'native_gdpr_invalid','boolean wire format remains explicit');
+$service->save(41,7,'portability',['gdpr_contact_data_portability_allowed'=>['profile_data','consent']]);
+essentialCheck($store->get(41,'gdpr_contact_data_portability_allowed')===serialize(['profile_data','consent']),'existing native serialized array format');
+essentialCheck($store->get(41,'gdpr_lead_data_portability_allowed')===serialize([]),'unchecked native multi-select clears own setting only');
+settingThrows(fn()=>$service->save(41,7,'portability',['gdpr_contact_data_portability_allowed'=>['__unsafe']]),'native_gdpr_invalid','portability only existing native options');
+$service->save(41,7,'informed',['privacy_policy'=>'<p>Policy <strong>owned</strong><script>alert(1)</script><img src="https://foreign.invalid/t.png"></p>']);
+$sanitized=$store->get(41,'privacy_policy');
+essentialCheck(str_contains($sanitized,'<strong>owned</strong>')&&!str_contains($sanitized,'<script')&&!str_contains($sanitized,'<img'),'real bundled purifier retains native rich text without active or remote content');
+essentialCheck($store->get(82,'privacy_policy')==='','private legal document does not hydrate another company');
+$service->save($primary,7,'general',['enable_gdpr'=>'1']);
+essentialCheck($store->get($primary,'enable_gdpr')==='1'&&$store->get(41,'enable_gdpr')==='1','primary retains separate legacy option lineage');
+$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7");
+settingThrows(fn()=>$service->save(41,7,'general',['enable_gdpr'=>'0']),'native_gdpr_denied','revoked owner cannot mutate settings');
+$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+echo "Native GDPR preferences actual PDO ownership/admin/primary/serialization/overpost passed.\n";

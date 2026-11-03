@@ -98,7 +98,7 @@ function a1nativeSeed(int $target=458): array
     $raw->query('CREATE TABLE a1_migrations (version int NOT NULL) ENGINE=InnoDB');$raw->query('INSERT INTO a1_migrations VALUES(456)');
     $autoId=$raw->driver==='sqlite'?'INTEGER PRIMARY KEY AUTOINCREMENT':'int NOT NULL AUTO_INCREMENT PRIMARY KEY';
     $raw->query('CREATE TABLE a1_emailtemplates (emailtemplateid '.$autoId.',issuer_id int unsigned NULL,`type` varchar(100) NOT NULL,slug varchar(191) NOT NULL,language varchar(40) NOT NULL,name varchar(191) NOT NULL,subject varchar(255) NOT NULL,message longtext NOT NULL,fromname varchar(191) NOT NULL,fromemail varchar(191) NOT NULL,plaintext int NOT NULL,active int NOT NULL,`order` int NOT NULL) ENGINE=InnoDB');
-    $defaults=json_decode(file_get_contents(APPPATH.'services/email_templates_ptbr/company_defaults.json'),true,512,JSON_THROW_ON_ERROR);
+    $defaults=json_decode(file_get_contents(APPPATH.'services/email_templates_ptbr/defaults.json'),true,512,JSON_THROW_ON_ERROR);
     $source=array_values(array_filter($defaults,static fn($r)=>$r['slug']==='contact-forgot-password'))[0]??null;
     if($source===null)throw new RuntimeException('Native factory email fixture missing');
     $rows=[['issuer_id'=>null]+$source,['issuer_id'=>10]+array_replace($source,['language'=>'portuguese_br','name'=>'NOME PERSONALIZADO','subject'=>'ASSUNTO PERSONALIZADO {contact_firstname}','message'=>'CORPO PERSONALIZADO {reset_password_url}']),['issuer_id'=>20]+array_replace($source,['language'=>'portuguese_br'])];

@@ -1,0 +1,25 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/ticket_status_endpoint.php';require_once APPPATH.'services/NativeCompanyTicketThreadPresentation.php';
+foreach(array_merge(NativeCompanyTicketReplySchema::definitions('tbl'),NativeCompanySpamSchema::definitions('tbl'))as$table=>$parts)if($table!==NativeCompanyTicketReplySchema::BODY)ticketSqliteDdl($table,$parts,$db);
+$wrapped=new TicketCreateDb($db,array_merge(NativeCompanyTicketReplySchema::definitions('tbl'),NativeCompanySpamSchema::definitions('tbl')));$ci->db=$wrapped;
+$db->query('CREATE TABLE tblcompany_ticket_files(file_key TEXT PRIMARY KEY,issuer_id INTEGER,ticket_id INTEGER,actor_id INTEGER,filename TEXT,mime TEXT,content_hash TEXT,byte_size INTEGER,content BLOB,active INTEGER,created_at TEXT)');$key=hash('sha256','thread-file');$bytes="%PDF-1.4\nThread fixture\n";$db->query('INSERT INTO tblcompany_ticket_files VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,2,$source,17,'thread.pdf','application/pdf',hash('sha256',$bytes),strlen($bytes),$bytes,'2026-01-01']);
+$db->query('CREATE TABLE tblcompany_portal_support_replies(issuer_id INTEGER,ticket_id INTEGER,client_id INTEGER,contact_id INTEGER,reply_id INTEGER PRIMARY KEY,author_name TEXT,created_at TEXT)');
+$reader=new NativeCompanyTicketRead($wrapped,'tbl');$before=$reader->get(2,17,$id);(new NativeCompanyTicketUpdates($wrapped,'tbl'))->reply(2,17,$id,'<p>Typed <strong>response</strong></p>',null,$before['revision_token'],hash('sha256','thread-reply'));
+$projection=new NativeCompanyTicketThreadPresentation($wrapped,'tbl');$data=$projection->read(2,17,$id);
+$render=function($data){extract($data);ob_start();include APPPATH.'views/admin/tickets/partials/ticket-history-message.php';include APPPATH.'views/admin/tickets/partials/ticket-history-replies.php';return ob_get_clean();};$html=$render($data);
+kc(str_contains($html,'Typed <strong>response</strong>')&&str_contains($html,'ticket-thread'),'same original thread partials retain rich-text provenance');kc(str_contains($html,'download/file/ticket/'.$key.'?ticket_id='.$id)&&str_contains($html,'data-native-parent-revision='),'actual private file route and CAS, not global upload path');kc(str_contains($html,'data-native-reply-revision='),'reply deletion carries separate proof');
+kc(NativeCompanyTicketThreadPresentation::message('<script>unsafe()</script>','plain_text')==='&lt;script&gt;unsafe()&lt;/script&gt;','historical text never promoted to HTML');$deny(fn()=>$projection->read(3,17,$id));
+$db->query('INSERT INTO tblcompany_tickets(issuer_id,client_id,assignee_id,subject,body,status,priority,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',[2,2,17,'Historical owned ticket','<script>plain historical body</script>','open','normal',1,'2026-01-01 00:00:00','2026-01-01 00:00:00']);
+$historicalSource=(int)$db->insert_id();$historicalId=NativeCompanyResourceId::encode('company_ticket',$historicalSource);
+$metadataBefore=$db->query('SELECT * FROM tblcompany_ticket_native_metadata ORDER BY ticket_id')->result_array();
+$historical=$projection->read(2,17,$historicalId);
+kc($historical['ticket']->message_format==='plain_text'&&$historical['ticket']->admin===null&&$historical['ticket']->metadata===null,'historical owned ticket does not acquire invented author or native metadata');
+kc($historical['native_ticket_presentation']['historical']&&!$historical['native_ticket_presentation']['can_reply']&&!$historical['native_ticket_presentation']['can_mark_read']&&!$historical['native_ticket_presentation']['can_edit_message'],'history projection never grants commands requiring absent provenance');
+kc($metadataBefore===$db->query('SELECT * FROM tblcompany_ticket_native_metadata ORDER BY ticket_id')->result_array(),'historical read creates no metadata or migration side effects');
+$deny(fn()=>$projection->read(3,17,$historicalId));
+$db->query('UPDATE tblcompany_tickets SET status=? WHERE id=?',['native',$historicalSource]);
+$deny(fn()=>$projection->read(2,17,$historicalId));
+$db->query('UPDATE tblcompany_tickets SET status=? WHERE id=?',['open',$historicalSource]);
+$db->query('UPDATE tblissuers_installation_identity SET master_staff_id=18');$db->query('UPDATE tblissuers_staff SET can_view=0 WHERE issuer_id=2 AND staff_id=17');$deny(fn()=>$projection->read(2,17,$id));
+echo "Original two ticket history partials + real SQLite readers passed: authors/body provenance, file route, reply/file CAS, A/B and revoked actor. Global options/hooks/upload paths never called. Full detail and browser remain pending.\n";

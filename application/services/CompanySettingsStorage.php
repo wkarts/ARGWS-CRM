@@ -199,6 +199,22 @@ final class CompanySettingsStorage
         require_once __DIR__.'/CompanySettingsCatalog.php';
         return $this->persistBatch($issuerId,$staffId,CompanySettingsCatalog::prepare('sales_pdf',$values),false,true);
     }
+    /** Existing GDPR form only; caller holds the full company transaction. */
+    public function updateNativeGdprInOwnedTransaction(int $issuer,int $actor,string $page,array $values):int
+    {
+        require_once __DIR__.'/NativeCompanyGdprSettings.php';
+        NativeCompanyGdprSettings::assertPrepared($page,$values);
+        $service=new NativeCompanyGdprSettings($this->db,$this->prefix);$service->authorize($issuer,$actor);
+        $count=$this->persistBatch($issuer,$actor,$values,true,true);
+        $service->authorize($issuer,$actor);return$count;
+    }
+    public function updateNativeSettingsInOwnedTransaction(int $issuer,int $actor,string $group,array $values):int
+    {
+        require_once __DIR__.'/NativeCompanySettingsForms.php';
+        NativeCompanySettingsForms::assertStorage($group,$values);
+        (new NativeCompanySettingsForms($this->db,$this->prefix))->authorize($issuer,$actor,'edit');
+        return $this->persistBatch($issuer,$actor,$values,true,true);
+    }
     private function persistBatch($issuerId,$staffId,array $values,bool $owned,bool $salesOnly=false): int
     {
         $issuerId=IssuerPolicy::id($issuerId);$staffId=IssuerPolicy::id($staffId);

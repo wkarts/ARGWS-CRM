@@ -54,10 +54,10 @@
 
             <div class="tw-space-x-4 tw-flex tw-items-center rtl:tw-space-x-reverse">
                 <p class="tw-text-neutral-600 tw-font-medium tw-text-sm tw-my-0">
-                    <?= e(_l('ticket_posted', _dt($ticket->date))); ?>
+                    <?= e(_l('ticket_posted', (isset($native_ticket_presentation)?$ticket->date_label:_dt($ticket->date)))); ?>
                 </p>
 
-                <?php if (staff_can('create', 'tasks')) { ?>
+                <?php if ((isset($native_ticket_presentation)?$native_ticket_presentation['can_create_task']:staff_can('create', 'tasks'))) { ?>
                 <a href="#"
                     class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-600 tw-text-sm tw-font-semibold"
                     onclick="convert_ticket_to_task(<?= e($ticket->ticketid); ?>,'ticket'); return false;">
@@ -71,7 +71,7 @@
                     <i class="fa fa-print"></i>
                 </a>
                 <?php } ?>
-                <?php if (can_staff_edit_ticket_message()) { ?>
+                <?php if ((isset($native_ticket_presentation)?$native_ticket_presentation['can_edit_message']:can_staff_edit_ticket_message())) { ?>
                 <a href="#" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-600"
                     onclick="edit_ticket_message(<?= e($ticket->ticketid); ?>,'ticket'); return false;">
                     <i class="fa-regular fa-pen-to-square"></i>
@@ -82,7 +82,7 @@
 
         <div data-ticket-id="<?= e($ticket->ticketid); ?>"
             class="tc-content">
-            <?php if (empty($ticket->admin)) {
+            <?php if(isset($native_ticket_presentation)){ echo NativeCompanyTicketThreadPresentation::message($ticket->message,$ticket->message_format); } elseif (empty($ticket->admin)) {
                 echo process_text_content_for_display($ticket->message);
             } else {
                 echo check_for_links($ticket->message);
@@ -92,28 +92,28 @@
         <?php if (count($ticket->attachments) > 0) { ?>
         <hr />
         <?php foreach ($ticket->attachments as $attachment) {
-            $path     = get_upload_path_by_type('ticket') . $ticket->ticketid . '/' . $attachment['file_name'];
-            $is_image = is_image($path);
+            $path     = isset($native_ticket_presentation)?null:get_upload_path_by_type('ticket') . $ticket->ticketid . '/' . $attachment['file_name'];
+            $is_image = isset($native_ticket_presentation)?in_array($attachment['filetype'],['image/png','image/jpeg','image/gif','image/webp'],true):is_image($path);
 
             if ($is_image) { ?>
         <div class="preview_image">
             <?php } ?>
-            <a href="<?= site_url('download/file/ticket/' . $attachment['id']); ?>"
+            <a href="<?= site_url(isset($native_ticket_presentation)?$attachment['url']:'download/file/ticket/' . $attachment['id']); ?>"
                 class="display-block mbot5" <?php if ($is_image) { ?>
                 data-lightbox="attachment-ticket-<?= e($ticket->ticketid); ?>"
                 <?php } ?>>
                 <?= e($attachment['file_name']); ?>
                 <?php if ($is_image) { ?>
                 <img class="mtop5"
-                    src="<?= site_url('download/preview_image?path=' . protected_file_url_by_path($path) . '&type=' . $attachment['filetype']); ?>">
+                    src="<?= site_url(isset($native_ticket_presentation)?$attachment['url']:'download/preview_image?path=' . protected_file_url_by_path($path) . '&type=' . $attachment['filetype']); ?>">
                 <?php } ?>
             </a>
             <?php if ($is_image) { ?>
         </div>
         <?php } ?>
-        <?php if (is_admin() || (! is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')) { ?>
-        <a href="<?= admin_url('tickets/delete_attachment/' . $attachment['id']); ?>"
-            class="text-danger _delete">
+        <?php if ((isset($native_ticket_presentation)?$native_ticket_presentation['can_delete_attachment']:(is_admin() || (! is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')))) { ?>
+        <a href="<?= admin_url(isset($native_ticket_presentation)?$attachment['delete_url']:'tickets/delete_attachment/' . $attachment['id']); ?>"
+            class="text-danger _delete" <?php if(isset($native_ticket_presentation)){ ?>data-native-revision="<?= e($attachment['revision']); ?>" data-native-parent-revision="<?= e($ticket->revision_token); ?>" data-native-request-nonce="<?= e(bin2hex(random_bytes(32))); ?>"<?php } ?>>
             <?= _l('delete'); ?>
         </a>
         <hr />

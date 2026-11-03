@@ -65,4 +65,38 @@ final class IssuerLegacyAccess
             IssuerStorage::query($db,"INSERT INTO {$p}audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(0,'legacy_primary_access_preserved',?,NULL,?,?)",[$primary,$now,json_encode(['staff_ids'=>$migrated,'staff_cutoff'=>$cutoff,'catalog_sha256'=>$hash,'active_modules'=>$activeModules],JSON_THROW_ON_ERROR)]);
         });
     }
+
+    /**
+     * Move grants from the former single-company ACL into the primary company.
+     * The renamed source table remains an immutable archive; the marker and
+     * copied grants commit together so later reconciliation cannot undo revokes.
+     */
+    public static function preserveLegacyResourcePermissions($db,string $prefix): void
+    {
+        $legacy=IssuerAccessSchema::legacyResourcePermissionsTable($prefix);
+        if(!$db->table_exists($legacy))return;
+        $p=$prefix.'issuers_';
+        IssuerTransaction::run($db,$prefix,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff'],static function()use($db,$prefix,$p,$legacy):void{
+            $identity=self::rows($db,"SELECT primary_issuer_id,legacy_resource_permissions_migrated_at FROM {$p}installation_identity WHERE id=1 FOR UPDATE")[0]??[];
+            if(!empty($identity['legacy_resource_permissions_migrated_at']))return;
+            $primary=IssuerPolicy::id($identity['primary_issuer_id']??null);
+            $memberRows=self::rows($db,"SELECT m.staff_id FROM {$p}staff m JOIN {$prefix}staff s ON s.staffid=m.staff_id WHERE m.issuer_id=? AND m.can_view=1 AND s.active=1 ORDER BY m.staff_id FOR UPDATE",[$primary]);
+            $members=array_fill_keys(array_map(static fn($row)=>(int)$row['staff_id'],$memberRows),true);
+            $legacyRows=self::rows($db,"SELECT staff_id,feature,capability FROM `{$legacy}` ORDER BY staff_id,feature,capability");
+            $copied=0;
+            foreach($legacyRows as$row){
+                $staff=IssuerPolicy::id($row['staff_id']??null);
+                $feature=IssuerResourceAccess::key($row['feature']??null);
+                $capability=IssuerResourceAccess::key($row['capability']??null);
+                if(!isset($members[$staff]))continue;
+                IssuerStorage::query($db,"INSERT IGNORE INTO {$p}resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,?,?,?)",[$primary,$staff,$feature,$capability]);
+                ++$copied;
+            }
+            $now=date('Y-m-d H:i:s');
+            IssuerStorage::query($db,"UPDATE {$p}installation_identity SET legacy_resource_permissions_migrated_at=? WHERE id=1 AND legacy_resource_permissions_migrated_at IS NULL",[$now]);
+            $confirmed=self::rows($db,"SELECT legacy_resource_permissions_migrated_at FROM {$p}installation_identity WHERE id=1")[0]??[];
+            if(($confirmed['legacy_resource_permissions_migrated_at']??null)!==$now)throw new RuntimeException('issuer_legacy_resource_permissions_unconfirmed');
+            IssuerStorage::query($db,"INSERT INTO {$p}audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(0,'legacy_resource_permissions_preserved',?,NULL,?,?)",[$primary,$now,json_encode(['archived_table'=>$legacy,'source_rows'=>count($legacyRows),'copied_rows'=>$copied],JSON_THROW_ON_ERROR)]);
+        });
+    }
 }

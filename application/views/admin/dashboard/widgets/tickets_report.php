@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('home_tickets_report'); ?>">
-    <?php if (is_admin()) { ?>
+    <?php if (isset($company_dashboard) ? ($company_dashboard['permissions']['tickets'] && $company_dashboard['permissions']['reports']) : is_admin()) { ?>
     <div class="row" id="tickets_report">
         <div class="col-md-12">
             <div class="panel_s">

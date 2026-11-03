@@ -7,7 +7,7 @@ define('APPPATH', FCPATH . 'application/');
 require APPPATH . 'config/app-config.php';
 if (APP_DB_NAME !== getenv('ISSUERS_BROWSER_DB_NAME') || !preg_match('/^(127\.0\.0\.1|argws-crm-provision-db-[0-9]+)(:[0-9]+)?$/D', APP_DB_HOSTNAME)) exit(2);
 require dirname(__DIR__) . '/support/BbPdoDatabase.php';
-require APPPATH . 'services/CompanyHrApi.php';
+require_once APPPATH . 'services/CompanyHrApi.php';
 function db_prefix() { return 'tbl'; }
 $pdo = new PDO('mysql:host=' . str_replace(':', ';port=', APP_DB_HOSTNAME) . ';dbname=' . APP_DB_NAME . ';charset=utf8mb4', APP_DB_USERNAME, APP_DB_PASSWORD, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $db = new BbPdoDatabase($pdo);
@@ -74,12 +74,12 @@ if ($mode === 'context') {
     ksort($value);
 } elseif ($mode === 'sources') {
     $paths = array_merge(glob(APPPATH . 'services/CompanyHr*.php'), [
-        APPPATH . 'controllers/admin/Company_hr.php', APPPATH . 'controllers/Company_hr_access.php',
-        APPPATH . 'views/admin/companies/hr.php', APPPATH . 'views/admin/companies/hr_mine.php', APPPATH . 'views/admin/companies/hr_records.php', APPPATH . 'views/hr_access.php',
-        APPPATH . 'views/admin/companies/api_tokens.php', APPPATH . 'controllers/admin/Company_api_tokens.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
+        APPPATH . 'controllers/admin/Staff.php', APPPATH . 'controllers/Hr_access.php',
+        APPPATH . 'views/admin/staff/native_hr.php', APPPATH . 'views/admin/staff/native_hr_mine.php', APPPATH . 'views/admin/staff/native_hr_records.php', APPPATH . 'views/hr_access.php',
+        APPPATH . 'views/admin/settings/native_api_tokens.php', APPPATH . 'controllers/admin/Settings.php', APPPATH . 'services/NativeCompanySpecializedOperations.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
     ]);
     $value = [];
-    foreach ($paths as $path) $value[substr($path, strlen(FCPATH))] = hash_file('sha256', $path);
+    foreach ($paths as $path) { if (!is_file($path)) throw new RuntimeException('HR source witness requires the current native handler'); $value[substr($path, strlen(FCPATH))] = hash_file('sha256', $path); }
     ksort($value);
 } else throw new RuntimeException('Unknown read-only HR token witness');
 echo json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) . PHP_EOL;

@@ -10,7 +10,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 function get_all_countries()
 {
     $countries = get_instance()->db->order_by('short_name', 'asc')->get(db_prefix() . 'countries')->result_array();
-
+    if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor(get_instance()))return $countries;
     return hooks()->apply_filters('all_countries', $countries);
 }
 /**
@@ -23,6 +23,10 @@ function get_all_countries()
 function get_country($id)
 {
     $CI = &get_instance();
+    if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($CI)){
+        if(!is_scalar($id)||!preg_match('/^[1-9][0-9]{0,9}$/D',(string)$id))return null;
+        return $CI->db->where('country_id',$id)->get(db_prefix().'countries')->row();
+    }
 
     $country = $CI->app_object_cache->get('db-country-' . $id);
 

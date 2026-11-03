@@ -181,66 +181,20 @@ function check_invoice_restrictions($id, $hash)
  */
 function format_invoice_status($status, $classes = '', $label = true)
 {
-    if (!class_exists('Invoices_model', false)) {
-        get_instance()->load->model('invoices_model');
-    }
-    
-    $id          = $status;
-    
-    $label_class = get_invoice_status_label($status);
-
-    if ($status == Invoices_model::STATUS_UNPAID) {
-        $status = _l('invoice_status_unpaid');
-    } elseif ($status == Invoices_model::STATUS_PAID) {
-        $status = _l('invoice_status_paid');
-    } elseif ($status == Invoices_model::STATUS_PARTIALLY) {
-        $status = _l('invoice_status_not_paid_completely');
-    } elseif ($status == Invoices_model::STATUS_OVERDUE) {
-        $status = _l('invoice_status_overdue');
-    } elseif ($status == Invoices_model::STATUS_CANCELLED) {
-        $status = _l('invoice_status_cancelled');
-    } else {
-        // status 6
-        $status = _l('invoice_status_draft');
-    }
-
+    require_once APPPATH.'services/InvoiceStatusPresentation.php';
+    $id=$status;
+    $label_class=get_invoice_status_label($status);
+    $status=_l(InvoiceStatusPresentation::labelKey($status));
     if ($label == true) {
         return '<span class="label label-' . $label_class . ' ' . $classes . ' s-status invoice-status-' . e($id) . '">' . e($status) . '</span>';
     }
-
     return e($status);
 }
-/**
- * Return invoice status label class baed on twitter bootstrap classses
- * @param  mixed $status invoice status id
- * @return string
- */
+/** Return the existing native Bootstrap status class without hydrating a financial model. */
 function get_invoice_status_label($status)
 {
-    if (!class_exists('Invoices_model', false)) {
-        get_instance()->load->model('invoices_model');
-    }
-
-    $label_class = '';
-    if ($status == Invoices_model::STATUS_UNPAID) {
-        $label_class = 'danger';
-    } elseif ($status == Invoices_model::STATUS_PAID) {
-        $label_class = 'success';
-    } elseif ($status == Invoices_model::STATUS_PARTIALLY) {
-        $label_class = 'warning';
-    } elseif ($status == Invoices_model::STATUS_OVERDUE) {
-        $label_class = 'warning';
-    } elseif ($status == Invoices_model::STATUS_CANCELLED || $status == Invoices_model::STATUS_DRAFT) {
-        $label_class = 'default';
-    } else {
-        if (!is_numeric($status)) {
-            if ($status == 'not_sent') {
-                $label_class = 'default';
-            }
-        }
-    }
-
-    return $label_class;
+    require_once APPPATH.'services/InvoiceStatusPresentation.php';
+    return InvoiceStatusPresentation::css($status);
 }
 
 /**

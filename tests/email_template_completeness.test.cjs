@@ -14,7 +14,7 @@ test('all literal mail class slugs have shipped localized definitions', () => {
  }
  assert.equal(slugs.size,101);
  assert.deepEqual([...slugs].sort(),Object.keys({...core,...modules}).sort());
- for(const row of readJson('company_defaults.json')) assert.ok(row.subject.trim() && row.message.trim(),row.slug);
+ for(const row of readJson('defaults.json')) assert.ok(row.subject.trim() && row.message.trim(),row.slug);
  for(const [slug,row] of Object.entries(modules)) assert.ok(row.subject.trim() && row.source_subject.trim() && row.source_message.trim(),slug);
 });
 test('webhook new body is translated without raw diagnostics; historic blank remains recognized',()=>{

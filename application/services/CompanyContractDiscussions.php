@@ -10,7 +10,7 @@ final class CompanyContractDiscussions extends CompanyPortalOperationsStorage
  private static function body($body):string{if(!is_string($body)||strlen($body)>8000||trim($body)===''||preg_match('//u',$body)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$body))throw new DomainException('company_contract_discussion_invalid');return trim($body);}
  private function staff(int $issuer,int $actor,int $id,string $cap):array
  {
-  $acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);if(!$acl->can($issuer,$actor,'contracts','view')||!$acl->can($issuer,$actor,'contracts',$cap))throw new DomainException('company_operation_access_denied');$row=$this->parent($issuer,'contracts',$id);$who=$this->rows('SELECT firstname,lastname FROM '.$this->p.'staff WHERE staffid=? FOR UPDATE',[$actor])[0]??[];return [$row,['author_type'=>'staff','actor_id'=>$actor,'staff_id'=>$actor,'contact_id'=>null,'client_id'=>(int)$row['client_id'],'author_name'=>trim(($who['firstname']??'').' '.($who['lastname']??''))?:'Funcionário #'.$actor]];
+  $acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);if(!$acl->can($issuer,$actor,'contracts','view')||!$acl->can($issuer,$actor,'contracts',$cap))throw new DomainException('company_operation_access_denied');$row=$this->parent($issuer,'contracts',$id);if($cap!=='view'&&$row['status']==='deleted')throw new DomainException('company_operation_access_denied');$who=$this->rows('SELECT firstname,lastname FROM '.$this->p.'staff WHERE staffid=? FOR UPDATE',[$actor])[0]??[];return [$row,['author_type'=>'staff','actor_id'=>$actor,'staff_id'=>$actor,'contact_id'=>null,'client_id'=>(int)$row['client_id'],'author_name'=>trim(($who['firstname']??'').' '.($who['lastname']??''))?:'Funcionário #'.$actor]];
  }
  private function contact(array $session,int $issuer,int $id):array
  {
@@ -36,6 +36,16 @@ final class CompanyContractDiscussions extends CompanyPortalOperationsStorage
  public function setVisible($issuer,$actor,$id,$revision,$comment,bool $visible,string $key):int
  {
   $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=IssuerPolicy::id($revision);$comment=IssuerPolicy::id($comment);return $this->operation($issuer,$id,$revision,$key,'visibility',[$comment,$visible],fn()=>$this->staff($issuer,$actor,$id,'edit'),function($parent,$who)use($issuer,$id,$comment,$visible):int{$this->comment($issuer,$id,$comment);if($visible&&(!$this->eligible($parent,'contracts')||!$this->rows('SELECT contract_id FROM '.$this->p.'company_portal_contracts WHERE issuer_id=? AND contract_id=? AND visible=1 FOR UPDATE',[$issuer,$id])||!$this->rows('SELECT client_id FROM '.$this->p.'issuers_clients WHERE owner_issuer_id=? AND client_id=? FOR UPDATE',[$issuer,$parent['client_id']])))throw new DomainException('company_contract_discussion_unavailable');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_contract_discussions SET visible=? WHERE issuer_id=? AND contract_id=? AND id=?',[(int)$visible,$issuer,$id,$comment]);if((int)$this->comment($issuer,$id,$comment)['visible']!==(int)$visible)throw new RuntimeException('issuer_portal_operation_unconfirmed');return $comment;});
+ }
+ public function edit($issuer,$actor,$id,$revision,$comment,?string $body,string $key):int
+ {
+  $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=IssuerPolicy::id($revision);$comment=IssuerPolicy::id($comment);$operation=$body===null?'delete':'edit';$body=$body===null?null:self::body($body);
+  return $this->operation($issuer,$id,$revision,$key,$operation,[$comment,$body],fn()=>$this->staff($issuer,$actor,$id,'edit'),function($parent,$who)use($issuer,$actor,$id,$comment,$body,$key):int{
+   $before=$this->comment($issuer,$id,$comment);$acl=new IssuerResourceAccess($this->db,$this->p);if($before['author_type']!=='staff'||((int)$before['staff_id']!==$actor&&!$acl->administrative($issuer,$actor)))throw new DomainException('company_operation_access_denied');
+   $text=$body??'[Comentário removido]';$visible=$body===null?0:(int)$before['visible'];IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_contract_discussions SET body=?,visible=? WHERE issuer_id=? AND contract_id=? AND id=?',[$text,$visible,$issuer,$id,$comment]);$after=$this->comment($issuer,$id,$comment);
+   if($after['body']!==$text||(int)$after['visible']!==$visible)throw new RuntimeException('issuer_portal_operation_unconfirmed');
+   $this->audit($issuer,$actor,$id,'native_contract_comment_revision',['comment_id'=>$comment,'request_key'=>$key,'before'=>$before,'after'=>$after]);return$comment;
+  });
  }
  public function staffPage($issuer,$actor,$id):array
  {

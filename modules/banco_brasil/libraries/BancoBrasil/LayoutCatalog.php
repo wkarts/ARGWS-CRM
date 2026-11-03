@@ -7,6 +7,10 @@ final class LayoutCatalog
 {
     public const CNAB400 = 'bb-cbr641-2026-07-cbr643-2023-07-7pos';
     public const CNAB400_AUX = 'bb-cbr643-2023-07-7pos-aux-observation-v1';
+    /** CBR641 July/2026 positions 85-86: foreign-currency codes are 02/14; BRL carries no foreign-currency code. */
+    public const CNAB400_BRL_CURRENCY_FIELD = '  ';
+    /** CBR641 July/2026 positions 161-173. Zero is safe only with an independently confirmed interest-free bank profile. */
+    public const CNAB400_DAILY_INTEREST_FIELD = '0000000000000';
     public static function all(): array
     {
         return [

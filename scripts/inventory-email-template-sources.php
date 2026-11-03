@@ -91,7 +91,7 @@ function comparison(array $row,array $core,array $modules,array $defaults,array 
 $root=rtrim($argv[1]??dirname(__DIR__),'/');$catalog=$root.'/application/services/email_templates_ptbr';
 $readJson=static fn($file)=>json_decode(file_get_contents($file),true,512,JSON_THROW_ON_ERROR);
 $core=$readJson($catalog.'/templates.json');$modules=$readJson($catalog.'/templates_modules.json');$defaults=[];
-foreach($readJson($catalog.'/company_defaults.json') as $row)$defaults[$row['slug']]=$row;
+foreach($readJson($catalog.'/defaults.json') as $row)$defaults[$row['slug']]=$row;
 $phrases=[];foreach(glob($catalog.'/phrases*.json') as $file)$phrases=array_replace($phrases,$readJson($file));
 $calls=[];$sqlStrings=[];$files=[];
 foreach(['application','modules','install'] as $directory) {

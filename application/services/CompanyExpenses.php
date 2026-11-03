@@ -3,12 +3,16 @@
 declare(strict_types=1);
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
+require_once __DIR__.'/NativeCompanyExpenseBillability.php';
+require_once __DIR__.'/NativeCompanyExpenseFormProfile.php';
 require_once __DIR__.'/CompanyExpenseSchema.php';require_once __DIR__.'/CompanyFinancialJournal.php';
 
 /** Company-owned expense recording, not a payment order or cash/bank settlement. */
 final class CompanyExpenses
 {
     private IssuerResourceAccess $acl;
+    private ?array $nativeBillabilityProof=null;
+    private ?array $nativeFormProof=null;
     private $originGuard;private array $originTables;
     public function __construct(private $db,private string $p,?callable $originGuard=null,array $originTables=[])
     {
@@ -21,7 +25,7 @@ final class CompanyExpenses
     }
     public function tables():array
     {
-        $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','company_projects','company_expenses','company_expense_categories','company_expense_requests','company_expense_files','issuers_audit'];if($this->db->table_exists($this->p.'asaas_company_fee_expenses'))$tables[]='asaas_company_fee_expenses';if($this->db->table_exists($this->p.'company_purchase_payables'))$tables[]='company_purchase_payables';foreach(['company_expense_billing_links','company_expense_billing_origins'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;return array_values(array_unique(array_merge($tables,$this->originTables,(new CompanyFinancialJournal($this->db,$this->p))->tables('expense'))));
+        $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','company_projects','company_expenses','company_expense_categories','company_expense_requests','company_expense_files','issuers_audit'];if($this->db->table_exists($this->p.'asaas_company_fee_expenses'))$tables[]='asaas_company_fee_expenses';if($this->db->table_exists($this->p.'company_purchase_payables'))$tables[]='company_purchase_payables';foreach(['company_expense_billing_links','company_expense_billing_origins'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;return array_values(array_unique(array_merge($tables,array_merge($this->originTables,NativeCompanyExpenseFormSchema::installed($this->db,$this->p)?[NativeCompanyExpenseFormSchema::TABLE,'company_taxes','company_payment_modes']:[],NativeCompanyExpenseBillabilitySchema::installed($this->db,$this->p)?[NativeCompanyExpenseBillabilitySchema::TABLE]:[]),(new CompanyFinancialJournal($this->db,$this->p))->tables('expense'))));
     }
     private function transaction(int $issuer,int $actor,string $cap,callable $work,?callable $finalGuard=null)
     {
@@ -44,15 +48,15 @@ final class CompanyExpenses
     }
     private function normalize(array $input):array
     {
-        if(PHP_INT_SIZE<8||array_diff(array_keys($input),['category_id','client_id','project_id','currency','date','description','note','amount','tax_rate']))throw new DomainException('company_expense_invalid');
+        if(PHP_INT_SIZE<8||array_diff(array_keys($input),['category_id','client_id','project_id','currency','date','description','note','amount','tax_rate','billable','native_form']))throw new DomainException('company_expense_invalid');
         $date=$input['date']??null;$parsed=is_string($date)?DateTimeImmutable::createFromFormat('!Y-m-d',$date):false;
         if(!$parsed||$parsed->format('Y-m-d')!==$date||$date<'2000-01-01'||$date>'2100-12-31')throw new DomainException('company_expense_invalid');
         $currency=$input['currency']??null;if(!is_string($currency)||!in_array($currency,['BRL','USD','EUR'],true))throw new DomainException('company_expense_invalid');
         $amount=self::decimal($input['amount']??null,99999999999);if($amount<1)throw new DomainException('company_expense_invalid');
-        $taxRate=self::decimal($input['tax_rate']??'0.00',10000);$tax=intdiv($amount*$taxRate+5000,10000);
+        $profile=null;if(array_key_exists('native_form',$input)){if(!is_array($input['native_form'])||array_key_exists('tax_rate',$input))throw new DomainException('company_expense_invalid');$profile=NativeCompanyExpenseFormValues::normalize($input['native_form']);$money=NativeCompanyExpenseFormValues::amounts($input['amount'],$profile);$taxRate=null;$tax=$money['tax_cents'];}else{$taxRate=self::decimal($input['tax_rate']??'0.00',10000);$tax=intdiv($amount*$taxRate+5000,10000);}
         $client=$input['client_id']??0;$client=in_array($client,['',0,'0',null],true)?0:IssuerPolicy::id($client);
         $project=$input['project_id']??0;$project=in_array($project,['',0,'0',null],true)?0:IssuerPolicy::id($project);
-        return ['project_id'=>$project,'category_id'=>IssuerPolicy::id($input['category_id']??null),'client_id'=>$client,'currency'=>$currency,'expense_date'=>$date,'description'=>self::text($input['description']??null,191),'note'=>self::text($input['note']??'',4000,false),'amount_cents'=>$amount,'tax_cents'=>$tax,'tax_rate'=>$taxRate,'total_cents'=>$amount+$tax];
+        return ['project_id'=>$project,'category_id'=>IssuerPolicy::id($input['category_id']??null),'client_id'=>$client,'currency'=>$currency,'expense_date'=>$date,'description'=>self::text($input['description']??null,191),'note'=>self::text($input['note']??'',4000,false),'amount_cents'=>$amount,'tax_cents'=>$tax,'tax_rate'=>$taxRate,'total_cents'=>$amount+$tax]+($profile===null?[]:['native_form'=>$profile])+(array_key_exists('billable',$input)?['native_billable'=>NativeCompanyExpenseBillability::input($input['billable'])]:[]);
     }
     private static function revision(array $row):string{return hash('sha256',json_encode($row,JSON_THROW_ON_ERROR));}
     private function receipt(int $issuer,int $actor,string $operation,string $key,array $input,?callable $confirm=null):?int
@@ -106,29 +110,64 @@ final class CompanyExpenses
     /** Import preview shares validation/reference locks but never writes an expense or consumes a number. */
     public function previewInOwnedTransaction($issuer,$actor,array $input):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$this->authorize($issuer,$actor,'create');$data=$this->normalize($input);$this->reference($issuer,$actor,$data);
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$this->authorize($issuer,$actor,'create');$data=$this->normalize($input);$this->reference($issuer,$actor,$data);if(isset($data['native_form']))$this->referenceNativeForm($issuer,$actor,$data['native_form']);
         $category=$this->rows('SELECT id,issuer_id,name,active,revision FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$data['category_id'],$issuer])[0];$project=$data['project_id']===0?null:($this->rows('SELECT id,issuer_id,client_id,name,status,revision FROM '.$this->p.'company_projects WHERE id=? AND issuer_id=? FOR UPDATE',[$data['project_id'],$issuer])[0]??null);$client=$data['client_id']===0?null:($this->rows('SELECT c.userid,c.company,c.vat,c.active,o.owner_issuer_id,o.tax_id FROM '.$this->p.'clients c JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid WHERE c.userid=? FOR UPDATE',[$data['client_id']])[0]??null);
-        $canonical=['category_id'=>$data['category_id'],'client_id'=>$data['client_id'],'project_id'=>$data['project_id'],'currency'=>$data['currency'],'date'=>$data['expense_date'],'description'=>$data['description'],'note'=>$data['note'],'amount'=>self::money($data['amount_cents']),'tax_rate'=>self::money($data['tax_rate'])];$this->authorize($issuer,$actor,'create');return ['input'=>$canonical,'reference_revision'=>hash('sha256',json_encode([$category,$client,$project],JSON_THROW_ON_ERROR)),'category_name'=>$category['name'],'client_name'=>$data['client_name'],'project_name'=>$data['project_name'],'tax'=>self::money($data['tax_cents']),'total'=>self::money($data['total_cents'])];
+        $canonical=['category_id'=>$data['category_id'],'client_id'=>$data['client_id'],'project_id'=>$data['project_id'],'currency'=>$data['currency'],'date'=>$data['expense_date'],'description'=>$data['description'],'note'=>$data['note'],'amount'=>self::money($data['amount_cents']),]+(isset($data['native_form'])?['native_form'=>$data['native_form']]:['tax_rate'=>self::money($data['tax_rate'])])+(array_key_exists('native_billable',$data)?['billable'=>$data['native_billable']]:[]);$this->authorize($issuer,$actor,'create');return ['input'=>$canonical,'reference_revision'=>hash('sha256',json_encode([$category,$client,$project],JSON_THROW_ON_ERROR)),'category_name'=>$category['name'],'client_name'=>$data['client_name'],'project_name'=>$data['project_name'],'tax'=>self::money($data['tax_cents']),'total'=>self::money($data['total_cents'])];
     }
     private function createLocked(int $issuer,int $actor,array $data,string $key):int
     {
-        $retry=$this->receipt($issuer,$actor,'create',$key,$data,fn(int $id)=>$this->locked($issuer,$id));if($retry!==null)return $retry;
-        $fields=$data;$this->reference($issuer,$actor,$fields);$max=$this->rows('SELECT COALESCE(MAX(number),0) n FROM '.$this->p.'company_expenses WHERE issuer_id=?',[$issuer])[0];$number=(int)$max['n']+1;if($number>2147483647)throw new DomainException('company_expense_invalid');
+        $retry=$this->receipt($issuer,$actor,'create',$key,$data,fn(int $id)=>$this->locked($issuer,$id));if($retry!==null){$this->confirmNativeBillabilityReplay($issuer,$actor,$retry,$data);(new NativeCompanyExpenseFormProfile($this->db,$this->p))->verifyRow($this->locked($issuer,$retry));return $retry;}
+        if(isset($data['native_form'])){$this->referenceNativeForm($issuer,$actor,$data['native_form']);}$fields=$data;unset($fields['native_billable'],$fields['native_form']);$this->reference($issuer,$actor,$fields);$max=$this->rows('SELECT COALESCE(MAX(number),0) n FROM '.$this->p.'company_expenses WHERE issuer_id=?',[$issuer])[0];$number=(int)$max['n']+1;if($number>2147483647)throw new DomainException('company_expense_invalid');
         $fields+=['issuer_id'=>$issuer,'number'=>$number,'state'=>'recorded','revision'=>1,'created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s'),'updated_at'=>date('Y-m-d H:i:s')];
         IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_expenses (`'.implode('`,`',array_keys($fields)).'`) VALUES ('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_expense_write_unconfirmed');$this->confirm($issuer,$id,$fields);
-        $this->journal($issuer,$actor,$id,'expense_recorded',[], $this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_created',['number'=>$number,'total_cents'=>$fields['total_cents'],'currency'=>$fields['currency']]);$this->writeReceipt($issuer,$actor,'create',$key,$data,$id);$this->confirm($issuer,$id,$fields);$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
+        $this->journal($issuer,$actor,$id,'expense_recorded',[], $this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_created',['number'=>$number,'total_cents'=>$fields['total_cents'],'currency'=>$fields['currency']]);$this->recordNativeBillability($issuer,$actor,$id,$data,true);$this->recordNativeForm($issuer,$actor,$id,$data,'create');if(isset($data['native_form']))$this->referenceNativeForm($issuer,$actor,$data['native_form']);$this->writeReceipt($issuer,$actor,'create',$key,$data,$id);$this->confirm($issuer,$id,$fields);$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
     }
     public function change($issuer,$actor,$id,string $revision,string $key,?array $input=null):void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$data=$input===null?null:$this->normalize($input);$op=$data===null?'cancel':'update';$payload=[$id,$revision,$data];
         $this->transaction($issuer,$actor,$op==='cancel'?'delete':'edit',function()use($issuer,$actor,$id,$revision,$key,$data,$op,$payload):void{
-            $old=$this->locked($issuer,$id);$this->assertPurchaseMutable($id);if($this->receipt($issuer,$actor,$op,$key,$payload)!==null)return;
+            $old=$this->locked($issuer,$id);$oldProfile=(new NativeCompanyExpenseFormProfile($this->db,$this->p))->verifyRow($old);if($data!==null&&$oldProfile!==null&&!isset($data['native_form']))throw new DomainException('native_expense_form_required');$this->assertPurchaseMutable($id);if($this->receipt($issuer,$actor,$op,$key,$payload)!==null){if($data!==null)$this->confirmNativeBillabilityReplay($issuer,$actor,$id,$data);return;}
             if(!preg_match('/^[a-f0-9]{64}$/D',$revision)||!hash_equals(self::revision($old),$revision))throw new DomainException('company_expense_stale');if($old['state']!=='recorded')throw new DomainException('company_expense_immutable');if($this->db->table_exists($this->p.'asaas_company_fee_expenses')&&$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_fee_expenses WHERE expense_id=? AND issuer_id=? FOR UPDATE',[$id,$issuer]))throw new DomainException('company_expense_provider_source_immutable');
             if($this->db->table_exists($this->p.'company_expense_billing_links')){require_once __DIR__.'/CompanyExpenseBillingSchema.php';CompanyExpenseBillingSchema::assertValid($this->db,$this->p);if($this->rows('SELECT expense_id FROM '.$this->p.'company_expense_billing_links WHERE expense_id=? AND issuer_id=? AND state IN (?,?) FOR UPDATE',[$id,$issuer,'converting','converted']))throw new DomainException('company_expense_billing_immutable');}
-            $fields=$data??['state'=>'cancelled'];if($data!==null){if($data['currency']!==$old['currency'])throw new DomainException('company_expense_immutable');$this->reference($issuer,$actor,$fields);}
+            if(isset($data['native_form']))$this->referenceNativeForm($issuer,$actor,$data['native_form']);$fields=$data??['state'=>'cancelled'];unset($fields['native_billable'],$fields['native_form']);if($data!==null){if($data['currency']!==$old['currency'])throw new DomainException('company_expense_immutable');$this->reference($issuer,$actor,$fields);}
             $fields+=['revision'=>(int)$old['revision']+1,'updated_at'=>date('Y-m-d H:i:s')];$set=[];foreach($fields as $field=>$value)$set[]='`'.$field.'`=?';IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expenses SET '.implode(',',$set).' WHERE id=? AND issuer_id=?',array_merge(array_values($fields),[$id,$issuer]));$this->confirm($issuer,$id,$fields);
-            $this->journal($issuer,$actor,$id,$op==='cancel'?'expense_cancelled':'expense_updated',$old,$this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_'.$op,['previous_revision'=>$old['revision'],'revision'=>$fields['revision']]);$this->writeReceipt($issuer,$actor,$op,$key,$payload,$id);$this->confirm($issuer,$id,array_replace($old,$fields));if($data!==null){$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');}
+            $this->journal($issuer,$actor,$id,$op==='cancel'?'expense_cancelled':'expense_updated',$old,$this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_'.$op,['previous_revision'=>$old['revision'],'revision'=>$fields['revision']]);if($data!==null){$this->recordNativeBillability($issuer,$actor,$id,$data,false);$this->recordNativeForm($issuer,$actor,$id,$data,'edit');if(isset($data['native_form']))$this->referenceNativeForm($issuer,$actor,$data['native_form']);}$this->writeReceipt($issuer,$actor,$op,$key,$payload,$id);$this->confirm($issuer,$id,array_replace($old,$fields));if($data!==null){$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');}
         },fn()=>$this->assertPurchaseMutable($id));
+    }
+    private function referenceNativeForm(int$i,int$a,array$profile):void
+    {
+        NativeCompanyExpenseFormSchema::assertValid($this->db,$this->p);require_once __DIR__.'/NativeCompanyCatalogUi.php';require_once __DIR__.'/NativeCompanyPaymentModes.php';$catalog=new NativeCompanyCatalogUi($this->db,$this->p,$i,$a);
+        foreach($profile['taxes']as$tax){$row=$catalog->expenseEditorTax($tax['id']);if($row['name']!==$tax['name']||NativeCompanyTaxRate::exact((string)$row['taxrate'])!==NativeCompanyTaxRate::exact($tax['rate']))throw new DomainException('native_expense_form_catalog_changed');}
+        if($profile['payment_mode']!=='')(new NativeCompanyPaymentModes($this->db,$this->p))->get($i,$a,$profile['payment_mode'],'expenses',false);
+    }
+    public function assertNativeFormProof($db,string$p,int$i,int$a,int$id,array$profile):void
+    {
+        if($db!==$this->db||$p!==$this->p||$this->nativeFormProof===null||array_slice($this->nativeFormProof,0,4)!==[$i,$a,$id,$profile])throw new DomainException('native_expense_form_proof_required');
+        IssuerTransaction::assertOwned($db,$p,NativeCompanyExpenseFormProfile::tables());$this->authorize($i,$a,$this->nativeFormProof[4]);
+    }
+    private function recordNativeForm(int$i,int$a,int$id,array$data,string$cap):void
+    {
+        if(!isset($data['native_form']))return;$this->nativeFormProof=[$i,$a,$id,$data['native_form'],$cap];try{(new NativeCompanyExpenseFormProfile($this->db,$this->p))->recordInOwned($i,$a,$id,$data['native_form'],$this);}finally{$this->nativeFormProof=null;}
+    }
+    /** Private per-call proof; owning a raw transaction or constructing another writer grants nothing. */
+    public function assertNativeBillabilityProof($db,string$p,int$i,int$a,int$id,int$value):void
+    {
+        IssuerTransaction::assertOwned($db,$p,NativeCompanyExpenseBillability::tables());
+        if($db!==$this->db||$p!==$this->p||$this->nativeBillabilityProof!==[$i,$a,$id,$value])throw new DomainException('native_expense_billability_proof_required');
+        $this->authorize($i,$a,$this->nativeBillabilityProofCapability);
+    }
+    private string $nativeBillabilityProofCapability='';
+    private function recordNativeBillability(int$i,int$a,int$id,array$data,bool$created):void
+    {
+        if(!array_key_exists('native_billable',$data))return;
+        // The exact current writer operation established ACL and canonical CAS before reaching this point.
+        $this->locked($i,$id);$cap=$created?'create':'edit';$this->authorize($i,$a,$cap);
+        $this->nativeBillabilityProof=[$i,$a,$id,$data['native_billable']];$this->nativeBillabilityProofCapability=$cap;
+        try{(new NativeCompanyExpenseBillability($this->db,$this->p))->recordInOwned($i,$a,$id,$data['native_billable'],$this);}finally{$this->nativeBillabilityProof=null;$this->nativeBillabilityProofCapability='';}
+    }
+    private function confirmNativeBillabilityReplay(int$i,int$a,int$id,array$data):void
+    {
+        if(array_key_exists('native_billable',$data)&&(new NativeCompanyExpenseBillability($this->db,$this->p))->readInOwned($i,$a,$id)===null)throw new RuntimeException('issuer_native_expense_billability_unconfirmed');
     }
     private static function journalSnapshot(array $row):array
     {
@@ -141,7 +180,7 @@ final class CompanyExpenses
     public function get($issuer,$actor,$id):?array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$this->authorize($issuer,$actor,'view');$row=$this->rows('SELECT e.*,c.name category_name FROM '.$this->p.'company_expenses e JOIN '.$this->p.'company_expense_categories c ON c.id=e.category_id AND c.issuer_id=e.issuer_id WHERE e.id=? AND e.issuer_id=?',[$id,$issuer])[0]??null;
-        $this->authorize($issuer,$actor,'view');if(!$row)return null;$category=$row['category_name'];unset($row['category_name']);$row['revision_token']=self::revision($row);$row['category_name']=$category;return $row;
+        $this->authorize($issuer,$actor,'view');if(!$row)return null;$category=$row['category_name'];unset($row['category_name']);$row['revision_token']=self::revision($row);$row['category_name']=$category;$profile=(new NativeCompanyExpenseFormProfile($this->db,$this->p))->verifyRow($row);if($profile!==null)$row['native_form']=$profile;return $row;
     }
     public function page($issuer,$actor,$after=0,int $limit=50,string $search=''):array
     {

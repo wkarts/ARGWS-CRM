@@ -36,8 +36,8 @@ final class CompanyTaskAutoStop
     {
         $acl=new IssuerResourceAccess($db,$p);
         if(!$acl->can($issuer,$actor,'tasks','view')||!$acl->can($issuer,$actor,'tasks','edit')||($kind==='project'&&!$acl->can($issuer,$actor,'projects','view')))throw new DomainException('company_project_access_denied');
-        $assignee=IssuerPolicy::id($row['assignee_id']);
-        if(!$acl->can($issuer,$assignee,'tasks','view')||($kind==='project'&&!$acl->can($issuer,$assignee,'projects','view')))throw new DomainException('company_project_reference_denied');
+        $assignee=$row['assignee_id']===null?null:IssuerPolicy::id($row['assignee_id']);
+        if($assignee!==null&&(!$acl->can($issuer,$assignee,'tasks','view')||($kind==='project'&&!$acl->can($issuer,$assignee,'projects','view'))))throw new DomainException('company_project_reference_denied');
         if($row['status']==='done')throw new DomainException('company_project_closed');
         if($kind==='standalone'){
             CompanyStandaloneBillingFence::assertAvailableInOwned($db,$p,$issuer,$actor,(int)$row['id']);
@@ -46,7 +46,7 @@ final class CompanyTaskAutoStop
         $parent=IssuerStorage::query($db,'SELECT * FROM '.$p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$row['project_id']])->row_array();
         if(!$parent)throw new DomainException('company_project_access_denied');
         if($parent['status']!=='active')throw new DomainException('company_project_closed');
-        if($row['due_date']<$parent['start_date']||$row['due_date']>$parent['due_date'])throw new DomainException('company_project_invalid_input');
+        if($row['due_date']!==null&&($row['due_date']<$parent['start_date']||($parent['due_date']!==null&&$row['due_date']>$parent['due_date'])))throw new DomainException('company_project_invalid_input');
         CompanyProjectFixedBillingFence::assertAvailableInOwned($db,$p,$issuer,$actor,(int)$parent['id']);
         CompanyTaskTimeBillingFence::assertMutableInOwned($db,$p,$issuer,(int)$row['id']);
         if($db->table_exists($p.'company_task_billing_links')&&IssuerStorage::query($db,'SELECT task_id FROM '.$p.'company_task_billing_links WHERE issuer_id=? AND task_id=? AND state IN (?,?) FOR UPDATE',[$issuer,$row['id'],'converting','converted'])->row_array())throw new DomainException('company_task_billing_immutable');

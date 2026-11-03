@@ -6,14 +6,14 @@
         </h1>
     </div>
     <div class="col-md-3 mtop15">
-        <?php if (! is_language_disabled()) { ?>
+        <?php if (!empty($native_portal)?$native_portal_options['disable_language']==='0':!is_language_disabled()) { ?>
         <div class="form-group">
             <select name="language" id="language" class="form-control selectpicker"
-                onchange="change_contact_language(this)"
+                <?= empty($native_portal)?'onchange="change_contact_language(this)"':''; ?>
                 data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>"
                 data-live-search="true">
-                <?php $selected = (get_contact_language() != '') ? get_contact_language() : get_option('active_language'); ?>
-                <?php foreach ($this->app->get_available_languages() as $availableLanguage) { ?>
+                <?php $selected = !empty($native_portal)?$language:((get_contact_language() != '') ? get_contact_language() : get_option('active_language')); ?>
+                <?php foreach ((!empty($native_portal)?$native_portal_languages:$this->app->get_available_languages()) as $availableLanguage) { ?>
                 <option value="<?= e($availableLanguage); ?>"
                     <?= ($availableLanguage == $selected) ? 'selected' : '' ?>>
                     <?= e(ucfirst($availableLanguage)); ?>
@@ -26,6 +26,8 @@
 </div>
 <div class="col-md-10 col-md-offset-1">
     <?= form_open('authentication/register', ['id' => 'register-form']); ?>
+    <?php if(!empty($native_portal)){echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf).form_hidden('native_registration_key',$native_registration_key);} ?>
+    <?php if(!empty($native_portal_message)){ ?><div class="alert alert-danger"><?= e($native_portal_message); ?></div><?php } ?>
     <div class="panel_s">
         <div class="panel-body">
             <div class="row">
@@ -123,7 +125,7 @@
                     <div class="form-group mtop15 register-company-group">
                         <label class="control-label"
                             for="<?= e($fields['company']); ?>">
-                            <?php if (get_option('company_is_required') == 1) { ?>
+                            <?php if ((!empty($native_portal)?$native_portal_options['company_is_required']:get_option('company_is_required')) == 1) { ?>
                             <span class="text-danger">*</span>
                             <?php } ?>
                             <?= _l('clients_company'); ?>
@@ -134,7 +136,7 @@
                             value="<?= set_value($fields['company']); ?>">
                         <?= form_error($fields['company']); ?>
                     </div>
-                    <?php if (get_option('company_requires_vat_number_field') == 1) { ?>
+                    <?php if ((!empty($native_portal)?$native_portal_options['company_requires_vat_number_field']:get_option('company_requires_vat_number_field')) == 1) { ?>
                     <div class="form-group register-vat-group">
                         <label class="control-label" for="vat">
                             <?php if ($requiredFields['company']['company_vat']['is_required']) { ?>
@@ -169,10 +171,10 @@
                             data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>"
                             data-live-search="true" name="country" class="form-control" id="country">
                             <option value=""></option>
-                            <?php foreach (get_all_countries() as $country) { ?>
+                            <?php foreach ((!empty($native_portal)?$native_portal_countries:get_all_countries()) as $country) { ?>
                             <option
                                 value="<?= e($country['country_id']); ?>"
-                                <?php if (get_option('customer_default_country') == $country['country_id']) {
+                                <?php if ((!empty($native_portal)?$native_portal_options['customer_default_country']:get_option('customer_default_country')) == $country['country_id']) {
                                     echo ' selected';
                                 } ?> <?= set_select('country', $country['country_id']); ?>><?= e($country['short_name']); ?>
                             </option>
@@ -228,14 +230,14 @@
                         <?= render_custom_fields('customers', '', ['show_on_client_portal' => 1]); ?>
                     </div>
                 </div>
-                <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions') == 1) { ?>
+                <?php if ((!empty($native_portal)?$native_portal_options['enable_gdpr']==='1':is_gdpr()) && (!empty($native_portal)?$native_portal_options['gdpr_enable_terms_and_conditions']:get_option('gdpr_enable_terms_and_conditions')) == 1) { ?>
                 <div class="col-md-12 register-terms-and-conditions-wrapper">
                     <div class="text-center">
                         <div class="checkbox">
                             <input type="checkbox" name="accept_terms_and_conditions" id="accept_terms_and_conditions"
                                 <?= set_checkbox('accept_terms_and_conditions', 'on'); ?>>
                             <label for="accept_terms_and_conditions">
-                                <?= _l('gdpr_terms_agree', terms_url()); ?>
+                                <?= _l('gdpr_terms_agree', (!empty($native_portal)?NativePortalPresentation::url('terms-and-conditions'):terms_url())); ?>
                             </label>
                         </div>
                         <?= form_error('accept_terms_and_conditions'); ?>
@@ -258,10 +260,10 @@
                     placeholder="Your company here">
                 <?php } ?>
 
-                <?php if (show_recaptcha_in_customers_area()) { ?>
+                <?php if ((!empty($native_portal)?$native_portal_options['use_recaptcha_customers_area']==='1':show_recaptcha_in_customers_area())) { ?>
                 <div class="col-md-12 register-recaptcha">
                     <div class="g-recaptcha"
-                        data-sitekey="<?= get_option('recaptcha_site_key'); ?>">
+                        data-sitekey="<?= (!empty($native_portal)?$native_portal_options['recaptcha_site_key']:get_option('recaptcha_site_key')); ?>">
                     </div>
                     <?= form_error('g-recaptcha-response'); ?>
                 </div>
@@ -278,3 +280,6 @@
     </div>
     <?= form_close(); ?>
 </div>
+<?php if(!empty($native_portal)&&$native_portal_options['disable_language']==='0'){ ?>
+<script>(function(){var e=document.getElementById('language');if(!e)return;e.addEventListener('change',function(){var f=document.createElement('form');f.method='post';f.action=<?= json_encode(site_url('authentication/change_language/'),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>+encodeURIComponent(e.value);var values={issuer_id:<?= json_encode((string)$native_portal_issuer); ?>,_native_portal_csrf:<?= json_encode($native_portal_csrf); ?>};Object.keys(values).forEach(function(k){var i=document.createElement('input');i.type='hidden';i.name=k;i.value=values[k];f.appendChild(i);});document.body.appendChild(f);f.submit();});})();</script>
+<?php } ?>

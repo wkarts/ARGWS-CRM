@@ -18,6 +18,7 @@ class Import_items extends App_import
 
     public function perform()
     {
+        if(CompanyRequestScope::nativeFor($this->ci))return $this->performNative();
         $this->initialize();
 
         $databaseFields      = $this->getImportableDatabaseFields();
@@ -71,6 +72,12 @@ class Import_items extends App_import
 
     public function formatFieldNameForHeading($field)
     {
+        if(CompanyRequestScope::nativeFor($this->ci)){
+            $catalog=$this->nativeCatalog();
+            if(strtolower($field)==='group_id')return 'Group';
+            if(str_starts_with($field,'rate'))return 'Rate - '.($field==='rate'?$catalog->baseCurrency()['name']:$catalog->currency(substr($field,14))['name']);
+            return parent::formatFieldNameForHeading($field);
+        }
         $this->ci->load->model('currencies_model');
 
         if (strtolower($field) == 'group_id') {
@@ -122,6 +129,8 @@ class Import_items extends App_import
 
     private function getTaxBy($field, $idOrName)
     {
+        if(CompanyRequestScope::nativeFor($this->ci))return $this->nativeReference($this->nativeCatalog()->taxes(),$field,$idOrName);
+
         $this->ci->db->where($field, $idOrName);
 
         return $this->ci->db->get(db_prefix().'taxes')->row();
@@ -129,6 +138,8 @@ class Import_items extends App_import
 
     private function getGroupBy($field, $idOrName)
     {
+        if(CompanyRequestScope::nativeFor($this->ci))return $this->nativeReference($this->nativeCatalog()->groups(),$field,$idOrName);
+
         $this->ci->db->where($field, $idOrName);
 
         return $this->ci->db->get(db_prefix().'items_groups')->row();
@@ -160,5 +171,36 @@ class Import_items extends App_import
         }
 
         return $value;
+    }
+    private function nativeReference(array $rows,string $field,$value):?object
+    {
+        if(!in_array($field,['id','name'],true)||(!is_string($value)&&!is_int($value)))throw new DomainException('company_catalog_invalid');
+        $matches=array_values(array_filter($rows,static fn($row)=>(string)$row[$field]===(string)$value));
+        if(count($matches)>1)throw new DomainException('company_catalog_import_ambiguous_reference');
+        return $matches?(object)$matches[0]:null;
+    }
+    private function nativeCatalog():NativeCompanyCatalogUi
+    {
+        require_once APPPATH.'services/NativeCompanyCatalogUi.php';$context=CompanyRequestScope::context();return new NativeCompanyCatalogUi($this->ci->db,db_prefix(),$context->issuerId(),$context->staffId(),$this->ci);
+    }
+    private function performNative():void
+    {
+        CompanyRequestScope::assertNativeMutation($this->ci);$this->initialize();$fields=$this->getImportableDatabaseFields();$prepared=[];$catalog=$this->nativeCatalog();
+        foreach($this->getRows()as$index=>$row){
+            if($index>5000)throw new DomainException('company_catalog_import_limit');$input=[];
+            foreach($fields as$i=>$field){$value=$row[$i]??'';if(!is_string($value))throw new DomainException('company_catalog_invalid');$value=trim($value);
+                if($field==='group_id'&&$value!==''){$found=$this->getGroupBy(ctype_digit($value)?'id':'name',$value);if(!$found)throw new DomainException('company_catalog_denied');$value=$found->id;}
+                if(in_array($field,['tax','tax2'],true)&&$value!==''){$found=$this->getTaxBy(ctype_digit($value)?'id':'name',$value);if(!$found)throw new DomainException('company_catalog_denied');$value=$found->id;}
+                $input[$field]=$value;
+            }
+            $n=count($fields);foreach($this->getCustomFields()as$field){$value=$row[$n++]??'';if(in_array($field['type'],['checkbox','multiselect'],true))$value=$value===''?[]:array_map('trim',explode(',',$value));$input['custom_fields']['items_pr'][$field['id']]=$value;}
+            $prepared[$index]=$catalog->validateItemInput($input);
+        }
+        foreach($prepared as$index=>$input){
+            if($this->isSimulation()){$this->simulationData[$index]=$input;foreach($this->getCustomFields()as$field)$this->simulationData[$index][$field['name']]=is_array($input['custom_fields']['items_pr'][$field['id']]??null)?implode(', ',$input['custom_fields']['items_pr'][$field['id']]):($input['custom_fields']['items_pr'][$field['id']]??'');unset($this->simulationData[$index]['custom_fields']);}
+            else $catalog->saveItem($input);
+            $this->incrementImported();
+            if($this->isSimulation()&&$index>=$this->maxSimulationRows)break;
+        }
     }
 }

@@ -48,7 +48,7 @@ class HoursOverviewChart
             $timesheets         = $this->getChartTimesheets($unbilled);
 
             foreach ($timesheets as $t) {
-                $total_logged_time = $t['end_time'] == null ? time() - $t['start_time'] : $t['end_time'] - $t['start_time'];
+                $total_logged_time = $this->timerSeconds($t);
 
                 if ($this->isWeekType()) {
                     $weekday = date('N', $t['start_time']);
@@ -100,6 +100,12 @@ class HoursOverviewChart
         }
 
         return $chart;
+    }
+
+    /** Duration source is separate from rendering so company timers retain authoritative persisted seconds. */
+    protected function timerSeconds(array $timer)
+    {
+        return $timer['end_time'] == null ? time() - $timer['start_time'] : $timer['end_time'] - $timer['start_time'];
     }
 
     protected function getChartTimesheets($unbilled = false)

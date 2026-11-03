@@ -1,14 +1,16 @@
 <?php
 /** Actual shared portal adapter; old432 contract/support paths remain intact. */
 require __DIR__.'/project_portal_rules_controller.php';
-class PortalRequestScope{public static bool $active=true;public static function active():bool{return self::$active;}}
+// This fixture enters the compatibility Portal controller. The native Clients
+// portal has a separate sealed request fixture and a different redirect target.
+class PortalRequestScope{public static bool $active=true;public static function active():bool{return self::$active;}public static function sealedFor($ci):bool{return false;}}
 class CI_Controller{public function __get($name){return $GLOBALS['CI']->$name;}}
 function show_404(){$GLOBALS['CI']->output->status=404;}
 if(!function_exists('form_open_multipart')){function form_open_multipart($url,$attrs=[]){return str_replace('<form ','<form enctype="multipart/form-data" ',form_open($url,$attrs));}}
 $GLOBALS['CI']->output=new class{public int $status=200;public string $body='',$mime='';public array $headers=[];function set_header($v){$this->headers[]=$v;return $this;}function set_status_header($v){$this->status=$v;return $this;}function set_content_type($v,$charset=null){$this->mime=$v;return $this;}function set_output($v){$this->body=$v;return $this;}};
 $GLOBALS['CI']->session=new class{public array $values=[];function userdata($k){return $this->values[$k]??null;}function set_userdata($k,$v){$this->values[$k]=$v;}function unset_userdata($k){unset($this->values[$k]);}function sess_regenerate($destroy=false){}};
 $GLOBALS['CI']->config=new class{function item($k){return str_repeat('synthetic-',4);}function site_url($path=''){return 'https://synthetic.invalid/'.$path;}};
-require APPPATH.'controllers/Company_portal.php';$public433=new Company_portal();$out433=$GLOBALS['CI']->output;$session433=$GLOBALS['CI']->session;$session433->set_userdata('company_portal_identity',$sessions[$a]);$session433->set_userdata('company_portal_csrf',str_repeat('c',64));
+require APPPATH.'controllers/Portal.php';$public433=new Portal();$out433=$GLOBALS['CI']->output;$session433=$GLOBALS['CI']->session;$session433->set_userdata('company_portal_identity',$sessions[$a]);$session433->set_userdata('company_portal_csrf',str_repeat('c',64));
 $reset433=function(array $get=[],array $post=[])use($http433,$out433):void{$http433->verb=$post?'POST':'GET';$http433->gets=$get;$http433->posts=$post;$out433->status=200;$out433->body='';$out433->mime='';$out433->headers=[];};
 $parentUrl433=['operation_kind'=>'projects','resource_id'=>(string)$project433];$reset433($parentUrl433);$public433->index($a);$actual433=end($GLOBALS['CI']->load->views);essentialCheck($out433->status===200&&is_array($actual433[1]['project_tasks'])&&count($actual433[1]['project_tasks']['items'])===1,'actual shared portal GET exposes only current published task list after independent project transaction');$html433=$harness433->render($actual433[0],$actual433[1]);essentialCheck(str_contains($html433,'portal-project-tasks')&&str_contains($html433,'project_task='.$task433),'actual shared portal renderer links selected parent to published task');
 $reset433($parentUrl433+['project_task'=>(string)$task433]);$public433->index($a);$actual433=end($GLOBALS['CI']->load->views);$html433=$harness433->render($actual433[0],$actual433[1]);essentialCheck($out433->status===200&&str_contains($html433,'portal-project-task-detail')&&str_contains($html433,'&lt;script&gt;comment433')&&!str_contains($html433,'New private child433'),'actual shared portal detail is literal and never auto-publishes hidden comment');

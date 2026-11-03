@@ -91,9 +91,16 @@ if ( ! function_exists('form_open'))
             && !preg_match('/method\\s*=\\s*[\"\']?get(?:[\"\'\\s>]|$)/i', $attributes)) {
             $base = parse_url($CI->config->base_url());
             $target = parse_url($action);
+            $adminPath = rtrim((string) parse_url(CompanyRequestScope::adminUrl($CI), PHP_URL_PATH), '/');
+            $targetPath = $target['path'] ?? '';
             if (($base['scheme'] ?? '') === ($target['scheme'] ?? '') && ($base['host'] ?? '') === ($target['host'] ?? '')
-                && ($base['port'] ?? null) === ($target['port'] ?? null)) {
+                && ($base['port'] ?? null) === ($target['port'] ?? null)
+                && $adminPath !== '' && ($targetPath === $adminPath || str_starts_with($targetPath, $adminPath . '/'))) {
                 $form .= '<input type="hidden" name="_company_context" value="' . html_escape(CompanyRequestScope::token()) . '" />';
+                $nativeCompanyCsrf = CompanyRequestScope::nativeCsrfToken($CI);
+                if ($nativeCompanyCsrf !== null) {
+                    $form .= '<input type="hidden" name="_native_company_csrf" value="' . html_escape($nativeCompanyCsrf) . '" />';
+                }
             }
         }
         return $form;

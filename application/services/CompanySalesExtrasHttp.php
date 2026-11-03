@@ -19,6 +19,6 @@ final class CompanySalesExtrasHttp
     }
     public static function output($ci,array $file,bool $preview=false):void
     {
-        if($preview&&$file['mime']!=='image/png')throw new DomainException('company_sales_file_invalid');$ci->output->set_header('Cache-Control: no-store');$ci->output->set_header('X-Content-Type-Options: nosniff');$ci->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");$ci->output->set_header('Content-Disposition: '.($preview?'inline':'attachment').'; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$ci->output->set_content_type($file['mime'])->set_output($file['content']);
+        if($preview&&$file['mime']!=='image/png')throw new DomainException('company_sales_file_invalid');$ci->output->set_header('Cache-Control: no-store');$ci->output->set_header('X-Content-Type-Options: nosniff');$ci->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");$ci->output->set_header('Content-Disposition: '.($preview?'inline':'attachment').'; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$ci->output->set_content_type($file['mime'])->set_output($ci->input->method(true)==='HEAD'?'':$file['content']);
     }
 }

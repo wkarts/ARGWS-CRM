@@ -19,7 +19,7 @@ abstract class CompanyExpenseBillingStorage extends CompanySalesBase
     }
     protected function expense(int $issuer,int $id):array
     {
-        $r=$this->rows('SELECT * FROM '.$this->prefix.'company_expenses WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_expense_billing_denied');return $r;
+        $r=$this->rows('SELECT * FROM '.$this->prefix.'company_expenses WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_expense_billing_denied');(new NativeCompanyExpenseFormProfile($this->db,$this->prefix))->verifyRow($r);return $r;
     }
     protected function references(int $issuer,int $actor,array $r):void
     {

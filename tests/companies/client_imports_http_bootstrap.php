@@ -3,7 +3,7 @@
 if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit(2);
 define('FCPATH',dirname(__DIR__,2).'/');define('BASEPATH',FCPATH.'system/');define('APPPATH',FCPATH.'application/');define('APP_MODULES_PATH',FCPATH.'modules/');require APPPATH.'config/app-config.php';
 if(APP_DB_NAME!=='argws_upgrade_ci'||APP_DB_HOSTNAME!=='127.0.0.1:48324')exit(2);
-require FCPATH.'tests/support/BbPdoDatabase.php';require APPPATH.'services/CompanyClientImportSchema.php';require APPPATH.'services/CompanyClientRequestSchema.php';
+require FCPATH.'tests/support/BbPdoDatabase.php';require_once APPPATH.'services/CompanyClientImportSchema.php';require_once APPPATH.'services/CompanyClientRequestSchema.php';
 function db_prefix(){return 'tbl';}function &get_instance(){return $GLOBALS['CI'];}
 $pdo=new PDO('mysql:host=127.0.0.1;port=48324;dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);$GLOBALS['CI']=(object)['db'=>$db];
 $markerBefore=$pdo->query('SELECT version FROM tblmigrations')->fetchColumn();$master=(int)$pdo->query('SELECT master_staff_id FROM tblissuers_installation_identity WHERE id=1')->fetchColumn();if($master!==17)throw new RuntimeException('Synthetic installer must identify its actual master17');CompanyClientImportSchema::ensure($db,'tbl');CompanyClientImportSchema::ensure($db,'tbl');CompanyClientRequestSchema::ensure($db,'tbl');

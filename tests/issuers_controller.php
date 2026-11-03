@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 define('BASEPATH', __DIR__);
-class AdminController { public $input; public $session; }
+define('APPPATH', dirname(__DIR__).'/application/');
+class AdminController { public $input; public $session; public $db; }
 class CompanyRequestScope {
     public static function sealedFor($ci){return false;}
     public static function context(){return null;}

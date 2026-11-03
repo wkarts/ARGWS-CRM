@@ -14,12 +14,161 @@ class Leads extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('leads_model');
+        // Native company requests use CompanyLeads and never hydrate the
+        // global leads model. The principal company follows the same route so
+        // historical and owned lead lineage share one authorization boundary.
+        if (!$this->nativeCompanyLeads()) {
+            $this->load->model('leads_model');
+        }
+    }
+
+    private function nativeCompanyLeads(): bool
+    {
+        return class_exists('CompanyRequestScope', false)
+            && CompanyRequestScope::nativeFor($this);
+    }
+
+    private function nativeLeadContext(): ?array
+    {
+        if (!$this->nativeCompanyLeads() || !CompanyRequestScope::sealedFor($this)) {
+            show_error('Contexto de empresa indisponível.', 503);
+            return null;
+        }
+        require_once APPPATH . 'services/CompanyLeads.php';
+        $ctx = CompanyRequestScope::context();
+        $issuer = $ctx->issuerId();
+        $actor = $ctx->staffId();
+        $acl = new IssuerResourceAccess($this->db, db_prefix());
+        if (!$acl->can($issuer, $actor, 'leads', 'view')) {
+            show_error('Sem permissão para leads desta empresa.', 403);
+            return null;
+        }
+        require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
+        NativeCompanyAdminPresentation::prepare($this);
+        $this->output->set_header('Cache-Control: no-store')->set_header('X-Content-Type-Options: nosniff');
+        return [$issuer, $actor, $acl, new CompanyLeads($this->db, db_prefix())];
+    }
+
+    private function nativeLeadUpload(string $field, int $limit): array
+    {
+        $file = $_FILES[$field] ?? null;
+        if (!is_array($file) || ($file['error'] ?? null) !== UPLOAD_ERR_OK
+            || !is_int($file['size'] ?? null) || $file['size'] > $limit
+            || !is_string($file['name'] ?? null) || !is_string($file['tmp_name'] ?? null)
+            || !is_uploaded_file($file['tmp_name'])) {
+            throw new DomainException('company_lead_upload_invalid');
+        }
+        $bytes = file_get_contents($file['tmp_name'], false, null, 0, $limit + 1);
+        if (!is_string($bytes) || strlen($bytes) !== $file['size']) {
+            throw new DomainException('company_lead_upload_invalid');
+        }
+        return [$file['name'], $bytes];
+    }
+
+    private function nativeLeadCsrf(): string
+    {
+        $csrf = $this->session->userdata('native_leads_csrf');
+        if (!is_string($csrf) || !preg_match('/^[a-f0-9]{64}$/D', $csrf)) {
+            $csrf = bin2hex(random_bytes(32));
+            $this->session->set_userdata('native_leads_csrf', $csrf);
+        }
+        return $csrf;
+    }
+
+    private function nativeLeadFailure(Throwable $error): void
+    {
+        $reason = $error instanceof DomainException ? $error->getMessage() : '';
+        if (str_ends_with($reason, 'denied')) {
+            show_error('Lead, referência ou ação indisponível nesta empresa.', 403);
+            return;
+        }
+        $status = str_ends_with($reason, 'stale') || str_ends_with($reason, 'conflict') ? 409 : ($reason !== '' ? 422 : 503);
+        $this->output->set_status_header($status)->set_output($this->nativeLeadErrorMessage($reason));
+    }
+
+    private function nativeLeadErrorMessage(string $reason): string
+    {
+        $message = match ($reason) {
+            'company_lead_stale' => 'O lead ou a configuração mudou. Reabra antes de salvar.',
+            'company_lead_request_conflict' => 'Este envio já foi utilizado com outros dados. Reabra o formulário.',
+            'company_lead_import_stale' => 'A prévia expirou, foi confirmada ou sua configuração mudou. Gere uma nova prévia.',
+            'company_lead_invalid_reminder' => 'Informe data, hora e fuso válidos.',
+            'company_contact_email_conflict' => 'Já existe um contato com este e-mail nesta empresa.',
+            'company_client_identity_conflict' => 'O documento informado já pertence a um cliente.',
+            'company_lead_conversion_stage' => 'Mova o lead para um status do tipo Ganho antes de converter.',
+            'company_lead_reference_in_use' => 'Há leads ativos nesta configuração. Mova ou arquive esses leads antes de desativá-la.',
+            'company_lead_category_immutable' => 'O tipo de um status existente é preservado.',
+            'company_operation_file_invalid', 'company_lead_upload_invalid' => 'Confira o arquivo e seus limites.',
+            'company_operation_file_limit' => 'Limite de arquivos atingido para este lead.',
+            'company_lead_import_invalid' => 'CSV inválido. Use UTF-8, até 100 linhas e o cabeçalho indicado.',
+            'company_lead_closed' => 'O lead está arquivado ou já foi convertido.',
+            default => 'Confira dados e referências. Nenhuma alteração desta tentativa foi confirmada.',
+        };
+        return $message;
+    }
+
+    private function nativeLeadIndex(): void
+    {
+        $ctx = $this->nativeLeadContext();
+        if ($ctx === null) return;
+        [$issuer, $actor, $acl, $service] = $ctx;
+        $method = $this->input->method(true);
+        if (!in_array($method, ['GET', 'HEAD', 'POST'], true)) { show_error('Método não permitido.', 405); return; }
+        $csrf = $this->nativeLeadCsrf();
+        $error = null; $detail = null; $batch = null;
+        $configuration = ['stages' => [], 'sources' => []]; $directory = ['items' => [], 'next' => null];
+        $inbox = ['items' => [], 'next' => null]; $staff = []; $search = ''; $state = 'active'; $stageFilter = null;
+        try {
+            if ($method === 'POST') {
+                CompanyRequestScope::assertNativeMutation($this);
+                $token = $this->input->post('native_leads_csrf', false);
+                if (!is_string($token) || !hash_equals($csrf, $token)) { show_error('Recarregue o formulário antes de salvar.', 403); return; }
+                $action = $this->input->post('action', false); $key = $this->input->post('request_key', false);
+                if (!is_string($key)) throw new DomainException('company_lead_invalid_input');
+                $id = $this->input->post('lead_id', false); $revision = $this->input->post('revision', false);
+                $redirect = '';
+                if (in_array($action, ['create', 'update'], true)) {
+                    $input = $this->input->post('lead', false); if (!is_array($input)) throw new DomainException('company_lead_invalid_input');
+                    if (($input['reminder_local'] ?? '') === '') $input['reminder_timezone'] = '';
+                    $id = $action === 'create' ? $service->create($issuer, $actor, $input, $key) : $service->update($issuer, $actor, $id, $revision, $input, $key); $redirect = '?lead=' . $id;
+                } elseif ($action === 'move') { $id = $service->move($issuer, $actor, $id, $revision, $this->input->post('stage_id', false), $key); $redirect = '?lead=' . $id;
+                } elseif ($action === 'note') { $body = $this->input->post('body', false); if (!is_string($body)) throw new DomainException('company_lead_invalid_input'); $id = $service->note($issuer, $actor, $id, $revision, $body, $key); $redirect = '?lead=' . $id;
+                } elseif (in_array($action, ['archive', 'restore'], true)) { $id = $service->archive($issuer, $actor, $id, $revision, $action === 'archive', $key); $redirect = '?lead=' . $id;
+                } elseif ($action === 'convert') { $result = $service->convert($issuer, $actor, $id, $revision, $key); $redirect = '?lead=' . $result['lead_id'];
+                } elseif ($action === 'configure') { $kind = $this->input->post('kind', false); $input = $this->input->post('configuration', false); $configId = $this->input->post('config_id', false); if (!is_string($kind) || !is_array($input)) throw new DomainException('company_lead_invalid_input'); $configId = $configId === null || $configId === '' ? null : IssuerPolicy::id($configId); $service->configure($issuer, $actor, $kind, $configId, $configId === null ? null : IssuerPolicy::id($revision), $input, $key); $redirect = '#configuration';
+                } elseif ($action === 'file_upload') { [$name, $bytes] = $this->nativeLeadUpload('lead_file', 2097152); $service->addFile($issuer, $actor, $id, $revision, $name, $bytes, $key); $redirect = '?lead=' . (int) $id . '#files';
+                } elseif ($action === 'file_hide') { $file = $this->input->post('file_key', false); if (!is_string($file)) throw new DomainException('company_lead_invalid_input'); $service->hideFile($issuer, $actor, $id, $revision, $file, $key); $redirect = '?lead=' . (int) $id . '#files';
+                } elseif ($action === 'import_preview') { [$name, $bytes] = $this->nativeLeadUpload('lead_csv', 262144); $result = $service->previewImport($issuer, $actor, $name, $bytes, $this->input->post('stage_id', false), $this->input->post('source_id', false), $key); $redirect = '?batch=' . $result['batch_id'] . '#import-preview';
+                } elseif ($action === 'import_commit') { $batchId = $this->input->post('batch_id', false); $hash = $this->input->post('preview_hash', false); if (!is_string($batchId) || !is_string($hash)) throw new DomainException('company_lead_invalid_input'); $service->commitImport($issuer, $actor, $batchId, $hash, $key); $redirect = '?batch=' . $batchId . '#import-preview';
+                } elseif ($action === 'notice_ack') { $service->acknowledge($issuer, $actor, $this->input->post('notice_id', false), $key); $redirect = '#inbox';
+                } else throw new DomainException('company_lead_invalid_input');
+                CompanyRequestScope::invalidateCaches($this); redirect(CompanyRequestScope::adminUrl($this, 'leads' . $redirect), 'location', 303); return;
+            }
+            $search = $this->input->get('search', false) ?? ''; $state = $this->input->get('state', false) ?? 'active';
+            if (!is_string($search) || !is_string($state)) throw new DomainException('company_lead_invalid_input');
+            $filter = $this->input->get('stage', false); $stageFilter = $filter === null || $filter === '' ? null : IssuerPolicy::id($filter);
+            $id = $this->input->get('lead', false); if ($id !== null) $detail = $service->get($issuer, $actor, $id);
+            $batchId = $this->input->get('batch', false); if ($batchId !== null) { if (!is_string($batchId)) throw new DomainException('company_lead_invalid_input'); $batch = $service->importBatch($issuer, $actor, $batchId); }
+            $configuration = $service->configuration($issuer, $actor); $directory = $service->page($issuer, $actor, $this->input->get('after', false) ?? 0, 50, $search, $state, $stageFilter); $staff = $service->staffOptions($issuer, $actor); $inbox = $service->inbox($issuer, $actor, $this->input->get('notice_after', false) ?? 0);
+        } catch (Throwable $error) {
+            $reason = $error instanceof DomainException ? $error->getMessage() : '';
+            if (str_ends_with($reason, 'denied')) { show_error('Lead, referência ou ação indisponível nesta empresa.', 403); return; }
+            $status = str_ends_with($reason, 'stale') || str_ends_with($reason, 'conflict') ? 409 : ($reason !== '' ? 422 : 503);
+            $this->output->set_status_header($status);
+            $error = $this->nativeLeadErrorMessage($reason);
+        }
+        $caps = []; foreach (['view', 'create', 'edit', 'delete'] as $cap) $caps[$cap] = $acl->can($issuer, $actor, 'leads', $cap);
+        $caps['convert'] = $caps['edit'] && $acl->can($issuer, $actor, 'customers', 'view') && $acl->can($issuer, $actor, 'customers', 'create');
+        $this->load->view('admin/leads/native', ['issuer'=>$issuer,'actor'=>$actor,'detail'=>$detail,'directory'=>$directory,'configuration'=>$configuration,'staff_options'=>$staff,'inbox'=>$inbox,'batch'=>$batch,'search'=>$search,'state'=>$state,'stage_filter'=>$stageFilter,'capabilities'=>$caps,'error'=>$error,'native_leads_csrf'=>$csrf,'native_company_csrf'=>CompanyRequestScope::nativeCsrfToken($this),'request_key'=>bin2hex(random_bytes(32))]);
     }
 
     /* List all leads */
     public function index($id = '')
     {
+        if ($this->nativeCompanyLeads()) {
+            $this->nativeLeadIndex();
+            return;
+        }
         close_setup_menu();
 
         if (!is_staff_member()) {
@@ -225,12 +374,39 @@ class Leads extends AdminController
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
 
-    public function export($id)
+    public function export($id = '')
     {
+        if ($this->nativeCompanyLeads()) {
+            $ctx = $this->nativeLeadContext();
+            if ($ctx === null) return;
+            [, , , $service] = $ctx;
+            if (!in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_error('Método não permitido.', 405); return; }
+            try {
+                $search = $this->input->get('search', false) ?? '';
+                $state = $this->input->get('state', false) ?? 'active';
+                if (!is_string($search) || !is_string($state)) throw new DomainException('company_lead_invalid_input');
+                $csv = $service->exportCsv(CompanyRequestScope::context()->issuerId(), CompanyRequestScope::context()->staffId(), $search, $state);
+                $this->output->set_header('Content-Disposition: attachment; filename="leads.csv"')->set_content_type('text/csv', 'UTF-8')->set_output($this->input->method(true) === 'HEAD' ? '' : $csv);
+            } catch (Throwable $error) { $this->nativeLeadFailure($error); }
+            return;
+        }
         if (is_admin()) {
             $this->load->library('gdpr/gdpr_lead');
             $this->gdpr_lead->export($id);
         }
+    }
+
+    public function file($id = '', $key = '')
+    {
+        if (!$this->nativeCompanyLeads()) { show_404(); return; }
+        $ctx = $this->nativeLeadContext();
+        if ($ctx === null) return;
+        [, , , $service] = $ctx;
+        if (!in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_error('Método não permitido.', 405); return; }
+        try {
+            $blob = $service->file(CompanyRequestScope::context()->issuerId(), CompanyRequestScope::context()->staffId(), $id, $key);
+            $this->output->set_header('Content-Security-Policy: sandbox; default-src \'none\'')->set_header('Content-Disposition: attachment; filename="anexo.' . ($blob['mime'] === 'image/png' ? 'png' : 'pdf') . '"; filename*=UTF-8\'\'' . rawurlencode($blob['filename']))->set_header('Content-Length: ' . strlen($blob['bytes']))->set_content_type($blob['mime'])->set_output($this->input->method(true) === 'HEAD' ? '' : $blob['bytes']);
+        } catch (Throwable $error) { $this->nativeLeadFailure($error); }
     }
 
     /* Delete lead from database */

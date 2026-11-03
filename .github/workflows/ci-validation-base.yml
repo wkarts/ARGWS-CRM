@@ -1,10 +1,10 @@
 name: Base isolada de validação CRM
 on:
   pull_request:
-    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py', 'scripts/ci/validation-base-plan.py', 'docs/ci/validation-images.json']
   push:
     branches: [main]
-    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py', 'scripts/ci/validation-base-plan.py', 'docs/ci/validation-images.json']
   workflow_dispatch:
     inputs:
       publish:
@@ -27,8 +27,24 @@ jobs:
           persist-credentials: false
       - name: Validar contrato da imagem isolada
         run: python3 -m unittest tests/test_ci_validation_base.py
+      - name: Reutilizar a base publicada somente com inputs idênticos
+        id: base_plan
+        env:
+          PHP_MINOR: ${{ matrix.php }}
+          REFRESH_BASE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == true }}
+        run: python3 scripts/ci/validation-base-plan.py
+      - name: Carregar base existente por digest imutável
+        if: steps.base_plan.outputs.reuse == 'true'
+        env:
+          BASE_DIGEST: ${{ steps.base_plan.outputs.digest }}
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          docker pull "$BASE_DIGEST"
+          docker tag "$BASE_DIGEST" "argws-crm-ci-php:test-$PHP_MINOR"
       - uses: docker/setup-buildx-action@v3
+        if: steps.base_plan.outputs.reuse != 'true'
       - name: Compilar somente ferramentas de validação
+        if: steps.base_plan.outputs.reuse != 'true'
         uses: docker/build-push-action@v6
         with:
           context: docker/ci

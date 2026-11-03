@@ -1,9 +1,11 @@
 $(function () {
+    var nativeTicketAdd = $("#new_ticket_form").attr("data-native-ticket") === "1";
+    var ticketAiEnabled = !nativeTicketAdd && !!app.options.is_ai_provider_enabled;
     init_editor("#message", {
-        quickbars_selection_toolbar: `bold link ${app.options.is_ai_provider_enabled ? 'ai' : ''}`,
+        quickbars_selection_toolbar: `bold link ${ticketAiEnabled ? 'ai' : ''}`,
         append_plugins: 'quickbars',
         setup: function (editor) {
-            if(app.options.is_ai_provider_enabled) {
+            if(ticketAiEnabled) {
                 configure_ai_editor(editor);
             }
         }
@@ -114,6 +116,13 @@ $(function () {
             alert("No Sender Found");
             return false;
         }
+        if (document.body.classList.contains('native-company-admin')) {
+            ticket_block_sender_request().done(function (response) {
+                if (!response || response.success !== true) throw new Error('native_ticket_receipt_invalid');
+                window.location.reload();
+            });
+            return false;
+        }
         $.post(admin_url + "tickets/block_sender", {
             sender: sender,
         }).done(function () {
@@ -215,9 +224,9 @@ $(function () {
         if (typeof csrfData !== "undefined") {
             data += "&" + csrfData["token_name"] + "=" + csrfData["hash"];
         }
-        $.post(admin_url + "tickets/update_single_ticket_settings", data).done(
+        ticket_settings_request(data).done(
             function (response) {
-                response = JSON.parse(response);
+                response = typeof response === "string" ? JSON.parse(response) : response;
                 if (response.success == true) {
                     if (typeof response.department_reassigned !== "undefined") {
                         window.location.href = admin_url + "tickets/";
@@ -240,9 +249,7 @@ $(function () {
     $('.change-ticket-status').on("click", function () {
         var status = $(this).data('status');
         var ticketid = $('input[name="ticketid"]').val();
-        requestGetJSON(
-            "tickets/change_status_ajax/" + ticketid + "/" + status
-        ).done(function (response) {
+        ticket_status_request(ticketid, status).done(function (response) {
             alert_float(response.alert, response.message);
             setTimeout(function () {
                 window.location.reload()
@@ -254,9 +261,7 @@ $(function () {
     $('select[name="status_top"]').on("change", function () {
         var status = $(this).val();
         var ticketid = $('input[name="ticketid"]').val();
-        requestGetJSON(
-            "tickets/change_status_ajax/" + ticketid + "/" + status
-        ).done(function (response) {
+        ticket_status_request(ticketid, status).done(function (response) {
             alert_float(response.alert, response.message);
         });
     });
@@ -288,8 +293,12 @@ $(function () {
         if (contactid != "") {
             $.post(admin_url + "tickets/ticket_change_data/", {
                 contact_id: contactid,
+                _company_context: $('#new_ticket_form input[name="_company_context"]').val(),
+                _native_company_csrf: $('#new_ticket_form input[name="_native_company_csrf"]').val(),
             }).done(function (response) {
-                response = JSON.parse(response);
+                if (typeof response === "string") response = JSON.parse(response);
+                // A late response must not overwrite a newer contact selection.
+                if ($('select[name="contactid"]').val() !== contactid) return;
                 if (response.contact_data) {
                     $('input[name="name"]').val(
                         response.contact_data.firstname +
@@ -329,7 +338,7 @@ $(function () {
             clear_ticket_no_contact_email_warning();
         }
     });
-    init_ai_features();
+    if (!nativeTicketAdd) init_ai_features();
 });
 
 // Insert ticket knowledge base link modal
@@ -338,22 +347,21 @@ function insert_ticket_knowledgebase_link(e) {
     if (id == "") {
         return;
     }
-    requestGetJSON("knowledge_base/get_article_by_id_ajax/" + id).done(function (
-        response
-    ) {
-        var textarea = $('textarea[name="message"]');
-        tinymce.activeEditor.execCommand(
-            "mceInsertContent",
-            false,
-            '<a href="' +
-            site_url +
-            "knowledge_base/" +
-            response.slug +
-            '">' +
-            response.subject +
-            "</a>"
-        );
+    function insertLink(url, subject) {
+        var link = document.createElement("a");
+        link.href = url;
+        link.textContent = subject;
+        tinymce.activeEditor.execCommand("mceInsertContent", false, link.outerHTML);
         $(e).selectpicker("val", "");
+    }
+    if ($("#new_ticket_form").attr("data-native-ticket") === "1") {
+        var option = $(e).find("option:selected");
+        var url = option.attr("data-public-url");
+        if (url && /^https?:\/\//i.test(url)) insertLink(url, option.text());
+        return;
+    }
+    requestGetJSON("knowledge_base/get_article_by_id_ajax/" + id).done(function (response) {
+        insertLink(site_url + "knowledge_base/" + encodeURIComponent(response.slug), response.subject);
     });
 }
 
@@ -362,6 +370,7 @@ function tickets_bulk_action(event) {
         var mass_delete = $("#mass_delete").prop("checked");
         var merge_tickets = $("#merge_tickets").prop("checked");
         var ids = [];
+        var proofs = {};
         var data = {};
 
         if (typeof merge_tickets != "undefined" && merge_tickets == true) {
@@ -397,14 +406,18 @@ function tickets_bulk_action(event) {
             var checkbox = $($(this).find("td").eq(0)).find("input");
             if (checkbox.prop("checked") == true) {
                 ids.push(checkbox.val());
+                if (document.body.classList.contains('native-company-admin')) {
+                    proofs[String(checkbox.val())] = {revision:checkbox.attr('data-ticket-revision'),tags:checkbox.attr('data-tags-revision')};
+                }
             }
         });
         data.ids = ids;
         $(event).addClass("disabled");
         setTimeout(function () {
-            $.post(admin_url + "tickets/bulk_action", data).done(function () {
-                window.location.reload();
-            });
+            var request;
+            try { request = ticket_bulk_request(data, proofs, event); }
+            catch (error) { $(event).removeClass('disabled'); throw error; }
+            request.done(function () { window.location.reload(); }).fail(function () { $(event).removeClass('disabled'); });
         }, 50);
     }
 }
@@ -503,3 +516,114 @@ function init_ai_features() {
     });
 }
 
+
+// Existing status controls share one request path; named mutations never fall back to GET.
+function ticket_status_request(ticketid, status) {
+    if (!document.body.classList.contains('native-company-admin')) {
+        return requestGetJSON("tickets/change_status_ajax/" + ticketid + "/" + status);
+    }
+    if (!window.NativeCompanyTransport || !/^[1-9][0-9]*$/.test(String(ticketid)) || !/^[1-9][0-9]*$/.test(String(status))) throw new Error('native_ticket_status_invalid');
+    var form = $('#single-ticket-form');
+    var revision = form.find('input[name="revision"]').val();
+    var nonce = form.find('input[name="request_nonce"]').val();
+    if (!/^[a-f0-9]{64}$/.test(revision || '') || !/^[a-f0-9]{64}$/.test(nonce || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request("tickets/change_status_ajax/" + ticketid + "/" + status, 'POST', { revision: revision, request_nonce: nonce }, { dataType: 'json' }).done(function (response) {
+        if (!response || response.success !== true || String(response.ticketid) !== String(ticketid) || !/^[a-f0-9]{64}$/.test(response.revision || '')) throw new Error('native_ticket_receipt_invalid');
+        // Reload is already the native click handler. The older select control needs a new command identity after a confirmed response.
+        var random = new Uint8Array(32); window.crypto.getRandomValues(random);
+        form.find('input[name="revision"]').val(response.revision);
+        form.find('input[name="request_nonce"]').val(Array.from(random, function (b) { return b.toString(16).padStart(2, '0'); }).join(''));
+    });
+}
+
+function ticket_block_sender_request() {
+    if (!document.body.classList.contains('native-company-admin') || !window.NativeCompanyTransport) throw new Error('native_ticket_context_required');
+    var form = $('#single-ticket-form');
+    var ticket = form.find('input[name="ticketid"]').val();
+    var revision = form.find('input[name="revision"]').val();
+    var nonce = form.find('input[name="request_nonce"]').val();
+    if (!/^[1-9][0-9]*$/.test(ticket || '') || !/^[a-f0-9]{64}$/.test(revision || '') || !/^[a-f0-9]{64}$/.test(nonce || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request('tickets/block_sender', 'POST', {ticketid: ticket, revision: revision, request_nonce: nonce}, {dataType: 'json'});
+}
+
+// Same native typing lifecycle; named writes carry content CAS and authenticated context.
+function ticket_replying_request(ticket, actor) {
+    var path = 'tickets/update_staff_replying/' + ticket + (actor === '' ? '' : '/' + actor);
+    if (!document.body.classList.contains('native-company-admin')) return $.post(admin_url + path);
+    if (!window.NativeCompanyTransport || !/^[1-9][0-9]*$/.test(ticket) || (actor !== '' && !/^[1-9][0-9]*$/.test(actor))) throw new Error('native_ticket_context_required');
+    var revision = $('#single-ticket-form').find('input[name="revision"]').val();
+    if (!/^[a-f0-9]{64}$/.test(revision || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request(path, 'POST', {revision: revision}, {dataType: 'json'}).done(function (result) {
+        if (!result || result.success !== true || result.revision !== revision) throw new Error('native_ticket_lease_unconfirmed');
+    });
+}
+
+// Original Settings button, same form serialization and shared authenticated POST transport.
+function ticket_settings_request(data) {
+    if (!document.body.classList.contains('native-company-admin')) return $.post(admin_url + 'tickets/update_single_ticket_settings', data);
+    if (!window.NativeCompanyTransport || typeof data !== 'string') throw new Error('native_ticket_context_required');
+    var parameters = new URLSearchParams(data);
+    var form = $('#single-ticket-form');
+    ['revision', 'request_nonce'].forEach(function (key) {
+        if (parameters.has(key)) throw new Error('native_ticket_duplicate_field');
+        var value = form.find('input[name="' + key + '"]').val();
+        if (!/^[a-f0-9]{64}$/.test(value || '')) throw new Error('native_ticket_revision_required');
+        parameters.append(key, value);
+    });
+    ['tags_revision', 'custom_fields_revision'].forEach(function (key) {
+        if (parameters.getAll(key).length !== 1 || !/^[a-f0-9]{64}$/.test(parameters.get(key) || '')) throw new Error('native_ticket_revision_required');
+    });
+    if (parameters.getAll('ticketid').length !== 1 || !/^[1-9][0-9]*$/.test(parameters.get('ticketid') || '')) throw new Error('native_ticket_input_invalid');
+    function save() {
+        return window.NativeCompanyTransport.request('tickets/update_single_ticket_settings', 'POST', parameters.toString(), {dataType:'json'}).done(function (result) {
+            if (!result || result.success !== true || String(result.ticketid) !== parameters.get('ticketid') || !/^[a-f0-9]{64}$/.test(result.revision || '')) throw new Error('native_ticket_receipt_invalid');
+        });
+    }
+    if (parameters.getAll('merge_ticket_ids').length > 1) throw new Error('native_ticket_duplicate_field');
+    var merge = parameters.get('merge_ticket_ids') || '';
+    if (!merge) return save();
+    var ids = merge.split(',');
+    if (ids.length > 100 || new Set(ids).size !== ids.length || ids.some(function (id) { return !/^[1-9][0-9]*$/.test(id) || id === parameters.get('ticketid'); })) throw new Error('native_ticket_merge_input_invalid');
+    parameters.forEach(function (value, key) { if (key.indexOf('merge_revisions') === 0) throw new Error('native_ticket_duplicate_field'); });
+    // The original merge field now has an explicit, read-only human review before the existing POST.
+    return window.NativeCompanyTransport.request('tickets/ticket/' + parameters.get('ticketid') + '?merge_preview=' + encodeURIComponent(merge), 'GET', {}, {dataType:'json'}).then(function (proof) {
+        if (!proof || String(proof.ticketid) !== parameters.get('ticketid') || proof.revision !== parameters.get('revision') || !Array.isArray(proof.children) || proof.children.length !== ids.length) throw new Error('native_ticket_merge_preview_invalid');
+        var seen = new Set(), labels = [];
+        proof.children.forEach(function (child) {
+            var id = String(child.id);
+            if (ids.indexOf(id) < 0 || seen.has(id) || typeof child.subject !== 'string' || !/^[a-f0-9]{64}$/.test(child.revision || '')) throw new Error('native_ticket_merge_preview_invalid');
+            seen.add(id); labels.push('#' + id + ' — ' + child.subject); parameters.append('merge_revisions[' + id + ']', child.revision);
+        });
+        if (!app.lang || typeof app.lang.confirm_action_prompt !== 'string') throw new Error('native_ticket_confirmation_unavailable');
+        if (!window.confirm(app.lang.confirm_action_prompt + '\n' + labels.join('\n'))) throw new Error('native_ticket_merge_cancelled');
+        return save();
+    });
+}
+
+// Same original bulk modal, selection and command endpoint. Never accept unversioned named rows.
+function ticket_bulk_request(data, proofs, button) {
+    if (!document.body.classList.contains('native-company-admin')) return $.post(admin_url + 'tickets/bulk_action', data);
+    if (!window.NativeCompanyTransport || !Array.isArray(data.ids) || !data.ids.length || data.ids.length > 101) throw new Error('native_ticket_bulk_invalid');
+    var ids = data.ids.map(String), unique = new Set(ids), payload = {ids:ids,revisions:{}}, mode;
+    if (unique.size !== ids.length || ids.some(function(id){return !/^[1-9][0-9]*$/.test(id);}) || Object.keys(proofs).length !== ids.length) throw new Error('native_ticket_bulk_invalid');
+    ids.forEach(function(id){if (!proofs[id] || !/^[a-f0-9]{64}$/.test(proofs[id].revision || '')) throw new Error('native_ticket_revision_required');payload.revisions[id]=proofs[id].revision;});
+    if (data.merge_tickets === true) {
+        mode='merged';payload.merge_tickets='1';payload.primary_ticket=String(data.primary_ticket);payload.primary_ticket_status=String(data.primary_ticket_status);
+        if(ids.length < 2 || !unique.has(payload.primary_ticket) || !/^[1-9][0-9]*$/.test(payload.primary_ticket_status)) throw new Error('native_ticket_bulk_invalid');
+    } else if (data.mass_delete === true) { mode='deleted';payload.mass_delete='1';if(ids.length>100)throw new Error('native_ticket_bulk_invalid'); }
+    else {
+        mode='updated';if(ids.length>100)throw new Error('native_ticket_bulk_invalid');
+        ['status','department','priority','service'].forEach(function(key){if(data[key]!==undefined && data[key]!==''){if(!/^[1-9][0-9]*$/.test(String(data[key])))throw new Error('native_ticket_bulk_invalid');payload[key]=String(data[key]);}});
+        if(data.tags!==undefined && (!Array.isArray(data.tags)||data.tags.some(function(tag){return typeof tag!=='string';})))throw new Error('native_ticket_bulk_invalid');
+        if(Array.isArray(data.tags)&&data.tags.length){payload.tags=data.tags;payload.tag_revisions={};ids.forEach(function(id){if(!/^[a-f0-9]{64}$/.test(proofs[id].tags||''))throw new Error('native_ticket_revision_required');payload.tag_revisions[id]=proofs[id].tags;});}
+        if(Object.keys(payload).length===2)throw new Error('native_ticket_bulk_empty');
+    }
+    var fingerprint=JSON.stringify(payload), state=$(button).data('native-ticket-command');
+    if(!state || state.fingerprint!==fingerprint){var bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);state={fingerprint:fingerprint,nonce:Array.from(bytes,function(b){return b.toString(16).padStart(2,'0');}).join('')};$(button).data('native-ticket-command',state);}
+    payload.request_nonce=state.nonce;
+    return window.NativeCompanyTransport.request('tickets/bulk_action','POST',payload,{dataType:'json'}).then(function(receipt){
+        var expected=mode==='merged'?ids.length-1:ids.length;
+        if(!receipt||receipt.success!==true||receipt[mode]!==expected||(mode==='merged'&&(String(receipt.ticketid)!==payload.primary_ticket||!/^[a-f0-9]{64}$/.test(receipt.revision||''))))throw new Error('native_ticket_bulk_receipt_invalid');
+        return receipt;
+    });
+}

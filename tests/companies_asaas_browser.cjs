@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/Chromium; protocol responses are injected only by the CLI service fixture.
 const assert=require('node:assert/strict');const {execFileSync}=require('node:child_process');const fs=require('node:fs');
 
@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');const {execFileSync}=require('node:ch
 const PHASES = /^(?:authenticate|install-native|preferences-unselected|preferences-selected|isolation|capture-evidence|[ab]:(?:select-company|open-company|save-account|prepare-origin|refresh-account|rotate-token|refresh-proof|refresh-token|reveal-token|refresh-reveal|settle|fee|callback|automation|worker|refresh-worker))$/;
 function safeResponse(response) {
  const request=response.request();let pathname='other';
- try {const path=new URL(response.url()).pathname;if(['/admin','/admin/','/admin/authentication','/admin/authentication/admin','/admin/company_context','/admin/company_context/select','/admin/company_asaas'].includes(path))pathname=path;}catch{}
+ try {const path=new URL(response.url()).pathname;if(['/admin','/admin/','/admin/authentication','/admin/authentication/admin','/admin/issuers/select','/admin/settings/asaas'].includes(path))pathname=path;}catch{}
  const method=request.method();return {pathname,method:['GET','POST','HEAD'].includes(method)?method:'other',status:response.status()};
 }
 function diagnostics(page,write=record=>console.log(JSON.stringify(record))) {
@@ -43,7 +43,7 @@ async function openCompany(page,url,trace,phase) {
  try {
   // These controllers render their POST response directly. Reload would replay the
   // previous mutation, including an already-consumed secret-recovery CSRF token.
-  const response=await page.goto(url+'/admin/company_asaas',{waitUntil:'domcontentloaded'});
+  const response=await page.goto(url+'/admin/settings/asaas',{waitUntil:'domcontentloaded'});
   assert.ok(response&&response.status()===200,'fresh native company GET must return HTTP 200');
   assert.equal(response.request().method(),'GET','refresh must not replay a mutation');
   trace.report('passed');return response;
@@ -64,7 +64,7 @@ try{
  trace.stage('authenticate');
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('form').filter({has:page.locator('input[name=password]')}).locator('button[type=submit]'),trace,'authenticate');
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");const prepared={};let oldForm;
- async function select(id,letter){trace.stage(letter+':select-company');await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
+ async function select(id,letter){trace.stage(letter+':select-company');await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer,letter);await openCompany(page,url,trace,letter+':open-company');
   await page.locator('#asaas-new-environment').selectOption('sandbox');await page.locator('#asaas-new-account').fill('wallet-browser-'+letter);await page.locator('#asaas-new-key').fill('synthetic-browser-key-'+letter);
@@ -77,7 +77,7 @@ try{
   const reveal=page.locator('form').filter({has:page.locator('input[name=action][value=reveal_webhook]')});await go(page,reveal.locator('button[type=submit]'),trace,letter+':reveal-token');assert.equal(await page.locator('#asaas-one-time-token').inputValue(),token,'explicit reveal recovers the original token');assert.equal(await page.locator('#asaas-one-time-token').getAttribute('type'),'password','recovered token starts masked');await openCompany(page,url,trace,letter+':refresh-reveal');
   const settle=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=settle]')});const retry=await hidden(settle);await settle.locator('input[name=confirm]').check();await go(page,settle.locator('button[type=submit]'),trace,letter+':settle');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+x.invoice),'2');
-  assert.equal((await context.request.post(url+'/admin/company_asaas',{form:{...retry,confirm:'1'}})).status(),200,'same proof retry is idempotent');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');
+  assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:{...retry,confirm:'1'}})).status(),200,'same proof retry is idempotent');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');
   const fee=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=fee]')});await fee.locator('select[name=category_id]').selectOption(String(x.category));await fee.locator('input[name=confirm]').check();await go(page,fee.locator('button[type=submit]'),trace,letter+':fee');
   assert.equal(sql('SELECT COUNT(*) FROM tblasaas_company_fee_expenses WHERE origin_id='+x.origin),'1');assert.equal(sql('SELECT total_cents FROM tblcompany_expenses WHERE id=(SELECT expense_id FROM tblasaas_company_fee_expenses WHERE origin_id='+x.origin+')'),'100');
   trace.stage(letter+':callback');const publicId=sql('SELECT webhook_public_id FROM tblasaas_company_accounts WHERE issuer_id='+issuer+" AND environment='sandbox'");const event={id:'evt_browser_'+letter,event:'PAYMENT_RECEIVED',payment:{id:x.remote}};
@@ -89,8 +89,8 @@ try{
   fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','opt-in worker creates exactly one canonical nominal receipt');fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','worker retry preserves canonical receipt');await openCompany(page,url,trace,letter+':refresh-worker');
   if(letter==='a')oldForm={...await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}))};
  }
- trace.stage('isolation');assert.equal((await context.request.post(url+'/admin/company_asaas',{form:oldForm})).status(),409,'obsolete A company editor denied before effects');
- assert.equal((await context.request.get(url+'/admin/company_asaas?invoice='+prepared[a].invoice)).status(),403,'B cannot hydrate A invoice in issuer UI');
+ trace.stage('isolation');assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:oldForm})).status(),409,'obsolete A company editor denied before effects');
+ assert.equal((await context.request.get(url+'/admin/settings/asaas?invoice='+prepared[a].invoice)).status(),403,'B cannot hydrate A invoice in issuer UI');
  assert.ok(!(await page.locator('#charges').innerText()).includes(prepared[a].remote),'B charge list never renders A remote identity');
  trace.stage('capture-evidence');await page.screenshot({path:output+'/company-asaas.png',fullPage:true,mask:[page.locator('input[type=password], [data-asaas-secret], input[id^=company-webhook-url-]')]});assert.equal(trace.pageErrors(),0,'no native page errors');console.log('Company Asaas A/B actual UI credentials/protected-token-recovery/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation.');
  trace.stage('preferences-selected');await require('./companies/asaas_preferences_real_browser.cjs').run({...process.env,ISSUERS_BROWSER_ASAAS_PREFERENCES_PHASE:'selected'});

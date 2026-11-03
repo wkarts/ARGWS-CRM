@@ -17,10 +17,16 @@ final class CompanyPortalMailQueueConsumer
     public function state(object$email,string$key):array
     {
         if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_portal_mail_denied');CompanyPortalMailSchema::assertValid($this->db,$this->p);$emitter=new CompanyPortalRecoveryMail($this->db,$this->p,$this->secret);
-        return IssuerTransaction::run($this->db,$this->p,$emitter->tables(),function()use($email,$key){$row=IssuerStorage::query($this->db,'SELECT * FROM '.$this->p.'company_portal_mail_deliveries WHERE delivery_key=? AND queue_id=? FOR UPDATE',[$key,$email->id])->result_array()[0]??null;if(!$row||(int)($email->issuer_id??0)!==(int)$row['issuer_id']||!hash_equals($row['payload_hash'],CompanyPortalMailIdentity::payload($email))||$row['expires_at']<=date('Y-m-d H:i:s')||$email->cc!==''||$email->bcc!==''||$email->attachments!=='')throw new DomainException('company_portal_mail_denied');
+        return IssuerTransaction::run($this->db,$this->p,$emitter->tables(),fn()=>$this->stateInOwnedTransaction($email,$key));
+    }
+    public function stateInOwnedTransaction(object$email,string$key):array
+    {
+        if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_portal_mail_denied');
+        IssuerTransaction::assertOwned($this->db,$this->p,(new CompanyPortalRecoveryMail($this->db,$this->p,$this->secret))->tables());
+$row=IssuerStorage::query($this->db,'SELECT * FROM '.$this->p.'company_portal_mail_deliveries WHERE delivery_key=? AND queue_id=? FOR UPDATE',[$key,$email->id])->result_array()[0]??null;if(!$row||(int)($email->issuer_id??0)!==(int)$row['issuer_id']||!hash_equals($row['payload_hash'],CompanyPortalMailIdentity::payload($email))||$row['expires_at']<=date('Y-m-d H:i:s')||$email->cc!==''||$email->bcc!==''||$email->attachments!=='')throw new DomainException('company_portal_mail_denied');
             $issuer=(int)$row['issuer_id'];$contact=CompanyPortalMailIdentity::contact($this->db,$this->p,$issuer,null,(int)$row['contact_id']);$token=IssuerStorage::query($this->db,'SELECT * FROM '.$this->p.'company_portal_tokens WHERE token_hash=? AND issuer_id=? AND contact_id=? FOR UPDATE',[$row['token_hash'],$issuer,$row['contact_id']])->result_array()[0]??null;
             if(!$contact||!$token||(int)$contact['userid']!==(int)$row['client_id']||$contact['email']!==$email->email||!hash_equals($row['recipient_hash'],CompanyPortalMailIdentity::recipient($contact))||!hash_equals($row['identity_hash'],CompanyPortalMailIdentity::stamp($contact,$this->secret))||!hash_equals($row['identity_hash'],$token['identity_hash'])||(int)$token['client_id']!==(int)$row['client_id']||$token['expires_at']!==$row['expires_at'])throw new DomainException('company_portal_mail_denied');
-            $state=(new CompanyPortalMailConfig($this->db,$this->p))->stateInOwnedTransaction($issuer);if($row['transport_kind']!==$state['kind']||(int)$row['transport_epoch']!==$state['epoch']||!hash_equals($row['configuration_hash'],$state['configuration_hash']))throw new DomainException('company_portal_mail_stale');return ['issuer_id'=>$issuer,'kind'=>$state['kind'],'epoch'=>$state['epoch']];});
+            $state=(new CompanyPortalMailConfig($this->db,$this->p))->stateInOwnedTransaction($issuer);if($row['transport_kind']!==$state['kind']||(int)$row['transport_epoch']!==$state['epoch']||!hash_equals($row['configuration_hash'],$state['configuration_hash']))throw new DomainException('company_portal_mail_stale');return ['issuer_id'=>$issuer,'kind'=>$state['kind'],'epoch'=>$state['epoch']];
     }
     public function assertDispatch(object$email,string$key):void{$this->state($email,$key);}
     public function __debugInfo():array{return[];}

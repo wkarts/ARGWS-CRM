@@ -77,7 +77,7 @@ foreach($files as $path=>$hash){
     $source=file_get_contents($root.'/'.$path);$tokens=token_get_all($source);
     $module=str_starts_with($path,'modules/')?explode('/',$path)[1]:null;
     $isController=str_contains($path,'/controllers/');
-    $parent=null;$methods=[];$calls=[];
+    $parent=null;$declaredClass=null;$methods=[];$calls=[];
     // Prefix expressions locate table candidates without executing SQL or copying
     // arbitrary query values, private configuration or credentials into the report.
     $tablePatterns=[
@@ -98,6 +98,7 @@ foreach($files as $path=>$hash){
     foreach($matches[1] as [$call,$offset])$databaseCalls[]=['path'=>$path,'line'=>substr_count(substr($source,0,$offset),"\n")+1,'source_sha256'=>$hash,'module'=>$module,'call'=>strtolower($call),'state'=>'requires_company_predicate_review'];
     for($i=0;$i<count($tokens);$i++){
         $token=$tokens[$i];if(!is_array($token))continue;
+        if($isController&&$token[0]===T_CLASS){$n=surfaceNext($tokens,$i+1);if(is_array($tokens[$n]??null)&&$tokens[$n][0]===T_STRING)$declaredClass=$tokens[$n][1];}
         if($isController&&$token[0]===T_EXTENDS){$n=surfaceNext($tokens,$i+1);$parent=surfaceText($tokens[$n]??'');}
         if($isController&&$token[0]===T_FUNCTION){$m=surfaceMethod($tokens,$i);if($m&&$m['visibility']==='public')$methods[]=$m;}
         if($token[0]!==T_STRING)continue;
@@ -112,7 +113,7 @@ foreach($files as $path=>$hash){
         }elseif($literal!==null)$hooks[]=$reference+['hook'=>$literal,'module'=>$module,'state'=>'not_verified'];
         else $hooks[]=$reference+['hook'=>null,'expression'=>$expression,'module'=>$module,'state'=>'not_verified'];
     }
-    if($isController){
+    if($isController&&$declaredClass!==null){
         $surface=str_contains($path,'application/controllers/admin/')||$parent==='AdminController'?'admin':'public_or_api_or_job';
         $controllers[]=['path'=>$path,'source_sha256'=>$hash,'module'=>$module,'base_class'=>$parent,'surface'=>$surface,'method_candidates'=>$methods,'http_verbs'=>'requires_dispatch_review','authentication'=>'requires_entry_point_review','company_origin'=>'requires_persisted_origin_review','state'=>'not_verified','operational_ready'=>false];
         if($module!==null)$modules[$module][$surface==='admin'?'admin_controllers':'public_controllers'][]=$path;
@@ -147,7 +148,7 @@ if(!$full){
 }
 $encoded=json_encode($result,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)."\n";
 if($check){
-    if(!is_file($target)||file_get_contents($target)!==$encoded){fwrite(STDERR,"Operational surface inventory is stale. Run php scripts/company-surface-inventory.php.\n");exit(1);}
+    if(!is_file($target)||file_get_contents($target)!==$encoded){fwrite(STDERR,"Operational surface inventory is stale. Run php scripts/company-surface-inventory.php.\n");fwrite(STDERR,"Expected operational source_manifest_sha256: ".$manifest."\n");exit(1);}
 }else file_put_contents($target,$encoded);
 echo json_encode($result['counts'],JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
 echo $check?"Inventory matches; operational readiness remains blocked.\n":"Inventory written; operational readiness remains blocked.\n";

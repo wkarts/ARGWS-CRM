@@ -30,6 +30,7 @@
 </div>
 <?php $this->load->view('admin/paymentmodes/paymentmode'); ?>
 <?php init_tail(); ?>
+<?php if (!empty($native_payment_modes)) { ?><script src="<?= base_url('assets/js/native-admin-payment-modes.js'); ?>"></script><?php } ?>
 <script>
     $(function() {
         initDataTable('.table-payment-modes', window.location.href, [4], [4], 'undefined', [1, 'asc']);

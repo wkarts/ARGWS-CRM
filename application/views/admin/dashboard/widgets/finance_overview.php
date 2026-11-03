@@ -1,9 +1,15 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php
-$canViewInvoices  = (staff_can('view', 'invoices') || staff_can('view_own', 'invoices') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices()));
-$canViewProposals = (staff_can('view', 'proposals') || staff_can('view_own', 'proposals') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals()));
-$canViewEstimates = (staff_can('view', 'estimates') || staff_can('view_own', 'estimates') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates()));
+if (isset($company_dashboard)) {
+    require_once APPPATH . 'services/NativeCompanySalesDirectory.php';
+}
+$canViewInvoices  = isset($company_dashboard) ? $company_dashboard['permissions']['invoices'] : (staff_can('view', 'invoices') || staff_can('view_own', 'invoices') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices()));
+$canViewProposals = isset($company_dashboard) ? $company_dashboard['permissions']['proposals'] : (staff_can('view', 'proposals') || staff_can('view_own', 'proposals') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals()));
+$canViewEstimates = isset($company_dashboard) ? $company_dashboard['permissions']['estimates'] : (staff_can('view', 'estimates') || staff_can('view_own', 'estimates') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates()));
 
+$invoicePercentage=isset($company_dashboard)?static fn($status)=>$company_dashboard['finance_overview']['invoices'][$status]:'get_invoices_percent_by_status';
+$estimatePercentage=isset($company_dashboard)?static fn($status)=>$company_dashboard['finance_overview']['estimates'][$status]:'get_estimates_percent_by_status';
+$proposalPercentage=isset($company_dashboard)?static fn($status)=>$company_dashboard['finance_overview']['proposals'][$status]:'get_proposals_percent_by_status';
 switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposals]))) {
     case 3:
         $totalColumnsLg = 4;
@@ -54,7 +60,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                 </p>
 
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status(6); ?>
+                            <?php $percent_data = $invoicePercentage(6); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?status=6'); ?>"
                                     class="text-muted mbot15 inline-block">
@@ -74,7 +80,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                     </div>
                                 </div>
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status('not_sent'); ?>
+                            <?php $percent_data = $invoicePercentage('not_sent'); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?not_sent=1'); ?>"
                                     class="text-muted inline-block mbot15">
@@ -94,7 +100,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                     </div>
                                 </div>
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status(1); ?>
+                            <?php $percent_data = $invoicePercentage(1); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?status=1'); ?>"
                                     class="text-danger mbot15 inline-block">
@@ -114,7 +120,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                     </div>
                                 </div>
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status(3); ?>
+                            <?php $percent_data = $invoicePercentage(3); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?status=3'); ?>"
                                     class="text-warning mbot15 inline-block">
@@ -134,7 +140,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                     </div>
                                 </div>
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status(4); ?>
+                            <?php $percent_data = $invoicePercentage(4); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?status=4'); ?>"
                                     class="text-warning mbot15 inline-block">
@@ -154,7 +160,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                                     </div>
                                 </div>
                             </div>
-                            <?php $percent_data = get_invoices_percent_by_status(2); ?>
+                            <?php $percent_data = $invoicePercentage(2); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= admin_url('invoices/list_invoices?status=2'); ?>"
                                     class="text-success mbot15 inline-block">
@@ -198,27 +204,27 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                             </div>
                             <?php
                            // Add not sent
-                        array_splice($estimate_statuses, 1, 0, 'not_sent');
+                        if(!isset($company_dashboard))array_splice($estimate_statuses, 1, 0, 'not_sent');
 
                         foreach ($estimate_statuses as $status) {
-                            if (! is_numeric($status)) {
+                            if (!isset($company_dashboard) && !is_numeric($status)) {
                                 $url = admin_url('estimates/list_estimates?' . $status . '=1');
                             } else {
-                                $url = admin_url('estimates/list_estimates?status=' . $status);
+                                $url = admin_url('estimates/list_estimates?status=' . (isset($company_dashboard) ? NativeCompanySalesDirectory::status('estimates', $status) : $status));
                             }
-                            $percent_data = get_estimates_percent_by_status($status); ?>
+                            $percent_data = $estimatePercentage($status); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= e($url); ?>"
-                                    class="text-<?= estimate_status_color_class($status, true); ?> mbot15 inline-block estimate-status-dashboard-<?= estimate_status_color_class($status, true); ?>">
+                                    class="text-<?= (isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : estimate_status_color_class($status, true)); ?> mbot15 inline-block estimate-status-dashboard-<?= (isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : estimate_status_color_class($status, true)); ?>">
                                     <span
                                         class="_total bold"><?= e($percent_data['total_by_status']); ?></span>
-                                    <?= format_estimate_status($status, '', false); ?>
+                                    <?= (isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['label']) : format_estimate_status($status, '', false)); ?>
                                 </a>
                             </div>
                             <div class="col-md-12 text-right progress-finance-status tw-text-neutral-400">
                                 <?= e($percent_data['percent']); ?>%
                                 <div class="progress no-margin progress-bar-mini">
-                                    <div class="progress-bar progress-bar-<?= estimate_status_color_class($status); ?> no-percent-text not-dynamic"
+                                    <div class="progress-bar progress-bar-<?= isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : estimate_status_color_class($status); ?> no-percent-text not-dynamic"
                                         role="progressbar"
                                         aria-valuenow="<?= e($percent_data['percent']); ?>"
                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%"
@@ -251,20 +257,20 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
 
                             </div>
                             <?php foreach ($proposal_statuses as $status) {
-                                $url          = admin_url('proposals/list_proposals?status=' . $status);
-                                $percent_data = get_proposals_percent_by_status($status); ?>
+                                $url          = admin_url('proposals/list_proposals?status=' . (isset($company_dashboard) ? NativeCompanySalesDirectory::status('proposals', $status) : $status));
+                                $percent_data = $proposalPercentage($status); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= e($url); ?>"
-                                    class="text-<?= proposal_status_color_class($status, true); ?> mbot15 inline-block">
+                                    class="text-<?= (isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : proposal_status_color_class($status, true)); ?> mbot15 inline-block">
                                     <span
                                         class="_total bold"><?= e($percent_data['total_by_status']); ?></span>
-                                    <?= format_proposal_status($status, '', false); ?>
+                                    <?= (isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['label']) : format_proposal_status($status, '', false)); ?>
                                 </a>
                             </div>
                             <div class="col-md-12 text-right progress-finance-status tw-text-neutral-400">
                                 <?= e($percent_data['percent']); ?>%
                                 <div class="progress no-margin progress-bar-mini">
-                                    <div class="progress-bar progress-bar-<?= proposal_status_color_class($status); ?> no-percent-text not-dynamic"
+                                    <div class="progress-bar progress-bar-<?= isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : proposal_status_color_class($status); ?> no-percent-text not-dynamic"
                                         role="progressbar"
                                         aria-valuenow="<?= e($percent_data['percent']); ?>"
                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%"
@@ -278,11 +284,11 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                     </div>
                     <?php } ?>
                 </div>
-                <?php if (staff_can('view', 'invoices') || staff_can('view_own', 'invoices')) { ?>
+                <?php if ($canViewInvoices) { ?>
                 <hr class="-tw-mx-8" />
                 <a href="#" class="hide invoices-total initialized"></a>
                 <div id="invoices_total" class="invoices-total-inline">
-                    <?php load_invoices_total_template(); ?>
+                    <?php if(isset($company_dashboard)) { $this->load->view('admin/invoices/invoices_total_template',$company_dashboard['invoices_total']); } else { load_invoices_total_template(); } ?>
                 </div>
                 <?php } ?>
             </div>

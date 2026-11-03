@@ -1,4 +1,5 @@
 <?php
+if(!defined('APPPATH'))define('APPPATH',dirname(__DIR__).'/application/');
 ob_start();require __DIR__.'/invoice_issuer_scope.php';ob_end_clean();
 require __DIR__.'/../application/models/Misc_model.php';
 require __DIR__.'/../application/models/Subscriptions_model.php';
@@ -22,9 +23,9 @@ function has_contact_permission(...$args) { return true; }
 function admin_url($path) { return $path; }
 function sales_number_format($number,$format,$prefix,$date) { return $prefix.$number; }
 if($pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite') {
- @$pdo->sqliteCreateFunction('YEAR',fn($date)=>(int)date('Y',strtotime($date)));
- @$pdo->sqliteCreateFunction('CONCAT',fn(...$values)=>implode('',$values));
- @$pdo->sqliteCreateFunction('VERSION',fn()=>'8.0');
+ TestPdo::registerSqliteFunction($pdo,'YEAR',fn($date)=>(int)date('Y',strtotime($date)));
+ TestPdo::registerSqliteFunction($pdo,'CONCAT',fn(...$values)=>implode('',$values));
+ TestPdo::registerSqliteFunction($pdo,'VERSION',fn()=>'8.0');
 }
 $fields=['vat','phonenumber','city','state','zip','address','billing_street','billing_city','billing_state','billing_zip','shipping_street','shipping_city','shipping_state','shipping_zip'];
 foreach($fields as $field) $db->query("ALTER TABLE {$prefix}clients ADD $field VARCHAR(50)");

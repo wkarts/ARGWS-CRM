@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
-if ($invoice->status == Invoices_model::STATUS_DRAFT) { ?>
+$nativeInvoicePreview=isset($native_invoice_preview_data);
+if ($invoice->status == (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)) { ?>
 <div class="alert alert-info">
     <?= _l('invoice_draft_status_info'); ?>
 </div>
@@ -19,7 +20,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
     <div class="row">
         <?php
 
-      if ($invoice->recurring > 0 || $invoice->is_recurring_from != null) {
+      if (!$nativeInvoicePreview && ($invoice->recurring > 0 || $invoice->is_recurring_from != null)) {
           $recurring_invoice           = $invoice;
           $show_recurring_invoice_info = true;
 
@@ -54,7 +55,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                 <?php } elseif ($show_recurring_invoice_info) { ?>
                 <span class="label label-info">
                     <?php
-               if ($recurring_invoice->status == Invoices_model::STATUS_DRAFT) {
+               if ($recurring_invoice->status == (isset($native_invoice_preview_data) ? 6 : Invoices_model::STATUS_DRAFT)) {
                    echo '<i class="fa-solid fa-circle-exclamation fa-fw text-warning tw-mr-1" data-toggle="tooltip" title="' . _l('recurring_invoice_draft_notice') . '"></i>';
                }
                     echo _l('cycles_remaining'); ?>:&nbsp;
@@ -87,34 +88,34 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
         <?php } ?>
         <div class="col-md-6 col-sm-6">
             <h4 class="bold">
-                <?php $tags = get_tags_in($invoice->id, 'invoice'); ?>
+                <?php $tags = isset($native_invoice_preview_data) ? $native_invoice_metadata['tags'] : get_tags_in($invoice->id, 'invoice'); ?>
                 <?php if (count($tags) > 0) { ?>
                 <i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip"
                     data-title="<?= e(implode(', ', $tags)); ?>"></i>
                 <?php } ?>
-                <a
-                    href="<?= admin_url('invoices/invoice/' . $invoice->id); ?>">
+                <?php if (!$nativeInvoicePreview) { ?><a
+                    href="<?= admin_url('invoices/invoice/' . $invoice->id); ?>"><?php } ?>
                     <span id="invoice-number">
-                        <?= e(format_invoice_number($invoice->id)); ?>
+                        <?= e(isset($native_invoice_preview_data) ? $native_invoice_preview_data['document']['number'] : format_invoice_number($invoice->id)); ?>
                     </span>
-                </a>
+                <?php if (!$nativeInvoicePreview) { ?></a><?php } ?>
             </h4>
             <address>
-                <?= format_organization_info(); ?>
+                <?php if (isset($native_invoice_preview_data)) { require_once APPPATH.'services/NativeCompanyInvoicePreviewData.php'; echo NativeCompanyInvoicePreviewData::addressHtml($native_invoice_preview_data['document']['identity']); } else { echo format_organization_info(); } ?>
             </address>
-            <?php hooks()->do_action('after_left_panel_invoice_preview_template', $invoice); ?>
+            <?php if (!$nativeInvoicePreview) { hooks()->do_action('after_left_panel_invoice_preview_template', $invoice); } ?>
         </div>
         <div class="col-sm-6 text-right">
             <span
                 class="bold"><?= _l('invoice_bill_to'); ?></span>
             <address class="tw-text-neutral-500">
-                <?= format_customer_info($invoice, 'invoice', 'billing', true); ?>
+                <?= isset($native_invoice_preview_data) ? NativeCompanyInvoicePreviewData::addressHtml($native_invoice_preview_data['document']['recipient'], true) : format_customer_info($invoice, 'invoice', 'billing', true); ?>
             </address>
             <?php if ($invoice->include_shipping == 1 && $invoice->show_shipping_on_invoice == 1) { ?>
             <span
                 class="bold"><?= _l('ship_to'); ?></span>
             <address class="tw-text-neutral-500">
-                <?= format_customer_info($invoice, 'invoice', 'shipping'); ?>
+                <?= isset($native_invoice_preview_data) ? NativeCompanyInvoicePreviewData::addressHtml($native_invoice_preview_data['document']['recipient'], true, true) : format_customer_info($invoice, 'invoice', 'shipping'); ?>
             </address>
             <?php } ?>
             <p class="no-mbot">
@@ -146,9 +147,9 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                 <?= e(get_project_name_by_id($invoice->project_id)); ?>
             </p>
             <?php } ?>
-            <?php $pdf_custom_fields = get_custom_fields('invoice', ['show_on_pdf' => 1]); ?>
+            <?php $pdf_custom_fields = isset($native_invoice_preview_data) ? $native_invoice_metadata['pdf_fields'] : get_custom_fields('invoice', ['show_on_pdf' => 1]); ?>
             <?php foreach ($pdf_custom_fields as $field) {
-                $value = get_custom_field_value($invoice->id, $field['id'], 'invoice');
+                $value = isset($native_invoice_preview_data) ? $field['value'] : get_custom_field_value($invoice->id, $field['id'], 'invoice');
                 if ($value == '') {
                     continue;
                 } ?>
@@ -156,10 +157,10 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                 <span
                     class="bold"><?= e($field['name']); ?>:
                 </span>
-                <?= $value; ?>
+                <?= isset($native_invoice_preview_data) ? e($value) : $value; ?>
             </p>
             <?php } ?>
-            <?php hooks()->do_action('after_right_panel_invoice_preview_template', $invoice); ?>
+            <?php if (!$nativeInvoicePreview) { hooks()->do_action('after_right_panel_invoice_preview_template', $invoice); } ?>
         </div>
     </div>
     <div class="row">
@@ -197,7 +198,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                     </tr>
                     <?php } ?>
                     <?php foreach ($items->taxes() as $tax) {
-                        echo '<tr class="tax-area"><td class="tw-font-medium !tw-text-neutral-700">' . e($tax['taxname']) . ' (' . e(app_format_number($tax['taxrate'])) . '%)</td><td>' . e(app_format_money($tax['total_tax'], $invoice->currency_name)) . '</td></tr>';
+                        echo '<tr class="tax-area"><td class="tw-font-medium !tw-text-neutral-700">' . e($tax['taxname']) . ' (' . e($nativeInvoicePreview ? NativeCompanyTaxRate::display($tax['taxrate']) : app_format_number($tax['taxrate'])) . '%)</td><td>' . e(app_format_money($tax['total_tax'], $invoice->currency_name)) . '</td></tr>';
                     } ?>
                     <?php if ((int) $invoice->adjustment != 0) { ?>
                     <tr>
@@ -226,11 +227,12 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                                 class="tw-font-medium tw-text-neutral-700"><?= _l('invoice_total_paid'); ?></span>
                         </td>
                         <td>
-                            <?= e('-' . app_format_money(sum_from_table(db_prefix() . 'invoicepaymentrecords', ['field' => 'amount', 'where' => ['invoiceid' => $invoice->id]]), $invoice->currency_name)); ?>
+                            <?= e('-' . app_format_money($nativeInvoicePreview ? $native_invoice_preview_data['balance']['received'] : sum_from_table(db_prefix() . 'invoicepaymentrecords', ['field' => 'amount', 'where' => ['invoiceid' => $invoice->id]]), $invoice->currency_name)); ?>
                         </td>
                     </tr>
                     <?php } ?>
-                    <?php if (get_option('show_credits_applied_on_invoice') == 1 && $credits_applied = total_credits_applied_to_invoice($invoice->id)) { ?>
+                    <?php $credits_applied = $nativeInvoicePreview ? $native_invoice_preview_data['balance']['applied_credit'] : total_credits_applied_to_invoice($invoice->id); ?>
+                    <?php if (get_option('show_credits_applied_on_invoice') == 1 && (float)$credits_applied > 0) { ?>
                     <tr>
                         <td>
                             <span
@@ -241,7 +243,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                         </td>
                     </tr>
                     <?php } ?>
-                    <?php if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != Invoices_model::STATUS_CANCELLED) { ?>
+                    <?php if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != (isset($native_invoice_preview_data) ? 5 : Invoices_model::STATUS_CANCELLED)) { ?>
                     <tr>
                         <td>
                             <span
@@ -261,6 +263,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
             </table>
         </div>
     </div>
+    <?php if (isset($native_invoice_preview_data)) $this->load->view('admin/invoices/financial_position', ['native_invoice_preview_data' => $native_invoice_preview_data]); ?>
     <?php if (count($invoice->attachments) > 0) { ?>
     <div class="clearfix"></div>
     <hr />
@@ -273,7 +276,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
             $attachment_url = $attachment['external_link'];
         } ?>
     <div class="mbot15 row inline-block full-width"
-        data-attachment-id="<?= e($attachment['id']); ?>">
+        data-attachment-id="<?= e($attachment['id']); ?>"<?php if (($attachment['native_file_source'] ?? null) === 'invoice') { ?> data-native-file-revision="<?= e($attachment['revision']); ?>"<?php } ?>>
         <div class="col-md-8">
             <a href="<?= e($attachment_url); ?>"
                 target="_blank"><?= e($attachment['file_name']); ?></a>
@@ -289,13 +292,14 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
                 $icon    = 'fa-toggle-on';
                 $tooltip = _l('hide_from_customer');
             } ?>
-            <a href="#" data-toggle="tooltip" class="text-muted"
+            <?php if (!$nativeInvoicePreview || staff_can('edit', 'invoices')) { ?><a href="#" data-toggle="tooltip" class="text-muted"
                 onclick="toggle_file_visibility(<?= e($attachment['id']); ?>,<?= e($invoice->id); ?>,this); return false;"
+                <?php if (($attachment['native_file_source'] ?? null) === 'invoice') { ?>data-native-file-source="invoice" data-native-file-revision="<?= e($attachment['revision']); ?>" data-native-file-visible="<?= e($attachment['visible_to_customer']); ?>"<?php } ?>
                 data-title="<?= e($tooltip); ?>">
                 <i class="fa <?= e($icon); ?> fa-lg"
                     aria-hidden="true"></i>
-            </a>
-            <?php if ($attachment['staffid'] == get_staff_user_id() || is_admin()) { ?>
+            </a><?php } ?>
+            <?php if (($attachment['native_file_source'] ?? null) === 'invoice' ? (($attachment['can_delete'] ?? false) === true) : ($attachment['staffid'] == get_staff_user_id() || is_admin())) { ?>
             <a href="#" class="text-muted"
                 onclick="delete_invoice_attachment(<?= e($attachment['id']); ?>); return false;">
                 <i class="fa-regular fa-trash-can"></i>

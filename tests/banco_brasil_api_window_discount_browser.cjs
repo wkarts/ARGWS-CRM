@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Real CRM UI and browser guards; the named CLI fixture injects only synthetic bank transport.
 const assert=require('node:assert/strict'),fs=require('node:fs'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -14,7 +14,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
  try{
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");let stale,ownA;
-  async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(id));}
+  async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, String(id));}
   async function billing(f,kind){await page.goto(url+'/admin/banco_brasil?issuer_id='+f.issuer);await page.locator('#bb-tab-billing').click();const form=page.locator('form.bb-api-'+kind+'-form').filter({has:page.locator('input[name=origin_id][value="'+f.origin+'"]')});assert.equal(await form.count(),1);return form;}
   const route={window:'amend_api_receipt_window',assign:'assign_api_discount',clear:'cancel_api_discount'},field={window:'window_instruction',assign:'discount_assignment',clear:'discount_cancellation'};
   for(const[id,letter]of[[a,'a'],[b,'b']]){

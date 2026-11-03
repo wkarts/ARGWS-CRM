@@ -5,6 +5,22 @@ require_once __DIR__.'/CompanyProjectContactFilesStorage.php';require_once __DIR
 /** Native contact project file writes: no staff identity, physical deletion or broad publication. */
 final class CompanyProjectContactFileWrite extends CompanyProjectContactFilesStorage
 {
+    private bool $nativeFileRemoval = false;
+    public function tables(): array { return array_values(array_unique(array_merge(parent::tables(), ['options']))); }
+    protected function canHide(int $issuer): bool
+    {
+        if (!$this->nativeFileRemoval) return parent::canHide($issuer);
+        require_once __DIR__.'/CompanySettingsStorage.php';
+        return (new CompanySettingsStorage($this->db,$this->p))->get($issuer,'allow_contact_to_delete_files') === '1';
+    }
+    /** Same native file policy as Clients settings; no fallback to the retired parallel preferences. */
+    public function hideNative(array $session,$issuer,$project,$projectRevision,$collectionRevision,string $file,string $key): array
+    {
+        $this->nativeFileRemoval = true;
+        try { return $this->hide($session,$issuer,$project,$projectRevision,$collectionRevision,$file,$key); }
+        finally { $this->nativeFileRemoval = false; }
+    }
+
     private function operation(array $session,int $issuer,int $project,int $projectRevision,int $collectionRevision,string $op,array $input,string $key,callable $work):array
     {
         self::key($key);$hash=self::hash([$project,$projectRevision,$collectionRevision,$op,$input]);return $this->tx(function()use($session,$issuer,$project,$projectRevision,$collectionRevision,$op,$input,$key,$hash,$work):array{

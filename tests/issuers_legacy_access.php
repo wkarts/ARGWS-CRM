@@ -51,4 +51,25 @@ essentialCheck(!$acl->member($primary,25),'failure rolls back newly attempted me
 $db->trans_begin();essentialThrows(fn()=>IssuerLegacyAccess::apply($db,$p),'issuer_outer_transaction_not_allowed','external transaction refused');essentialCheck($db->pdo->inTransaction(),'caller transaction retained');$db->trans_rollback();
 $db->query("INSERT INTO {$p}staff_permissions VALUES(11,'bad key','view')");essentialThrows(fn()=>IssuerLegacyAccess::apply($db,$p),'issuer_invalid_permission','malformed persisted key is reported instead of silently discarded');
 essentialCheck($db->query("SELECT legacy_access_migrated_at FROM {$ip}installation_identity WHERE id=1")->row()->legacy_access_migrated_at===null,'invalid source cannot advance marker');
+
+// A pre-company resource ACL table is archived verbatim, mapped only into the
+// principal company for active members, and never replayed after later revokes.
+$legacyFixture=essentialFixture('1.0.2',1);$legacyDb=$legacyFixture->db;$legacyPrefix=$legacyFixture->prefix;$legacyIssuerPrefix=$legacyPrefix.'issuers_';
+$legacyDb->query("INSERT INTO {$legacyPrefix}staff VALUES(11,1,0,NULL)");
+$legacyDb->query("CREATE TABLE {$legacyIssuerPrefix}resource_permissions (staff_id INT NOT NULL,feature VARCHAR(100) NOT NULL,capability VARCHAR(100) NOT NULL,PRIMARY KEY(staff_id,feature,capability)) ENGINE=InnoDB");
+$legacyDb->query("INSERT INTO {$legacyIssuerPrefix}resource_permissions VALUES(11,'invoices','view'),(11,'invoices','view_own')");
+$archive=IssuerAccessSchema::legacyResourcePermissionsTable($legacyPrefix);
+IssuerCore::reconcile($legacyDb,$legacyPrefix);
+$legacyPrimary=(new IssuerResourceAccess($legacyDb,$legacyPrefix))->primaryId();
+$legacyAcl=new IssuerResourceAccess($legacyDb,$legacyPrefix);
+essentialCheck($legacyDb->table_exists($archive),'legacy ACL source is retained under its archive name');
+essentialCheck((int)$legacyDb->query("SELECT COUNT(*) AS n FROM `{$archive}`")->row()->n===2,'archived ACL rows remain available');
+essentialCheck($legacyAcl->can($legacyPrimary,11,'invoices','view')&&$legacyAcl->can($legacyPrimary,11,'invoices','view_own'),'legacy grants are mapped to active primary-company membership');
+$legacyDb->query("INSERT INTO {$legacyIssuerPrefix}registry(legal_name,tax_id,active,settings_json,created_by,created_at) VALUES('Synthetic B',NULL,1,'{}',7,'2026-10-26 00:00:00')");$legacyOther=(int)$legacyDb->insert_id();
+$legacyDb->query("INSERT INTO {$legacyIssuerPrefix}staff(issuer_id,staff_id,can_view) VALUES(?,11,1)",[$legacyOther]);
+essentialCheck(!$legacyAcl->can($legacyOther,11,'invoices','view')&&!$legacyAcl->can($legacyOther,11,'invoices','view_own'),'legacy ACL grants do not cross into a secondary company');
+$legacyDb->query("DELETE FROM {$legacyIssuerPrefix}resource_permissions WHERE issuer_id=? AND staff_id=11 AND feature='invoices'",[$legacyPrimary]);
+IssuerCore::reconcile($legacyDb,$legacyPrefix);
+essentialCheck(!$legacyAcl->can($legacyPrimary,11,'invoices','view')&&!$legacyAcl->can($legacyPrimary,11,'invoices','view_own'),'reconciliation never restores revoked archived grants');
+essentialCheck($legacyDb->query("SELECT legacy_resource_permissions_migrated_at FROM {$legacyIssuerPrefix}installation_identity WHERE id=1")->row()->legacy_resource_permissions_migrated_at!==null,'one-time legacy ACL marker is persisted');
 echo 'Legacy principal access: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().').'.PHP_EOL;

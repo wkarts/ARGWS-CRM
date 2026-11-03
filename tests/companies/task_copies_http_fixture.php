@@ -4,7 +4,7 @@ if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit
 set_exception_handler(static function($e){fwrite(STDERR,get_class($e).':'.$e->getMessage().PHP_EOL);exit(1);});
 define('FCPATH',dirname(__DIR__,2).'/');define('BASEPATH',FCPATH.'system/');define('APPPATH',FCPATH.'application/');
 require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit(2);
-require dirname(__DIR__).'/support/BbPdoDatabase.php';require APPPATH.'services/CompanyTaskCopies.php';function db_prefix(){return 'tbl';}
+require dirname(__DIR__).'/support/BbPdoDatabase.php';require_once APPPATH.'services/CompanyTaskCopies.php';function db_prefix(){return 'tbl';}
 $pdo=new PDO('mysql:host='.str_replace(':',';port=',APP_DB_HOSTNAME).';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);
 $identity=$db->query('SELECT master_staff_id,primary_issuer_id FROM tblissuers_installation_identity WHERE id=1')->row_array();$actor=(int)$identity['master_staff_id'];$owners=['a'=>(int)$db->query("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'")->row()->id,'b'=>(int)$db->query("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'")->row()->id,'primary'=>(int)$identity['primary_issuer_id']];$mode=$argv[1]??'';
 function individualFixtureHash(array $rows):string{$rows=array_map('serialize',$rows);sort($rows,SORT_STRING);return hash('sha256',serialize($rows));}

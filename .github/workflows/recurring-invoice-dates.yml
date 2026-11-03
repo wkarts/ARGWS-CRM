@@ -32,6 +32,9 @@ on:
       - .github/workflows/recurring-invoice-dates.yml
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   calendar:
     runs-on: ubuntu-latest

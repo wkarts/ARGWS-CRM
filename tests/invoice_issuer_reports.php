@@ -16,9 +16,9 @@ function handle_custom_fields_post(...$args) { return false; }
 function do_action_deprecated(...$args) {}
 function log_activity(...$args) {}
 if($pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite') {
- @$pdo->sqliteCreateFunction('YEAR',fn($date)=>(int)date('Y',strtotime($date)));
- @$pdo->sqliteCreateFunction('MONTH',fn($date)=>(int)date('n',strtotime($date)));
- @$pdo->sqliteCreateFunction('YEARWEEK',fn($date)=>(int)date('oW',strtotime($date)));
+ TestPdo::registerSqliteFunction($pdo,'YEAR',fn($date)=>(int)date('Y',strtotime($date)));
+ TestPdo::registerSqliteFunction($pdo,'MONTH',fn($date)=>(int)date('n',strtotime($date)));
+ TestPdo::registerSqliteFunction($pdo,'YEARWEEK',fn($date)=>(int)date('oW',strtotime($date)));
 }
 $db->query("ALTER TABLE {$prefix}invoicepaymentrecords ADD date VARCHAR(10)");
 $db->query("UPDATE {$prefix}invoicepaymentrecords SET date=?",[date('Y-m-d')]);

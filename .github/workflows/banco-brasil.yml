@@ -2,15 +2,40 @@ name: Banco do Brasil module
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'scripts/ci/bb-sql*', 'tests/ci/test_bb_sql*', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   push:
     branches: [main]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'scripts/ci/bb-sql*', 'tests/ci/test_bb_sql*', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  validation-gate:
+    name: Preflight and exact-tree evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_WORKFLOW_PATH: .github/workflows/banco-brasil.yml
+        run: python3 scripts/ci/validation-gate.py
   checkout-presentation:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -31,6 +56,8 @@ jobs:
           path: /tmp/bb-checkout-render/
           if-no-files-found: error
   unit:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -41,11 +68,14 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+          extensions: pdo_sqlite, mbstring
+      - run: php tests/companies/bb_channel_preferences.php
       - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/banco_brasil_checkout_legacy_guard.php
       - run: php tests/banco_brasil_admin.php
       - run: php tests/banco_brasil_cnab240.php
-      - run: php tests/banco_brasil_cnab400.php
+      # Includes the existing parser suite plus invoice comparison; no duplicate run.
+      - run: php tests/banco_brasil_cnab400_invoice_comparison.php
       - run: php tests/banco_brasil_store.php
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
@@ -60,8 +90,19 @@ jobs:
       - run: php tests/banco_brasil_api_movements.php
       - run: php tests/banco_brasil_mtls.php
       - run: python3 tests/banco_brasil_mtls_transport.py
-  mysql:
+  mysql-shards:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
+    name: mysql SQL shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      BB_SQL_RECEIPT: /tmp/bb-sql-mysql-${{ matrix.shard }}.json
     services:
       mysql:
         image: mysql:8.4
@@ -78,23 +119,25 @@ jobs:
           extensions: gd, pdo_mysql, mysqli, curl, mbstring, bcmath
           coverage: none
       - run: |
+          python3 scripts/ci/bb-sql-run.py run --database mysql --shard "${{ matrix.shard }}" --receipt "$BB_SQL_RECEIPT" <<'BB_SQL_COMMANDS'
+          set -x # Trace test entrypoints only; no credential values or banking payloads.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
-          php tests/banco_brasil_api_monthly_interest_mysql.php
           php tests/banco_brasil_api_fixed_discount.php
-          php tests/banco_brasil_api_fixed_discount_mysql.php
           php tests/banco_brasil_api_fixed_discount_concurrency.php
           php tests/banco_brasil_api_percentage_discount.php
-          php tests/banco_brasil_api_percentage_discount_mysql.php
           php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
           php tests/banco_brasil_api16_components_data.php
-          php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
-          php tests/banco_brasil_api16_components_portal_mysql.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
           php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
@@ -130,7 +173,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php
@@ -145,6 +187,7 @@ jobs:
           php tests/banco_brasil_local_noncash_clock_v3.php
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php
+          BB_SQL_COMMANDS
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           MYSQL_USER: root
@@ -152,9 +195,29 @@ jobs:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: root
+      - name: Preserve exact SQL completion receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bb-sql-mysql-${{ matrix.shard }}
+          path: ${{ env.BB_SQL_RECEIPT }}
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 3
 
-  mariadb:
+  mariadb-shards:
+    if: ${{ needs.validation-gate.outputs.run == 'true' }}
+    needs: validation-gate
+    name: mariadb SQL shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      BB_SQL_RECEIPT: /tmp/bb-sql-mariadb-${{ matrix.shard }}.json
     services:
       mariadb:
         image: mariadb:11.4
@@ -179,8 +242,13 @@ jobs:
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: synthetic-ci-password
         run: |
+          python3 scripts/ci/bb-sql-run.py run --database mariadb --shard "${{ matrix.shard }}" --receipt "$BB_SQL_RECEIPT" <<'BB_SQL_COMMANDS'
+          set -x # Preserve the exact test at a failure/cancellation.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/issuers_core.php
           php tests/companies/clients.php
@@ -194,9 +262,9 @@ jobs:
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
           php tests/banco_brasil_api16_components_data.php
-          php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
-          php tests/banco_brasil_api16_components_portal_mysql.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
           php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
@@ -208,12 +276,9 @@ jobs:
           php tests/banco_brasil_api16_mutation_fence_concurrency.php
           php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
-          php tests/banco_brasil_api_monthly_interest_mysql.php
           php tests/banco_brasil_api_fixed_discount.php
-          php tests/banco_brasil_api_fixed_discount_mysql.php
           php tests/banco_brasil_api_fixed_discount_concurrency.php
           php tests/banco_brasil_api_percentage_discount.php
-          php tests/banco_brasil_api_percentage_discount_mysql.php
           php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php
@@ -243,7 +308,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php
@@ -258,3 +322,55 @@ jobs:
           php tests/banco_brasil_local_noncash_clock_v3.php
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php
+          BB_SQL_COMMANDS
+      - name: Preserve exact SQL completion receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bb-sql-mariadb-${{ matrix.shard }}
+          path: ${{ env.BB_SQL_RECEIPT }}
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 3
+
+  mysql:
+    name: mysql
+    if: ${{ always() }}
+    needs: [validation-gate, mysql-shards]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect all four SQL receipts
+        if: ${{ needs.validation-gate.result == 'success' && needs.validation-gate.outputs.run == 'true' && needs.mysql-shards.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bb-sql-mysql-*
+          path: /tmp/bb-sql-receipts/mysql
+          merge-multiple: true
+      - name: Require gate success and complete original SQL coverage
+        env:
+          GATE_RESULT: ${{ needs.validation-gate.result }}
+          GATE_RUN: ${{ needs.validation-gate.outputs.run }}
+          SHARDS_RESULT: ${{ needs.mysql-shards.result }}
+        run: python3 scripts/ci/bb-sql-run.py aggregate --database mysql --receipts /tmp/bb-sql-receipts/mysql
+
+  mariadb:
+    name: mariadb
+    if: ${{ always() }}
+    needs: [validation-gate, mariadb-shards]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect all four SQL receipts
+        if: ${{ needs.validation-gate.result == 'success' && needs.validation-gate.outputs.run == 'true' && needs.mariadb-shards.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bb-sql-mariadb-*
+          path: /tmp/bb-sql-receipts/mariadb
+          merge-multiple: true
+      - name: Require gate success and complete original SQL coverage
+        env:
+          GATE_RESULT: ${{ needs.validation-gate.result }}
+          GATE_RUN: ${{ needs.validation-gate.outputs.run }}
+          SHARDS_RESULT: ${{ needs.mariadb-shards.result }}
+        run: python3 scripts/ci/bb-sql-run.py aggregate --database mariadb --receipts /tmp/bb-sql-receipts/mariadb

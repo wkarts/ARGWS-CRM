@@ -504,6 +504,24 @@ $config['csrf_exclude_uris'] = ['company_operations_api/(hr_structure|hr_employe
     'company_api/drafts',
     'company_api/(draft_change|draft_cancel|draft_issue)/[1-9][0-9]*', 'company_api/credits', 'company_api/(payments|payment_reverse|credit_apply|credit_unapply|credit_refund|credit_refund_reverse|credit_void)/[1-9][0-9]*', 'company_asaas_callback/integration/[a-f0-9]{32}', 'forms/wtl/[0-9a-z]+', 'forms/ticket', 'forms/quote/[0-9a-z]+', 'admin/tasks/timer_tracking', 'api\/.+', 'razorpay/success\/.+'];
 
+// Canonical controller namespaces are first-class routes. Keep the finite
+// historical aliases above while granting the same machine-only CSRF boundary
+// to their official names; browser/admin URLs remain protected.
+$config['csrf_exclude_uris'] = array_merge($config['csrf_exclude_uris'], [
+    'operations_api/(hr_structure|hr_employees|hr_profiles|hr_records|hr_contracts|hr_courses|hr_assignments|hr_accesses|hr_files|hr_reports|hr_imports|hr_articles|hr_documents)(/[1-9][0-9]{0,9})?',
+    'purchases_api/index/(suppliers|requests|quotes|orders|receipts|documents|payables|events|files|file_download|settings|reports|invites|order_pdf|export)(/[1-9][0-9]{0,9})?',
+    'operations_api/project_copies/[1-9][0-9]{0,9}',
+    'operations_api/(project_files|task_files|contract_files|ticket_files)/[1-9][0-9]{0,9}(/[a-f0-9]{64})?',
+    'operations_api/(project_milestones|task_dependencies|project_follow|task_follow)/[1-9][0-9]{0,9}',
+    'operations_api/(projects|tasks|standalone_tasks|contracts|tickets)(/[1-9][0-9]{0,9})?',
+    'operations_api/(task_schedules|standalone_schedules)(/[1-9][0-9]{0,9})?',
+    'operations_api/(leads|lead_stages|lead_sources|lead_inbox)(/[1-9][0-9]{0,9})?',
+    'operations_api/(lead_assignees|lead_exports)',
+    'operations_api/lead_imports(/[a-f0-9]{32})?',
+    'operations_api/lead_files/[1-9][0-9]{0,9}(/[a-f0-9]{64})?',
+    'asaas_callback/integration/[a-f0-9]{32}',
+]);
+
 // Efí provider notifications query authenticated charge state; only these finite
 // inboxes omit browser CSRF. Creation, polling and certificate operations do not.
 $config['csrf_exclude_uris'] = array_merge($config['csrf_exclude_uris'], [

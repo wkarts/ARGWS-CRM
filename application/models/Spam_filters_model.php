@@ -55,29 +55,7 @@ class Spam_filters_model extends App_Model
 
     public function check($email, $subject, $message, $rel_type)
     {
-        $status       = false;
-        $spam_filters = $this->get($rel_type);
-
-        foreach ($spam_filters as $filter) {
-            $type  = $filter['type'];
-            $value = $filter['value'];
-            if ($type == 'sender') {
-                if (strtolower($value) == strtolower($email)) {
-                    $status = 'Blocked Sender';
-                }
-            }
-            if ($type == 'subject') {
-                if (strpos('x' . strtolower($subject), strtolower($value))) {
-                    $status = 'Blocked Subject';
-                }
-            }
-            if ($type == 'phrase') {
-                if (strpos('x' . strtolower($message), strtolower($value))) {
-                    $status = 'Blocked Phrase';
-                }
-            }
-        }
-
-        return $status;
+        require_once APPPATH.'services/NativeSpamFilterMatcher.php';
+        return NativeSpamFilterMatcher::check($this->get($rel_type), (string)$email, (string)$subject, (string)$message);
     }
 }

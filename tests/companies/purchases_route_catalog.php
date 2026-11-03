@@ -2,10 +2,10 @@
 declare(strict_types=1);
 define('BASEPATH',dirname(__DIR__,2).'/system/'); define('APPPATH',dirname(__DIR__,2).'/application/');
 $file=$argv[1]??APPPATH.'config/routes.php'; $route=[]; require $file;
-$expected=['company_purchase_portal'=>'company_purchase_portal/index','company_purchase_portal/index'=>'company_purchase_portal/index'];
+$expected=['company_purchase_portal'=>'purchase_portal/index','company_purchase_portal/index'=>'purchase_portal/index'];
 foreach (['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'] as $resource) {
-    $expected['company_purchases_api/index/'.$resource]='company_purchases_api/index/'.$resource;
-    $expected['company_purchases_api/index/'.$resource.'/([1-9][0-9]{0,9})']='company_purchases_api/index/'.$resource.'/$1';
+    $expected['company_purchases_api/index/'.$resource]='purchases_api/index/'.$resource;
+    $expected['company_purchases_api/index/'.$resource.'/([1-9][0-9]{0,9})']='purchases_api/index/'.$resource.'/$1';
 }
 $actual=array_filter($route,static fn($value,$key)=>str_starts_with($key,'company_purchase'),ARRAY_FILTER_USE_BOTH); ksort($expected); ksort($actual);
 if ($actual!==$expected) { throw new RuntimeException('Finite executable Purchase route catalog differs: expected32, actual'.count($actual)); }

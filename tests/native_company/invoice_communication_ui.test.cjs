@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('assets/js/native-ui-tools.js','utf8');
+const start=source.indexOf('function native_invoice_communication(');assert.ok(start>0);
+const attributes={'href':'https://crm.example.test/sub/admin/invoices/mark_as_sent/23','data-native-invoice-communication-revision':'a'.repeat(64)};
+const node={attr(k,v){if(v===undefined)return attributes[k];attributes[k]=v;return this;}};
+let calls=[],done,always,navigated=[],random=0;
+const transport={request(path,method,data,options){calls.push({path,method,data,options});return{done(fn){done=fn;return this;},always(fn){always=fn;return this;}};},navigate(path){navigated.push(path);}};
+const context={window:{NativeCompanyTransport:transport,crypto:{getRandomValues(b){random++;b.fill(17);}}},$:()=>node,Uint8Array};
+vm.createContext(context);vm.runInContext(source.slice(start),context);
+assert.equal(context.native_invoice_communication({}),false);assert.equal(calls[0].method,'POST');assert.equal(calls[0].data.revision,'a'.repeat(64));assert.equal(calls[0].data.request_key,'11'.repeat(32));
+context.native_invoice_communication({});assert.equal(calls.length,1,'busy click cannot dispatch twice');always();
+context.native_invoice_communication({});assert.equal(calls.length,2);assert.equal(random,1,'uncertain request retries same durable key');assert.equal(calls[1].data.request_key,calls[0].data.request_key);
+done({success:true,redirect:'/sub/admin/invoices/list_invoices/23'});assert.deepEqual(navigated,['/sub/admin/invoices/list_invoices/23']);always();
+delete attributes['data-native-invoice-communication-revision'];assert.throws(()=>context.native_invoice_communication({}),/revision_required/);assert.equal(calls.length,2);
+const view=fs.readFileSync('application/views/admin/invoices/invoice_preview_template.php','utf8');for(const action of ['pause_overdue_reminders','resume_overdue_reminders','mark_as_sent'])assert.match(view,new RegExp('native_invoice_communication\\(this\\);[\\s\\S]{0,160}invoices/'+action));
+console.log('Original invoice action UI: POST, captured revision, busy suppression, durable replay key and native redirect passed.');

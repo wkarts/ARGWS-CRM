@@ -1,6 +1,10 @@
 <?php
 /** Final API16 source and canonical writer, real SQL; only the provider protocol is simulated. */
 require __DIR__.'/banco_brasil_api_percentage_discount_mysql.php';require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ApiComponentsReceipt.php';
+// All assertions in the required chain have completed; later API16, portal and checkout
+// assertions use persisted rows/provider observations, not the earlier query log.
+// Release only test-harness diagnostics so the accumulated synthetic fixture stays bounded.
+$db->queries=[];
 $api16Proof=['credit_confirmed'=>'1','component_policy_confirmed'=>'1','reference'=>'Synthetic independently checked integral API16 credit','reason'=>'Explicit full local equation; interest, discount and abatement observed in the account-proven query'];
 function api16Observed(string $tag,array $override=[]):array{
  global$s,$a,$apiInput,$percentageApi,$monthlyProfile,$monthlyTitle,$db,$p,$titles;

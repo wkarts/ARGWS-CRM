@@ -17,6 +17,10 @@ class Reports extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            $this->ci = &get_instance();
+            return;
+        }
         if (staff_cant('view', 'reports')) {
             access_denied('reports');
         }
@@ -27,6 +31,11 @@ class Reports extends AdminController
     // No access on this url
     public function index()
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyReportsController.php';
+            NativeCompanyReportsController::handle($this);
+            return;
+        }
         redirect(admin_url());
     }
 

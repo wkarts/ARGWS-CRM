@@ -10,7 +10,7 @@
 							<h4 class="tw-my-0 tw-font-bold tw-text-xl">
 								<?= _l('invoices'); ?>
 							</h4>
-							<?php if (! isset($project)) { ?>
+							<?php if (! isset($project) && empty($native_company_invoice_manage)) { ?>
 							<a href="<?= admin_url('invoices/recurring'); ?>"
 								class="tw-mr-4">
 								<?= _l('invoices_list_recurring'); ?>

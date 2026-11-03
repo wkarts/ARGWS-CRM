@@ -3,6 +3,7 @@
 <div class="modal fade" id="copy_project" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('projects/copy/' . (isset($project) ? $project->id : '')), ['id' => 'copy_form', 'data-copy-url' => admin_url('projects/copy/')]); ?>
+        <?php if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){ ?><input type="hidden" name="native_copy_request_key" value="<?= e(bin2hex(random_bytes(32))); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

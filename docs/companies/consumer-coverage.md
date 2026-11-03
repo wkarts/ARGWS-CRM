@@ -2,7 +2,7 @@
 
 ## Estado atual reconciliado em 19/10/2026
 
-O histórico abaixo descreve etapas anteriores. `admin/company_clients` já está
+O histórico abaixo descreve etapas anteriores. `admin/clients?source=company` já está
 roteado no renderer isolado com CRUD/busca/paginação/compartilhamento/revogação.
 Portal privado já tem login/reset, templates/SMTP/fila por origem, permissão
 nativa e lista/PDF de faturas emitidas. Faturas nomeadas já têm emissão, edição

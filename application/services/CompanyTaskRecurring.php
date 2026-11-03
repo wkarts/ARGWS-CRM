@@ -5,6 +5,7 @@ require_once __DIR__.'/CompanyTaskRecurringDates.php';
 require_once __DIR__.'/CompanyTasks.php';
 require_once __DIR__.'/CompanyStandaloneTasks.php';
 require_once __DIR__.'/CompanyApiTokens.php';
+require_once __DIR__.'/NativeCompanyWorkAssignmentsSchema.php';
 
 /** Own local task recurrence. No legacy cron, transport, financial copy or ambient company. */
 final class CompanyTaskRecurring
@@ -28,7 +29,7 @@ final class CompanyTaskRecurring
     }
     public function tables():array
     {
-        return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','company_api_tokens','company_api_token_requests'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p),array_keys(CompanyTaskRecurringSchema::definitions($this->p)))));
+        return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','company_api_tokens','company_api_token_requests'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p),(new CompanyTasks($this->db,$this->p))->copyTransactionParticipants(),(new CompanyStandaloneTasks($this->db,$this->p))->copyTransactionParticipants(),($this->db->table_exists($this->p.'company_task_assignees')?array_keys(NativeCompanyWorkAssignmentsSchema::definitions($this->p)):[]),array_keys(CompanyTaskRecurringSchema::definitions($this->p)))));
     }
     private function access(int $i,int $a,string $kind,string $cap):void
     {
@@ -71,6 +72,16 @@ final class CompanyTaskRecurring
     private function taskFrame(int $i,string $kind,int $id):array
     {
         $frame=CompanyTaskPriority::frame($this->db,$this->p,$kind,$i,$id);
+        if(($frame['native']['native_fields_json']??null)!==null&&$frame['native']['assignee_id']===null){
+            NativeCompanyWorkAssignmentsSchema::assertValid($this->db,$this->p);
+            $table=$kind==='project'?'company_task_assignees':'company_standalone_assignees';
+            $rows=$this->rows('SELECT staff_id,active,revision,origin FROM '.$this->p.$table.' WHERE issuer_id=? AND task_id=? ORDER BY staff_id FOR UPDATE',[$i,$id]);
+            $active=array_values(array_filter($rows,static fn($r)=>(int)$r['active']===1));
+            if(count($active)!==1)throw new DomainException('company_task_recurring_reference_denied');
+            $staff=IssuerPolicy::id($active[0]['staff_id']);$acl=new IssuerResourceAccess($this->db,$this->p);
+            if(!$acl->can($i,$staff,'tasks','view')||($kind==='project'&&!$acl->can($i,$staff,'projects','view')))throw new DomainException('company_task_recurring_reference_denied');
+            $frame['assignment']=['assignee_id'=>$staff,'rows'=>array_map([self::class,'strings'],$rows)];
+        }
         $prefix=$kind==='project'?'company_task_':'company_standalone_';
         foreach(['comments','timers']as$child){$rows=$this->rows('SELECT * FROM '.$this->p.$prefix.$child.' WHERE issuer_id=? AND task_id=? ORDER BY id LIMIT 501 FOR UPDATE',[$i,$id]);if(count($rows)>500)throw new DomainException('company_task_recurring_limit');$frame[$child]=array_map([self::class,'strings'],$rows);}
         $frame['project']=null;$frame['dependencies']=[];$frame['files']=[];
@@ -86,7 +97,7 @@ final class CompanyTaskRecurring
         $r=$frame['native'];$checks=json_decode($r['checklist_json'],true,32,JSON_THROW_ON_ERROR);
         if(!is_array($checks)||!array_is_list($checks)||count($checks)>30)throw new DomainException('company_task_recurring_invalid');$reset=[];
         foreach($checks as$c){if(!is_array($c)||array_keys($c)!==['text','done']||!is_string($c['text'])||!in_array($c['done'],[0,1],true))throw new DomainException('company_task_recurring_invalid');$reset[]=['text'=>$c['text'],'done'=>0];}
-        $out=['assignee_id'=>IssuerPolicy::id($r['assignee_id']),'name'=>$r['name'],'description'=>$r['description'],'status'=>'todo','checklist'=>$reset,'priority'=>CompanyTaskPriority::value($frame['priority']['priority']??2)];
+        $out=['assignee_id'=>IssuerPolicy::id($frame['assignment']['assignee_id']??$r['assignee_id']),'name'=>$r['name'],'description'=>$r['description'],'status'=>'todo','checklist'=>$reset,'priority'=>CompanyTaskPriority::value($frame['priority']['priority']??2)];
         if($kind==='project')$out=['project_id'=>IssuerPolicy::id($r['project_id'])]+$out;return $out;
     }
     private function source(int $i,array $contract):array
@@ -168,6 +179,14 @@ final class CompanyTaskRecurring
     {
         $r=['request_key'=>$key,'issuer_id'=>$i,'actor_id'=>$a,'schedule_id'=>$id,'action'=>$action,'input_hash'=>$hash,'result_hash'=>self::hash($result),'result_json'=>self::json($result),'created_at'=>$now];$this->insert('company_task_schedule_requests',$r);
         $this->exact('company_task_schedule_requests','request_key=?',[$key],$r);$this->audit($i,$a,$id,'company_task_schedule_request',['row_hash'=>self::hash(self::strings($r))]);
+    }
+    public function sourceForReview(int $issuer,int $actor,string $kind,int $id):array
+    {
+        $kind=self::kind($kind);IssuerPolicy::id($id);
+        return $this->tx($issuer,$actor,$kind,'view',function()use($issuer,$kind,$id):array{
+            $frame=$this->taskFrame($issuer,$kind,$id);$this->watch(fn()=>$this->taskFrame($issuer,$kind,$id),$frame);
+            $row=$frame['native'];if(isset($frame['assignment']))$row['assignee_id']=$frame['assignment']['assignee_id'];return $row;
+        });
     }
     public function create($issuer,$actor,string $kind,$source,$sourceRevision,array $calendar,string $key,?array $apiOrigin=null):int
     {

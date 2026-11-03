@@ -14,7 +14,7 @@ if (count($invoices_to_merge) > 0) { ?>
                 data-toggle="tooltip"
                 data-title="<?= format_invoice_status($_inv->status, '', false); ?>"
                 target="_blank">
-                <?= e(format_invoice_number($_inv->id)); ?>
+                <?= e(isset($_inv->native_formatted_number) ? $_inv->native_formatted_number : format_invoice_number($_inv->id)); ?>
             </a> -
             <?= e(app_format_money($_inv->total, $_inv->currency_name)); ?>
         </label>

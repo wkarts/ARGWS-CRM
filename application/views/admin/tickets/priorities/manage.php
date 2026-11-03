@@ -32,17 +32,17 @@
                                     </td>
                                     <td><a href="#" class="tw-font-medium"
                                             onclick="edit_priority(this,<?= e($priority['priorityid']); ?>);return false;"
-                                            data-name="<?= e($priority['name']); ?>"><?= e($priority['name']); ?></a>
+                                            data-name="<?= e($priority['name']); ?>" <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($priority['revision_token']); ?>"<?php } ?>><?= e($priority['name']); ?></a>
                                     </td>
                                     <td>
                                         <div class="tw-flex tw-items-center tw-space-x-2">
                                             <a href="#"
                                                 onclick="edit_priority(this,<?= e($priority['priorityid']); ?>); return false"
-                                                data-name="<?= e($priority['name']); ?>"
+                                                data-name="<?= e($priority['name']); ?>" <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($priority['revision_token']); ?>"<?php } ?>
                                                 class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700">
                                                 <i class="fa-regular fa-pen-to-square fa-lg"></i>
                                             </a>
-                                            <a href="<?= admin_url('tickets/delete_priority/' . $priority['priorityid']); ?>"
+                                            <a <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($priority['revision_token']); ?>" data-native-return="<?= e(admin_url('tickets/priorities')); ?>"<?php } ?> href="<?= admin_url('tickets/delete_priority/' . $priority['priorityid']); ?>"
                                                 class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
                                                 <i class="fa-regular fa-trash-can fa-lg"></i>
                                             </a>
@@ -65,7 +65,8 @@
 </div>
 <div class="modal fade" id="priority" tabindex="-1" role="dialog">
     <div class="modal-dialog">
-        <?= form_open(admin_url('tickets/priority')); ?>
+        <?= form_open(admin_url('tickets/priority'), ['id' => 'ticket-priority-form']); ?>
+        <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -98,7 +99,7 @@
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
+        appValidateForm($('#ticket-priority-form'), {
             name: 'required'
         }, manage_ticket_priorities);
         $('#priority').on('hidden.bs.modal', function(event) {
@@ -125,7 +126,8 @@
 
     function edit_priority(invoker, id) {
         var name = $(invoker).data('name');
-        $('#additional').append(hidden_input('id', id));
+        $('#additional').empty().append(hidden_input('id', id));
+        if($(invoker).attr('data-native-revision'))$('#additional').append($('<input>',{type:'hidden',name:'revision',value:$(invoker).attr('data-native-revision')}));
         $('#priority input[name="name"]').val(name);
         $('#priority').modal('show');
         $('.add-title').addClass('hide');

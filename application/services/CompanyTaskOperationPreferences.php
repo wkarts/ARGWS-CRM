@@ -55,8 +55,13 @@ final class CompanyTaskOperationPreferences
     }
     public function save($issuer,$actor,int $revision,array $settings):void
     {
+        IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->saveInOwnedTransaction($issuer,$actor,$revision,$settings));
+    }
+    /** Compose the original policy writer into one atomic native Settings form. */
+    public function saveInOwnedTransaction($issuer,$actor,int $revision,array $settings):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);if(!CompanyTaskPrioritySchema::tables($this->db,$this->p))throw new DomainException('company_task_priority_unavailable');self::prepare($settings);if($revision<0||$revision>2147483647)throw new DomainException('company_task_operation_preferences_invalid');$this->authorize($issuer,$actor,'edit');
-        IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$revision,$settings){
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'edit');$row=$this->row($issuer);$doc=self::document((string)$row['settings_json']);$old=$doc->{self::NODE}??null;
             if(($old?->revision??0)!==$revision)throw new DomainException('company_task_operation_preferences_stale');
             if($old&&$old->{self::PRIORITY}===$settings[self::PRIORITY]&&$old->{self::FOLLOW}===$settings[self::FOLLOW])return;
@@ -68,6 +73,5 @@ final class CompanyTaskOperationPreferences
             $now=gmdate('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)',[$actor,'company_task_operation_preferences_saved',$issuer,$now]);$audit=(int)$this->db->insert_id();
             if($audit<1||count(IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND actor_id=? AND event=? AND issuer_id=? AND subject_id IS NULL AND created_at=?',[$audit,$actor,'company_task_operation_preferences_saved',$issuer,$now])->result_array())!==1)throw new RuntimeException('issuer_task_operation_preferences_unconfirmed');
             self::confirmInOwnedTransaction($this->db,$this->p,$issuer,$expected);$this->authorize($issuer,$actor,'edit');
-        });
     }
 }

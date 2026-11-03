@@ -14,7 +14,7 @@ final class CompanyPurchasesScope
         if (!is_string($uri)||!is_string($script)||preg_match('/[\x00-\x1f\x7f]/',$uri)||basename($script)!=='index.php') { return false; }
         $path=parse_url($uri,PHP_URL_PATH); if (!is_string($path)) { return false; }
         $path=preg_replace('#/+#','/',rawurldecode($path)); $base=rtrim(str_replace('\\','/',dirname($script)),'/.');
-        foreach (['company_purchases_api','company_purchase_portal'] as $controller) {
+        foreach (['purchases_api','company_purchases_api','purchase_portal','company_purchase_portal'] as $controller) {
             foreach ([$base.'/'.$controller,$base.'/index.php/'.$controller] as $prefix) { if (strcasecmp($path,$prefix)===0||strncasecmp($path,$prefix.'/',strlen($prefix)+1)===0) { return true; } }
         }
         return false;
@@ -24,14 +24,18 @@ final class CompanyPurchasesScope
         self::$requested=false; self::$active=null;
         if ($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()) { return false; }
         $class=strtolower((string)$ci->router->fetch_class());
-        if (!in_array($class,['company_purchases_api','company_purchase_portal'],true)) { return false; }
+        if (!in_array($class,['purchases_api','company_purchases_api','purchase_portal','company_purchase_portal'],true)) { return false; }
         self::$requested=true;
         if (strtolower((string)$ci->router->fetch_method())!=='index'||!isset($ci->uri)||!method_exists($ci->uri,'segment')) { return false; }
         $segments=[]; for ($i=1;$i<=5;$i++) { $s=$ci->uri->segment($i); if ($s===null||$s===false||$s==='') { break; } $segments[]=(string)$s; }
-        if (($segments[0]??null)!==$class) { return false; }
+        // CI resolves declared public aliases to their native controller names;
+        // the original raw namespace still has to match the exact request below.
+        $namespace=$segments[0]??null;
+        $aliases=['purchase_portal'=>'company_purchase_portal','purchases_api'=>'company_purchases_api'];
+        if ($namespace!==$class&&(!isset($aliases[$class])||$namespace!==$aliases[$class])) { return false; }
         if (!self::canonicalRequest($_SERVER,$segments)) { return false; }
-        if ($class==='company_purchase_portal') {
-            if ($segments!==[$class]&&$segments!==[$class,'index']) { return false; }
+        if ($namespace==='company_purchase_portal') {
+            if ($segments!==[$namespace]&&$segments!==[$namespace,'index']) { return false; }
             self::$active='portal'; return true;
         }
         $resources=['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'];

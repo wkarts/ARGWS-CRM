@@ -2,6 +2,7 @@
 <div class="modal fade" id="ticket-service-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('tickets/service'), ['id' => 'ticket-service-form']); ?>
+        <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -53,11 +54,10 @@
         }
         $.post(url, data).done(function(response) {
             if (ticketArea) {
-                response = JSON.parse(response);
+                if(typeof response==='string')response = JSON.parse(response);
                 if (response.success == true && typeof(response.id) != 'undefined') {
                     var group = $('select#service');
-                    group.find('option:first').after('<option value="' + response.id + '">' + response.name +
-                        '</option>');
+                    group.find('option:first').after($('<option>',{value:response.id}).text(response.name));
                     group.selectpicker('val', response.id);
                     group.selectpicker('refresh');
                 }
@@ -76,7 +76,8 @@
 
     function edit_service(invoker, id) {
         var name = $(invoker).data('name');
-        $('#additional').append(hidden_input('id', id));
+        $('#additional').empty().append(hidden_input('id', id));
+        if($(invoker).attr('data-native-revision'))$('#additional').append($('<input>',{type:'hidden',name:'revision',value:$(invoker).attr('data-native-revision')}));
         $('#ticket-service-modal input[name="name"]').val(name);
         $('#ticket-service-modal').modal('show');
         $('.add-title').addClass('hide');

@@ -1,6 +1,6 @@
 # Portal por origem, contatos e recuperação
 
-`admin/company_clients` administra contatos próprios sem carregar Clients_model.
+`admin/clients?source=company` administra contatos próprios sem carregar Clients_model.
 Nome, sobrenome e e-mail têm projeção explícita; senha/chaves e permissões financeiras
 não são retornadas. Reenvio idêntico da inclusão retorna o contato existente. E-mail
 repetido em outra empresa é permitido; na mesma empresa há conflito explícito sem

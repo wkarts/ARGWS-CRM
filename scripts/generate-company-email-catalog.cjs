@@ -55,4 +55,4 @@ function rowsFromSeed(sql) {
 
 function catalog(sql){const rows=rowsFromSeed(sql).filter(row=>row.language==='english');assert.ok(rows.length>0);const seen=new Set();for(const row of rows){assert.ok(!seen.has(row.slug));seen.add(row.slug);}return rows;}
 module.exports={catalog};
-if(require.main===module){const root=path.resolve(__dirname,'..');const data=catalog(fs.readFileSync(path.join(root,'install/database.sql'),'utf8'));fs.writeFileSync(path.join(root,'application/services/email_templates_ptbr/company_defaults.json'),JSON.stringify(data,null,2)+'\n');console.log(data.length+' shipped English defaults extracted; PT-BR uses existing validated translation catalog.');}
+if(require.main===module){const root=path.resolve(__dirname,'..');const data=catalog(fs.readFileSync(path.join(root,'install/database.sql'),'utf8'));fs.writeFileSync(path.join(root,'application/services/email_templates_ptbr/defaults.json'),JSON.stringify(data,null,2)+'\n');console.log(data.length+' shipped English defaults extracted; PT-BR uses existing validated translation catalog.');}

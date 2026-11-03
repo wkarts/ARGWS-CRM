@@ -3,6 +3,8 @@
 <div id="wrapper">
     <div class="content">
         <?= form_open($this->uri->uri_string(), ['id' => 'article-form']); ?>
+        <?php if (isset($native_knowledge)) { echo form_hidden('_company_context', $native_knowledge_context); echo form_hidden('_native_company_csrf', $native_knowledge_csrf); } ?>
+        <?php if (isset($native_knowledge, $article)) { echo form_hidden('revision', $article->revision_token); } ?>
         <div class="tw-max-w-4xl tw-mx-auto">
             <div class="tw-flex tw-justify-between tw-mb-2">
                 <div>
@@ -15,15 +17,15 @@
                         <a href="<?= admin_url('knowledge_base/view/' . $article->slug); ?>"
                             target="_blank"><?= admin_url('knowledge_base/view/' . $article->slug); ?></a>
                         <?php } else { ?>
-                        <a href="<?= site_url('knowledge-base/article/' . $article->slug); ?>"
-                            target="_blank"><?= site_url('knowledge-base/article/' . $article->slug); ?></a>
+                        <a href="<?= isset($native_knowledge) ? NativeCompanyKnowledgePresentation::publicUrl($article->slug, $native_knowledge_issuer) : site_url('knowledge-base/article/' . $article->slug); ?>"
+                            target="_blank"><?= isset($native_knowledge) ? NativeCompanyKnowledgePresentation::publicUrl($article->slug, $native_knowledge_issuer) : site_url('knowledge-base/article/' . $article->slug); ?></a>
                         <?php } ?>
                     </small>
                     <br />
                     <small>
                         <span
                             class="tw-font-medium"><?= _l('article_total_views'); ?>:</span>
-                        <?= total_rows(db_prefix() . 'views_tracking', ['rel_type' => 'kb_article', 'rel_id' => $article->articleid]);
+                        <?= isset($native_knowledge) ? $article->total_views : total_rows(db_prefix() . 'views_tracking', ['rel_type' => 'kb_article', 'rel_id' => $article->articleid]);
                         ?>
                     </small>
                     <?php } ?>
@@ -35,7 +37,7 @@
                         class="btn btn-primary"><?= _l('kb_article_new_article'); ?></a>
                     <?php } ?>
                     <?php if (staff_can('delete', 'knowledge_base')) { ?>
-                    <a href="<?= admin_url('knowledge_base/delete_article/' . $article->articleid); ?>"
+                    <a href="<?= admin_url('knowledge_base/delete_article/' . $article->articleid); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($article->revision_token); ?>" data-native-return="<?= e(admin_url('knowledge_base')); ?>"<?php } ?>
                         class="btn btn-default _delete">
                         <i class="fa-regular fa-trash-can"></i>
                     </a>
@@ -54,9 +56,9 @@
                     } ?>
                     <?php $value = (isset($article) ? $article->articlegroup : ''); ?>
                     <?php if (staff_can('create', 'knowledge_base')) {
-                        echo render_select_with_input_group('articlegroup', get_kb_groups(), ['groupid', 'name'], 'kb_article_add_edit_group', $value, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_kb_group();return false;"><i class="fa fa-plus"></i></a></div>');
+                        echo render_select_with_input_group('articlegroup', (isset($native_knowledge) ? $groups : get_kb_groups()), ['groupid', 'name'], 'kb_article_add_edit_group', $value, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_kb_group();return false;"><i class="fa fa-plus"></i></a></div>');
                     } else {
-                        echo render_select('articlegroup', get_kb_groups(), ['groupid', 'name'], 'kb_article_add_edit_group', $value);
+                        echo render_select('articlegroup', (isset($native_knowledge) ? $groups : get_kb_groups()), ['groupid', 'name'], 'kb_article_add_edit_group', $value);
                     }
 ?>
                     <div class="checkbox checkbox-primary">

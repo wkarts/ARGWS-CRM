@@ -1,0 +1,12 @@
+<?php
+require __DIR__.'/native_portal_registration.php';
+$start=$GLOBALS['essentialChecks'];$store->mutate(41,7,'update','allow_registration','1',null);$store->mutate(41,7,'update','disable_language','0',null);
+if(!$db->table_exists($p.'countries'))$db->query('CREATE TABLE '.$p.'countries(country_id INTEGER PRIMARY KEY,short_name TEXT,calling_code TEXT)');elseif(!$db->field_exists('calling_code',$p.'countries'))$db->query('ALTER TABLE '.$p.'countries ADD calling_code TEXT');$db->query('INSERT INTO '.$p.'countries(country_id,short_name,calling_code) VALUES(999,?,?)',['Synthetic country','55']);
+$rLocale=$writer->register(41,hash('sha256','locale-phone'),array_replace($input,['email'=>'locale@example.invalid','country'=>'999','contact_phonenumber'=>'11999999999']),$hash,$verify,[],null,'english');
+essentialCheck($db->query('SELECT default_language FROM '.$p.'clients WHERE userid=?',[$rLocale['client_id']])->row()->default_language==='english','selected installed language persists on native customer');
+essentialCheck($db->query('SELECT phonenumber FROM '.$p.'contacts WHERE id=?',[$rLocale['contact_id']])->row()->phonenumber==='+5511999999999','same native automatic country calling code semantics apply');
+$store->mutate(41,7,'update','automatic_calling_codes','0',null);$store->mutate(41,7,'update','disable_language','1',null);$store->mutate(41,7,'update','active_language','portuguese_br',null);
+$fixed=$writer->register(41,hash('sha256','locale-phone-off'),array_replace($input,['email'=>'locale2@example.invalid','country'=>'999','contact_phonenumber'=>'11999999999']),$hash,$verify,[],null,'english');
+essentialCheck($db->query('SELECT default_language FROM '.$p.'clients WHERE userid=?',[$fixed['client_id']])->row()->default_language==='portuguese_br'&&$db->query('SELECT phonenumber FROM '.$p.'contacts WHERE id=?',[$fixed['contact_id']])->row()->phonenumber==='11999999999','disabled language selection and calling policy respect issuer configuration');
+$store->mutate(41,7,'update','disable_language','0',null);essentialThrows(fn()=>$writer->register(41,hash('sha256','locale-bad'),array_replace($input,['email'=>'locale3@example.invalid']),$hash,$verify,[],null,'../english'),'native_portal_registration_invalid','language path cannot escape installed product locales');
+echo 'Native registration locale/phone: '.($GLOBALS['essentialChecks']-$start).' actual SQLite checks passed.'.PHP_EOL;

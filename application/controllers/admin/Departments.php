@@ -11,6 +11,7 @@ class Departments extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments(); return; }
         $this->load->model('departments_model');
 
         if (!is_admin()) {
@@ -18,9 +19,13 @@ class Departments extends AdminController
         }
     }
 
+    private function nativeDepartments(): NativeCompanyDepartmentsController
+    { require_once APPPATH.'services/NativeCompanyDepartmentsController.php';return new NativeCompanyDepartmentsController($this); }
+
     /* List all departments */
     public function index()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->index(); return; }
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('departments');
         }
@@ -32,6 +37,7 @@ class Departments extends AdminController
     /* Edit or add new department */
     public function department($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->save(); return; }
         if ($this->input->post()) {
             $message          = '';
             $data             = $this->input->post();
@@ -74,6 +80,7 @@ class Departments extends AdminController
     /* Delete department from database */
     public function delete($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->delete($id); return; }
         if (!$id) {
             redirect(admin_url('departments'));
         }
@@ -90,6 +97,7 @@ class Departments extends AdminController
 
     public function email_exists()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->emailExists(); return; }
         // First we need to check if the email is the same
         $departmentid = $this->input->post('departmentid');
         if ($departmentid) {
@@ -112,6 +120,7 @@ class Departments extends AdminController
 
     public function folders()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->probe(true); return; }
         app_check_imap_open_function();
 
         $imap = new Imap(
@@ -133,6 +142,7 @@ class Departments extends AdminController
 
     public function test_imap_connection()
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeDepartments()->probe(false); return; }
         app_check_imap_open_function();
 
         $imap = new Imap(

@@ -6,6 +6,7 @@ class Privacy_policy extends ClientsController
 {
     public function index()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($this)){NativePortalPresentation::legal($this,'privacy_policy');return;}
         $data['policy'] = get_option('privacy_policy');
         $data['title']  = _l('privacy_policy') . ' - ' . get_option('companyname');
         $this->data($data);

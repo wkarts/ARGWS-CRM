@@ -16,9 +16,10 @@
 	</div>
 </div>
 <?php $this->load->view('admin/utilities/calendar_template'); ?>
-<?php hooks()->do_action('after_calendar_loaded');?>
+<?php if(empty($native_calendar))hooks()->do_action('after_calendar_loaded');?>
 <script>
-	app.calendarIDs = '<?php echo json_encode($google_ids_calendars); ?>';
+	<?php if(!empty($native_calendar)){ ?>window.nativeCalendarConfig=<?= json_encode($native_calendar_config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;<?php }else{ ?>
+	app.calendarIDs = <?= json_encode(json_encode($google_ids_calendars),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;<?php } ?>
 </script>
 <?php init_tail(); ?>
 <script>

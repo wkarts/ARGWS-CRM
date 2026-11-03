@@ -2,6 +2,11 @@
 if(!class_exists('CI_Email')){class CI_Email {}}
 require_once APPPATH.'libraries/App_Email.php';
 if(!function_exists('config_item')){function config_item($name){return "\r\n";}}
+final class ExpenseRecurringWorkerConfig
+{
+    public array $config=[];
+    public function item($name){return $name==='base_url'?'https://crm.example.invalid/':null;}
+}
 final class ExpenseRecurringWorkerDb
 {
     public PDO $pdo;private array $predicates=[];private array $fields=[];private int $affected=0;

@@ -15,7 +15,7 @@
             <?php echo render_datetime_input('start', 'utility_calendar_new_event_start_date', '', ['data-step' => 30]); ?>
             <div class="clearfix mtop15"></div>
             <?php echo render_datetime_input('end', 'utility_calendar_new_event_end_date', '', ['data-step' => 30]); ?>
-             <?php if (is_email_template_active('event-notification-to-staff')) { ?>
+             <?php if ((!empty($native_calendar) ? $native_calendar_email_active : is_email_template_active('event-notification-to-staff'))) { ?>
             <div class="form-group">
              <div class="row">
               <div class="col-md-12">
@@ -42,7 +42,7 @@
          <p class="bold"><?php echo _l('event_color'); ?></p>
          <?php
          $event_colors     = '';
-         $favourite_colors = get_system_favourite_colors();
+         $favourite_colors = get_system_favourite_colors(empty($native_calendar));
          $i                = 0;
          foreach ($favourite_colors as $color) {
              $color_selected_class = 'cpicker-small';

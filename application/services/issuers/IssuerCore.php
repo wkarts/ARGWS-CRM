@@ -33,7 +33,7 @@ final class IssuerCore
         self::$metadata??=new WeakMap();$valid=self::$metadata[$db]??[];
         if(isset($valid[$prefix]))return;
         IssuerCoreSchema::assertSchema($db,$prefix);IssuerAccessSchema::assertValid($db,$prefix);IssuerFinancialSchema::assertValid($db,$prefix);
-        foreach(['registry'=>['tax_id'=>['varchar(14)','YES'],'identity_status'=>['varchar(16)','NO']],'installation_identity'=>['legacy_identity_json'=>['longtext','YES'],'legacy_access_migrated_at'=>['datetime','YES'],'legacy_staff_cutoff'=>['int','YES'],'legacy_catalog_hash'=>['varchar(64)','YES']],'audit'=>['metadata_json'=>['longtext','YES']]] as$suffix=>$fields){
+        foreach(['registry'=>['tax_id'=>['varchar(14)','YES'],'identity_status'=>['varchar(16)','NO']],'installation_identity'=>['legacy_identity_json'=>['longtext','YES'],'legacy_access_migrated_at'=>['datetime','YES'],'legacy_staff_cutoff'=>['int','YES'],'legacy_catalog_hash'=>['varchar(64)','YES'],'legacy_resource_permissions_migrated_at'=>['datetime','YES']],'audit'=>['metadata_json'=>['longtext','YES']]] as$suffix=>$fields){
             $columns=self::columns($db,$prefix.'issuers_'.$suffix);
             foreach($fields as$name=>[$type,$nullable]){if(preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($columns[$name]['COLUMN_TYPE']??'')))!==$type||($columns[$name]['IS_NULLABLE']??null)!==$nullable)throw new RuntimeException('issuer_core_schema_invalid');}
         }
@@ -70,13 +70,14 @@ final class IssuerCore
             if(!isset($columns['identity_status'])){IssuerStorage::query($db,"ALTER TABLE `{$registry}` ADD `identity_status` varchar(16) NOT NULL DEFAULT 'complete'");}
             $identity=$prefix.'issuers_installation_identity';$columns=self::columns($db,$identity);
             if(!isset($columns['legacy_identity_json'])){IssuerStorage::query($db,"ALTER TABLE `{$identity}` ADD `legacy_identity_json` longtext DEFAULT NULL");}
-            foreach(['legacy_access_migrated_at'=>'datetime','legacy_staff_cutoff'=>'int','legacy_catalog_hash'=>'varchar(64)'] as $name=>$type){
+            foreach(['legacy_access_migrated_at'=>'datetime','legacy_staff_cutoff'=>'int','legacy_catalog_hash'=>'varchar(64)','legacy_resource_permissions_migrated_at'=>'datetime'] as $name=>$type){
                 if(!isset($columns[$name]))IssuerStorage::query($db,"ALTER TABLE `{$identity}` ADD `{$name}` {$type} DEFAULT NULL");
             }
             self::invalidate($db);self::assertMetadata($db,$prefix);
             self::ensurePrincipal($db,$prefix);
             CompanyEmailTemplates::reconcile($db,$prefix);
             IssuerLegacyAccess::apply($db,$prefix);
+            IssuerLegacyAccess::preserveLegacyResourcePermissions($db,$prefix);
             // Keep historical version/data for compatibility; the loader always excludes this retired module.
             if($db->table_exists($prefix.'modules')){IssuerStorage::query($db,"UPDATE {$prefix}modules SET active=0 WHERE module_name='issuers'");}
             if(!self::ready($db,$prefix))throw new RuntimeException('issuer_core_reconcile_unconfirmed');

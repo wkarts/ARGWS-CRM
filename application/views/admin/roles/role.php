@@ -18,8 +18,9 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <?= form_open($this->uri->uri_string()); ?>
+                        <?php if (!empty($native_staff_roles)) { echo form_hidden('revision',$native_staff_roles_revision);echo form_hidden('_native_company_csrf',$native_staff_csrf); } ?>
                         <?php if (isset($role)) { ?>
-                        <?php if (total_rows(db_prefix() . 'staff', ['role' => $role->roleid]) > 0) { ?>
+                        <?php if (!empty($native_staff_roles) ? count($role_staff)>0 : total_rows(db_prefix() . 'staff', ['role' => $role->roleid]) > 0) { ?>
                         <div class="alert alert-warning bold">
                             <?= _l('change_role_permission_warning'); ?>
                             <div class="checkbox">
@@ -62,9 +63,9 @@
                                     <?php foreach ($role_staff as $staff) { ?>
                                     <tr>
                                         <td>
-                                            <?= '<a href="' . admin_url('staff/profile/' . $staff['staffid']) . '">' . staff_profile_image($staff['staffid'], [
+                                            <?= '<a href="' . admin_url('staff/profile/' . $staff['staffid']) . '">' . (!empty($native_staff_roles) ? StaffAvatarPresentation::render((object)$staff,$staff['staffid'],['staff-profile-image-small'],'small',[],fn($path)=>base_url($path),fn($path)=>is_file(FCPATH.$path)) : staff_profile_image($staff['staffid'], [
                                                 'staff-profile-image-small',
-                                            ]) . '</a>';
+                                            ])) . '</a>';
                                         echo ' <a href="' . admin_url('staff/member/' . $staff['staffid']) . '">' . e($staff['firstname'] . ' ' . $staff['lastname']) . '</a>';
                                         ?>
                                         </td>

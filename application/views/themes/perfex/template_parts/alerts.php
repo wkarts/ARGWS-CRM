@@ -1,18 +1,17 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php if (is_client_logged_in() && $navigationEnabled) {
-    $_announcements = get_announcements_for_user(false);
+<?php $nativeAlerts=!empty($native_portal);if (($nativeAlerts?!empty($native_portal_identity):is_client_logged_in()) && $navigationEnabled) {
+    $_announcements = $nativeAlerts?($native_portal_announcements??[]):get_announcements_for_user(false);
     if (count($_announcements) > 0) { ?>
 <div class="panel_s">
     <?php foreach ($_announcements as $__announcement) { ?>
     <div class="panel-body announcement mbot15 tc-content">
         <div class="alert-dismissible" role="alert">
-            <a href="<?= site_url('clients/dismiss_announcement/' . $__announcement['announcementid']); ?>"
-                class="close">
+            <?php if($nativeAlerts){echo form_open(NativePortalPresentation::url('clients/dismiss_announcement/'.$__announcement['announcementid']),['class'=>'close']).form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" class="close" aria-label="<?= e(_l('dismiss')); ?>"><?php }else{ ?><a href="<?= site_url('clients/dismiss_announcement/' . $__announcement['announcementid']); ?>" class="close"><?php } ?>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="tw-w-5 tw-h-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-            </a>
+            <?php if($nativeAlerts){echo '</button>'.form_close();}else{echo '</a>';} ?>
             <h4 class="tw-my-0 text-info tw-font-medium">
                 <?= _l('announcement'); ?>
                 <?php if ($__announcement['showname'] == 1) {
@@ -27,7 +26,7 @@
             <?= e($__announcement['name']); ?>
         </h4>
         <div class="announcement-message tw-text-neutral-500 [&>p:last-child]:tw-mb-0">
-            <?= check_for_links($__announcement['message']); ?>
+            <?= ($nativeAlerts?$__announcement['message']:check_for_links($__announcement['message'])); ?>
         </div>
     </div>
     <?php } ?>

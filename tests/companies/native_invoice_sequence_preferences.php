@@ -1,0 +1,25 @@
+<?php
+require __DIR__.'/invoices.php';
+require_once APPPATH.'services/NativeCompanyInvoiceSequencePreferences.php';
+$sequence=new NativeCompanyInvoiceSequencePreferences($db,$p);$start=$GLOBALS['essentialChecks'];
+$before=$sequence->read($a,7);$other=$sequence->read($b,7);
+$after=$sequence->save($a,7,'1000',$before['revision']);
+essentialCheck($after['next_number']==='1000'&&$sequence->read($b,7)===$other,'advance affects only selected named series');
+essentialThrows(fn()=>$sequence->save($a,7,'1001',$before['revision']),'native_invoice_sequence_stale','stale form cannot overwrite current allocator');
+essentialThrows(fn()=>$sequence->save($a,7,'999',$after['revision']),'native_invoice_sequence_regression','counter never decreases');
+essentialThrows(fn()=>$sequence->save($a,7,'18446744073709551615',$after['revision']),'native_invoice_sequence_invalid','exhausted unsigned range rejected without cast');
+essentialThrows(fn()=>$sequence->save($a,7,'1e4',$after['revision']),'native_invoice_sequence_invalid','numeric coercion rejected');
+essentialCheck($sequence->save($a,7,'1000',$after['revision'])===$after,'unchanged form does not allocate document or append duplicate audit');
+essentialThrows(fn()=>$sequence->save($a,7,'2147483648',$after['revision']),'native_invoice_sequence_unemittable','settings cannot advance beyond native invoice INT capacity');
+$invoiceRows=$db->query('SELECT * FROM '.$p.'invoices ORDER BY id')->result_array();$documents=$db->query('SELECT * FROM '.$p.'issuers_invoice_documents ORDER BY invoice_id')->result_array();
+$db->query("CREATE TRIGGER ignore_sequence_audit BEFORE INSERT ON {$p}issuers_audit WHEN NEW.event='native_invoice_sequence_advanced' BEGIN SELECT RAISE(IGNORE); END");
+essentialThrows(fn()=>$sequence->save($a,7,'1002',$after['revision']),'issuer_storage_failed','audit ignored fails whole settings mutation');$db->query('DROP TRIGGER ignore_sequence_audit');
+essentialCheck($sequence->read($a,7)===$after,'failed audit restores counter');
+essentialCheck($db->query('SELECT * FROM '.$p.'invoices ORDER BY id')->result_array()===$invoiceRows&&$db->query('SELECT * FROM '.$p.'issuers_invoice_documents ORDER BY invoice_id')->result_array()===$documents,'settings never rewrites issued invoices or snapshots');
+$db->query("CREATE TRIGGER ignore_sequence_update BEFORE UPDATE ON {$p}issuers_sequences BEGIN SELECT RAISE(IGNORE); END");
+essentialThrows(fn()=>$sequence->save($a,7,'1003',$after['revision']),'issuer_storage_failed','ignored counter update cannot report success');$db->query('DROP TRIGGER ignore_sequence_update');
+$db->query("UPDATE {$p}issuers_sequences SET next_number=2147483648 WHERE issuer_id=? AND series='INV'",[$a]);
+$exhausted=$sequence->read($a,7);essentialCheck($exhausted['next_number']==='2147483648'&&$sequence->save($a,7,'2147483648',$exhausted['revision'])===$exhausted,'exhausted allocator remains readable and unchanged without reuse or fictitious availability');
+$db->query("UPDATE {$p}issuers_sequences SET next_number=1 WHERE issuer_id=? AND series='INV'",[$a]);
+essentialThrows(fn()=>$sequence->read($a,7),'issuer_storage_failed','counter corruption against persisted issued documents rejected without guessing max');
+echo 'Native invoice counter preferences: '.($GLOBALS['essentialChecks']-$start).' checks passed; MySQL locking and Settings HTTP wiring remain separate.'.PHP_EOL;

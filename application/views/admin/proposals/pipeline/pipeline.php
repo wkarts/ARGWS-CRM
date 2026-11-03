@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
+if(isset($native_sales_columns)){ $this->load->view('admin/includes/native_sales/pipeline',['columns'=>$native_sales_columns,'kind'=>$native_sales_kind]);return; }
 $i = 0;
 
 foreach ($statuses as $status) {

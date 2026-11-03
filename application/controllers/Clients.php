@@ -17,11 +17,13 @@ class Clients extends ClientsController
     {
         parent::__construct();
 
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this))return;
         hooks()->do_action('after_clients_area_init', $this);
     }
 
     public function index()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalHomeHttp.php';(new NativePortalHomeHttp($this))->index();return;}
         $data['is_home'] = true;
         $this->load->model('reports_model');
         $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
@@ -35,6 +37,7 @@ class Clients extends ClientsController
 
     public function announcements()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalAnnouncementsHttp.php';(new NativePortalAnnouncementsHttp($this))->index();return;}
         $data['title']         = _l('announcements');
         $data['announcements'] = $this->announcements_model->get();
         $this->data($data);
@@ -44,6 +47,7 @@ class Clients extends ClientsController
 
     public function announcement($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalAnnouncementsHttp.php';(new NativePortalAnnouncementsHttp($this))->detail($id);return;}
         $data['announcement'] = $this->announcements_model->get($id);
         $data['title']        = $data['announcement']->name;
         $this->data($data);
@@ -74,6 +78,7 @@ class Clients extends ClientsController
 
     public function projects($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProjectsHttp.php';(new NativePortalProjectsHttp($this))->index($status);return;}
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -107,6 +112,7 @@ class Clients extends ClientsController
 
     public function project($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProjectsHttp.php';(new NativePortalProjectsHttp($this))->detail($id);return;}
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -530,6 +536,7 @@ class Clients extends ClientsController
 
     public function files()
     {
+        if (PortalRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativePortalCustomerFilesHttp.php'; (new NativePortalCustomerFilesHttp($this))->index(); return; }
         $files_where = 'visible_to_customer = 1 AND id IN (SELECT file_id FROM ' . db_prefix() . 'shared_customer_files WHERE contact_id =' . get_contact_user_id() . ')';
 
         $files_where = hooks()->apply_filters('customers_area_files_where', $files_where);
@@ -545,6 +552,7 @@ class Clients extends ClientsController
 
     public function upload_files()
     {
+        if (PortalRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativePortalCustomerFilesHttp.php'; (new NativePortalCustomerFilesHttp($this))->upload(); return; }
         $success = false;
         if ($this->input->post('external')) {
             $file                        = $this->input->post('files');
@@ -571,6 +579,7 @@ class Clients extends ClientsController
 
     public function delete_file($id, $type = '')
     {
+        if (PortalRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativePortalCustomerFilesHttp.php'; (new NativePortalCustomerFilesHttp($this))->delete($id, $type); return; }
         if (get_option('allow_contact_to_delete_files') == 1) {
             if ($type == 'general') {
                 $file = $this->misc_model->get_file($id);
@@ -623,6 +632,7 @@ class Clients extends ClientsController
 
     public function tickets($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->index($status);return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -665,6 +675,7 @@ class Clients extends ClientsController
 
     public function proposals()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProposalsHttp.php';try{(new NativePortalProposalsHttp($this))->index();}catch(DomainException$denied){show_404();}return;}
         if (!has_contact_permission('proposals')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -691,6 +702,7 @@ class Clients extends ClientsController
 
     public function open_ticket()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->open();return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -747,6 +759,7 @@ class Clients extends ClientsController
 
     public function ticket($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->detail($id);return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -790,8 +803,13 @@ class Clients extends ClientsController
         $this->layout();
     }
 
-    public function contracts()
+    public function contracts($id = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativePortalContractsHttp.php';
+            (new NativePortalContractsHttp($this))->index($id);
+            return;
+        }
         if (!has_contact_permission('contracts')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -811,6 +829,7 @@ class Clients extends ClientsController
 
     public function invoices($status = false)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalInvoicesHttp.php';(new NativePortalInvoicesHttp($this))->index($status);return;}
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -957,6 +976,7 @@ class Clients extends ClientsController
 
     public function estimates($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalEstimatesHttp.php';try{(new NativePortalEstimatesHttp($this))->index($status);}catch(DomainException$denied){show_404();}return;}
         if (!has_contact_permission('estimates')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -986,6 +1006,7 @@ class Clients extends ClientsController
 
     public function company()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProfileHttp.php';(new NativePortalProfileHttp($this))->company();return;}
         if ($this->input->post() && is_primary_contact()) {
             if (get_option('company_is_required') == 1) {
                 $this->form_validation->set_rules('company', _l('clients_company'), 'required');
@@ -1055,12 +1076,13 @@ class Clients extends ClientsController
         }
         $data['title'] = _l('client_company_info');
         $this->data($data);
-        $this->view('company_profile');
+        $this->view('native_profile');
         $this->layout();
     }
 
     public function profile()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProfileHttp.php';(new NativePortalProfileHttp($this))->profile();return;}
         if ($this->input->post('profile')) {
             $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
             $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
@@ -1172,6 +1194,7 @@ class Clients extends ClientsController
 
     public function remove_profile_image()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProfileHttp.php';(new NativePortalProfileHttp($this))->remove();return;}
         $id = get_contact_user_id();
 
         hooks()->do_action('before_remove_contact_profile_image', $id);
@@ -1192,6 +1215,7 @@ class Clients extends ClientsController
 
     public function dismiss_announcement($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalAnnouncementsHttp.php';(new NativePortalAnnouncementsHttp($this))->dismiss($id);return;}
         $this->misc_model->dismiss_announcement($id, false);
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
@@ -1397,6 +1421,7 @@ class Clients extends ClientsController
 
     public function gdpr()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($this)){require_once APPPATH.'services/NativePortalPrivacyHttp.php';(new NativePortalPrivacyHttp($this))->index();return;}
         $this->load->model('gdpr_model');
 
         if (is_gdpr()

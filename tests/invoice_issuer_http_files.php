@@ -1,5 +1,7 @@
 <?php
+if (!defined('APPPATH')) { define('APPPATH', dirname(__DIR__).'/application/'); }
 ob_start();require __DIR__.'/invoice_issuer_scope.php';ob_end_clean();
+require_once APPPATH.'services/CompanyRequestScope.php';
 class App_Controller { public $db; public $load; public $input; public $invoices_model; public $payments_model; public $misc_model; }
 class AdminController extends App_Controller {}
 class ClientsController extends App_Controller {}

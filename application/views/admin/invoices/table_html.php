@@ -17,13 +17,19 @@ $table_data = array(
   _l('tags'),
   _l('invoice_dt_table_heading_duedate'),
   _l('invoice_dt_table_heading_status'));
-$custom_fields = get_custom_fields('invoice',array('show_on_table'=>1));
+$nativeInvoiceView = class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor(get_instance());
+if ($nativeInvoiceView) {
+  if (!isset($native_invoice_custom_fields) || !is_array($native_invoice_custom_fields)) throw new DomainException('native_company_invoice_columns_missing');
+  $custom_fields = $native_invoice_custom_fields;
+} else {
+  $custom_fields = get_custom_fields('invoice',array('show_on_table'=>1));
+}
 foreach($custom_fields as $field){
   array_push($table_data, [
-   'name' => $field['name'],
+   'name' => e($field['name']),
    'th_attrs' => array('data-type'=>$field['type'], 'data-custom-field'=>1)
  ]);
 }
-$table_data = hooks()->apply_filters('invoices_table_columns', $table_data);
+if (!$nativeInvoiceView) $table_data = hooks()->apply_filters('invoices_table_columns', $table_data);
 render_datatable($table_data, (isset($class) ? $class : 'invoices'), [], ['id'=>$table_id ?? 'invoices']);
 ?>

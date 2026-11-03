@@ -239,8 +239,9 @@ final class IssuerRegistry
         if (!in_array($active, [0, 1, '0', '1'], true)) {
             throw new DomainException('issuer_invalid_status');
         }
+        $ticketPlan=null;if($native&&$id===null){require_once dirname(__DIR__).'/NativeCompanyTicketBootstrap.php';$ticketPlan=NativeCompanyTicketBootstrap::plan($this->db,$this->prefix);}
         $seedTemplates=$native && $id===null && $this->db->table_exists($this->prefix.'emailtemplates');
-        $operation = function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates, $expectedIdentity) {
+        $operation = function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates, $expectedIdentity, $ticketPlan) {
             $this->requireCompanyMutation($actor, $id);
             if($expectedIdentity!==null&&!hash_equals($expectedIdentity,$this->identityRevision($actor,$id))){throw new DomainException('company_identity_revision_stale');}
             if($id!==null&&(int)$active!==1&&(new IssuerResourceAccess($this->db,$this->prefix))->primaryId()===$id){throw new DomainException('issuer_primary_deactivation_denied');}
@@ -268,10 +269,12 @@ final class IssuerRegistry
                 require_once dirname(__DIR__).'/CompanyEmailTemplates.php';
                 CompanyEmailTemplates::seedOwned($this->db,$this->prefix,$id,CompanyEmailTemplates::defaults());
             }
+            if($ticketPlan!==null)NativeCompanyTicketBootstrap::initializeInOwnedTransaction($this->db,$this->prefix,$id,$actor,$ticketPlan);
             $this->audit($actor, 'issuer_saved', $id);
             return $id;
         };
         $extra = $native ? array_merge(['issuers_resource_permissions','issuers_installation_identity','options'],$seedTemplates?['emailtemplates']:[]) : [];
+        if($ticketPlan!==null)$extra=array_merge($extra,$ticketPlan['tables']);
         if ($owned) {
             IssuerTransaction::assertOwned($this->db,$this->prefix,array_unique(array_merge(
                 ['issuers_lock','issuers_registry','issuers_staff','issuers_staff_defaults','issuers_audit','staff'],$extra)));

@@ -1,6 +1,7 @@
+<?php if(isset($company_dashboard) && $company_dashboard['widgets']['tickets']['status']!=='available') { return; } ?>
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>">
-    <?php if ((get_option('access_tickets_to_none_staff_members') == 1 && !is_staff_member() || is_staff_member()) && (count($tickets_reply_by_status_no_json['datasets'][0]['data']) > 0 || count($tickets_awaiting_reply_by_department_no_json['datasets'][0]['data']) > 0)) { ?>
+    <?php if (isset($company_dashboard) || (get_option('access_tickets_to_none_staff_members') == 1 && !is_staff_member() || is_staff_member()) && (count($tickets_reply_by_status_no_json['datasets'][0]['data']) > 0 || count($tickets_awaiting_reply_by_department_no_json['datasets'][0]['data']) > 0)) { ?>
     <div class="panel_s">
         <div class="panel-body padding-10">
             <div class="widget-dragger"></div>

@@ -13,6 +13,7 @@ class Smtp_oauth_google extends AdminController
 {
     public function token()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyMailOAuthController.php';return NativeCompanyMailOAuthController::token($this,'google');}
         $providerName = 'Google';
         $clientId     = get_option('google_mail_client_id');
         $clientSecret = $this->encryption->decrypt(get_option('google_mail_client_secret'));

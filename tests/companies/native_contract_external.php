@@ -1,0 +1,18 @@
+<?php
+require __DIR__.'/contracts_controller.php';
+$start=$GLOBALS['essentialChecks'];$out=$GLOBALS['CI']->output;$token=$GLOBALS['CI']->session->userdata('native_contracts_csrf');CompanyRequestScope::$issuer=$b;
+$reset=function(array$post)use($http,$out){$http->verb='POST';$http->gets=[];$http->posts=$post;$out->status=200;$out->body='';};
+$command=function(string$key)use($contracts,$b,$httpContract,$canonicalId,$token){return['contract_id'=>$canonicalId,'revision'=>(string)$contracts->get($b,7,$httpContract)['revision'],'request_key'=>hash('sha256',$key),'native_contracts_csrf'=>$token];};
+$input=['external'=>'gdrive','files'=>[['name'=>'Actual stored reference','link'=>'https://drive.google.com/file/d/synthetic-contract/view']]];
+$before=$contracts->get($b,7,$httpContract);$post=$command('external-contract-add')+$input;$reset($post);$cc->add_external_attachment();$files=$contracts->externalFiles($b,7,$httpContract);$after=$contracts->get($b,7,$httpContract);
+essentialCheck($out->status===303&&count($files)===1&&$files[0]['url']===$input['files'][0]['link']&&(int)$after['revision']===(int)$before['revision']+1,'Original external attachment action stores an authorized private reference');
+$reset($post);$cc->add_external_attachment();essentialCheck($out->status===303&&$contracts->externalFiles($b,7,$httpContract)===$files&&$contracts->get($b,7,$httpContract)===$after,'External attachment exact retry is idempotent');
+$reset(array_replace($post,['files'=>[['name'=>'Changed intent','link'=>$input['files'][0]['link']]]]));$cc->add_external_attachment();essentialCheck($out->status===409,'External request key rejects changed intent');
+$reset($command('external-bad-host')+['external'=>'gdrive','files'=>[['name'=>'Bad host','link'=>'https://drive.google.com.example.invalid/private']]]);$cc->add_external_attachment();essentialCheck($out->status===422&&$contracts->externalFiles($b,7,$httpContract)===$files,'External URL validation rejects a misleading provider hostname without network access');
+$reset($command('external-userinfo')+['external'=>'gdrive','files'=>[['name'=>'Bad URL','link'=>'https://secret@drive.google.com/private']]]);$cc->add_external_attachment();essentialCheck($out->status===422,'External URL cannot include embedded credentials');
+$reset($command('external-foreign')+$input);CompanyRequestScope::$issuer=$a;$cc->add_external_attachment();essentialCheck($out->status===403,'Known foreign contract cannot receive an external reference');CompanyRequestScope::$issuer=$b;
+$reset($command('external-rollback')+$input);$db->failOn='INSERT INTO '.$p.'company_contract_requests';$cc->add_external_attachment();$db->failOn=null;essentialCheck($out->status===503&&$contracts->externalFiles($b,7,$httpContract)===$files&&$contracts->get($b,7,$httpContract)===$after,'Late receipt failure rolls back reference, parent revision and audit');
+$remove=$command('external-remove')+['file_key'=>$files[0]['file_key']];$reset($remove);$cc->delete_contract_attachment($files[0]['file_key']);essentialCheck($out->status===303&&$contracts->externalFiles($b,7,$httpContract)===[],'Original attachment removal hides the scoped external reference');
+$reset($remove);$cc->delete_contract_attachment($files[0]['file_key']);essentialCheck($out->status===303&&count($contracts->externalFiles($b,7,$httpContract,false))===1,'External removal retries safely and retains its original URL/history');
+essentialCheck($contracts->get($b,7,$httpContract)['snapshot_json']===$before['snapshot_json'],'External references never rewrite issued PDF identity/content or mail attachments');
+echo 'Contract external references: '.($GLOBALS['essentialChecks']-$start).' additional checks passed ('.$db->driver().'). No provider fetch.'.PHP_EOL;

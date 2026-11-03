@@ -10,6 +10,7 @@ class Proposal extends ClientsController
 {
     public function index($id = '', $hash = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($this)){require_once APPPATH.'services/NativePortalProposalHttp.php';try{(new NativePortalProposalHttp($this))->index($id,$hash);}catch(DomainException$denied){show_404();}return;}
         check_proposal_restrictions($id, $hash);
         $proposal = $this->proposals_model->get($id);
 

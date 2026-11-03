@@ -1,0 +1,8 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/ticket_settings_merge_endpoint.php';
+$first=$service->createNative(2,17,array_replace($input,['subject'=>'Preview primary']),hash('sha256','preview-primary'));$second=$service->createNative(2,17,array_replace($input,['subject'=>'Preview child']),hash('sha256','preview-child'));$foreignAudience=$service->createNative(2,17,array_replace($input,['email'=>'other@example.invalid']),hash('sha256','preview-audience'));
+$ci->router=new class{function fetch_method(){return'ticket';}};$page=new Tickets();$ci->input->verb='GET';$ci->input->query=['merge_preview'=>$second];$snapshot=$db->query('SELECT * FROM tblcompany_ticket_requests ORDER BY request_key')->result_array();$page->ticket($first);$proof=json_decode($ci->output->body,true,512,JSON_THROW_ON_ERROR);kc($proof['ticketid']===$first&&$proof['children'][0]['id']===$second&&$proof['children'][0]['revision']===$reader->get(2,17,$second)['revision_token'],'same original detail endpoint returns actual child snapshot');kc($snapshot===$db->query('SELECT * FROM tblcompany_ticket_requests ORDER BY request_key')->result_array(),'preview performs no command mutation');
+foreach([$foreignAudience,$second.','.$second,$first,'1',$other]as$bad){$ci->input->query=['merge_preview'=>$bad];$deny(fn()=>$page->ticket($first));}
+$db->query('UPDATE tblissuers_staff SET can_view=0 WHERE issuer_id=2 AND staff_id=17');$db->query('UPDATE tblissuers_installation_identity SET master_staff_id=18');$ci->input->query=['merge_preview'=>$second];$deny(fn()=>$page->ticket($first));
+echo "Original detail merge-preview GET + SQLite passed: exact snapshots, no command write, audience/duplicate/foreign/merged/ACL negatives. Whole detail bootstrap remains pending.\n";

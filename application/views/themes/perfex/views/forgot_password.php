@@ -9,7 +9,8 @@
         <div class="panel_s">
             <div class="panel-body">
                 <?= form_open($this->uri->uri_string(), ['id' => 'forgot-password-form']); ?>
-                <?= validation_errors('<div class="alert alert-danger text-center">', '</div>'); ?>
+                <?php if(!empty($native_portal))echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf); ?>
+                    <?= validation_errors('<div class="alert alert-danger text-center">', '</div>'); ?>
                 <?php if ($this->session->flashdata('message-danger')) { ?>
                 <div class="alert alert-danger">
                     <?= $this->session->flashdata('message-danger'); ?>

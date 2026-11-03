@@ -33,7 +33,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+if [ "${ARGWS_SMOKE_PREBUILT_IMAGE:-0}" = 1 ]; then
+    # The workflow builds and loads this image locally from this exact checkout.
+    # Cached layers are inputs, never evidence that a test passed.
+    expected_tree="$(git rev-parse 'HEAD^{tree}')"
+    actual_tree="$(docker image inspect --format '{{ index .Config.Labels "org.argws.smoke.source-tree" }}' "$image")"
+    if [ "$actual_tree" != "$expected_tree" ]; then
+        echo "Prebuilt smoke image does not match the checked out source tree." >&2
+        exit 1
+    fi
+else
+    docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+fi
 docker run --rm --entrypoint /bin/sh "$image" -ec 'test "$(id -u www-data):$(id -g www-data)" = "33:33"'
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/brand_assets_smoke.php
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/email_templates_php_smoke.php
@@ -300,8 +311,8 @@ if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
     if ! ISSUERS_BROWSER_URL="$url" ISSUERS_BROWSER_PASSWORD="$admin_password" \
         ISSUERS_BROWSER_DB_CONTAINER="$database" ISSUERS_BROWSER_DB_USER="$database_user" \
         ISSUERS_BROWSER_DB_PASSWORD="$database_password" node tests/issuers_browser_smoke.cjs; then
-        # Print only the fixed-format migration category written by App::upgrade_database_silent.
-        docker logs "$web" 2>&1 | grep -F "Falha na atualização nativa [" | tail -n 8 >&2 || true
+        # Print only fixed-format safe diagnostics; never dump application/request data.
+        docker logs "$web" 2>&1 | grep -E 'Native company dashboard (denied|failed) \[[a-z][a-z0-9_]{0,99}(:[a-z][a-z0-9_]{0,99})?\]|Native calendar (feed|save|delete) rejected \[[a-z0-9_]{1,107}\]; request values omitted|Native calendar boundary rejected \[[a-z0-9_]{1,107}\]; no request values logged|Native item catalogue (construction|response) unconfirmed: [A-Za-z_][A-Za-z0-9_]*@[A-Za-z0-9_.-]+:[0-9]+; no messages or request values logged\.|Falha na atualização nativa \[' | tail -n 8 >&2 || true
         exit 1
     fi
 fi

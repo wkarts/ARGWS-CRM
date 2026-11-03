@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$payment->paymentmode]); ?>
+<?php $nativePayment=isset($native_payment);if(!$nativePayment)$payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$payment->paymentmode]); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">
@@ -8,7 +8,7 @@
                 <?= _l('payment_edit_for_invoice'); ?>
                 <a
                     href="<?= admin_url('invoices/list_invoices/' . $payment->invoiceid); ?>">
-                    <?= e(format_invoice_number($payment->invoice->id)); ?>
+                    <?= e($nativePayment?$native_payment['invoice']['number']:format_invoice_number($payment->invoice->id)); ?>
                 </a>
             </h4>
             <div class="horizontal-scrollable-tabs">
@@ -36,10 +36,10 @@
                             <div class="tw-flex tw-justify-end tw-mb-6">
                                 <div class="tw-self-start">
                                     <div class="btn-group">
-                                        <a href="#" data-toggle="modal" data-target="#payment_send_to_client"
+                                        <?php if(!$nativePayment){ ?><a href="#" data-toggle="modal" data-target="#payment_send_to_client"
                                             class="payment-send-to-client btn-with-tooltip btn btn-default">
                                             <i class="fa-regular fa-envelope"></i></span>
-                                        </a>
+                                        </a><?php } ?>
 
                                         <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
                                             aria-haspopup="true" aria-expanded="false">
@@ -76,7 +76,7 @@
                                             </li>
                                         </ul>
                                     </div>
-                                    <?php if (staff_can('delete', 'payments')) { ?>
+                                    <?php if (!$nativePayment&&staff_can('delete', 'payments')) { ?>
                                     <a href="<?= admin_url('payments/delete/' . $payment->paymentid); ?>"
                                         class="btn btn-danger _delete">
                                         <i class="fa-regular fa-trash-can"></i>
@@ -88,12 +88,12 @@
                             <div class="row">
                                 <div class="col-md-6 col-sm-6">
                                     <address class="tw-text-neutral-500">
-                                        <?= format_organization_info(); ?>
+                                        <?php if($nativePayment){echo e($native_payment['invoice']['identity']['legal_name']).'<br>'.e($native_payment['invoice']['identity']['tax_id']).'<br>'.e(CompanyDocumentBranding::address($native_payment['invoice']['identity']));}else echo format_organization_info(); ?>
                                     </address>
                                 </div>
                                 <div class="col-sm-6 text-right">
                                     <address class="tw-text-neutral-500">
-                                        <?= format_customer_info($payment->invoice, 'payment', 'billing', true); ?>
+                                        <?php if($nativePayment){echo e($native_payment['invoice']['recipient']['name']).'<br>'.e($native_payment['invoice']['recipient']['tax_id']);}else echo format_customer_info($payment->invoice, 'payment', 'billing', true); ?>
                                     </address>
                                 </div>
                             </div>
@@ -161,8 +161,8 @@
                                                     </th>
                                                     <th><?= _l('payment_table_payment_amount_total'); ?>
                                                     </th>
-                                                    <?php if ($payment->invoice->status != Invoices_model::STATUS_PAID
-        && $payment->invoice->status != Invoices_model::STATUS_CANCELLED) { ?>
+                                                    <?php if ($payment->invoice->status != 2
+        && $payment->invoice->status != 5) { ?>
                                                     <th><span
                                                             class="text-danger"><?= _l('invoice_amount_due'); ?></span>
                                                     </th>
@@ -172,7 +172,7 @@
                                             <tbody>
                                                 <tr>
                                                     <td class="tw-font-medium">
-                                                        <?= e(format_invoice_number($payment->invoice->id)); ?>
+                                                        <?= e($nativePayment?$native_payment['invoice']['number']:format_invoice_number($payment->invoice->id)); ?>
                                                     </td>
                                                     <td><?= e(_d($payment->invoice->date)); ?>
                                                     </td>
@@ -180,10 +180,10 @@
                                                     </td>
                                                     <td><?= e(app_format_money($payment->amount, $payment->invoice->currency_name)); ?>
                                                     </td>
-                                                    <?php if ($payment->invoice->status != Invoices_model::STATUS_PAID
-            && $payment->invoice->status != Invoices_model::STATUS_CANCELLED) { ?>
+                                                    <?php if ($payment->invoice->status != 2
+            && $payment->invoice->status != 5) { ?>
                                                     <td class="text-danger">
-                                                        <?= e(app_format_money(get_invoice_total_left_to_pay($payment->invoice->id, $payment->invoice->total), $payment->invoice->currency_name)); ?>
+                                                        <?= e(app_format_money(($nativePayment?$native_payment['balance']['receivable']:get_invoice_total_left_to_pay($payment->invoice->id, $payment->invoice->total)), $payment->invoice->currency_name)); ?>
                                                     </td>
                                                     <?php } ?>
                                                 </tr>
@@ -200,6 +200,13 @@
                         <div class="panel-body">
                             <?= form_open($this->uri->uri_string()); ?>
 
+                            <?php if($nativePayment){ ?>
+                            <p>Valor original: <?= e($native_payment['invoice']['currency'].' '.$native_payment['payment']['original_amount']); ?> · Estornado: <?= e($native_payment['payment']['reversed_amount']); ?> · Efetivo: <?= e($payment->amount); ?></p>
+                            <p>Data: <?= e($payment->date); ?> · Modo: <?= e($payment->name); ?> · Referência: <?= e($payment->transactionid); ?></p>
+                            <p>Para corrigir o lançamento financeiro, registre o estorno autorizado e o novo recebimento. Ambos permanecem no histórico.</p>
+                            <?= form_hidden('revision',$native_payment['revision']); ?><?= form_hidden('request_key',bin2hex(random_bytes(32))); ?>
+                            <?= render_textarea('note','note',$payment->note,['rows'=>7]); ?>
+                            <?php }else{ ?>
                             <?= render_input('amount', 'payment_edit_amount_received', $payment->amount, 'number'); ?>
                             <?= render_date_input('date', 'payment_edit_date', _d($payment->date)); ?>
                             <?= render_select('paymentmode', $payment_modes, ['id', 'name'], 'payment_mode', $payment->paymentmode); ?>
@@ -209,13 +216,21 @@
                             <?= render_input('transactionid', 'payment_transaction_id', $payment->transactionid); ?>
                             <?= render_textarea('note', 'note', $payment->note, ['rows' => 7]); ?>
 
-                            <?php hooks()->do_action('before_admin_edit_payment_form_submit', $payment); ?>
+                            <?php hooks()->do_action('before_admin_edit_payment_form_submit', $payment); } ?>
 
                             <div class="text-right">
                                 <button type="submit"
-                                    class="btn btn-primary"><?= _l('submit'); ?></button>
+                                    class="btn btn-primary" <?= $nativePayment&&!$native_payment_caps['edit']?'disabled':''; ?>><?= _l('submit'); ?></button>
                             </div>
                             <?= form_close(); ?>
+                            <?php if($nativePayment&&$native_payment_caps['delete']&&$native_payment['payment']['can_reverse']){ ?>
+                            <hr><h4>Estornar pagamento manual</h4>
+                            <?= form_open(admin_url('payments/delete/'.$payment->paymentid),['id'=>'payment-reversal-form']); ?>
+                            <?= form_hidden('revision',$native_payment['financial_revision']); ?><?= form_hidden('request_key',bin2hex(random_bytes(32))); ?><?= form_hidden('reversal[payment_id]',$payment->paymentid); ?>
+                            <?= render_input('reversal[amount]','Valor',$native_payment['payment']['native_amount'],'text'); ?><?= render_input('reversal[date]','Data',gmdate('Y-m-d'),'date'); ?>
+                            <?= render_input('reversal[reference]','Referência'); ?><?= render_textarea('reversal[reason]','Motivo'); ?>
+                            <button type="submit" class="btn btn-danger">Confirmar estorno</button><?= form_close(); ?>
+                            <?php } ?>
                         </div>
                     </div>
                 </div>
@@ -223,14 +238,11 @@
         </div>
     </div>
 </div>
-<?php $this->load->view('admin/payments/send_to_client'); ?>
+<?php if(!$nativePayment)$this->load->view('admin/payments/send_to_client'); ?>
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
-            amount: 'required',
-            date: 'required'
-        });
+        appValidateForm($('form'), <?= $nativePayment?'{}':"{amount:'required',date:'required'}"; ?>);
     });
 </script>
 </body>

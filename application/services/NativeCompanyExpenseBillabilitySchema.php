@@ -1,0 +1,27 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/issuers/IssuerTransaction.php';
+/** Additive 474 metadata. No historical expense row, request hash or billing source is rewritten. */
+final class NativeCompanyExpenseBillabilitySchema
+{
+ public const TABLE='company_expense_native_billability';
+ public const FIELDS=['expense_id'=>'int unsigned','issuer_id'=>'int unsigned','revision'=>'int unsigned','billable'=>'tinyint','actor_id'=>'int','source_revision'=>'varchar(64)','audit_id'=>'bigint unsigned'];
+ private static function sqlite($db):bool{$c=$db->pdo??$db->conn_id??null;return$c instanceof PDO&&$c->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';}
+ public static function definitions(string$p):array
+ {
+  if(!preg_match('/^[A-Za-z0-9_]+$/D',$p)||strlen($p.self::TABLE)>64)throw new InvalidArgumentException('Invalid prefix or physical table name');$parts=[];foreach(self::FIELDS as$name=>$type)$parts[]='`'.$name.'` '.$type.($name==='source_revision'?' CHARACTER SET ascii COLLATE ascii_bin':'').' NOT NULL';$parts[]='PRIMARY KEY (`expense_id`)';$parts[]='CONSTRAINT `neb_'.substr(hash('sha256',$p.self::TABLE.'.expense_id'),0,40).'` FOREIGN KEY (`expense_id`) REFERENCES `'.$p.'company_expenses` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT';$parts[]='CONSTRAINT `neb_'.substr(hash('sha256',$p.self::TABLE.'.issuer_id'),0,40).'` FOREIGN KEY (`issuer_id`) REFERENCES `'.$p.'issuers_registry` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT';return[self::TABLE=>$parts];
+ }
+ public static function installed($db,string$p):bool
+ {
+  self::definitions($p);$sql=self::sqlite($db)?"SELECT name FROM sqlite_master WHERE type='table' AND name=?":"SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?";$rows=IssuerStorage::query($db,$sql,[$p.self::TABLE])->result_array();if(count($rows)>1)throw new RuntimeException('issuer_native_expense_billability_schema_invalid');return count($rows)===1;
+ }
+ public static function ensure($db,string$p):void{$definitions=self::definitions($p);IssuerTransaction::assertIndependent($db);foreach($definitions as$table=>$parts)IssuerStorage::query($db,'CREATE TABLE IF NOT EXISTS `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB');self::assertValid($db,$p);}
+ public static function assertValid($db,string$p):void
+ {
+  self::definitions($p);$name=$p.self::TABLE;$sql=self::sqlite($db)?'PRAGMA table_info(`'.$name.'`)':'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY ORDINAL_POSITION';$rows=IssuerStorage::query($db,$sql,self::sqlite($db)?[]:[$name])->result_array();if(count($rows)!==count(self::FIELDS))self::fail();
+  foreach(array_keys(self::FIELDS)as$i=>$field){$row=$rows[$i];$type=strtolower($row['type']??$row['COLUMN_TYPE']??'');$type=preg_replace('/^(tinyint|int|bigint)\([0-9]+\)/','$1',$type);if(($row['name']??$row['COLUMN_NAME']??null)!==$field||$type!==self::FIELDS[$field]||(self::sqlite($db)?(int)$row['notnull']!==1:($row['IS_NULLABLE']!=='NO'||$row['EXTRA']!==''))||!IssuerStorage::sqlNullDefault(['COLUMN_DEFAULT'=>$row['dflt_value']??$row['COLUMN_DEFAULT']??null]))self::fail();if(!self::sqlite($db)&&($row['COLLATION_NAME']??null)!==($field==='source_revision'?'ascii_bin':null))self::fail();}
+  if(self::sqlite($db)){$indexes=IssuerStorage::query($db,'PRAGMA index_list(`'.$name.'`)')->result_array();if(count($indexes)!==1||(int)$indexes[0]['unique']!==1||array_column(IssuerStorage::query($db,'PRAGMA index_info(`'.$indexes[0]['name'].'`)')->result_array(),'name')!==['expense_id'])self::fail();$foreign=IssuerStorage::query($db,'PRAGMA foreign_key_list(`'.$name.'`)')->result_array();if(count($foreign)!==2)self::fail();foreach($foreign as$r){$expected=match($r['from']){'expense_id'=>[$p.'company_expenses','id'],'issuer_id'=>[$p.'issuers_registry','id'],default=>null};if($expected===null||[$r['table'],$r['to']]!==$expected||$r['on_delete']!=='RESTRICT'||$r['on_update']!=='RESTRICT')self::fail();}}
+  else{$engine=IssuerStorage::query($db,'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->row_array();if(strtoupper($engine['ENGINE']??'')!=='INNODB')self::fail();$indexes=IssuerStorage::query($db,'SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME=? ORDER BY SEQ_IN_INDEX',[$name,'PRIMARY'])->result_array();if(array_column($indexes,'COLUMN_NAME')!==['expense_id'])self::fail();$foreign=IssuerStorage::query($db,'SELECT k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE,r.UPDATE_RULE FROM information_schema.KEY_COLUMN_USAGE k INNER JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME AND r.TABLE_NAME=k.TABLE_NAME WHERE k.TABLE_SCHEMA=DATABASE() AND k.TABLE_NAME=? AND k.REFERENCED_TABLE_SCHEMA=DATABASE()',[$name])->result_array();if(count($foreign)!==2)self::fail();foreach($foreign as$r){$expected=match($r['COLUMN_NAME']){'expense_id'=>[$p.'company_expenses','id'],'issuer_id'=>[$p.'issuers_registry','id'],default=>null};if($expected===null||[$r['REFERENCED_TABLE_NAME'],$r['REFERENCED_COLUMN_NAME']]!==$expected||!in_array($r['DELETE_RULE'],['RESTRICT','NO ACTION'],true)||!in_array($r['UPDATE_RULE'],['RESTRICT','NO ACTION'],true))self::fail();}}
+ }
+ private static function fail():never{throw new RuntimeException('issuer_native_expense_billability_schema_invalid');}
+}

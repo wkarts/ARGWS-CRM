@@ -1,0 +1,21 @@
+<?php
+require __DIR__.'/clients.php';
+require_once APPPATH.'services/NativeCompanyCustomFields.php';
+NativeCompanyCustomFieldSchema::ensure($db,$p);
+$db->query("DELETE FROM {$p}issuers_resource_permissions WHERE issuer_id=41 AND staff_id=12 AND feature='customers' AND capability<>'create'");
+$definition=NativeCompanyCustomFields::definition(['fieldto'=>'customers','name'=>'Creation field','type'=>'input','required'=>'1']);
+$db->query("INSERT INTO {$p}company_custom_fields(issuer_id,fieldto,slug,definition_json,revision) VALUES(?,?,?,?,?)",[41,'customers','customers_creation',json_encode($definition,JSON_THROW_ON_ERROR),1]);
+$field=NativeCompanyResourceId::encode('company_custom_field',$db->insert_id());$fields=new NativeCompanyCustomFields($db,$p);$start=$GLOBALS['essentialChecks'];
+essentialCheck($fields->validateValues(41,12,'customers',[$field=>'created'],'create')===[$field=>'created'],'create-only may validate new form fields');
+essentialThrows(fn()=>$fields->definitions(41,12,'customers'),'native_custom_field_denied','create permission does not grant ordinary definition view');
+$captured=null;$calls=0;$callback=function($id,$writer)use($fields,$field,&$captured,&$calls){$calls++;$captured=[$id,$writer];$fields->saveCreatedInOwnedTransaction(41,12,'customers',$id,[$field=>'created'],$writer);};
+$key=hash('sha256','custom-field-create-only');$id=$clients->create(41,12,['company'=>'Create-only field owner'],$key,$callback,$fields->tableNames(),[$field=>'created']);
+$row=$db->query("SELECT value,source_kind,source_id FROM {$p}company_custom_field_values WHERE issuer_id=41")->row_array();
+essentialCheck($row['value']==='created'&&$row['source_kind']==='client'&&(int)$row['source_id']===$id,'fresh field saved atomically without edit authority');
+$again=$clients->create(41,12,['company'=>'Create-only field owner'],$key,$callback,$fields->tableNames(),[$field=>'created']);essentialCheck($again===$id&&$calls===1,'replay neither repeats field writes nor reissues attestation');
+essentialThrows(fn()=>IssuerTransaction::run($db,$p,array_merge($clients->tables(),$fields->tableNames()),fn()=>$fields->saveCreatedInOwnedTransaction(41,12,'customers',$id,[$field=>'overwrite'],$captured[1])),'native_creation_attestation_invalid','retained writer cannot edit old fields in another transaction');
+essentialThrows(fn()=>$fields->saveCreatedInOwnedTransaction(41,12,'customers',$id,[$field=>'overwrite'],new stdClass),'native_custom_field_creation_denied','arbitrary attestations denied');
+$before=(int)$db->query("SELECT COUNT(*) n FROM {$p}clients")->row()->n;
+essentialThrows(fn()=>$clients->create(41,12,['company'=>'Rollback required field'],hash('sha256','missing-required'),fn($new,$writer)=>$fields->saveCreatedInOwnedTransaction(41,12,'customers',$new,[],$writer),$fields->tableNames(),[]),'native_custom_field_required','required failure aborts writer');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}clients")->row()->n===$before,'no customer orphan on field failure');
+echo 'Native custom fields create-only: '.($GLOBALS['essentialChecks']-$start).' checks passed.'.PHP_EOL;

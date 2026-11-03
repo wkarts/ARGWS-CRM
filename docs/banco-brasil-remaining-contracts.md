@@ -48,7 +48,7 @@ O núcleo442/4.4.2 usa BB121/1.2.1. Este resumo substitui somente as indicaçõe
 | Nominal, protesto/negativação | Adapter/outbox/estados e confirmação ainda incompletos | Não são apenas homologação |
 | API18/19 | Efeito financeiro parcial não implementado | Faltam ID estável por crédito e semântica individual/cumulativa de valorCreditoCedente |
 | CNAB240 | Remessa e conciliação assistida nominal/parcial/componentes existentes | Tarifas/IOF/outros e reversões parciais continuam exigindo adapters/equação próprios |
-| CNAB400 | Codec candidato e parser, canal operacional indisponível | Faltam os três documentos abaixo e a vertical operacional própria |
+| CNAB400 | Preparação, reserva, validação, geração e download locais disponíveis por empresa; transmissão/financeiro externo indisponíveis | Faltam os três documentos abaixo para declarar aceite bancário e a homologação do canal externo |
 
 InsumosCNAB400 indispensáveis: códigoBRL nas posições85–86CBR641; documento da conta/convênio/carteira/variação com isenção inequívoca ou parâmetros dos juros herdados; errata/explicaçãoBB do totalCBR64326–39 (14posições versus9(013)v99). TrailerCBR641 já resolvido. Não pedir nem registrar segredos naPR.
 

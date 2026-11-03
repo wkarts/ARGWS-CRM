@@ -193,6 +193,9 @@ class Cron_model extends App_Model
 
     private function events()
     {
+        require_once APPPATH.'services/NativeCompanyEventWorker.php';
+        $owned=(new NativeCompanyEventWorker($this->db,db_prefix()))->run(gmdate('Y-m-d H:i:s'),base_url(),fn($value)=>$this->encryption->decrypt($value));
+        if($owned['deferred']>0)log_message('error','Owned calendar events deferred after source/configuration validation.');
         // User events
         $this->db->where('isstartnotified', 0);
         $events = $this->db->get(db_prefix() . 'events')->result_array();
@@ -1089,6 +1092,12 @@ class Cron_model extends App_Model
 
     private function staff_reminders()
     {
+        require_once APPPATH . 'services/NativeCompanyReminderWorker.php';
+        require_once APPPATH . 'services/NativeCompanyLegacyReminderScope.php';
+        $owned = (new NativeCompanyReminderWorker($this->db, db_prefix()))->run(
+            date('Y-m-d H:i:s'), base_url(), fn($value) => $this->encryption->decrypt($value)
+        );
+        if ($owned['deferred'] > 0) { log_message('error', 'Owned reminders deferred after source/configuration validation.'); }
         $this->db->select('' . db_prefix() . 'reminders.*, email, phonenumber');
         $this->db->join(db_prefix() . 'staff', '' . db_prefix() . 'staff.staffid=' . db_prefix() . 'reminders.staff');
         $this->db->where('isnotified', 0);
@@ -1096,6 +1105,7 @@ class Cron_model extends App_Model
         $notifiedUsers = [];
 
         foreach ($reminders as $reminder) {
+            if (!NativeCompanyLegacyReminderScope::permits($this->db, db_prefix(), $reminder)) { continue; }
             if (date('Y-m-d H:i:s') >= $reminder['date']) {
                 $this->db->where('id', $reminder['id']);
                 $this->db->update(db_prefix() . 'reminders', [

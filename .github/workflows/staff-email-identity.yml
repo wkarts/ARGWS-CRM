@@ -4,12 +4,15 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   real-database-identity:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         database: ['mysql:8.0', 'mysql:8.4', 'mariadb:10.11', 'mariadb:11.4']
     container: php:8.2-cli
@@ -32,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Preparar PHP sem credenciais de produção
-        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libonig-dev && docker-php-ext-install mysqli pdo_mysql pdo_sqlite mbstring
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libonig-dev && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pdo_sqlite mbstring
       - name: Validar sintaxe
         run: |
           php -l application/services/StaffEmailIdentity.php

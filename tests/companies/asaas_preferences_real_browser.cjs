@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Real authenticated CRM/MySQL/native assets only. No HTML, provider or response fixtures.
 // Run unselected immediately after the existing native installer, before A/B account fixtures;
 // run selected after companies_asaas_browser.cjs. Both reuse existing A/B invoices and never seed.
@@ -45,9 +45,9 @@ function requestDecision(requestUrl, method, origin, permittedPost = null) {
   // Match canonical paths only: aliases, encoded slashes and extra segments are not admitted.
   const pathname = url.pathname;
   if (method === 'POST' && pathname === permittedPost &&
-      ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(pathname)) return 'allow';
+      ['/admin/authentication', '/admin/authentication/admin', '/admin/issuers/select'].includes(pathname)) return 'allow';
   if (!['GET', 'HEAD'].includes(method)) return 'mutation';
-  if (['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_context', '/admin/company_asaas'].includes(pathname)) return 'allow';
+  if (['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/settings/asaas'].includes(pathname)) return 'allow';
   if (/^\/(?:assets|uploads|modules)\/[a-zA-Z0-9_./-]+\.(?:css|js|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp)$/i.test(pathname)) return 'allow';
   return 'navigation';
 }
@@ -57,7 +57,7 @@ async function withNativeSessionPermit(form, origin, permit, interact) {
   assert.equal(await form.count(), 1, 'one native session form is required');
   const target = new URL(await form.getAttribute('action'), origin);
   assert.ok(target.origin === origin && !target.username && !target.password && !target.search && !target.hash &&
-    ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(target.pathname), 'only exact native login/context forms may be submitted');
+    ['/admin/authentication', '/admin/authentication/admin', '/admin/issuers/select'].includes(target.pathname), 'only exact native login/context forms may be submitted');
   assert.equal((await form.getAttribute('method') || '').toLowerCase(), 'post', 'native session form must use POST');
   assert.equal(permit.path, null, 'session permits cannot overlap');
   permit.path = target.pathname;
@@ -73,12 +73,12 @@ function safePath(value, origin) {
   try {
     const url = new URL(value, origin);
     if (url.origin !== origin || url.username || url.password) return '[external]';
-    const known = ['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_context', '/admin/company_context/select', '/admin/company_asaas', '/admin/dashboard', '/admin/misc/my_reminders', '/admin/misc/notifications_check', '/admin/misc/get_notifications', '/admin/tasks/table'];
+    const known = ['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/issuers/select', '/admin/settings/asaas', '/admin/dashboard', '/admin/misc/my_reminders', '/admin/misc/notifications_check', '/admin/misc/get_notifications', '/admin/tasks/table'];
     return known.includes(url.pathname) ? url.pathname : '[other-local]';
   } catch { return '[invalid]'; }
 }
 function requestScope(requestUrl, documentUrl, origin) {
-  return [requestUrl, documentUrl].some(value => safePath(value, origin) === '/admin/company_asaas') ? 'presentation' : 'session';
+  return [requestUrl, documentUrl].some(value => safePath(value, origin) === '/admin/settings/asaas') ? 'presentation' : 'session';
 }
 function bodyCategory(body) {
   const text = typeof body === 'string' ? body.slice(0, 65536) : '';
@@ -219,15 +219,15 @@ async function run(env = process.env) {
         for (const owner of owners) {
           phase = 'select real company context: ' + owner.letter;
           observePageErrors = false;
-          await navigate(config.url + '/admin/company_context');
+          await navigate(config.url + '/admin/');
           await submitSession(page.locator('.company-selector-form'), () => selectCompanyOption(page, owner.issuer));
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;
-          const response = await navigate(config.url + '/admin/company_asaas');
+          const response = await navigate(config.url + '/admin/settings/asaas');
           check(response.status() === 200, 'actual nominal preferences render: ' + owner.letter);
           check((response.headers()['cache-control'] || '').includes('no-store'), 'real nominal view prevents cached account/preferences recovery');
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'header confirms the actual active owner');
-          check(await page.locator('body.company-context-shell').count() === 1 && await page.locator('script[src*="assets/js/company-context-tabs.js"]').count() === 1, 'real company shell and native tabs asset are present');
+          check(await page.locator('body.company-context-shell').count() === 1 && await page.locator('script[src*="assets/js/native-admin-tabs.js"]').count() === 1, 'real company shell and native tabs asset are present');
           const nativeAssets = await page.evaluate(nativeTabAssetFacts, NATIVE_TAB_ASSETS);
           check(nativeAssets.stylesheet, 'actual native vendor stylesheet is loaded and readable');
           check(nativeAssets.tabStyles, 'actual native vendor stylesheet contains Bootstrap tab visibility rules');
@@ -291,11 +291,11 @@ async function run(env = process.env) {
           await page.reload({waitUntil: 'domcontentloaded'});
           await page.locator('#company-asaas-profile-tab-sandbox').click();
           check(await sandboxLabel.inputValue() === owner.profiles.sandbox.label && await card.isChecked() === (owner.profiles.sandbox.allow_card === '1'), 'real GET reload discards unsaved edits');
-          await navigate(config.url + '/admin/company_asaas#company-asaas-profile-production');
+          await navigate(config.url + '/admin/settings/asaas#company-asaas-profile-production');
           await active('production');
           check(await page.locator('#preferences input[name=environment][value=sandbox]').count() >= 1, 'deep-link navigation preserves the other environment controls');
           // Owned invoice hydration is a real GET. Never click the financial submit button.
-          check((await navigate(config.url + '/admin/company_asaas?invoice=' + owner.invoice)).status() === 200, 'existing own invoice opens through the real controller');
+          check((await navigate(config.url + '/admin/settings/asaas?invoice=' + owner.invoice)).status() === 200, 'existing own invoice opens through the real controller');
           const issue = page.locator('#issue form').filter({has: page.locator('input[name=action][value=issue]')});
           if (config.phase === 'unselected') {
             check(await issue.count() === 0 && await page.locator('#asaas-issue-account').count() === 0, 'no issuance form/account appears before explicit selection');
@@ -311,7 +311,7 @@ async function run(env = process.env) {
           }
           // Real HTTP 403 using the browser transport, so the same network guard still applies.
           const foreign = owners.find(item => item.issuer !== owner.issuer);
-          check((await navigate(config.url + '/admin/company_asaas?invoice=' + foreign.invoice)).status() === 403, 'foreign invoice hydration is rejected within the current owner');
+          check((await navigate(config.url + '/admin/settings/asaas?invoice=' + foreign.invoice)).status() === 403, 'foreign invoice hydration is rejected within the current owner');
           check(await page.locator('#preferences, #asaas-issue-account').count() === 0, 'denied foreign invoice response exposes no preference or issuance form');
           await page.goBack({waitUntil: 'domcontentloaded'});
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer && await page.locator('#preferences').count() === 1, 'Back recovers the owned view without changing company');

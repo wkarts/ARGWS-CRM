@@ -16,7 +16,8 @@ test('PT-BR é o único idioma selecionável e o padrão da instalação', () =>
   const settings = read('application/controllers/admin/Settings.php');
   const dump = read('install/database.sql');
   assert.match(config, /\$config\['language'\]\s*=\s*'portuguese_br'/);
-  assert.equal((app.match(/return \['portuguese_br'\];/g) || []).length, 2);
+  assert.match(app, /'active_language'\s*=>\s*'portuguese_br'/);
+  assert.match(app, /'enabled_languages'\s*=>\s*'\["portuguese_br"\]'/);
   assert.match(settings, /\['active_language'\]\s*=\s*'portuguese_br'/);
   assert.match(dump, /'active_language'.*'portuguese_br'/s);
   assert.match(dump, /'enabled_languages'.*portuguese_br/s);

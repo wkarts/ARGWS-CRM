@@ -1,11 +1,15 @@
 <div id="settings">
+    <?php if(isset($native_ticket_presentation)){ ?>
+    <?= form_hidden('tags_revision',$native_ticket_presentation['tags_revision']); ?>
+    <?= form_hidden('custom_fields_revision',$native_ticket_presentation['custom_fields_revision']); ?>
+    <?php } ?>
     <div class="form-group">
         <label for="tags" class="control-label">
             <i class="fa fa-tag" aria-hidden="true"></i>
             <?= _l('tags'); ?>
         </label>
         <input type="text" class="tagsinput" id="tags" name="tags"
-            value="<?= prep_tags_input(get_tags_in($ticket->ticketid, 'ticket')); ?>"
+            value="<?= isset($native_ticket_presentation)?e($native_ticket_presentation['tags_value']):prep_tags_input(get_tags_in($ticket->ticketid, 'ticket')); ?>"
             data-role="tagsinput">
     </div>
 
@@ -22,9 +26,10 @@
                 echo ' data-ticket-emails="' . $ticket->ticket_emails . '"';
             } ?>>
             <?php
+                              if(isset($native_ticket_presentation)){ $contact=$native_ticket_presentation['contact']; if($contact!==null) echo '<option value="'.e($contact['id']).'" selected data-subtext="'.e($contact['email']).'">'.e(trim($contact['firstname'].' '.$contact['lastname'])).'</option>'; } else {
                               $rel_data = get_relation_data('contact', $ticket->contactid);
             $rel_val                    = get_relation_values($rel_data, 'contact');
-            echo '<option value="' . $rel_val['id'] . '" selected data-subtext="' . $rel_val['subtext'] . '">' . $rel_val['name'] . '</option>';
+            echo '<option value="' . $rel_val['id'] . '" selected data-subtext="' . $rel_val['subtext'] . '">' . $rel_val['name'] . '</option>'; }
             ?>
         </select>
         <?= form_hidden('userid', $ticket->userid); ?>
@@ -89,18 +94,18 @@
     </div>
     <div class="row">
         <div
-            class="<?= get_option('services') == 1 ? 'col-sm-12 col-lg-6' : 'col-md-12'; ?>">
+            class="<?= (isset($native_ticket_presentation)?$native_ticket_presentation['options']['services']:get_option('services')) == 1 ? 'col-sm-12 col-lg-6' : 'col-md-12'; ?>">
             <?= render_select(
                 'priority',
-                $priorities += ['callback_translate' => 'ticket_priority_translate'],
+                isset($native_ticket_presentation)?$priorities:($priorities + ['callback_translate' => 'ticket_priority_translate']),
                 ['priorityid', 'name'],
                 'ticket_settings_priority',
                 $ticket->priority
             ); ?>
         </div>
-        <?php if (get_option('services') == 1) { ?>
+        <?php if ((isset($native_ticket_presentation)?$native_ticket_presentation['options']['services']:get_option('services')) == 1) { ?>
         <div class="col-sm-12 col-lg-6">
-            <?php if (is_admin() || get_option('staff_members_create_inline_ticket_services') == '1') {
+            <?php if (isset($native_ticket_presentation)?$native_ticket_presentation['inline_service']:(is_admin() || get_option('staff_members_create_inline_ticket_services') == '1')) {
                 echo render_select_with_input_group('service', $services, ['serviceid', 'name'], 'ticket_settings_service', $ticket->service, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_service();return false;"><i class="fa fa-plus"></i></a></div>');
             } else {
                 echo render_select('service', $services, ['serviceid', 'name'], 'ticket_settings_service', $ticket->service);
@@ -120,13 +125,13 @@
                 data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                 <?php if ($ticket->project_id) { ?>
                 <option value="<?= e($ticket->project_id); ?>">
-                    <?= e(get_project_name_by_id($ticket->project_id)); ?>
+                    <?= e(isset($native_ticket_presentation)?$native_ticket_presentation['project_name']:get_project_name_by_id($ticket->project_id)); ?>
                 </option>
                 <?php } ?>
             </select>
         </div>
     </div>
-    <?= render_input('merge_ticket_ids', 'merge_ticket_ids_field_label', '', 'text', $ticket->merged_ticket_id === null ? ['placeholder' => _l('merge_ticket_ids_field_placeholder')] : ['disabled' => true]); ?>
+    <?= render_input('merge_ticket_ids', 'merge_ticket_ids_field_label', '', 'text', ($ticket->merged_ticket_id === null ? ['placeholder' => _l('merge_ticket_ids_field_placeholder')] : ['disabled' => true])); ?>
 
-    <?= render_custom_fields('tickets', $ticket->ticketid); ?>
+    <?= render_custom_fields('tickets', $ticket->ticketid, [], isset($native_ticket_presentation)?['native_purpose'=>'edit']:[]); ?>
 </div>

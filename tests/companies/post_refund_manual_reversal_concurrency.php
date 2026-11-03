@@ -2,11 +2,14 @@
 require_once dirname(__DIR__).'/issuers_core_support.php';if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
 function pvrConnection(string$p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
 if(($argv[1]??'')==='worker'){
-    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$GLOBALS['essentialPrefix']=$p;$db=pvrConnection($p);$GLOBALS['CI']=(object)['db'=>$db];if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');require APPPATH.'services/CompanyPostRefundManualReversalSource.php';$v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
+    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$GLOBALS['essentialPrefix']=$p;$db=pvrConnection($p);$db->recordQueries=false;$GLOBALS['CI']=(object)['db'=>$db];if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');require APPPATH.'services/CompanyPostRefundManualReversalSource.php';$v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
     try{(new CompanyPostRefundManual($db,$p))->reverse($v['issuer'],7,$v['invoice'],$v['manual_request_key'],$v['revision'],$v['key'],$v['entry'],$v['evidence'],true);echo'confirmed';}
     catch(DomainException$e){if(!in_array($e->getMessage(),['company_post_refund_manual_reversal_conflict','company_credit_access_denied','asaas_refund_grant_required','asaas_company_access_denied','company_invoice_stale'],true))throw$e;echo$e->getMessage();}exit(0);
 }
-require __DIR__.'/post_refund_manual_reversal.php';$observer=pvrConnection($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
+require __DIR__.'/post_refund_manual_reversal.php';
+// This concurrency test never asserts SQL diagnostics after fixture setup; release
+// the large setup trace before five real worker races and keep polling bounded.
+$db->queries=[];$db->recordQueries=false;$observer=pvrConnection($p);$observer->recordQueries=false;$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
 foreach(['same','conflicting','new-key','grant','actor']as$scenario){
     $f=pmFresh('local-reversal-race-'.$scenario);$payment=$pmRecord($f);$view=$manualService->page($a,7,$f['invoice'],true);$v=['issuer'=>$a,'invoice'=>$f['invoice'],'manual_request_key'=>$view['manual_request_key'],'revision'=>$view['revision'],'key'=>$rvKey('race-'.$scenario),'entry'=>['amount'=>'105.53','date'=>gmdate('Y-m-d'),'reference'=>'Independent local correction race '.$scenario,'reason'=>'Independent reviewed local full correction of NEW manual cash'],'evidence'=>$rvKey('race-proof-'.$scenario)];$events=(int)$db->query('SELECT COUNT(*) n FROM '.$p.'company_financial_events')->row()->n;$workers=[];$db->trans_begin();$db->query('SELECT id FROM '.$p.'issuers_lock WHERE id=1 FOR UPDATE');
     try{

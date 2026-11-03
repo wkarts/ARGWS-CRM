@@ -14,6 +14,7 @@
             </div>
             <?= form_open('admin/paymentmodes/manage', ['id' => 'payment_modes_form']); ?>
             <?= form_hidden('paymentmodeid'); ?>
+            <?php if (!empty($native_payment_modes)) echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -45,7 +46,7 @@
                             <label
                                 for="expenses_only"><?= _l('payment_mode_expenses_only'); ?></label>
                         </div>
-                        <?php hooks()->do_action('before_paymentmode_modal_form_close'); ?>
+                        <?php if (empty($native_payment_modes)) hooks()->do_action('before_paymentmode_modal_form_close'); ?>
                     </div>
                 </div>
             </div>
@@ -84,6 +85,7 @@
         $('#payment_mode_modal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget)
             var id = button.data('id');
+            $('#payment_mode_modal input[name="revision"]').val(button.attr('data-revision') || '');
             var expenses_only = button.data('expenses-only');
             var selected_by_default = button.data('default-selected');
             var invoices_only = button.data('invoices-only');
@@ -119,6 +121,9 @@
                 $('#payment_mode_modal input[name="name"]').val(name);
                 $('#payment_mode_modal textarea[name="description"]').val(description.trim().replace(
                     /(<|&lt;)br\s*\/*(>|&gt;)/g, " "));
+                if (button.attr('data-native-description') !== undefined) {
+                    $('#payment_mode_modal textarea[name="description"]').val(button.attr('data-native-description'));
+                }
             }
         });
     });

@@ -28,7 +28,7 @@
                             $href = admin_url('profile/' . $activity['staff_id']);
                         } elseif ($activity['contact_id'] != 0) {
                             $name = '<span class="label label-info inline-block mright5">' . _l('is_customer_indicator') . '</span> - ' . $name;
-                            $href = admin_url('clients/client/' . get_user_id_by_contact_id($activity['contact_id']) . '?contactid=' . $activity['contact_id']);
+                            $href = admin_url('clients/client/' . (isset($company_dashboard) ? $activity['client_id'] : get_user_id_by_contact_id($activity['contact_id'])) . '?contactid=' . $activity['contact_id']);
                         } else {
                             $href = '';
                             $name = '[CRON]';

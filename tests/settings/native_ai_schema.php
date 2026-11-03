@@ -1,0 +1,10 @@
+<?php
+require __DIR__.'/native_ai_setup.php';$start=$GLOBALS['essentialChecks'];$before=$db->query('SELECT * FROM '.$p.'company_ai_requests')->result_array();CompanyAiSchema::ensure($db,$p);CompanyAiSchema::ensure($db,$p,false);essentialCheck($db->query('SELECT * FROM '.$p.'company_ai_requests')->result_array()===$before,'own schema replay preserves all rows');essentialCheck(count(CompanyAiSchema::definitions())===1,'one additive AI outbox; no legacy ticket/options table adoption');
+if($db->driver()==='mysql'){
+ $t=$p.'company_ai_requests';$db->query('ALTER TABLE '.$t.' ALTER COLUMN status SET DEFAULT \'pending\'');try{essentialThrows(fn()=>CompanyAiSchema::ensure($db,$p,false),'issuer_ai_schema_invalid','nonNULL default refused');}finally{$db->query('ALTER TABLE '.$t.' ALTER COLUMN status DROP DEFAULT');}
+ $db->query('ALTER TABLE '.$t.' DROP INDEX ai_owned_dedupe');try{essentialThrows(fn()=>CompanyAiSchema::ensure($db,$p,false),'issuer_ai_schema_invalid','missing actor/source dedupe index refused');}finally{$db->query('ALTER TABLE '.$t.' ADD UNIQUE KEY ai_owned_dedupe(issuer_id,actor_id,dedupe_hash)');}
+ $db->query('ALTER TABLE '.$t.' ADD COLUMN unexpected int NULL');try{essentialThrows(fn()=>CompanyAiSchema::ensure($db,$p,false),'issuer_ai_schema_invalid','unexpected plaintext/extra columns refused');}finally{$db->query('ALTER TABLE '.$t.' DROP COLUMN unexpected');}
+ $f=$db->query("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME='ticket_id' AND REFERENCED_TABLE_NAME=?",[$t,$p.'company_tickets'])->row()->CONSTRAINT_NAME;$db->query('ALTER TABLE '.$t.' DROP FOREIGN KEY `'.$f.'`');try{essentialThrows(fn()=>CompanyAiSchema::ensure($db,$p,false),'issuer_ai_schema_invalid','missing real parent FK refused');}finally{$db->query('ALTER TABLE '.$t.' ADD CONSTRAINT `'.$f.'` FOREIGN KEY(ticket_id) REFERENCES '.$p.'company_tickets(id)');}
+ CompanyAiSchema::ensure($db,$p,false);
+}
+echo 'Company AI actual standalone schema/replay/metadata: '.($GLOBALS['essentialChecks']-$start).' added checks ('.$db->driver().'). Future core migration/tracking remains separate.'.PHP_EOL;

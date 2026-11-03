@@ -7,6 +7,30 @@ final class CompanyPortalProjectTasks extends CompanyProjectPortalRulesStorage
 {
     private CompanyPortal $portal;
     public function __construct($db,string $p,string $portalSecret){parent::__construct($db,$p);$this->portal=new CompanyPortal($db,$p,$portalSecret);}
+    public function tables():array
+    {
+        $tables=parent::tables();
+        if($this->db->table_exists($this->p.'company_task_assignees'))$tables[]='company_task_assignees';
+        return $tables;
+    }
+    private function assignees(int $issuer,array $task):array
+    {
+        if($this->db->table_exists($this->p.'company_task_assignees')){
+            $assignments=$this->rows('SELECT staff_id,active FROM '.$this->p.'company_task_assignees WHERE issuer_id=? AND task_id=? AND active=1 ORDER BY staff_id LIMIT 501 FOR UPDATE',[$issuer,$task['id']]);
+            if(count($assignments)>500)throw new DomainException('company_project_portal_unavailable');
+            // Recorded inactive assignments are authoritative removals. Never
+            // resurrect a historical assignee after a native removal.
+            if($assignments||$this->rows('SELECT staff_id FROM '.$this->p.'company_task_assignees WHERE issuer_id=? AND task_id=? LIMIT 1 FOR UPDATE',[$issuer,$task['id']])){
+                $members=[];
+                foreach($assignments as $assignment)if((int)$assignment['active']===1){
+                    $staff=$this->rows('SELECT staffid,firstname,lastname FROM '.$this->p.'staff WHERE staffid=? AND active=1',[$assignment['staff_id']])[0]??null;
+                    if($staff)$members[]=$staff;
+                }
+                return $members;
+            }
+        }
+        return $this->rows('SELECT s.staffid,s.firstname,s.lastname FROM '.$this->p.'company_tasks t JOIN '.$this->p.'staff s ON s.staffid=t.assignee_id AND s.active=1 WHERE t.issuer_id=? AND t.project_id=? AND t.id=?',[$issuer,$task['project_id'],$task['id']]);
+    }
     private function context(array $session,int $issuer,int $project):array
     {
         $who=$this->portal->invoiceIdentity($session,$issuer,true);if(!$who||count($this->rows('SELECT id FROM '.$this->p.'contact_permissions WHERE userid=? AND permission_id=6 FOR UPDATE',[$who['contact_id']]))!==1)throw new DomainException('company_project_portal_unavailable');$parent=$this->parent($issuer,$project);
@@ -19,7 +43,7 @@ final class CompanyPortalProjectTasks extends CompanyProjectPortalRulesStorage
     private function summary(int $issuer,array $r,array $flags):array
     {
         $out=['id'=>(int)$r['id'],'name'=>$r['name'],'description'=>$r['description'],'status'=>$r['status'],'due_date'=>$r['due_date'],'revision'=>(int)$r['revision']];
-        if($flags['view_team_members']===1){$assignee=$this->rows('SELECT s.staffid,s.firstname,s.lastname FROM '.$this->p.'company_tasks t JOIN '.$this->p.'staff s ON s.staffid=t.assignee_id AND s.active=1 WHERE t.issuer_id=? AND t.project_id=? AND t.id=?',[$issuer,$r['project_id'],$r['id']])[0]??null;$acl=new IssuerResourceAccess($this->db,$this->p);if($assignee&&$acl->can($issuer,(int)$assignee['staffid'],'projects','view')&&$acl->can($issuer,(int)$assignee['staffid'],'tasks','view'))$out['assignee_name']=trim($assignee['firstname'].' '.$assignee['lastname']);}
+        if($flags['view_team_members']===1){$names=[];$acl=new IssuerResourceAccess($this->db,$this->p);foreach($this->assignees($issuer,$r) as $assignee)if($acl->can($issuer,(int)$assignee['staffid'],'projects','view')&&$acl->can($issuer,(int)$assignee['staffid'],'tasks','view'))$names[]=trim($assignee['firstname'].' '.$assignee['lastname']);if($names)$out['assignee_name']=implode(', ',$names);}
         return $out;
     }
     private function children(int $issuer,int $project,int $task,string $kind):array

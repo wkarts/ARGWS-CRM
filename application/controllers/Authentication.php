@@ -7,7 +7,14 @@ class Authentication extends ClientsController
     public function __construct()
     {
         parent::__construct();
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this))return;
         hooks()->do_action('clients_authentication_constructor', $this);
+    }
+
+    private function nativePortal():?NativePortalAuthentication
+    {
+        if(!class_exists('PortalRequestScope',false)||!PortalRequestScope::nativeFor($this))return null;
+        require_once APPPATH.'services/NativePortalAuthentication.php';return new NativePortalAuthentication($this);
     }
 
     public function index()
@@ -23,6 +30,7 @@ class Authentication extends ClientsController
 
     public function login()
     {
+        if($native=$this->nativePortal()){$native->login();return;}
         if (is_client_logged_in()) {
             redirect(site_url());
         }
@@ -77,6 +85,7 @@ class Authentication extends ClientsController
 
     public function register()
     {
+        if($native=$this->nativePortal()){$native->register();return;}
         if (get_option('allow_registration') != 1 || is_client_logged_in()) {
             redirect(site_url());
         }
@@ -261,6 +270,7 @@ class Authentication extends ClientsController
 
     public function forgot_password()
     {
+        if($native=$this->nativePortal()){$native->forgot();return;}
         if (is_client_logged_in()) {
             redirect(site_url());
         }
@@ -294,6 +304,7 @@ class Authentication extends ClientsController
 
     public function reset_password($staff, $userid, $new_pass_key)
     {
+        if($native=$this->nativePortal()){$native->reset($staff,$userid,$new_pass_key);return;}
         $this->load->model('Authentication_model');
         if (!$this->Authentication_model->can_reset_password($staff, $userid, $new_pass_key)) {
             set_alert('danger', _l('password_reset_key_expired'));
@@ -336,6 +347,7 @@ class Authentication extends ClientsController
 
     public function logout()
     {
+        if($native=$this->nativePortal()){$native->logout();return;}
         $this->load->model('authentication_model');
         $this->authentication_model->logout(false);
         hooks()->do_action('after_client_logout');
@@ -344,6 +356,7 @@ class Authentication extends ClientsController
 
     public function contact_email_exists($email = '')
     {
+        if($this->nativePortal()){return is_string($email)&&strlen($email)<=100&&filter_var($email,FILTER_VALIDATE_EMAIL)!==false;}
         $this->db->where('email', $email);
         $total_rows = $this->db->count_all_results(db_prefix() . 'contacts');
 
@@ -358,11 +371,13 @@ class Authentication extends ClientsController
 
     public function recaptcha($str = '')
     {
+        if($native=$this->nativePortal())return$native->validateCaptcha();
         return do_recaptcha_validation($str);
     }
 
     public function change_language($lang = '')
     {
+        if($this->nativePortal()){NativePortalPresentation::changeLanguage($this,(string)$lang);redirect(NativePortalPresentation::url('authentication/login'),'location',303);return;}
         if (is_language_disabled()) {
             redirect(site_url());
         }

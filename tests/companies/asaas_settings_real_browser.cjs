@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Actual authenticated CRM/HTTP/MySQL and native assets. No HTML fixture or provider calls.
 const assert = require('node:assert/strict');
 const {execFileSync} = require('node:child_process');
@@ -96,7 +96,7 @@ async function run(env = process.env) {
         await page.locator('input[name=password]').fill(env.ISSUERS_BROWSER_PASSWORD);
         await submit(page, page.locator('button[type=submit]'));
         check(!page.url().includes('/authentication'), 'synthetic administrator authenticated');
-        await page.goto(config.url + '/admin/company_context');
+        await page.goto(config.url + '/admin/');
         await selectCompanyOption(page, primary);
 
         const response = await page.goto(config.url + '/admin/settings?group=payment_gateways');

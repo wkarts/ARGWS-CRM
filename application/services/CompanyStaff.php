@@ -11,6 +11,8 @@ final class CompanyStaff
 {
     private IssuerResourceAccess $acl;
     private array $catalog;
+    private ?array $createdInOwned=null;
+    private ?string $creationRequestKey=null;
     public function __construct(private $db,private string $prefix,?array $catalog=null)
     {
         CompanyStaffSchema::statements($prefix);$this->acl=new IssuerResourceAccess($db,$prefix);
@@ -26,13 +28,13 @@ final class CompanyStaff
     private static function canonical($value)
     {
         if(!is_array($value)){return $value===null?null:(string)$value;}
-        if(!array_is_list($value)){ksort($value);}return array_map([self::class,'canonical'],$value);
+        if(!array_is_list($value)){if(isset($value['hourly_rate'])&&is_scalar($value['hourly_rate'])&&preg_match('/^(0|[1-9][0-9]*)(?:\.([0-9]+))?$/D',(string)$value['hourly_rate'],$m)){$fraction=rtrim($m[2]??'','0');$value['hourly_rate']=$m[1].($fraction!==''?'.'.$fraction:'');}ksort($value);}return array_map([self::class,'canonical'],$value);
     }
     private static function digest(array $value):string{return hash('sha256',json_encode(self::canonical($value),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));}
     private function state(int $staff):array
     {
         return [
-            'profile'=>$this->rows('SELECT staffid,firstname,lastname,email,phonenumber,password,admin,active,role,is_not_staff FROM '.$this->prefix.'staff WHERE staffid=?',[$staff]),
+            'profile'=>$this->rows('SELECT * FROM '.$this->prefix.'staff WHERE staffid=?',[$staff]),
             'members'=>$this->rows('SELECT issuer_id,staff_id,can_view,can_manage_clients,can_share_clients,can_manage_integrations FROM '.$this->prefix.'issuers_staff WHERE staff_id=? ORDER BY issuer_id',[$staff]),
             'grants'=>$this->acl->rowsForStaff($staff),
             'default'=>$this->rows('SELECT staff_id,issuer_id FROM '.$this->prefix.'issuers_staff_defaults WHERE staff_id=?',[$staff]),
@@ -49,12 +51,19 @@ final class CompanyStaff
         return !$this->acl->isInstallationMaster($staff)&&(int)($row['admin']??1)===0&&(int)($row['role']??0)===0
             &&array_map('intval',array_column($state['members'],'issuer_id'))===[$issuer];
     }
+    /** Administrative target authority does not require that the target can currently log in. */
+    public function assertAdministrativeTarget(int $issuer,int $actor,int $staff,string $cap='view'):void
+    {
+        foreach([$issuer,$actor,$staff]as$id)IssuerPolicy::id($id);if(!in_array($cap,['view','create','edit','delete'],true))throw new DomainException('issuer_staff_denied');
+        $this->guard($issuer,$actor,$cap);if(!$this->linked($issuer,$staff)||count($this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE staffid=?',[$staff]))!==1)throw new DomainException('issuer_staff_denied');$this->guard($issuer,$actor,$cap);if(!$this->linked($issuer,$staff))throw new DomainException('issuer_staff_denied');
+    }
     public function get($issuer,$actor,$staff):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$staff=IssuerPolicy::id($staff);$this->guard($issuer,$actor,'view');
         if(!$this->linked($issuer,$staff)){throw new DomainException('issuer_staff_denied');}$state=$this->state($staff);$row=$state['profile'][0]??null;
-        if(!$row){throw new DomainException('issuer_staff_denied');}unset($row['password']);
+        if(!$row){throw new DomainException('issuer_staff_denied');}$row=array_intersect_key($row,array_flip(['staffid','firstname','lastname','email','phonenumber','admin','active','role','is_not_staff']));
         $grants=[];foreach($state['grants'] as$grant){if((int)$grant['issuer_id']===$issuer){$grants[$grant['feature']][]=$grant['capability'];}}
+        $this->guard($issuer,$actor,'view');if(!$this->linked($issuer,$staff)||!hash_equals(self::digest($state),self::digest($this->state($staff))))throw new DomainException('issuer_staff_stale');
         return $row+['revision'=>self::digest($state),'grants'=>$grants,'default_current'=>(int)($state['default'][0]['issuer_id']??0)===$issuer,'master'=>$this->acl->isInstallationMaster($staff),'profile_editable'=>$this->editable($issuer,$actor,$staff,$state)];
     }
     public function page($issuer,$actor,$after=0,int $limit=50,string $search=''):array
@@ -87,6 +96,41 @@ final class CompanyStaff
         }
         ksort($out);foreach($out as&$caps){ksort($caps);$caps=array_keys($caps);}unset($caps);return $out;
     }
+    /** Existing native profile fields; system authority, role and grants are never accepted in this array. */
+    private function nativeProfile(array $input,bool $create):array
+    {
+        require_once __DIR__.'/CompanySettingsCatalog.php';
+        $extra=['facebook','linkedin','skype','default_language','email_signature','direction','is_not_staff'];
+        if(array_diff(array_keys($input),array_merge(['firstname','lastname','email','phonenumber','password'],$extra)))throw new DomainException('issuer_staff_profile_field_denied');
+        $base=array_intersect_key($input,array_flip(['firstname','lastname','email','phonenumber','password']));$password=$base['password']??null;if(!$create)unset($base['password']);$out=$this->profile($base,$create);
+        if(!$create&&$password!==null&&$password!==''){if(!is_string($password)||strlen($password)<12||strlen($password)>128||str_contains($password,"\0"))throw new DomainException('issuer_staff_invalid');$out['password']=$password;}
+        foreach($extra as$key){if(!array_key_exists($key,$input))continue;$v=$input[$key];if(!is_string($v)&&!is_int($v))throw new DomainException('issuer_staff_invalid');$v=(string)$v;
+            if($key==='email_signature'){$v=CompanySettingsCatalog::htmlFragment($v);}
+            elseif($key==='is_not_staff'){if(!in_array($v,['0','1'],true))throw new DomainException('issuer_staff_invalid');}
+            elseif($key==='direction'){if(!in_array($v,['','ltr','rtl'],true))throw new DomainException('issuer_staff_invalid');}
+            elseif($key==='default_language'){if($v!==''&&(!preg_match('/^[a-z][a-z0-9_]{0,39}$/D',$v)||!is_dir(APPPATH.'language/'.$v)))throw new DomainException('issuer_staff_invalid');}
+            elseif(mb_strlen($v)>200||preg_match('/[\x00-\x1f\x7f]/',$v)||preg_match('//u',$v)!==1)throw new DomainException('issuer_staff_invalid');
+            $out[$key]=$v;
+        }return$out;
+    }
+    /** Validation only for the actor's original personal profile; no administration fields. */
+    public function selfProfileInput(array $input):array
+    {
+        if(array_diff(array_keys($input),['firstname','lastname','email','phonenumber','facebook','linkedin','skype','default_language','email_signature','direction']))throw new DomainException('issuer_staff_profile_field_denied');
+        return$this->nativeProfile($input,false);
+    }
+    public function createNative(int $issuer,int $actor,array $profile,array $grants,bool $makeDefault,string $key,?NativeCompanyStaffForm $form=null):int{return$this->write($issuer,$actor,'create',null,null,$this->nativeProfile($profile,true),$grants,$makeDefault,$key,$form);}
+    public function updateNative(int $issuer,int $actor,int $staff,string $revision,array $profile,array $grants,bool $makeDefault,string $key,?NativeCompanyStaffForm $form=null):int{return$this->write($issuer,$actor,'update',$staff,$revision,$this->nativeProfile($profile,false),$grants,$makeDefault,$key,$form);}
+    public function assertCreatedInOwned($db,string $prefix,int $issuer,int $actor,string $source,int $staff):void
+    {
+        if($db!==$this->db||$prefix!==$this->prefix||$source!=='staff'||$this->createdInOwned!==[$issuer,$actor,$staff])throw new DomainException('native_custom_field_creation_denied');IssuerTransaction::assertOwned($db,$prefix,$this->tables());$this->guard($issuer,$actor,'create');if(!$this->linked($issuer,$staff))throw new DomainException('native_custom_field_creation_denied');
+    }
+    public function assertCreationRequestInOwned($db,string $prefix,int $issuer,int $actor,int $staff,string $key):void
+    {
+        $this->assertCreatedInOwned($db,$prefix,$issuer,$actor,'staff',$staff);
+        if($this->creationRequestKey===null||!hash_equals($this->creationRequestKey,$key))throw new DomainException('native_staff_invite_denied');
+    }
+    private function writeState(int $staff,?NativeCompanyStaffForm $form):array{$state=$this->state($staff);if($form!==null)$state['native_form']=$form->state($staff);return$state;}
     public function create($issuer,$actor,array $profile,array $grants,bool $makeDefault,string $key):int
     {
         return $this->write($issuer,$actor,'create',null,null,$this->profile($profile,true),$grants,$makeDefault,$key);
@@ -103,20 +147,26 @@ final class CompanyStaff
     {
         return $this->write($issuer,$actor,'revoke',IssuerPolicy::id($staff),$revision,[],[],false,$key);
     }
-    private function write($issuer,$actor,string $operation,?int $staff,?string $revision,array $profile,array $grants,bool $makeDefault,string $key):int
+    /** The native active flag remains global identity state, never a membership alias. */
+    public function setNativeStatus(int $issuer,int $actor,int $staff,string $revision,int $active,string $key):int
+    {
+        if(!in_array($active,[0,1],true))throw new DomainException('issuer_staff_invalid');
+        return $this->write($issuer,$actor,'status',$staff,$revision,['active'=>$active],[],false,$key);
+    }
+    private function write($issuer,$actor,string $operation,?int $staff,?string $revision,array $profile,array $grants,bool $makeDefault,string $key,?NativeCompanyStaffForm $form=null):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$cap=match($operation){'create','link'=>'create','revoke'=>'delete',default=>'edit'};
         if(!preg_match('/^[a-f0-9]{64}$/D',$key)||($revision!==null&&!preg_match('/^[a-f0-9]{64}$/D',$revision))){throw new DomainException('issuer_staff_invalid');}
         $this->guard($issuer,$actor,$cap);CompanyStaffSchema::assertValid($this->db,$this->prefix);
-        $input=$profile;unset($input['password']);$inputHash=self::digest([$issuer,$actor,$operation,$staff,$revision,$input,$grants,$makeDefault]);
-        return IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($issuer,$actor,$operation,$staff,$revision,$profile,$grants,$makeDefault,$key,$cap,$inputHash):int{
+        $form?->assertFor($this->db,$this->prefix,$issuer,$actor);$input=$profile;unset($input['password']);$binding=[$issuer,$actor,$operation,$staff,$revision,$input,$grants,$makeDefault];if($form!==null)$binding[]=$form->input();$inputHash=self::digest($binding);
+        try{$result=IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables(),$form?->tables()??[]))),function()use($issuer,$actor,$operation,$staff,$revision,$profile,$grants,$makeDefault,$key,$cap,$inputHash,$form):int{
             $this->acl->lockFinancialIdentity($issuer,$actor);$this->guard($issuer,$actor,$cap);
             $receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_staff_commands WHERE issuer_id=? AND actor_id=? AND request_key=?',[$issuer,$actor,$key])[0]??null;
             if($receipt){
                 if($receipt['operation']!==$operation||!hash_equals($receipt['input_hash'],$inputHash)){throw new DomainException('issuer_staff_conflict');}
-                $id=(int)$receipt['staff_id'];$state=$this->state($id);
+                $id=(int)$receipt['staff_id'];$state=$this->writeState($id,$form);
                 if(!$state['profile']||!hash_equals($receipt['result_hash'],self::digest($state))||($operation!=='revoke'&&!$this->linked($issuer,$id))){throw new DomainException('issuer_staff_stale');}
-                if($operation==='create'&&!$this->hasher()->CheckPassword($profile['password'],$state['profile'][0]['password'])){throw new DomainException('issuer_staff_conflict');}
+                if(isset($profile['password'])&&!$this->hasher()->CheckPassword($profile['password'],$state['profile'][0]['password'])){throw new DomainException('issuer_staff_conflict');}
                 $this->guard($issuer,$actor,$cap);return $id;
             }
             $before=[];
@@ -125,16 +175,18 @@ final class CompanyStaff
                 $grants=$this->grants($issuer,$actor,$grants);$values=$profile;$values['password']=$this->hasher()->HashPassword($profile['password']);
                 $values+=['admin'=>0,'active'=>1,'role'=>0,'is_not_staff'=>0,'datecreated'=>gmdate('Y-m-d H:i:s')];
                 StaffIdentityTransaction::write($this->db,fn()=>$this->db->query('INSERT INTO '.$this->prefix.'staff ('.implode(',',array_keys($values)).') VALUES ('.implode(',',array_fill(0,count($values),'?')).')',array_values($values)));$staff=IssuerPolicy::id((int)$this->db->insert_id());
-                $before=$this->state($staff);$created=$before['profile'][0]??[];foreach($values as$field=>$value){if($field==='datecreated'){continue;}if((string)($created[$field]??'')!==(string)$value){throw new RuntimeException('issuer_staff_write_unconfirmed');}}
+                $this->createdInOwned=[$issuer,$actor,$staff];$this->creationRequestKey=$key;$before=$this->state($staff);$created=$before['profile'][0]??[];foreach($values as$field=>$value){if($field==='datecreated'){continue;}if(self::canonical([$field=>$created[$field]??null])!==self::canonical([$field=>$value])){throw new RuntimeException('issuer_staff_write_unconfirmed');}}
             }elseif($operation==='link'){
                 $found=$this->rows('SELECT staffid,active FROM '.$this->prefix.'staff WHERE '.StaffEmailIdentity::expression().'=? FOR UPDATE',[$profile['email']]);
-                if(count($found)!==1||(int)$found[0]['active']!==1){throw new DomainException('issuer_staff_denied');}$staff=(int)$found[0]['staffid'];$before=$this->state($staff);
+                if(count($found)!==1||(int)$found[0]['active']!==1){throw new DomainException('issuer_staff_denied');}$staff=(int)$found[0]['staffid'];$before=$this->writeState($staff,$form);
                 if($this->acl->isInstallationMaster($staff)||(!$this->acl->isMaster($actor)&&(int)$before['profile'][0]['admin']===1)){throw new DomainException('issuer_staff_denied');}
                 if($this->linked($issuer,$staff)){throw new DomainException('issuer_staff_conflict');}$grants=$this->grants($issuer,$actor,$grants);
             }else{
-                if(!$this->linked($issuer,$staff)){throw new DomainException('issuer_staff_denied');}$this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE staffid=? FOR UPDATE',[$staff]);$before=$this->state($staff);
-                if(!hash_equals(self::digest($before),(string)$revision)){throw new DomainException('issuer_staff_stale');}
+                if(!$this->linked($issuer,$staff)){throw new DomainException('issuer_staff_denied');}$this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE staffid=? FOR UPDATE',[$staff]);$before=$this->writeState($staff,$form);
+                if(!hash_equals(self::digest($this->state($staff)),(string)$revision)){throw new DomainException('issuer_staff_stale');}
                 if($operation==='revoke'&&($staff===$actor||$this->acl->isInstallationMaster($staff))){throw new DomainException('issuer_master_protected');}
+                if($operation==='status'&&($staff===$actor||$this->acl->isInstallationMaster($staff)))throw new DomainException('issuer_master_protected');
+                if($operation==='status'&&!$this->editable($issuer,$actor,$staff,$before))throw new DomainException('issuer_staff_shared_identity');
                 if($operation==='update'){
                     if($profile&&!$this->editable($issuer,$actor,$staff,$before)){throw new DomainException('issuer_staff_shared_identity');}
                     if(isset($profile['email'])){$profile['email']=StaffEmailIdentity::assertAvailable($this->db,$this->prefix,$profile['email'],$staff);}
@@ -142,9 +194,10 @@ final class CompanyStaff
                 }
             }
             $expected=$before;
-            if($operation==='update'&&$profile){StaffIdentityTransaction::write($this->db,fn()=>$this->db->query('UPDATE '.$this->prefix.'staff SET '.implode(',',array_map(static fn($f)=>$f.'=?',array_keys($profile))).' WHERE staffid=?',array_merge(array_values($profile),[$staff])));$expected['profile'][0]=array_replace($expected['profile'][0],$profile);}
+            if($operation==='update'&&isset($profile['password'])){$profile['password']=$this->hasher()->HashPassword($profile['password']);$profile['last_password_change']=gmdate('Y-m-d H:i:s');}
+            if(in_array($operation,['update','status'],true)&&$profile){StaffIdentityTransaction::write($this->db,fn()=>$this->db->query('UPDATE '.$this->prefix.'staff SET '.implode(',',array_map(static fn($f)=>$f.'=?',array_keys($profile))).' WHERE staffid=?',array_merge(array_values($profile),[$staff])));$expected['profile'][0]=array_replace($expected['profile'][0],$profile);if(isset($profile['email'])&&array_key_exists('staff_email_identity',$expected['profile'][0]))$expected['profile'][0]['staff_email_identity']=StaffEmailIdentity::normalize($profile['email']);}
             $master=$this->acl->isInstallationMaster($staff);
-            if(!$master){
+            if(!$master&&$operation!=='status'){
                 $expected['grants']=array_values(array_filter($before['grants'],static fn($g)=>(int)$g['issuer_id']!==$issuer));
                 $this->query('DELETE FROM '.$this->prefix.'issuers_resource_permissions WHERE issuer_id=? AND staff_id=?',[$issuer,$staff]);
                 if($operation==='revoke'){
@@ -161,7 +214,8 @@ final class CompanyStaff
                 $this->query('DELETE FROM '.$this->prefix.'issuers_staff_defaults WHERE staff_id=?',[$staff]);$this->query('INSERT INTO '.$this->prefix.'issuers_staff_defaults(staff_id,issuer_id) VALUES(?,?)',[$staff,$issuer]);$expected['default']=[['staff_id'=>$staff,'issuer_id'=>$issuer]];
             }
             usort($expected['members'],static fn($a,$b)=>(int)$a['issuer_id']<=>(int)$b['issuer_id']);usort($expected['grants'],static fn($a,$b)=>[(int)$a['issuer_id'],$a['feature'],$a['capability']]<=>[(int)$b['issuer_id'],$b['feature'],$b['capability']]);
-            $resultHash=self::digest($expected);if(!hash_equals($resultHash,self::digest($this->state($staff)))){throw new RuntimeException('issuer_staff_write_unconfirmed');}
+            if($form!==null){$expected['native_form']=$form->apply($staff,$operation==='create',$this);$expected['profile'][0]=array_replace($expected['profile'][0],$form->profileMutation($staff,$operation==='create'));}
+            $resultHash=self::digest($expected);if(!hash_equals($resultHash,self::digest($this->writeState($staff,$form)))){throw new RuntimeException('issuer_staff_write_unconfirmed');}
             $now=gmdate('Y-m-d H:i:s');$metadata=json_encode(['before'=>self::digest($before),'after'=>$resultHash],JSON_THROW_ON_ERROR);$event='company_staff_'.$operation;
             $last=(int)($this->rows('SELECT MAX(id) AS id FROM '.$this->prefix.'issuers_audit')[0]['id']??0);
             $this->query('INSERT INTO '.$this->prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$actor,$event,$issuer,$staff,$now,$metadata]);$audit=(int)$this->db->insert_id();
@@ -170,8 +224,8 @@ final class CompanyStaff
             $command=['issuer_id'=>$issuer,'actor_id'=>$actor,'request_key'=>$key,'operation'=>$operation,'input_hash'=>$inputHash,'staff_id'=>$staff,'result_hash'=>$resultHash,'created_at'=>$now];
             $this->query('INSERT INTO '.$this->prefix.'company_staff_commands('.implode(',',array_keys($command)).') VALUES(?,?,?,?,?,?,?,?)',array_values($command));
             if(self::canonical($this->rows('SELECT * FROM '.$this->prefix.'company_staff_commands WHERE issuer_id=? AND actor_id=? AND request_key=?',[$issuer,$actor,$key]))!==self::canonical([$command])){throw new RuntimeException('issuer_staff_write_unconfirmed');}
-            $this->guard($issuer,$actor,$cap);if(!hash_equals($resultHash,self::digest($this->state($staff)))){throw new RuntimeException('issuer_staff_write_unconfirmed');}return $staff;
-        });
+            $this->guard($issuer,$actor,$cap);if(!hash_equals($resultHash,self::digest($this->writeState($staff,$form)))){throw new RuntimeException('issuer_staff_write_unconfirmed');}return $staff;
+        });$form?->commitFiles();return$result;}catch(Throwable $error){$form?->rollbackFiles();throw$error;}finally{$this->createdInOwned=null;$this->creationRequestKey=null;}
     }
     private function hasher()
     {

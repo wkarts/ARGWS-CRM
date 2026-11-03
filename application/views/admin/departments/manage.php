@@ -12,7 +12,7 @@
                 </div>
                 <?php } ?>
                 <?php
-             if (total_rows('departments', 'password != \'\' AND email LIKE "%gmail.com%"') > 0) { ?>
+             if (isset($native_departments) ? $native_department_gmail_warning : total_rows('departments', 'password != \'\' AND email LIKE "%gmail.com%"') > 0) { ?>
                 <div class="alert alert-warning">
                     <p class="bold">
                         Starting from May 30, 2022, Google will no longer support sign in to your Google Account using
@@ -57,6 +57,7 @@
 <div class="modal fade" id="department" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('departments/department'), ['id' => 'department-form']); ?>
+        <?php if(isset($native_departments)){echo form_hidden('_company_context',$native_department_context);echo form_hidden('_native_company_csrf',$native_department_csrf);} ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -151,7 +152,7 @@
 <script>
     $(function() {
         initDataTable('.table-departments', window.location.href, [4], [4], undefined, [1, 'asc']);
-        appValidateForm($('form'), {
+        appValidateForm($('#department-form'), {
             name: 'required',
             email: {
                 email: true,
@@ -183,7 +184,7 @@
         var data = $(form).serialize();
         var url = form.action;
         $.post(url, data).done(function(response) {
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
             if (response.success == true) {
                 alert_float('success', response.message);
             }
@@ -202,7 +203,7 @@
     function new_department() {
         $('#department').modal('show');
         $('.edit-title').addClass('hide');
-        $('#folder').html('');
+        $('#folder').empty().append($('<option>').val('INBOX').text('INBOX'));
         $('#folder').selectpicker('refresh');
     }
 
@@ -217,10 +218,11 @@
         var input_enc_selector = encryption == '' ? '#no_enc' : '#' + encryption;
         $(input_enc_selector).prop('checked', true);
 
-        $('#folder').html('<option value="' + folder + '" selected>' + folder + '</option>');
+        $('#folder').empty().append($('<option>').val(folder).text(folder).prop('selected',true));
         $('#folder').selectpicker('refresh');
 
-        $('#additional').append(hidden_input('id', id));
+        $('#additional').empty().append(hidden_input('id', id));
+        if(window.NativeCompanyTransport) $('#additional').append(hidden_input('revision', $(invoker).attr('data-native-revision')));
 
         $('#department input[name="name"]').val($(invoker).data('name'));
         $('#department input[name="email"]').val($(invoker).data('email'));
@@ -234,6 +236,8 @@
 
     function retrieve_imap_department_folders() {
         retrieve_imap_folders(admin_url + 'departments/folders', {
+            id: window.NativeCompanyTransport ? ($('input[name="id"]').val() || '') : undefined,
+            revision: window.NativeCompanyTransport ? ($('input[name="revision"]').val() || '') : undefined,
             email: $('input[name="email"]').val(),
             password: $('input[name="password"]').val(),
             host: $('input[name="host"]').val(),
@@ -244,7 +248,9 @@
 
     function test_dep_imap_connection() {
         $.post(admin_url + 'departments/test_imap_connection', {
-                email: $('input[name="email"]').val(),
+                id: window.NativeCompanyTransport ? ($('input[name="id"]').val() || '') : undefined,
+            revision: window.NativeCompanyTransport ? ($('input[name="revision"]').val() || '') : undefined,
+            email: $('input[name="email"]').val(),
                 password: $('input[name="password"]').val(),
                 host: $('input[name="host"]').val(),
                 username: $('input[name="imap_username"]').val(),
@@ -252,7 +258,7 @@
                 folder: $('#folder').selectpicker('val'),
             })
             .done(function(response) {
-                response = JSON.parse(response);
+                response = typeof response === 'string' ? JSON.parse(response) : response;
                 alert_float(response.alert_type, response.message);
             });
     }

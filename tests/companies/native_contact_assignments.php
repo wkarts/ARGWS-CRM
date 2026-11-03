@@ -1,0 +1,20 @@
+<?php
+require __DIR__.'/native_contacts.php';
+require_once APPPATH.'services/CompanyCustomerAccess.php';
+CompanyCustomerAdminSchema::ensure($db,$p);
+foreach(['firstname','lastname']as$field)if(!$db->field_exists($field,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$field.' varchar(191)');
+$db->query("INSERT INTO {$p}staff(staffid,active,admin,firstname,lastname) VALUES(51,1,0,'Assigned','Contact')");$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(?,51,1),(?,51,1)",[$a,$b]);
+$access=new CompanyCustomerAccess($db,$p);$old=$access->assignments($a,7,101);$access->assign($a,7,101,[51],$old['revision']);$start=$GLOBALS['essentialChecks'];
+essentialCheck($native->get($a,51,101,$na)['contact']['id']==$na,'assigned contact read uses exact customer');
+essentialThrows(fn()=>$native->get($b,51,202,$nb),'company_client_access_denied','membership without customer assignment grants no contact access');
+$assigned=['firstname'=>'Assigned created','lastname'=>'Contact','email'=>'assigned-created@example.invalid','permissions'=>[]];
+$created=$native->save($a,51,101,$assigned,fn($v)=>password_hash($v,PASSWORD_DEFAULT),null,null,function($id,$cap,$writer)use($db,$p,$a){$writer->assertCreatedInOwned($db,$p,$a,51,'contact',$id);});
+essentialCheck($native->get($a,51,101,$created)['permissions']===[],'assigned contact creation has no implicit financial or portal permissions');
+$withFinance=$assigned;$withFinance['email']='denied-permission@example.invalid';$withFinance['permissions']=[1];
+essentialThrows(fn()=>$native->save($a,51,101,$withFinance,'password_hash'),'company_contact_permission_denied','customer assignment cannot grant invoice permission');
+$before=$native->get($a,51,101,$created);$assigned['title']='Assigned edited';$native->save($a,51,101,$assigned,'password_hash',$created,$before['revision']);
+essentialCheck($native->get($a,51,101,$created)['contact']['title']==='Assigned edited','assigned writer updates only owned contact');
+$fresh=$access->assignments($a,7,101);$access->assign($a,7,101,[],$fresh['revision']);
+essentialThrows(fn()=>$native->get($a,51,101,$created),'company_client_access_denied','assignment revocation immediately closes contact reader');
+essentialThrows(fn()=>$native->save($a,51,101,$assigned,'password_hash',$created,$native->get($a,7,101,$created)['revision']),'company_client_access_denied','assignment revocation closes contact writer');
+echo 'Native assigned contact integration: '.($GLOBALS['essentialChecks']-$start).' checks passed.'.PHP_EOL;

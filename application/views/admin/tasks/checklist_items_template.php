@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $nativeChecklist=isset($native_task_checklist);$checklistActor=$nativeChecklist?$native_task_checklist['actor']:get_staff_user_id();$checklistAdmin=$nativeChecklist?$native_task_checklist['admin']:is_admin();$checklistEdit=$nativeChecklist?$native_task_checklist['can_edit']:staff_can('edit','tasks');$checklistDelete=$nativeChecklist?$native_task_checklist['can_delete']:staff_can('delete','tasks');$checklistTemplateCreate=$nativeChecklist?$native_task_checklist['can_create_template']:staff_can('create','checklist_templates');$checklistName=static fn($id)=>$nativeChecklist?($native_task_checklist['names'][(string)$id]??_l('unknown')):get_staff_full_name($id); ?>
 <div class="clearfix"></div>
 <div class="progress mtop15 no-mbot hide">
     <div class="progress-bar not-dynamic progress-bar-default task-progress-bar" role="progressbar" aria-valuenow="40"
@@ -9,11 +10,11 @@
     <?php foreach ($checklists as $list) { ?>
     <div>
         <div class="checklist"
-            data-checklist-id="<?= e($list['id']); ?>">
+            data-checklist-id="<?= e($list['id']); ?>"<?php if($nativeChecklist){ ?> data-checklist-item-revision="<?= e($list['revision']); ?>"<?php } ?>>
             <div class="tw-flex">
                 <div class="checkbox checkbox-success checklist-checkbox" data-toggle="tooltip" title="">
                     <input type="checkbox"
-                        <?= $list['finished'] == 1 && $list['finished_from'] != get_staff_user_id() && ! is_admin() ? 'disabled' : ''; ?>
+                        <?= $nativeChecklist ? (!$checklistEdit ? 'disabled' : '') : ($list['finished'] == 1 && $list['finished_from'] != $checklistActor && ! $checklistAdmin ? 'disabled' : ''); ?>
                     name="checklist-box"
                     <?= $list['finished'] == 1 ? 'checked' : ''; ?>>
                     <label for="">
@@ -25,10 +26,10 @@
                 <div class="tw-grow">
                     <textarea data-taskid="<?= e($task_id); ?>"
                         name="checklist-description" rows="1"
-                        <?= $list['addedfrom'] != get_staff_user_id() && staff_cant('edit', 'tasks') ? 'disabled' : ''; ?>><?= clear_textarea_breaks($list['description']); ?></textarea>
+                        <?= $nativeChecklist ? (!$checklistEdit ? 'disabled' : '') : ($list['addedfrom'] != $checklistActor && staff_cant('edit', 'tasks') ? 'disabled' : ''); ?>><?= $nativeChecklist ? e(clear_textarea_breaks($list['description'])) : clear_textarea_breaks($list['description']); ?></textarea>
                 </div>
                 <div class="mleft10 tw-inline-flex tw-items-center tw-space-x-1 sm:tw-space-x-2">
-                    <?php if (($list['addedfrom'] == get_staff_user_id() || $current_user_is_creator || is_admin()) && count($task_staff_members) > 0) { ?>
+                    <?php if (($nativeChecklist ? $checklistEdit : ($list['addedfrom'] == $checklistActor || $current_user_is_creator || $checklistAdmin)) && count($task_staff_members) > 0) { ?>
                     <span class="dropdown"
                         data-title="<?= _l('task_checklist_assign'); ?>"
                         data-toggle="tooltip">
@@ -57,9 +58,9 @@
                     </span>
                     <?php } ?>
 
-                    <?php if (staff_can('create', 'checklist_templates')) { ?>
+                    <?php if ($checklistTemplateCreate) { ?>
                     <a href="#"
-                        class="tw-text-neutral-500 save-checklist-template<?= $list['description'] == '' || total_rows(db_prefix() . 'tasks_checklist_templates', ['description' => $list['description']]) > 0 ? ' hide' : ''; ?>"
+                        class="tw-text-neutral-500 save-checklist-template<?= $list['description'] == '' || ($nativeChecklist ? in_array($list['description'],$native_task_checklist['template_descriptions'],true) : total_rows(db_prefix() . 'tasks_checklist_templates', ['description' => $list['description']]) > 0) ? ' hide' : ''; ?>"
                         data-toggle="tooltip"
                         data-title="<?= _l('save_as_template'); ?>"
                         onclick="save_checklist_item_template(<?= e($list['id']); ?>,this); return false;">
@@ -71,7 +72,7 @@
                         </svg>
                     </a>
                     <?php } ?>
-                    <?php if (staff_can('delete', 'tasks') || $list['addedfrom'] == get_staff_user_id()) { ?>
+                    <?php if ($nativeChecklist ? $checklistEdit : ($checklistDelete || $list['addedfrom'] == $checklistActor)) { ?>
                     <a href="#" class="tw-text-neutral-500 remove-checklist -tw-mt-1 tw-ml-1"
                         onclick="delete_checklist_item(<?= e($list['id']); ?>,this); return false;">
                         <i class="fa-regular fa-trash-can"></i>
@@ -79,27 +80,27 @@
                     <?php } ?>
                 </div>
             </div>
-            <?php if ($list['finished'] == 1 || $list['addedfrom'] != get_staff_user_id() || ! empty($list['assigned'])) { ?>
+            <?php if ($list['finished'] == 1 || $list['addedfrom'] != $checklistActor || ! empty($list['assigned'])) { ?>
             <p class="font-medium-xs mtop15 tw-text-neutral-500 checklist-item-info">
                 <?php
-                if ($list['addedfrom'] != get_staff_user_id()) {
-                    echo e(_l('task_created_by', get_staff_full_name($list['addedfrom'])));
+                if ($list['addedfrom'] != $checklistActor) {
+                    echo e(_l('task_created_by', $checklistName($list['addedfrom'])));
                 }
 
-                if ($list['addedfrom'] != get_staff_user_id() && $list['finished'] == 1) {
+                if ($list['addedfrom'] != $checklistActor && $list['finished'] == 1) {
                     echo ' - ';
                 }
 
                 if ($list['finished'] == 1) {
-                    echo e(_l('task_checklist_item_completed_by', get_staff_full_name($list['finished_from'])));
+                    echo e(_l('task_checklist_item_completed_by', $checklistName($list['finished_from'])));
                 }
 
-                if (($list['addedfrom'] != get_staff_user_id() || $list['finished'] == 1) && ! empty($list['assigned'])) {
+                if (($list['addedfrom'] != $checklistActor || $list['finished'] == 1) && ! empty($list['assigned'])) {
                     echo ' - ';
                 }
 
                 if (! empty($list['assigned'])) {
-                    echo e(_l('task_checklist_assigned', get_staff_full_name($list['assigned'])));
+                    echo e(_l('task_checklist_assigned', $checklistName($list['assigned'])));
                 }
                 ?>
             </p>
@@ -113,6 +114,7 @@
         $("#checklist-items").sortable({
             helper: 'clone',
             items: 'div.checklist',
+            disabled: <?= $nativeChecklist && !$checklistEdit ? 'true' : 'false' ?>,
             update: function(event, ui) {
                 update_checklist_order();
             }
@@ -141,14 +143,25 @@
             var _hideCompleted = $(el).data('hide');
             $(el).addClass('hide');
             $(el).siblings().removeClass('hide');
+            <?php if ($nativeChecklist) { ?>
+            $.ajax({url:admin_url + 'staff/save_completed_checklist_visibility',type:'POST',dataType:'json',data:{task_id:'<?= e($task_id) ?>',hideCompleted:_hideCompleted}}).fail(function () {
+                _task_checklist_items.filter(':checked').closest('.checklist').toggleClass('hide');$(el).removeClass('hide');$(el).siblings().addClass('hide');alert_float('danger','Não foi possível salvar a preferência. Tente novamente.');
+            });
+            <?php } else { ?>
             $.post(admin_url + 'staff/save_completed_checklist_visibility', {
                 task_id: "<?= $task_id ?>",
                 hideCompleted: _hideCompleted
             }, "json");
+            <?php } ?>
         }
     }
 
     function save_checklist_assigned_staff(staffId, list_id) {
+        <?php if ($nativeChecklist) { ?>
+        var item = $('#checklist-items .checklist').filter(function () { return $(this).attr('data-checklist-id') === String(list_id); }).first();
+        native_task_checklist_command($('#checklist-items'), 'assign', {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision'), assigned_id:staffId}).fail(function () { alert_float('danger', 'Não foi possível atribuir o item. Atualize a tarefa e tente novamente.'); });
+        return;
+        <?php } ?>
         $.post(
             admin_url + 'tasks/save_checklist_assigned_staff', {
                 assigned: staffId,

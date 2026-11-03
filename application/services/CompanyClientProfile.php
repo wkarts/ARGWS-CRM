@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/CompanyCustomerAccess.php';
 require_once __DIR__.'/CompanyClientProfileSchema.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
@@ -25,7 +26,7 @@ final class CompanyClientProfile
     }
     public function allowed(int $issuer,int $actor,int $client,string $cap='view'):bool
     {
-        $acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'customers',$cap))return false;
+        $acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'customers',$cap)&&!(in_array($cap,['view','edit'],true)&&(new CompanyCustomerAccess($this->db,$this->p))->can($issuer,$actor,$client,$cap)))return false;
         $owner=$this->rows('SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$client])[0]??null;
         if($owner)return (int)$owner['owner_issuer_id']===$issuer;
         return $acl->primaryId()===$issuer && (bool)$this->rows('SELECT userid FROM '.$this->p.'clients WHERE userid=?',[$client]);

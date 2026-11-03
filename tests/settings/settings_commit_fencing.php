@@ -1,6 +1,6 @@
 <?php
 /** Final-write SQL witnesses. Fixtures only; the original isolation suite remains intact. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/../support/TestPdo.php';require __DIR__.'/native_settings.php';
 $fencingStart=$GLOBALS['essentialChecks'];
 $observe=getenv('SETTINGS_FENCE_OBSERVE_BASELINE')==='1';
 $observed=[];
@@ -27,7 +27,7 @@ function settingsFenceTrigger($db,string $p,string $event,string $sql):void
         $db->query("CREATE TRIGGER {$p}settings_fence AFTER INSERT ON {$p}issuers_audit FOR EACH ROW BEGIN IF NEW.event='$event' THEN SET @settings_fence_hit=COALESCE(@settings_fence_hit,0)+1; $sql; END IF; END");
     }else{
         $GLOBALS['settingsFenceHit']=0;
-        $db->pdo->sqliteCreateFunction('settings_fence_hit',static function(){return ++$GLOBALS['settingsFenceHit'];},0);
+        TestPdo::registerSqliteFunction($db->pdo,'settings_fence_hit',static function(){return ++$GLOBALS['settingsFenceHit'];},0);
         $db->query("CREATE TRIGGER {$p}settings_fence AFTER INSERT ON {$p}issuers_audit WHEN NEW.event='$event' BEGIN SELECT settings_fence_hit(); $sql; END");
     }
 }
@@ -74,7 +74,7 @@ if($db->driver()==='mysql'){
     $db->query("CREATE TRIGGER {$p}settings_fence BEFORE UPDATE ON {$p}options FOR EACH ROW BEGIN IF NEW.name='fencing_existing' THEN SET @settings_fence_hit=COALESCE(@settings_fence_hit,0)+1; SET NEW.autoload=OLD.autoload; END IF; END");
 }else{
     $GLOBALS['settingsFenceHit']=0;
-    $db->pdo->sqliteCreateFunction('settings_fence_hit',static function(){return ++$GLOBALS['settingsFenceHit'];},0);
+    TestPdo::registerSqliteFunction($db->pdo,'settings_fence_hit',static function(){return ++$GLOBALS['settingsFenceHit'];},0);
     $db->query("CREATE TRIGGER {$p}settings_fence BEFORE UPDATE ON {$p}options WHEN NEW.name='fencing_existing' BEGIN SELECT settings_fence_hit(); SELECT RAISE(IGNORE); END");
 }
 $error=null;try{$store->mutate($primary,7,'update','fencing_existing','same',0);}catch(Throwable $e){$error=$e->getMessage();}

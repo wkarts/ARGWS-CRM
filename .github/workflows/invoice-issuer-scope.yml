@@ -16,6 +16,9 @@ on:
       - .github/workflows/invoice-issuer-scope.yml
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   inventory:
     runs-on: ubuntu-latest
@@ -34,7 +37,14 @@ jobs:
     strategy:
       matrix:
         php: ['8.1', '8.5']
-    container: php:${{ matrix.php }}-cli
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
     services:
       mysql:
         image: mysql:8.0
@@ -46,7 +56,7 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - uses: actions/checkout@v5
-      - run: docker-php-ext-install pdo_mysql
+      - run: EXPECTED_PHP=${{ matrix.php }} argws-ci-smoke
       - name: Sintaxe e compatibilidade do calendário legado
         run: |
           php -l application/models/Invoices_model.php

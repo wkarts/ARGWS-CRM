@@ -899,7 +899,9 @@ function get_items_table_data($transaction, $type, $for = 'html', $admin_preview
     include_once APPPATH . 'libraries/App_items_table.php';
     $class = new App_items_table($transaction, $type, $for, $admin_preview);
 
-    $class = hooks()->apply_filters('items_table_class', $class, $transaction, $type, $for, $admin_preview);
+    if (!isset($transaction->native_items_presentation)) {
+        $class = hooks()->apply_filters('items_table_class', $class, $transaction, $type, $for, $admin_preview);
+    }
 
     if (! $class instanceof App_items_table_template) {
         show_error(get_class($class) . ' must be instance of "App_items_template"');
@@ -913,19 +915,8 @@ function sales_number_format($number, $format, $applied_prefix, $date)
     $originalNumber = $number;
     $prefixPadding  = get_option('number_padding_prefixes');
 
-    if ($format == 1) {
-        // Number based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT);
-    } elseif ($format == 2) {
-        // Year based
-        $number = $applied_prefix . date('Y', strtotime($date)) . '/' . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT);
-    } elseif ($format == 3) {
-        // Number-yy based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT) . '-' . date('y', strtotime($date));
-    } elseif ($format == 4) {
-        // Number-mm-yyyy based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT) . '/' . date('m', strtotime($date)) . '/' . date('Y', strtotime($date));
-    }
+    require_once APPPATH . 'services/SalesNumberPresentation.php';
+    $number = SalesNumberPresentation::format($number, $format, $applied_prefix, $date, $prefixPadding);
 
     return hooks()->apply_filters('sales_number_format', $number, [
         'format'         => $format,
@@ -946,6 +937,16 @@ function sales_number_format($number, $format, $applied_prefix, $date)
  */
 function get_currency($id_or_name)
 {
+    $nativeCI = &get_instance();
+    if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($nativeCI)) {
+        // The currency catalog is public reference data. Native requests do not
+        // initialize the global model/object-cache graph merely to format money.
+        if ((!is_int($id_or_name) && !is_string($id_or_name)) || !preg_match('/^(?:[1-9][0-9]*|[A-Z]{3})$/D', (string)$id_or_name)) { throw new DomainException('company_currency_invalid'); }
+        $column = ctype_digit((string)$id_or_name) ? 'id' : 'name';
+        $rows = $nativeCI->db->query('SELECT * FROM '.db_prefix().'currencies WHERE '.$column.'=?', [$id_or_name])->result_array();
+        if (count($rows) !== 1) { throw new DomainException('company_currency_invalid'); }
+        return (object)$rows[0];
+    }
     $CI = &get_instance();
     if (! class_exists('currencies_model', false)) {
         $CI->load->model('currencies_model');

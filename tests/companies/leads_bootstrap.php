@@ -23,7 +23,7 @@ foreach($valid as $tail){
     $csrf=array_filter($leadPatterns,static fn($pattern)=>preg_match('#^'.$pattern.'$#D',$uri)===1);
     opsBootCheck(count($csrf)===1,'Exactly one lead CSRF pattern admits the endpoint');
     $matches=[];foreach($routes as $pattern=>$target)if(str_starts_with($pattern,'company_operations_api/')&&preg_match('#^'.$pattern.'$#D',$uri)===1)$matches[]=$target;
-    opsBootCheck(count($matches)===1&&str_starts_with($matches[0],'company_operations_api/'.$tail[0]),'Exact finite native route only');
+    opsBootCheck(count($matches)===1&&str_starts_with($matches[0],'operations_api/'.$tail[0]),'Exact finite native route only');
 }
 $invalid=[];
 foreach(['leads','lead_stages','lead_sources','lead_inbox'] as $endpoint)foreach(['0','01','-1','1e2','2147483648','23.json','23/extra'] as $id)$invalid[]=[$endpoint,...explode('/',$id)];
@@ -36,7 +36,7 @@ foreach($invalid as $tail){
     try{opsBootAutoload(opsBootCi('company_operations_api',$tail[0],$segments),$segments);}catch(DomainException $e){$denied=$e->getMessage()==='native_machine_404';}
     opsBootCheck($denied&&!CompanyOperationsApiScope::active(),'Malformed lead path rejected before legacy hydration');
 }
-foreach(['admin/company_leads','admin/company_leads/file','admin/company_leads/export','company_operations_api/lead_files','company_operations_api/lead_files/23/bad','company_operations_api/lead_exports/23','company_operations_api/lead_imports/'.str_repeat('a',32).'/extra','company_operations_api_evil/leads'] as $uri){
+foreach(['admin/leads','admin/leads/file','admin/leads/export','company_operations_api/lead_files','company_operations_api/lead_files/23/bad','company_operations_api/lead_exports/23','company_operations_api/lead_imports/'.str_repeat('a',32).'/extra','company_operations_api_evil/leads'] as $uri){
     opsBootCheck(!array_filter($leadPatterns,static fn($pattern)=>preg_match('#^'.$pattern.'$#D',$uri)===1),'GUI and malformed paths retain their CSRF boundary');
 }
 $segments=['company_operations_api','leads'];$denied=false;

@@ -1,0 +1,10 @@
+            $('[data-timer-id="' + window._timer_id + '"').click();
+            response = JSON.parse(response);
+            var option =
+              '<option value="' +
+              response.id +
+              '" title="' +
+              response.name +
+              '" selected>' +
+              response.name +
+              "</option>";

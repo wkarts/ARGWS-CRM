@@ -257,7 +257,7 @@ return App_table::find('tasks')
         App_table_filter::new('duedate_passed', 'BooleanRule')
             ->label(_l('task_list_duedate_passed'))
             ->raw(function ($value) {
-                return '(startdate ' . ($value == '1' ? '=' : '!=') . ' "' . date('Y-m-d') . '") AND status != ' . Tasks_model::STATUS_COMPLETE;
+                return '(duedate ' . ($value == '1' ? '<' : '>=') . ' "' . date('Y-m-d') . '") AND status != ' . Tasks_model::STATUS_COMPLETE;
             }),
 
         App_table_filter::new('not_assigned', 'BooleanRule')
@@ -281,7 +281,7 @@ return App_table::find('tasks')
         App_table_filter::new('upcoming_tasks', 'BooleanRule')
             ->label(_l('upcoming_tasks'))
             ->raw(function ($value) {
-                return '(duedate ' . ($value == '1' ? '<' : '>') . ' "' . date('Y-m-d') . '" AND duedate IS NOT NULL) AND status != ' . Tasks_model::STATUS_COMPLETE;
+                return '(startdate ' . ($value == '1' ? '>' : '<=') . ' "' . date('Y-m-d') . '") AND status != ' . Tasks_model::STATUS_COMPLETE;
             }),
 
         App_table_filter::new('recurring', 'BooleanRule')

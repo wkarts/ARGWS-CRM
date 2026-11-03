@@ -43,13 +43,13 @@
                                     <tr>
                                         <td><?= e($group['name']); ?>
                                             <span
-                                                class="badge mleft5"><?= total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></span>
+                                                class="badge mleft5"><?= isset($native_knowledge) ? $native_knowledge_counts[$group['groupid']] : total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></span>
                                         </td>
                                         <td>
                                             <div class="onoffswitch">
                                                 <input type="checkbox"
                                                     id="<?= e($group['groupid']); ?>"
-                                                    data-id="<?= e($group['groupid']); ?>"
+                                                    data-id="<?= e($group['groupid']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($group['revision_token']); ?>"<?php } ?>
                                                     class="onoffswitch-checkbox" <?php if (staff_cant('edit', 'knowledge_base')) {
                                                         echo 'disabled';
                                                     } ?>
@@ -66,9 +66,9 @@
                                                 <?php if (staff_can('edit', 'knowledge_base')) { ?>
                                                 <a href="#"
                                                     onclick="edit_kb_group(this,<?= e($group['groupid']); ?>); return false"
-                                                    data-name="<?= e($group['name']); ?>"
+                                                    data-name="<?= e($group['name']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($group['revision_token']); ?>"<?php } ?>
                                                     data-color="<?= e($group['color']); ?>"
-                                                    data-description="<?= clear_textarea_breaks($group['description']); ?>"
+                                                    data-description="<?= e(clear_textarea_breaks($group['description'])); ?>"
                                                     data-order="<?= e($group['group_order']); ?>"
                                                     data-active="<?= e($group['active']); ?>"
                                                     data-slug="<?= e($group['group_slug']); ?>"
@@ -77,7 +77,7 @@
                                                 </a>
                                                 <?php } ?>
                                                 <?php if (staff_can('delete', 'knowledge_base')) { ?>
-                                                <a href="<?= admin_url('knowledge_base/delete_group/' . $group['groupid']); ?>"
+                                                <a href="<?= admin_url('knowledge_base/delete_group/' . $group['groupid']); ?>" <?php if (isset($native_knowledge)) { ?>data-native-revision="<?= e($group['revision_token']); ?>"<?php } ?>
                                                     class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
                                                     <i class="fa-regular fa-trash-can fa-lg"></i>
                                                 </a>

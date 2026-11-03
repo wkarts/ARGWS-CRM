@@ -1,9 +1,10 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $nativeProfile=isset($native_portal)&&$native_portal;$native_profile_permissions=$native_profile_permissions??[]; $profileUrl=$nativeProfile?NativePortalPresentation::url('clients/profile'):'clients/profile'; $profilePermission=static function($name)use($nativeProfile,$native_profile_permissions){$ids=['invoices'=>1,'estimates'=>2,'contracts'=>3,'support'=>5,'projects'=>6];return $nativeProfile?in_array($ids[$name],$native_profile_permissions,true):has_contact_permission($name);}; ?>
 <div class="row section-heading section-profile">
     <div class="col-md-8">
-        <?= form_open_multipart('clients/profile', ['autocomplete' => 'off']); ?>
+        <?= form_open_multipart($profileUrl, ['autocomplete' => 'off']); ?>
         <?= form_hidden('profile', true); ?>
-        <?php hooks()->do_action('before_client_profile_form_loaded'); ?>
+        <?php if($nativeProfile){echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf).form_hidden('native_profile_revision',$native_profile_revision);} ?>
+        <?php if(!$nativeProfile)hooks()->do_action('before_client_profile_form_loaded'); ?>
         <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-text">
             <?= _l('clients_profile_heading'); ?>
         </h4>
@@ -23,13 +24,14 @@
                             <div class="form-group profile-image-group">
                                 <div class="row">
                                     <div class="col-md-9">
-                                        <img src="<?= e(contact_profile_image_url($contact->id, 'thumb')); ?>
+                                        <img src="<?= e($nativeProfile?($native_profile_image??base_url('assets/images/user-placeholder.jpg')):contact_profile_image_url($contact->id, 'thumb')); ?>
 " class="client-profile-image-thumb">
                                     </div>
                                     <div class="col-md-3 text-right">
+                                        <?php if($nativeProfile){ ?><button type="submit" class="btn btn-link" formaction="<?= e(NativePortalPresentation::url('clients/remove_profile_image')); ?>" formmethod="post" aria-label="<?= e(_l('remove')); ?>"><i class="fa fa-remove text-danger"></i></button><?php }else{ ?>
                                         <a
                                             href="<?= site_url('clients/remove_profile_image'); ?>"><i
-                                                class="fa fa-remove text-danger"></i></a>
+                                                class="fa fa-remove text-danger"></i></a><?php } ?>
                                     </div>
                                 </div>
                             </div>
@@ -87,13 +89,13 @@
                                 } ?>>RTL</option>
                             </select>
                         </div>
-                        <?= render_custom_fields('contacts', get_contact_user_id(), ['show_on_client_portal' => 1]); ?>
-                        <?php if (can_contact_view_email_notifications_options()) { ?>
+                        <?= render_custom_fields('contacts', $nativeProfile?(int)$contact->id:get_contact_user_id(), ['show_on_client_portal' => 1]); ?>
+                        <?php if ($nativeProfile?count($native_profile_permissions)>0:can_contact_view_email_notifications_options()) { ?>
                         <hr />
                         <p class="bold email-notifications-label">
                             <?= _l('email_notifications'); ?>
                         </p>
-                        <?php if (has_contact_permission('invoices')) { ?>
+                        <?php if ($profilePermission('invoices')) { ?>
                         <div class="checkbox checkbox-info email-notifications-invoices">
                             <input type="checkbox" value="1" id="invoice_emails" name="invoice_emails" <?php if ($contact->invoice_emails == 1) {
                                 echo ' checked';
@@ -109,7 +111,7 @@
                                 for="credit_note_emails"><?= _l('credit_note'); ?></label>
                         </div>
                         <?php } ?>
-                        <?php if (has_contact_permission('estimates')) { ?>
+                        <?php if ($profilePermission('estimates')) { ?>
                         <div class="checkbox checkbox-info email-notifications-estimates">
                             <input type="checkbox" value="1" id="estimate_emails" name="estimate_emails" <?php if ($contact->estimate_emails == 1) {
                                 echo ' checked';
@@ -118,7 +120,7 @@
                                 for="estimate_emails"><?= _l('estimate'); ?></label>
                         </div>
                         <?php } ?>
-                        <?php if (has_contact_permission('support')) { ?>
+                        <?php if ($profilePermission('support')) { ?>
                         <div class="checkbox checkbox-info email-notifications-tickets">
                             <input type="checkbox" value="1" id="ticket_emails" name="ticket_emails" <?php if ($contact->ticket_emails == 1) {
                                 echo ' checked';
@@ -127,7 +129,7 @@
                                 for="ticket_emails"><?= _l('tickets'); ?></label>
                         </div>
                         <?php } ?>
-                        <?php if (has_contact_permission('contracts')) { ?>
+                        <?php if ($profilePermission('contracts')) { ?>
                         <div class="checkbox checkbox-info email-notifications-contracts">
                             <input type="checkbox" value="1" id="contract_emails" name="contract_emails" <?php if ($contact->contract_emails == 1) {
                                 echo ' checked';
@@ -136,7 +138,7 @@
                                 for="contract_emails"><?= _l('contract'); ?></label>
                         </div>
                         <?php } ?>
-                        <?php if (has_contact_permission('projects')) { ?>
+                        <?php if ($profilePermission('projects')) { ?>
                         <div class="checkbox checkbox-info email-notifications-projects">
                             <input type="checkbox" value="1" id="project_emails" name="project_emails" <?php if ($contact->project_emails == 1) {
                                 echo ' checked';
@@ -153,7 +155,7 @@
                         </div>
                         <?php } ?>
                         <?php } ?>
-                        <?php hooks()->do_action('after_client_profile_form_loaded'); ?>
+                        <?php if(!$nativeProfile)hooks()->do_action('after_client_profile_form_loaded'); ?>
                     </div>
                 </div>
             </div>
@@ -171,8 +173,9 @@
         </h4>
         <div class="panel_s">
             <div class="panel-body">
-                <?= form_open('clients/profile'); ?>
+                <?= form_open($profileUrl); ?>
                 <?= form_hidden('change_password', true); ?>
+                <?php if($nativeProfile){echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf).form_hidden('native_profile_revision',$native_profile_revision);} ?>
                 <div class="form-group">
                     <label
                         for="oldpassword"><?= _l('clients_edit_profile_old_password'); ?></label>
@@ -203,7 +206,7 @@
             </div>
             <?php } ?>
         </div>
-        <?php hooks()->do_action('after_client_profile_password_form_loaded'); ?>
+        <?php if(!$nativeProfile)hooks()->do_action('after_client_profile_password_form_loaded'); ?>
     </div>
 
 </div>

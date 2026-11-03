@@ -7,6 +7,7 @@
  * Run with ISSUERS_TEST_DSN/USER/PASSWORD for an isolated MySQL test database.
  */
 declare(strict_types=1);
+require_once __DIR__.'/support/TestPdo.php';
 require_once __DIR__.'/issuers_test_support.php';
 
 define('BASEPATH', dirname(__DIR__) . '/system/');
@@ -60,13 +61,46 @@ final class EssentialTestLoader
     public function vars($variables): void { $this->variables = $variables; }
 }
 
+/** Keep diagnostics bounded without changing the values sent to PDO. */
+function essentialTraceValue($value, int $depth = 0)
+{
+    if (is_string($value) && strlen($value) > 512) {
+        return '[large-string bytes=' . strlen($value) . ' sha256=' . hash('sha256', $value) . ']';
+    }
+    if (is_array($value)) {
+        if ($depth >= 4) { return '[nested-array]'; }
+        $count = count($value);
+        $limit = 32;
+        $trace = [];
+        $seen = 0;
+        foreach ($value as $key => $item) {
+            if ($seen++ >= $limit) {
+                $trace['__truncated__'] = '[array items=' . $count . ']';
+                break;
+            }
+            $trace[$key] = essentialTraceValue($item, $depth + 1);
+        }
+        return $trace;
+    }
+    if (is_object($value)) { return '[object ' . get_debug_type($value) . ']'; }
+    return $value;
+}
+
 final class EssentialTestDb
 {
     public array $queries = [];
+    /** Worker subprocesses do not expose query diagnostics to the parent test. */
+    public bool $recordQueries = true;
+    /** Opt-in MySQL metadata declarations for SQLite-only controller fixtures. */
+    public array $declaredMysqlMetadata = [];
+    /** Last failed statement for integration-test diagnostics; bound values are never retained. */
+    public ?array $lastQueryFailure = null;
     public ?string $failOn = null;
     public ?string $failVersion = null;
     public ?int $failActive = null;
     public bool $failInsert = false;
+    /** Optional mysqli-like behavior for tests: a read invalidates insert_id(). */
+    public bool $resetInsertIdAfterRead = false;
     public bool $pretendVersionWrite = false;
     public ?int $pretendActiveWrite = null;
     public bool $db_debug = true;
@@ -83,9 +117,19 @@ final class EssentialTestDb
     public function driver(): string { return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME); }
     public function query($sql, $params = [])
     {
-        $this->queries[] = [$sql, $params];
+        if ($this->recordQueries) {
+            $this->queries[] = [$sql, array_map(static fn($value) => essentialTraceValue($value), $params)];
+        }
         if ($this->failOn !== null && str_contains($sql, $this->failOn)) { return false; }
         if ($this->driver() === 'sqlite') {
+            $declaration=str_contains($sql,'information_schema.')&&is_string($params[0]??null)
+                ?($this->declaredMysqlMetadata[$params[0]]??null):null;
+            if($declaration!==null&&str_contains($sql,'information_schema.')) {
+                $exists=$this->pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?");$exists->execute([$params[0]]);
+                if(!$exists->fetch())return new EssentialTestResult([]);
+                foreach(['COLUMNS'=>'columns','STATISTICS'=>'indexes','KEY_COLUMN_USAGE'=>'foreign','REFERENTIAL_CONSTRAINTS'=>'rules','TABLES'=>'engine'] as $table=>$key)
+                    if(str_contains($sql,'information_schema.'.$table))return new EssentialTestResult($declaration[$key]);
+            }
             $metadata = issuerSqliteIntegrationColumn($this->pdo, $sql, $params);
             if ($metadata !== null) { return new EssentialTestResult($metadata); }
             $sql = preg_replace('/(?:int|bigint) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY/', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql);
@@ -97,9 +141,19 @@ final class EssentialTestDb
             $sql = preg_replace('/UNIQUE KEY `[^`]+` \(/', 'UNIQUE (', $sql);
             $sql = preg_replace('/,?\s*KEY `[^`]+` \([^)]*\)/', '', $sql);
         }
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute($params);
-        return new EssentialTestResult($statement->columnCount() ? $statement->fetchAll(PDO::FETCH_ASSOC) : []);
+        try {
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($params);
+            return new EssentialTestResult($statement->columnCount() ? $statement->fetchAll(PDO::FETCH_ASSOC) : []);
+        } catch (Throwable $error) {
+            $this->lastQueryFailure = [
+                'sql' => $sql,
+                'sqlstate' => (string) $error->getCode(),
+                'driver_code' => $error instanceof PDOException ? ($error->errorInfo[1] ?? null) : null,
+                'message' => $error->getMessage(),
+            ];
+            throw $error;
+        }
     }
     public function where($column, $value): self { $this->predicates[$column] = $value; return $this; }
     public function select($columns): self { return $this; }
@@ -110,7 +164,7 @@ final class EssentialTestDb
     }
     public function insert($table, $data): bool
     {
-        if ($this->failInsert) { $this->queries[] = ['FAILED INSERT ' . $table, $data]; return false; }
+        if ($this->failInsert) { $this->queries[] = ['FAILED INSERT ' . $table, essentialTraceValue($data)]; return false; }
         return $this->query('INSERT INTO ' . $this->table($table) . ' (' . implode(',', array_keys($data)) . ') VALUES ('
             . implode(',', array_fill(0, count($data), '?')) . ')', array_values($data)) !== false;
     }
@@ -119,12 +173,12 @@ final class EssentialTestDb
         [$clause, $params] = $this->takeWhere();
         if (($this->failVersion !== null && ($data['installed_version'] ?? null) === $this->failVersion)
             || ($this->failActive !== null && ($data['active'] ?? null) === $this->failActive)) {
-            $this->queries[] = ['FAILED UPDATE ' . $table, $data];
+            $this->queries[] = ['FAILED UPDATE ' . $table, essentialTraceValue($data)];
             return false;
         }
         if (($this->pretendVersionWrite && isset($data['installed_version']) && $data['installed_version'] === essentialHeaderVersion())
             || ($this->pretendActiveWrite !== null && ($data['active'] ?? null) === $this->pretendActiveWrite)) {
-            $this->queries[] = ['IGNORED UPDATE ' . $table, $data];
+            $this->queries[] = ['IGNORED UPDATE ' . $table, essentialTraceValue($data)];
             return true;
         }
         return $this->query('UPDATE ' . $this->table($table) . ' SET '
@@ -154,7 +208,10 @@ final class EssentialTestDb
     public function trans_commit(): bool { return $this->pdo->commit(); }
     public function trans_rollback(): bool { return $this->pdo->inTransaction()?$this->pdo->rollBack():true; }
     public function trans_status(): bool { return true; }
-    public function insert_id(): int { return (int)$this->pdo->lastInsertId(); }
+    public function insert_id(): int {
+        $last = $this->queries === [] ? '' : $this->queries[array_key_last($this->queries)][0];
+        return $this->resetInsertIdAfterRead && preg_match('/^\s*SELECT\b/i', $last) ? 0 : (int)$this->pdo->lastInsertId();
+    }
     public function writes(): array
     {
         return array_values(array_filter($this->queries, static fn($query) => (bool) preg_match('/^(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|FAILED|IGNORED)\b/i', $query[0])));
@@ -197,12 +254,17 @@ function essentialThrows(callable $operation, string $message, string $label): v
     try { $operation(); } catch (RuntimeException | DomainException $exception) { $caught = $exception->getMessage(); }
     essentialCheck($caught === $message, $label . ' (actual: ' . var_export($caught, true) . ')');
 }
-function essentialFixture(?string $version = null, int $active = 0, bool $available = true): object
+function essentialFixture(?string $version = null, int $active = 0, bool $available = true, int $coreVersion = 447): object
 {
     $prefix = 'essential_' . bin2hex(random_bytes(5)) . '_';
-    $pdo = new PDO(getenv('ISSUERS_TEST_DSN') ?: 'sqlite::memory:', getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null);
+    $pdo = TestPdo::connect(getenv('ISSUERS_TEST_DSN') ?: 'sqlite::memory:', getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null);
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { $pdo->exec('PRAGMA foreign_keys=ON'); }
     $db = new EssentialTestDb($pdo, $prefix);
+    // Synthetic pre-priority boundary: this minimal fixture does not install the mandatory 448 sidecars.
+    // This marker does not prove execution of the complete historical migration chain.
+    if ($coreVersion < 1 || $coreVersion > 999) { throw new InvalidArgumentException('Invalid fixture core version'); }
+    $db->query("CREATE TABLE {$prefix}migrations(version BIGINT NOT NULL)");
+    $db->query("INSERT INTO {$prefix}migrations(version) VALUES(?)", [$coreVersion]);
     $db->query("CREATE TABLE {$prefix}modules(module_name VARCHAR(50) PRIMARY KEY, installed_version VARCHAR(20), active INT NOT NULL)");
     $db->query("CREATE TABLE {$prefix}options(name VARCHAR(80) PRIMARY KEY, value TEXT)");
     $db->query("INSERT INTO {$prefix}options VALUES('companyname','Synthetic global company'),('smtp_password','synthetic-test-only'),('payment_account','legacy-test-only')");
@@ -210,7 +272,8 @@ function essentialFixture(?string $version = null, int $active = 0, bool $availa
     $db->query("INSERT INTO {$prefix}invoices VALUES(42,9,125000,'legacy-gateway')");
     $db->query("CREATE TABLE {$prefix}clients(userid INT PRIMARY KEY, company VARCHAR(80))");
     $db->query("INSERT INTO {$prefix}clients VALUES(9,'Legacy client')");
-    $db->query("CREATE TABLE {$prefix}staff(staffid INT PRIMARY KEY, active INT, admin INT, last_activity VARCHAR(30))");
+    $staffKey=defined('ESSENTIAL_NATIVE_STAFF_AUTOINCREMENT')&&ESSENTIAL_NATIVE_STAFF_AUTOINCREMENT&&$db->driver()==='sqlite'?'INTEGER PRIMARY KEY AUTOINCREMENT':'INT PRIMARY KEY';
+    $db->query("CREATE TABLE {$prefix}staff(staffid {$staffKey}, active INT, admin INT, last_activity VARCHAR(30))");
     $db->query("INSERT INTO {$prefix}staff VALUES(7,1,1,NULL)");
     $db->query("CREATE TABLE {$prefix}staff_permissions(staff_id INT NOT NULL,feature VARCHAR(100) NOT NULL,capability VARCHAR(100) NOT NULL)");
     if ($version !== null) { $db->insert($prefix . 'modules', ['module_name' => 'issuers', 'installed_version' => $version, 'active' => $active]); }
@@ -288,9 +351,23 @@ function essentialCleanup(): void
 {
     foreach ($GLOBALS['essentialFixtures'] as $fixture) {
         if ($fixture->db->driver() !== 'mysql') { continue; }
+        if(!is_string($fixture->prefix)||!preg_match('/^essential_[a-f0-9]{10}_$/D',$fixture->prefix))throw new RuntimeException('essential_cleanup_prefix_invalid');
+        // Foreign-key relaxation is allowed only for the explicit synthetic
+        // schemas used by our isolated harness; PDO's selected database, not
+        // a caller-supplied DSN string, is the authoritative boundary.
+        $schema=$fixture->db->pdo->query('SELECT DATABASE()')->fetchColumn();
+        $allowedSchemas=['issuer_module_audit','issuer_native_module_audit','issuer_local_module_audit','issuer_tests','invoice_scope_tests','asaas_test','bridge_test','staff_identity_test','bb_test'];
+        if(!is_string($schema)||!in_array($schema,$allowedSchemas,true))throw new RuntimeException('essential_cleanup_schema_invalid');
+        $foreignKeys=$fixture->db->pdo->query('SELECT @@SESSION.FOREIGN_KEY_CHECKS')->fetchColumn();
+        if(!in_array((string)$foreignKeys,['0','1'],true))throw new RuntimeException('essential_cleanup_fk_state_invalid');
+        $fixture->db->pdo->exec('SET SESSION FOREIGN_KEY_CHECKS=0');
+        try {
         // Only random-prefix synthetic test tables, children before parents.
-        foreach (['asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_hr_cursor','company_hr_requests','company_hr_articles','company_hr_notices','company_hr_files','company_hr_access','company_hr_attempts','company_hr_assignments','company_hr_courses','company_hr_contracts','company_hr_contract_counters','company_hr_records','company_hr_profiles','company_hr_employees','company_hr_contract_types','company_hr_workplaces','company_hr_positions','company_hr_units','company_purchase_commands','company_purchase_invites','company_purchase_files','company_purchase_events','company_purchase_payables','company_purchase_allocations','company_purchase_documents','company_purchase_receipts','company_purchase_orders','company_purchase_quotes','company_purchase_requests','company_purchase_suppliers','company_purchase_settings','company_lead_notices','company_lead_notes','company_lead_files','company_leads','company_lead_stages','company_lead_sources','company_lead_imports','company_lead_requests','company_lead_notice_cursor','company_task_schedule_requests','company_task_schedule_runs','company_task_schedules','company_task_schedule_cursor','company_staff_commands','company_task_priorities','company_standalone_priorities','company_invoice_schedule_discovery','company_invoice_schedule_drafts','company_invoice_schedule_modes','company_invoice_schedule_requests','company_invoice_schedule_runs','company_invoice_schedules','company_invoice_draft_events','company_invoice_drafts','company_invoice_copy_requests','company_local_noncash_settlements','company_local_noncash_restorations','company_local_noncash_declarations','company_project_file_requests','company_project_file_rule_requests','company_project_contact_files','company_project_file_states','company_project_file_upload_rules','company_project_fixed_billing_links','company_project_fixed_billing_origins','bb_api_cnab_contracts','company_expense_recurring_requests','company_expense_occurrences','company_expense_recurring','company_portal_mail_deliveries','company_portal_mail_preferences','company_google_mail_queue_bindings','company_google_mail_states','company_google_mail_accounts','company_task_billing_links','company_task_billing_origins','company_project_billing_rates','company_project_gantt_requests','company_task_gantt_dates','company_project_gantt_rules','company_project_timesheet_requests','company_project_timesheet_rules','company_milestone_requests','company_portal_milestones','company_task_milestones','company_milestone_details','company_milestone_portal_rules','company_client_import_batches','company_expense_billing_links','company_expense_billing_origins','company_portal_task_requests','company_portal_task_files','company_portal_task_comments','company_portal_task_origins','company_project_write_rules','company_project_portal_requests','company_portal_task_children','company_portal_project_tasks','company_project_portal_rules','company_contract_comment_requests','company_contract_discussions','company_portal_support_files','company_portal_support_requests','company_portal_support_replies','company_portal_support_origins','company_portal_contracts_files','company_portal_tickets_files','company_portal_projects_files','company_portal_ticket_replies','company_portal_contracts','company_portal_tickets','company_portal_projects','company_portal_operation_requests','company_contract_files','company_ticket_files','company_bank_receipt_reversals','company_bank_receipt_components','asaas_company_hosted_links','asaas_company_payers','company_sales_files','company_sales_deliveries','company_import_batches','company_financial_events','company_currency_units','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','company_standalone_comments','company_standalone_timers','company_standalone_tasks','company_financial_api_requests','company_api_token_requests','company_api_tokens','company_recurring_runs','company_recurring','company_sales_documents','company_project_files','company_task_dependencies','company_project_followers','company_task_followers','company_project_milestones','asaas_company_receipts','asaas_company_proofs','asaas_company_events','asaas_company_origin_meta','asaas_company_accounts','asaas_payment_origins','company_ticket_replies','company_ticket_requests','company_contract_requests','company_contract_counters','company_tickets','company_contracts','company_task_timers','company_task_comments','company_task_checklists','company_tasks','company_project_requests','company_projects','company_expense_files','company_expense_requests','company_expenses','company_expense_categories','company_credit_entries','company_credit_documents','creditnote_refunds','creditnotes','company_invoice_attachments','company_invoice_deliveries','company_payment_receipts','company_invoice_requests','company_portal_tokens','company_portal_limits','user_auto_login','contact_permissions','contacts','company_client_requests','issuers_master_authorizations','company_wizard_drafts','recurring_rule_runs','recurring_rule_audit','recurring_rule_batches','recurring_rules','mail_queue','issuers_invoice_documents', 'issuers_sequences', 'issuers_resource_permissions', 'issuers_installation_identity', 'issuers_client_links', 'issuers_staff_defaults', 'issuers_clients', 'issuers_staff', 'issuers_audit', 'issuers_registry', 'issuers_lock', 'modules', 'options','item_tax','itemable','invoicepaymentrecords','credits','currencies','countries', 'invoices', 'clients', 'staff_permissions', 'staff'] as $table) {
+        foreach (['company_customer_file_contents','shared_customer_files','files','company_expense_native_forms','user_meta','company_native_filter_defaults','company_native_filters','filter_defaults','filters','company_payment_modes','company_invoice_native_relations','company_custom_field_values','company_custom_fields','company_work_tag_links','company_work_tags','taggables','tags','customfieldsvalues','customfields','projects','payment_modes','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_hr_cursor','company_hr_requests','company_hr_articles','company_hr_notices','company_hr_files','company_hr_access','company_hr_attempts','company_hr_assignments','company_hr_courses','company_hr_contracts','company_hr_contract_counters','company_hr_records','company_hr_profiles','company_hr_employees','company_hr_contract_types','company_hr_workplaces','company_hr_positions','company_hr_units','company_purchase_commands','company_purchase_invites','company_purchase_files','company_purchase_events','company_purchase_payables','company_purchase_allocations','company_purchase_documents','company_purchase_receipts','company_purchase_orders','company_purchase_quotes','company_purchase_requests','company_purchase_suppliers','company_purchase_settings','company_lead_notices','company_lead_notes','company_lead_files','leads','company_lead_stages','company_lead_sources','company_lead_imports','company_lead_requests','company_lead_notice_cursor','company_task_schedule_requests','company_task_schedule_runs','company_task_schedules','company_task_schedule_cursor','company_staff_commands','company_task_priorities','company_standalone_priorities','company_invoice_schedule_discovery','company_invoice_schedule_drafts','company_invoice_schedule_modes','company_invoice_schedule_requests','company_invoice_schedule_runs','company_invoice_schedules','company_invoice_native_commands','company_invoice_draft_line_transfers','company_invoice_draft_lines','company_invoice_draft_projection','company_invoice_draft_events','company_invoice_drafts','company_invoice_copy_requests','company_local_noncash_settlements','company_local_noncash_restorations','company_local_noncash_declarations','company_project_file_requests','company_project_file_rule_requests','company_project_contact_files','company_project_file_states','company_project_file_upload_rules','company_project_fixed_billing_links','company_project_fixed_billing_origins','bb_api_cnab_contracts','company_expense_recurring_requests','company_expense_occurrences','company_expense_recurring','company_portal_mail_deliveries','company_portal_mail_preferences','company_google_mail_queue_bindings','company_google_mail_states','company_google_mail_accounts','company_task_billing_links','company_task_billing_origins','company_project_billing_rates','company_project_gantt_requests','company_task_gantt_dates','company_project_gantt_rules','company_project_timesheet_requests','company_project_timesheet_rules','company_milestone_requests','company_portal_milestones','company_task_milestones','company_milestone_details','company_milestone_portal_rules','company_client_import_batches','company_expense_billing_links','company_expense_billing_origins','company_portal_task_requests','company_portal_task_files','company_portal_task_comments','company_portal_task_origins','company_project_write_rules','company_project_portal_requests','company_portal_task_children','company_portal_project_tasks','company_project_portal_rules','company_contract_comment_requests','company_contract_discussions','company_portal_support_files','company_portal_support_requests','company_portal_support_replies','company_portal_support_origins','company_portal_contracts_files','company_portal_tickets_files','company_portal_projects_files','company_portal_ticket_replies','company_portal_contracts','company_portal_tickets','company_portal_projects','company_portal_operation_requests','company_contract_files','company_ticket_files','company_bank_receipt_reversals','company_bank_receipt_components','asaas_company_hosted_links','asaas_company_payers','company_sales_files','company_sales_deliveries','company_import_batches','company_financial_events','company_currency_units','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','company_standalone_comments','company_standalone_timers','company_standalone_tasks','company_financial_api_requests','company_api_token_requests','company_api_tokens','company_recurring_runs','company_recurring','company_sales_documents','company_project_files','company_task_dependencies','company_project_followers','company_task_followers','company_project_milestones','asaas_company_receipts','asaas_company_proofs','asaas_company_events','asaas_company_origin_meta','asaas_company_accounts','asaas_payment_origins','company_ticket_replies','company_ticket_requests','company_contract_requests','company_contract_counters','company_tickets','company_contracts','company_task_timers','company_task_comments','company_task_checklists','company_tasks','company_project_requests','company_projects','company_expense_files','company_expense_requests','company_expenses','company_expense_categories','company_credit_entries','company_credit_documents','creditnote_refunds','creditnotes','company_invoice_attachments','company_invoice_deliveries','company_payment_receipts','company_invoice_requests','company_portal_tokens','company_portal_limits','user_auto_login','contact_permissions','contacts','company_client_requests','issuers_master_authorizations','company_wizard_drafts','recurring_rule_runs','recurring_rule_audit','recurring_rule_batches','recurring_rules','mail_queue','issuers_invoice_documents', 'issuers_sequences', 'issuers_resource_permissions', 'issuers_installation_identity', 'issuers_client_links', 'issuers_staff_defaults', 'issuers_clients', 'issuers_staff', 'issuers_audit', 'issuers_registry', 'issuers_lock', 'modules', 'options','item_tax','itemable','invoicepaymentrecords','credits','currencies','countries', 'invoices', 'clients', 'staff_permissions', 'staff'] as $table) {
             $fixture->db->pdo->exec('DROP TABLE IF EXISTS ' . $fixture->prefix . $table);
+        }
+        } finally {
+            $fixture->db->pdo->exec('SET SESSION FOREIGN_KEY_CHECKS='.(int)$foreignKeys);
         }
     }
 }

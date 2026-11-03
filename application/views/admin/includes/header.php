@@ -1,4 +1,14 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php
+require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+$nativeCompany=NativeCompanyAdminPresentation::current(function_exists('get_instance') ? get_instance() : $this);
+if($nativeCompany && isset($nativeCompany['started_timers'])){
+    if(!isset($nativeCompany['timer_policy']))throw new LogicException('native_timer_policy_missing');
+    $startedTimers=$nativeCompany['started_timers'];
+}
+$nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPresentation::label((string)$key) : static fn($key, ...$args)=>_l($key,...$args);
+?>
+
 <div id="header"<?= class_exists('CompanyRequestScope', false) && CompanyRequestScope::context() ? ' class="native-company-header"' : ''; ?>>
     <button type="button"
         class="hide-menu tw-inline-flex tw-bg-transparent tw-border-0 tw-p-1 tw-mt-4 hover:tw-bg-neutral-600/10 tw-text-neutral-600 hover:tw-text-neutral-800 focus:tw-text-neutral-800 focus:tw-outline-none tw-rounded-md tw-mx-4 ltr:md:tw-ml-4 rtl:md:tw-mr-4 ltr:tw-float-left  rtl:tw-float-right">
@@ -12,15 +22,15 @@
             <div class="tw-overflow-hidden tw-shrink-0">
                 <div id="logo"
                     class="tw-h-[57px] tw-hidden md:tw-flex tw-items-center [&_img]:tw-h-9 [&_img]:tw-w-auto">
-                    <?php $logo = get_admin_header_logo_url(); ?>
+                    <?php $logo = $nativeCompany ? $nativeCompany['logo'] : get_admin_header_logo_url(); ?>
                     <?php if (! $logo) { ?>
                     <a class="logo logo-text tw-text-2xl tw-font-semibold"
-                        href="<?= hooks()->apply_filters('admin_header_logo_href', admin_url()); ?>">
+                        href="<?= ($nativeCompany ? ($nativeCompany['routes'][''] ?? '#') : hooks()->apply_filters('admin_header_logo_href', admin_url())); ?>">
                         <?= crm_app_display_name_html(); ?>
                     </a>
                     <?php } else { ?>
                     <a class="logo"
-                        href="<?= hooks()->apply_filters('admin_header_logo_href', admin_url()); ?>">
+                        href="<?= ($nativeCompany ? ($nativeCompany['routes'][''] ?? '#') : hooks()->apply_filters('admin_header_logo_href', admin_url())); ?>">
                         <img src="<?= e($logo); ?>"
                             class="img-responsive"
                             alt="<?= crm_app_display_name_html(); ?>" />
@@ -32,10 +42,10 @@
                 <div id="top_search"
                     class="tw-inline-flex tw-relative dropdown sm:tw-ml-1.5 sm:tw-mr-3 tw-max-w-xl tw-flex-auto tw-group/top-search"
                     data-toggle="tooltip" data-placement="bottom"
-                    data-title="<?= _l('search_by_tags'); ?>">
-                    <input type="search" id="search_input"
+                    data-title="<?= $nativeLabel('search_by_tags'); ?>">
+                    <input type="search" id="search_input" <?= $nativeCompany && !isset($nativeCompany['routes']['misc/search']) ? 'disabled aria-disabled="true"' : ''; ?>
                         class="ltr:tw-pr-4 ltr:tw-pl-9 rtl:tw-pr-9 rtl:tw-pl-4 tw-ml-1 tw-mt-2 focus:!tw-ring-0 tw-w-full !tw-placeholder-neutral-500 !tw-shadow-none tw-text-neutral-800 focus:!tw-placeholder-neutral-600 hover:!tw-placeholder-neutral-600 sm:tw-w-[350px] tw-h-[38px] tw-border-0 tw-border-solid !tw-border-white !tw-bg-neutral-100 !tw-rounded-lg"
-                        placeholder="<?= _l('top_search_placeholder'); ?>"
+                        placeholder="<?= $nativeLabel('top_search_placeholder'); ?>"
                         autocomplete="off">
                     <div id="top_search_button" class="tw-absolute rtl:tw-right-2 ltr:tw-left-2 tw-top-2.5">
                         <button
@@ -50,12 +60,12 @@
 
                 </div>
                 <ul class="nav navbar-nav visible-md visible-lg">
-                    <?php $quickActions = collect($this->app->get_quick_actions_links())->reject(function ($action) {
+                    <?php $quickActions = $nativeCompany ? $nativeCompany['quick_actions'] : collect($this->app->get_quick_actions_links())->reject(function ($action) {
                         return isset($action['permission']) && staff_cant('create', $action['permission']);
                     }); ?>
-                    <?php if ($quickActions->isNotEmpty()) { ?>
+                    <?php if (($nativeCompany ? count($quickActions)>0 : $quickActions->isNotEmpty())) { ?>
                     <li class="icon tw-relative ltr:tw-mr-1.5 rtl:tw-ml-1.5 -tw-mt-1"
-                        title="<?= _l('quick_create'); ?>"
+                        title="<?= $nativeLabel('quick_create'); ?>"
                         data-toggle="tooltip" data-placement="bottom">
                         <a href="#" class="!tw-px-0 tw-group !tw-text-white" data-toggle="dropdown">
                             <span
@@ -65,12 +75,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right animated fadeIn tw-text-base">
                             <li class="dropdown-header tw-mb-1">
-                                <?= _l('quick_create'); ?>
+                                <?= $nativeLabel('quick_create'); ?>
                             </li>
                             <?php foreach ($quickActions as $key => $item) {
                                 $url = '';
                                 if (isset($item['permission'])) {
-                                    if (staff_cant('create', $item['permission'])) {
+                                    if (!$nativeCompany && staff_cant('create', $item['permission'])) {
                                         continue;
                                     }
                                 }
@@ -115,10 +125,12 @@
                 <ul class="mobile-icon-menu tw-inline-flex tw-mt-5">
                     <?php
                // To prevent not loading the timers twice
-            if (is_mobile()) { ?>
+            if ($nativeCompany ? $nativeCompany['is_mobile'] : is_mobile()) { ?>
+                    <?php if(!$nativeCompany || isset($nativeCompany['notifications'])) { ?>
                     <li class="dropdown notifications-wrapper header-notifications tw-block ltr:tw-mr-3 rtl:tw-ml-3">
                         <?php $this->load->view('admin/includes/notifications'); ?>
                     </li>
+                    <?php } if(!$nativeCompany || isset($nativeCompany['started_timers'])) { ?>
                     <li class="header-timers ltr:tw-mr-1.5 rtl:tw-ml-1.5">
                         <a href="#" id="top-timers" class="dropdown-toggle top-timers tw-block tw-h-5 tw-w-5"
                             data-toggle="dropdown">
@@ -128,60 +140,60 @@
                                 class="tw-leading-none tw-px-1 tw-py-0.5 tw-text-xs bg-success tw-z-10 tw-absolute tw-rounded-full -tw-right-3 -tw-top-2 tw-min-w-[18px] tw-min-h-[18px] tw-inline-flex tw-items-center tw-justify-center icon-started-timers<?= $totalTimers = count($startedTimers) == 0 ? ' hide' : ''; ?>"><?= count($startedTimers); ?></span>
                         </a>
                         <ul class="dropdown-menu animated fadeIn started-timers-top width300" id="started-timers-top">
-                            <?php $this->load->view('admin/tasks/started_timers', ['startedTimers' => $startedTimers]); ?>
+                            <?php $this->load->view('admin/tasks/started_timers', array_merge(['startedTimers' => $startedTimers],$nativeCompany?['nativeTimerPolicy'=>$nativeCompany['timer_policy']]:[])); ?>
                         </ul>
                     </li>
-                    <?php } ?>
+                    <?php } } ?>
                 </ul>
                 <div class="mobile-navbar collapse" id="mobile-collapse" aria-expanded="false" style="height: 0px;"
                     role="navigation">
                     <ul class="nav navbar-nav">
-                        <li class="header-my-profile"><a
+                        <?php if(!$nativeCompany || isset($nativeCompany['routes']['profile'])) { ?><li class="header-my-profile"><a
                                 href="<?= admin_url('profile'); ?>">
-                                <?= _l('nav_my_profile'); ?>
+                                <?= $nativeLabel('nav_my_profile'); ?>
                             </a>
-                        </li>
-                        <li class="header-my-timesheets"><a
+                        </li><?php } ?>
+                        <?php if(!$nativeCompany || isset($nativeCompany['routes']['staff/timesheets'])) { ?><li class="header-my-timesheets"><a
                                 href="<?= admin_url('staff/timesheets'); ?>">
-                                <?= _l('my_timesheets'); ?>
+                                <?= $nativeLabel('my_timesheets'); ?>
                             </a>
-                        </li>
-                        <li class="header-edit-profile"><a
+                        </li><?php } ?>
+                        <?php if(!$nativeCompany || isset($nativeCompany['routes']['staff/edit_profile'])) { ?><li class="header-edit-profile"><a
                                 href="<?= admin_url('staff/edit_profile'); ?>">
-                                <?= _l('nav_edit_profile'); ?>
+                                <?= $nativeLabel('nav_edit_profile'); ?>
                             </a>
-                        </li>
-                        <?php if (is_staff_member()) { ?>
+                        </li><?php } ?>
+                        <?php if (!$nativeCompany && is_staff_member()) { ?>
                         <li class="header-newsfeed">
                             <a href="#" class="open_newsfeed mobile">
-                                <?= _l('whats_on_your_mind'); ?>
+                                <?= $nativeLabel('whats_on_your_mind'); ?>
                             </a>
                         </li>
                         <?php } ?>
-                        <li class="header-logout">
-                            <a href="#" onclick="logout(); return false;">
-                                <?= _l('nav_logout'); ?>
+                        <?php if(!$nativeCompany || isset($nativeCompany['routes']['authentication/logout'])) { ?><li class="header-logout">
+                            <a href="<?= $nativeCompany ? e($nativeCompany['routes']['authentication/logout']) : '#'; ?>" <?= $nativeCompany ? '' : 'onclick="logout(); return false;"'; ?>>
+                                <?= $nativeLabel('nav_logout'); ?>
                             </a>
-                        </li>
+                        </li><?php } ?>
                     </ul>
                 </div>
             </div>
 
             <ul class="nav navbar-nav navbar-right -tw-mt-px">
-                <?php do_action_deprecated('after_render_top_search', [], '3.0.0', 'admin_navbar_start'); ?>
-                <?php hooks()->do_action('admin_navbar_start'); ?>
-                <?php if (staff_can('view', 'settings')) { ?>
+                <?php if(!$nativeCompany) { do_action_deprecated('after_render_top_search', [], '3.0.0', 'admin_navbar_start'); } ?>
+                <?php if(!$nativeCompany) { hooks()->do_action('admin_navbar_start'); } ?>
+                <?php if ($nativeCompany ? isset($nativeCompany['routes']['settings']) : staff_can('view', 'settings')) { ?>
                 <li>
                     <a
                         href="<?= admin_url('settings'); ?>">
-                        <?= _l('settings'); ?>
+                        <?= $nativeLabel('settings'); ?>
                     </a>
                 </li>
                 <?php } ?>
-                <?php if (is_staff_member()) { ?>
+                <?php if (!$nativeCompany && is_staff_member()) { ?>
                 <li class="icon header-newsfeed -tw-mr-1.5">
                     <a href="#" class="open_newsfeed desktop" data-toggle="tooltip"
-                        title="<?= _l('whats_on_your_mind'); ?>"
+                        title="<?= $nativeLabel('whats_on_your_mind'); ?>"
                         data-placement="bottom">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor"
@@ -193,22 +205,23 @@
                 </li>
                 <?php } ?>
 
-                <li class="icon header-todo">
+                <?php if(!$nativeCompany || isset($nativeCompany['total_unfinished_todos'])) { ?><li class="icon header-todo">
                     <a href="<?= admin_url('todo'); ?>"
                         data-toggle="tooltip"
-                        title="<?= _l('nav_todo_items'); ?>"
+                        title="<?= $nativeLabel('nav_todo_items'); ?>"
                         data-placement="bottom" class="">
                         <i class="fa-regular fa-square-check fa-lg tw-shrink-0"></i>
                         <span
-                            class="tw-leading-none tw-px-1 tw-py-0.5 tw-text-xs bg-warning tw-z-10 tw-absolute tw-rounded-full -tw-right-0.5 tw-top-2 tw-min-w-[18px] tw-min-h-[18px] tw-inline-flex tw-items-center tw-justify-center nav-total-todos<?= $current_user->total_unfinished_todos == 0 ? ' hide' : ''; ?>">
-                            <?= e($current_user->total_unfinished_todos); ?>
+                            class="tw-leading-none tw-px-1 tw-py-0.5 tw-text-xs bg-warning tw-z-10 tw-absolute tw-rounded-full -tw-right-0.5 tw-top-2 tw-min-w-[18px] tw-min-h-[18px] tw-inline-flex tw-items-center tw-justify-center nav-total-todos<?= ($nativeCompany?$nativeCompany['total_unfinished_todos']:$current_user->total_unfinished_todos) == 0 ? ' hide' : ''; ?>">
+                            <?= e($nativeCompany?$nativeCompany['total_unfinished_todos']:$current_user->total_unfinished_todos); ?>
                         </span>
                     </a>
                 </li>
 
+                <?php } if(!$nativeCompany || isset($nativeCompany['started_timers'])) { ?>
                 <li class="icon header-timers timer-button tw-relative ltr:tw-mr-1.5 rtl:tw-ml-1.5"
                     data-placement="bottom" data-toggle="tooltip"
-                    data-title="<?= _l('my_timesheets'); ?>">
+                    data-title="<?= $nativeLabel('my_timesheets'); ?>">
                     <a href="#" id="top-timers" class="top-timers !tw-px-0 tw-group" data-toggle="dropdown">
                         <span class="tw-inline-flex tw-items-center tw-justify-center tw-h-8 tw-w-9 -tw-mt-1.5">
                             <i
@@ -220,18 +233,20 @@
                         </span>
                     </a>
                     <ul class="dropdown-menu animated fadeIn started-timers-top width300" id="started-timers-top">
-                        <?php $this->load->view('admin/tasks/started_timers', ['startedTimers' => $startedTimers]); ?>
+                        <?php $this->load->view('admin/tasks/started_timers', array_merge(['startedTimers' => $startedTimers],$nativeCompany?['nativeTimerPolicy'=>$nativeCompany['timer_policy']]:[])); ?>
                     </ul>
                 </li>
 
+                <?php } if(!$nativeCompany || isset($nativeCompany['notifications'])) { ?>
                 <li class="icon dropdown tw-relative tw-block notifications-wrapper header-notifications rtl:tw-ml-3"
                     data-toggle="tooltip"
-                    title="<?= _l('nav_notifications'); ?>"
+                    title="<?= $nativeLabel('nav_notifications'); ?>"
                     data-placement="bottom">
                     <?php $this->load->view('admin/includes/notifications'); ?>
                 </li>
 
-                <?php hooks()->do_action('admin_navbar_end'); ?>
+                <?php } ?>
+                <?php if(!$nativeCompany) { hooks()->do_action('admin_navbar_end'); } ?>
             </ul>
         </div>
     </nav>

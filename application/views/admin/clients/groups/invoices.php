@@ -1,4 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (!empty($native_customers)) { ?>
+<h4 class="customer-profile-group-heading"><?= e(_l('client_invoices_tab')); ?></h4>
+<?php $this->load->view('admin/invoices/table_html',['class'=>'invoices-single-client','client'=>$client,'native_invoice_custom_fields'=>$native_invoice_custom_fields]); ?>
+<?php } else { ?>
 <?php if (isset($client)) { ?>
 <h4 class="customer-profile-group-heading">
     <?= _l('client_invoices_tab'); ?></h4>
@@ -19,5 +23,6 @@
         $this->load->view('admin/invoices/table_html', ['class' => 'invoices-single-client']);
     $this->load->view('admin/clients/modals/zip_invoices');
     ?>
+<?php } ?>
 <?php } ?>
 <?php } ?>

@@ -6,7 +6,7 @@ require dirname(__DIR__).'/companies/sales.php';require_once APPPATH.'services/C
 class App_Model extends CI_Model{}class AdminController extends CI_Model{}
 require_once APPPATH.'services/CompanyRequestScope.php';
 $GLOBALS['CI']->config=new class{function site_url($path){return 'https://synthetic.invalid/'.ltrim($path,'/');}};
-function get_option($key){return CompanySettingsRuntime::get($key);}function staff_can($cap,$feature){return false;}
+function get_option($key){return array_key_exists($key,$GLOBALS['test_option_overrides']??[])?$GLOBALS['test_option_overrides'][$key]:CompanySettingsRuntime::get($key);}function staff_can($cap,$feature){return false;}
 function show_error($message,$status=500){throw new DomainException('http_'.$status);}function access_denied($feature){throw new DomainException('http_403');}
 function admin_url($path){return 'https://synthetic.invalid/admin/'.$path;}
 function render_input($name,$label,$value,...$args){return '<input name="'.htmlspecialchars($name).'" value="'.htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'">';}
@@ -20,6 +20,10 @@ CompanySettingsRuntime::run($db,$p,$principal,7,function()use($model,$terms,$sal
  essentialCheck(CompanySettingsRuntime::get('predefined_terms_proposal')===$terms,'principal terms persist as literal text without losing markup text');
  $render=static function(){ob_start();include APPPATH.'views/admin/settings/includes/proposals.php';return ob_get_clean();};$html=$render();essentialCheck(str_contains($html,'name="settings[predefined_terms_proposal]"')&&str_contains($html,'maxlength="10000"'),'actual legacy proposal settings declares bounded known field');essentialCheck(str_contains($html,'&lt;script&gt;literal principal only&lt;/script&gt;')&&!str_contains($html,'<script>literal principal only</script>'),'actual legacy field escapes current principal terms');
  $id=$sales->create($principal,7,'proposals',$principalInput,hash('sha256','primary-settings-proposal'));$dto=$sales->document($principal,7,$id);essentialCheck($dto['terms']===$terms&&str_starts_with($dto['formatted_number'],'PRIMARY-PROP-'),'new principal source consumes own graphical preference without reading secondary company');
+ // Real native estimate setting must keep untrusted quotes inside the value attribute.
+ $GLOBALS['test_option_overrides']=['estimate_prefix'=>'P" autofocus onfocus="alert(1)'];
+ try{$estimateHtml=(static function(){ob_start();include APPPATH.'views/admin/settings/includes/estimates.php';return ob_get_clean();})();}finally{unset($GLOBALS['test_option_overrides']);}
+ essentialCheck(str_contains($estimateHtml,'value="P&quot; autofocus onfocus=&quot;alert(1)"')&&!str_contains($estimateHtml,'value="P" autofocus onfocus="alert(1)"'),'estimate prefix stays escaped within its input value');
  $atomicBefore=CompanySettingsRuntime::all();$trigger=$GLOBALS['p'].'primary_preference_fail';$nativeDb=$GLOBALS['db'];
  if($nativeDb->driver()==='mysql')$nativeDb->query("CREATE TRIGGER {$trigger} BEFORE UPDATE ON {$GLOBALS['p']}options FOR EACH ROW BEGIN IF NEW.name='predefined_terms_proposal' AND NEW.value='synthetic-trigger-failure' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic failure'; END IF; END");else $nativeDb->query("CREATE TRIGGER {$trigger} BEFORE UPDATE ON {$GLOBALS['p']}options WHEN NEW.name='predefined_terms_proposal' AND NEW.value='synthetic-trigger-failure' BEGIN SELECT RAISE(FAIL,'synthetic failure'); END");
  essentialThrows(fn()=>$model->update(['settings'=>['proposal_number_prefix'=>'PARTIAL-MUST-ROLLBACK','predefined_terms_proposal'=>'synthetic-trigger-failure']]),'issuer_storage_failed','failure of second known principal preference propagates');$nativeDb->query('DROP TRIGGER '.$trigger);essentialCheck(CompanySettingsRuntime::all()===$atomicBefore,'all known principal preferences roll back when later option fails');

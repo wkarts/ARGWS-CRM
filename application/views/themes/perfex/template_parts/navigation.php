@@ -10,17 +10,17 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <?php get_dark_company_logo('', 'navbar-brand logo'); ?>
+            <?php if(!empty($native_portal)){ ?><a class="logo img-responsive navbar-brand logo" href="<?= e(NativePortalPresentation::url('authentication/login')); ?>"><img src="<?= e($native_portal_logo); ?>" class="img-responsive" alt="<?= e($native_portal_options['companyname']!==''?$native_portal_options['companyname']:'ARGWS CRM'); ?>"></a><?php }else get_dark_company_logo('', 'navbar-brand logo'); ?>
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="theme-navbar-collapse">
             <ul class="nav navbar-nav navbar-right">
-                <?php hooks()->do_action('customers_navigation_start'); ?>
+                <?php if(empty($native_portal))hooks()->do_action('customers_navigation_start'); ?>
                 <?php foreach ($menu as $item_id => $item) { ?>
-                <li class="customers-nav-item-<?= e($item_id); ?><?= $item['href'] === current_full_url() ? ' active' : ''; ?>"
-                    <?= _attributes_to_string($item['li_attributes'] ?? []); ?>>
+                <li class="customers-nav-item-<?= e($item_id); ?><?= empty($native_portal) && $item['href'] === current_full_url() ? ' active' : ''; ?>"
+                    <?= !empty($native_portal) ? '' : _attributes_to_string($item['li_attributes'] ?? []); ?>>
                     <a href="<?= e($item['href']); ?>"
-                        <?= _attributes_to_string($item['href_attributes'] ?? []); ?>>
+                        <?= !empty($native_portal) ? '' : _attributes_to_string($item['href_attributes'] ?? []); ?>>
                         <?php
                      if (! empty($item['icon'])) {
                          echo '<i class="' . $item['icon'] . '"></i> ';
@@ -30,8 +30,17 @@
                     </a>
                 </li>
                 <?php } ?>
-                <?php hooks()->do_action('customers_navigation_end'); ?>
-                <?php if (is_client_logged_in()) { ?>
+                <?php if (!empty($native_portal) && !empty($native_portal_identity)) { ?>
+                <li class="customers-nav-item-logout">
+                    <?= form_open(NativePortalPresentation::url('authentication/logout'), ['class'=>'navbar-form']); ?>
+                    <input type="hidden" name="issuer_id" value="<?= (int)$native_portal_issuer; ?>">
+                    <input type="hidden" name="_native_portal_csrf" value="<?= e($native_portal_csrf); ?>">
+                    <button type="submit" class="btn btn-default"><?= e(_l('clients_nav_logout')); ?></button>
+                    <?= form_close(); ?>
+                </li>
+                <?php } ?>
+                <?php if(empty($native_portal))hooks()->do_action('customers_navigation_end'); ?>
+                <?php if (empty($native_portal) && is_client_logged_in()) { ?>
                 <li class="dropdown customers-nav-item-profile">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                         aria-expanded="false">
@@ -117,7 +126,7 @@
                         </li>
                         <?php
                         } ?>
-                        <?= hooks()->do_action('customers_navigation_before_logout'); ?>
+                        <?php if(empty($native_portal))hooks()->do_action('customers_navigation_before_logout'); ?>
                         <li class="customers-nav-item-logout">
                             <a
                                 href="<?= site_url('authentication/logout'); ?>">
@@ -127,7 +136,7 @@
                     </ul>
                 </li>
                 <?php } ?>
-                <?php hooks()->do_action('customers_navigation_after_profile'); ?>
+                <?php if(empty($native_portal))hooks()->do_action('customers_navigation_after_profile'); ?>
             </ul>
         </div>
         <!-- /.navbar-collapse -->

@@ -1,0 +1,21 @@
+<?php
+require __DIR__.'/native_customer_assignments.php';
+require APPPATH.'services/NativeCompanyCustomerVault.php';
+$db->query("CREATE TABLE {$p}vault(id INTEGER PRIMARY KEY AUTOINCREMENT,customer_id INT NOT NULL,server_address VARCHAR(191) NOT NULL,port INT,username VARCHAR(191) NOT NULL,password TEXT NOT NULL,description TEXT,creator INT NOT NULL,creator_name VARCHAR(100),visibility INT NOT NULL DEFAULT 1,share_in_projects INT NOT NULL DEFAULT 0,last_updated TEXT,last_updated_from VARCHAR(100),date_created TEXT NOT NULL)");
+if(!$db->field_exists('password',$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD password VARCHAR(255)');$password='Synthetic-staff-password-123';$db->query('UPDATE '.$p.'staff SET password=?',[password_hash($password,PASSWORD_DEFAULT)]);
+$key=random_bytes(32);$encrypt=static function($plain)use($key){$iv=random_bytes(12);$tag='';$cipher=openssl_encrypt($plain,'aes-256-gcm',$key,OPENSSL_RAW_DATA,$iv,$tag);return base64_encode($iv.$tag.$cipher);};$decrypt=static function($cipher)use($key){$raw=base64_decode($cipher,true);return $raw===false?false:openssl_decrypt(substr($raw,28),'aes-256-gcm',$key,OPENSSL_RAW_DATA,substr($raw,0,12),substr($raw,12,16));};
+$v=new NativeCompanyCustomerVault($db,$p);$start=$GLOBALS['essentialChecks'];$input=['server_address'=>'synthetic.example.invalid','username'=>'synthetic-user','password'=>'Synthetic-vault-value','description'=>'<script>not executed</script>','visibility'=>'1','port'=>'443','share_in_projects'=>'on'];
+$id=$v->save(41,52,$nativeA,$input,$encrypt);$dto=$v->get(41,52,$id);essentialCheck(!isset($dto['password'])&&count($v->page(41,52,$nativeA,true))===1,'original vault DTO hides ciphertext and honors explicit project flag');
+essentialCheck($v->reveal(41,52,$id,$dto['revision'],$password,'password_verify',$decrypt)==='Synthetic-vault-value','reauthenticated owner decrypts exact-bound real authenticated ciphertext');
+essentialThrows(fn()=>$v->reveal(41,52,$id,$dto['revision'],'bad','password_verify',$decrypt),'native_vault_reauthentication_required','incorrect staff password blocks reveal');
+essentialThrows(fn()=>$v->get(82,52,$id),'company_client_access_denied','other company cannot inspect vault');
+essentialThrows(fn()=>$v->save(41,51,$nativeA,$input,$encrypt),'company_client_access_denied','revoked customer responsible cannot create vault');
+$edit=$input;$edit['password']='';$edit['description']='Updated';$v->save(41,52,$nativeA,$edit,$encrypt,$id,$dto['revision']);
+essentialThrows(fn()=>$v->save(41,52,$nativeA,$edit,$encrypt,$id,$dto['revision']),'company_client_stale','vault update requires current full-row revision');
+$new=$v->get(41,52,$id);essentialCheck($v->reveal(41,52,$id,$new['revision'],$password,'password_verify',$decrypt)==='Synthetic-vault-value','empty update password retains prior bound cipher');
+$second=$v->save(41,52,$nativeA,$input,$encrypt);$cipher=$db->query('SELECT password FROM '.$p.'vault WHERE id=?',[$id])->row()->password;$db->query('UPDATE '.$p.'vault SET password=? WHERE id=?',[$cipher,$second]);
+essentialThrows(fn()=>$v->reveal(41,52,$second,$v->get(41,52,$second)['revision'],$password,'password_verify',$decrypt),'native_vault_crypto_failed','ciphertext from another entry cannot be replayed');
+$before=$v->get(41,52,$id);$db->query("CREATE TRIGGER {$p}ignore_vault_audit BEFORE INSERT ON {$p}issuers_audit BEGIN SELECT RAISE(IGNORE); END");
+essentialThrows(fn()=>$v->delete(41,52,$id,$before['revision']),'issuer_client_write_unconfirmed','ignored audit blocks vault deletion');$db->query("DROP TRIGGER {$p}ignore_vault_audit");essentialCheck($v->get(41,52,$id)===$before,'failed audit restores exact native vault row');
+$v->delete(41,52,$id,$before['revision']);essentialThrows(fn()=>$v->get(41,52,$id),'company_client_access_denied','owned vault deletion removes only selected entry');
+echo 'Native customer vault: '.($GLOBALS['essentialChecks']-$start).' checks passed; real authenticated encryption, synthetic values, no external access.'.PHP_EOL;

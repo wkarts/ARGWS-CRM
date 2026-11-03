@@ -1,24 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php include_once APPPATH . 'views/admin/includes/modals/post_likes.php'; ?>
 <?php include_once APPPATH . 'views/admin/includes/modals/post_comment_likes.php'; ?>
-<div id="event"></div>
+<?php require APPPATH.'views/admin/utilities/event_mount.php'; ?>
 <div id="newsfeed" class="animated fadeIn hide" <?php if ($this->session->flashdata('newsfeed_auto')) {
     echo 'data-newsfeed-auto';
 } ?>>
 </div>
-<!-- Task modal view -->
-<div class="modal fade task-modal-single" id="task-modal" tabindex="-1" role="dialog"
-  aria-labelledby="myLargeModalLabel">
-  <div
-    class="modal-dialog <?= get_option('task_modal_class'); ?>">
-    <div class="modal-content data">
-
-    </div>
-  </div>
-</div>
-
-<!--Add/edit task modal-->
-<div id="_task"></div>
+<?php require APPPATH.'views/admin/tasks/modal_mount.php'; ?>
 
 <!-- Lead Data Add/Edit-->
 <div class="modal fade lead-modal" id="lead-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">

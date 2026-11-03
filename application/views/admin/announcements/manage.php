@@ -4,7 +4,7 @@
     <div class="content">
         <div class="row">
             <div class="col-md-12">
-                <?php if (is_admin()) { ?>
+                <?php if (isset($native_can_create) ? $native_can_create : is_admin()) { ?>
                 <a href="<?php echo admin_url('announcements/announcement'); ?>"
                     class="btn btn-primary tw-mb-2">
                     <i class="fa-regular fa-plus tw-mr-1"></i>

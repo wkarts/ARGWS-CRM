@@ -2,6 +2,9 @@
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 /** Actual source writer, frozen DTO, native TCPDF dimensions, retries and historical contexts. */
 require __DIR__.'/sales_preferences.php';$start=$GLOBALS['essentialChecks'];$records=[];
+// The inherited preference suite has already checked its SQL trace. Retain the
+// real stored documents while releasing completed diagnostics before TCPDF.
+$db->queries=[];
 $settings->mutate($principal,7,'update','pdf_format_estimate','LETTER-LANDSCAPE',null);
 $noFallback=$sales->create($b,7,'estimates',array_replace($salesInput,['client_id'=>$cb]),hash('sha256','pdf-no-global-fallback'));essentialCheck($sales->document($b,7,$noFallback)['context']['sales_preferences']['pdf']==='A4-PORTRAIT','absent B format never inherits principal Letter landscape');
 foreach([$a=>'A',$b=>'B',$principal=>'P'] as $owner=>$letter){
@@ -14,6 +17,9 @@ foreach([$a=>'A',$b=>'B',$principal=>'P'] as $owner=>$letter){
    $folder=getenv('CRM_SALES_PDF_FORMAT_EVIDENCE');if($folder){if(!preg_match('~^/tmp/crm-sales-pdf-[A-Za-z0-9_-]+$~D',$folder)||!is_dir($folder))throw new RuntimeException('invalid evidence folder');$name=$letter.'-'.$kind.'-'.$choice;file_put_contents($folder.'/'.$name.'.pdf',$pdf->Output('','S'));file_put_contents($folder.'/'.$name.'.json',json_encode(['width'=>$expected[0],'height'=>$expected[1]],JSON_THROW_ON_ERROR));}
    $other=$choice==='A4-PORTRAIT'?'LETTER-LANDSCAPE':'A4-PORTRAIT';$settings->updateSalesPdfPreferences($owner,7,[$field=>$other]);essentialCheck($sales->document($owner,7,$id)['context']===$frozen&&$sales->create($owner,7,$kind,$input,$key)===$id,'format edits and same-key retry never rewrite existing snapshots');$again=CompanySalesPdf::prepare($sales->document($owner,7,$id));essentialCheck(abs($again->getPageWidth()-$expected[0])<0.05,'later settings do not change original PDF orientation');
    $settings->updateSalesPdfPreferences($owner,7,[$field=>$choice]);$sales->decide($owner,7,$id,'accepted');essentialCheck($sales->convert($owner,7,$id)>0,'version2 source still converts through canonical invoice writer');
+   // Each format case has asserted creation, rendering, replay and conversion.
+   // Do not retain completed query traces or PDF instances across all 24 cases.
+   $db->queries=[];unset($pdf,$again);
   }
  }
 }

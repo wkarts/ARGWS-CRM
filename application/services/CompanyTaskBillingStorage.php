@@ -21,6 +21,13 @@ abstract class CompanyTaskBillingStorage extends CompanySalesBase
     {
         CompanyTaskBillingSchema::assertValid($this->db,$this->prefix);return IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($issuer,$actor,$work){(new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);$this->billingAuth($issuer,$actor);$r=$work();$this->billingAuth($issuer,$actor);return $r;});
     }
+    /** Explicit read-only projection authority; mutating billingTx retains its existing create/edit checks. */
+    protected function billingReadTx(int $issuer,int $actor,callable $work)
+    {
+        CompanyTaskBillingSchema::assertValid($this->db,$this->prefix);
+        $authorize=function()use($issuer,$actor):void{$acl=new IssuerResourceAccess($this->db,$this->prefix);foreach(['tasks','projects','customers','invoices']as$feature)if(!$acl->can($issuer,$actor,$feature,'view'))throw new DomainException('company_task_billing_read_denied');};
+        return IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($issuer,$actor,$authorize,$work){(new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);$authorize();$result=$work();$authorize();return$result;});
+    }
     protected function task(int $issuer,int $id):array
     {
         $r=$this->rows('SELECT * FROM '.$this->prefix.'company_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_task_billing_denied');return $r;
@@ -37,7 +44,7 @@ abstract class CompanyTaskBillingStorage extends CompanySalesBase
         if(!$timers||count($timers)>500)throw new DomainException('company_task_billing_timer');foreach($timers as $t)if($t['stopped_at']===null)throw new DomainException('company_task_billing_timer');
         $portal=$this->portal($issuer,$id);if($portal&&((int)$portal['project_id']!==(int)$p['id']||(int)$portal['client_id']!==(int)$p['client_id']||!in_array($portal['billing_state'],['unbilled','converting','billed'],true)))throw new DomainException('company_task_billing_reference_denied');if($portal)unset($portal['billing_state']);
         // Project rename/status and task comments do not change already captured billing quantities.
-        return ['issuer_id'=>$issuer,'task_id'=>$id,'project_id'=>(int)$p['id'],'client_id'=>(int)$p['client_id'],'project_name'=>$p['name'],'name'=>$r['name'],'description'=>$r['description'],'assignee_id'=>(int)$r['assignee_id'],'due_date'=>$r['due_date'],'checklist_json'=>$r['checklist_json'],'timers'=>$timers,'portal_origin'=>$portal];
+        return ['issuer_id'=>$issuer,'task_id'=>$id,'project_id'=>(int)$p['id'],'client_id'=>(int)$p['client_id'],'project_name'=>$p['name'],'name'=>$r['name'],'description'=>$r['description'],'assignee_id'=>$r['assignee_id']===null?null:(int)$r['assignee_id'],'due_date'=>$r['due_date'],'checklist_json'=>$r['checklist_json'],'timers'=>$timers,'portal_origin'=>$portal];
     }
     protected function references(int $issuer,int $actor,array $r):void
     {

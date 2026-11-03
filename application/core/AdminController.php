@@ -11,6 +11,23 @@ class AdminController extends App_Controller
         // Only the server bootstrap can attest this exact authenticated controller.
         // Isolated company routes must not hydrate legacy menus, models or hooks.
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this)) {
+            if (CompanyRequestScope::nativeFor($this)) {
+                // Shared native views use these pure presentation helpers. The
+                // general translation helper checks the sealed company scope
+                // and skips global module hooks in this path.
+                $this->load->helper(['admin', 'general', 'app_branding', 'misc']);
+                if (CompanyRequestScope::context()->issuerId() !== null) {
+                    if (!CompanySettingsRuntime::active()
+                        || CompanySettingsRuntime::issuerId() !== CompanyRequestScope::context()->issuerId()
+                        || CompanySettingsRuntime::staffId() !== CompanyRequestScope::context()->staffId()) {
+                        throw new LogicException('native_admin_settings_scope_mismatch');
+                    }
+                    $this->load->helper(['settings', 'tickets', 'invoices', 'sales', 'countries']);
+                }
+                $this->load->helper(['fields', 'datatables', 'custom_fields', 'func', 'template', 'language']);
+                require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
+                NativeCompanyAdminPresentation::prepare($this);
+            }
             return;
         }
         $nativeUpgradeOnly = class_exists('CompanyRequestScope', false)
@@ -135,141 +152,11 @@ class AdminController extends App_Controller
 
     private function init_quick_actions_links()
     {
-        $this->app->add_quick_actions_link([
-            'name'       => _l('invoice'),
-            'permission' => 'invoices',
-            'url'        => 'invoices/invoice',
-            'position'   => 5,
-            'icon'       => 'fa-solid fa-file-invoice',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('estimate'),
-            'permission' => 'estimates',
-            'url'        => 'estimates/estimate',
-            'position'   => 10,
-            'icon'       => 'fa-regular fa-file',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('proposal'),
-            'permission' => 'proposals',
-            'url'        => 'proposals/proposal',
-            'position'   => 15,
-            'icon'       => 'fa-regular fa-file-powerpoint',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('credit_note'),
-            'permission' => 'credit_notes',
-            'url'        => 'credit_notes/credit_note',
-            'position'   => 20,
-            'icon'       => 'fa-regular fa-file-lines',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('client'),
-            'permission' => 'customers',
-            'url'        => 'clients/client',
-            'position'   => 25,
-            'icon'       => 'fa-regular fa-building',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('subscription'),
-            'permission' => 'subscriptions',
-            'url'        => 'subscriptions/create',
-            'position'   => 30,
-            'icon'       => 'fa-solid fa-repeat',
-        ]);
-
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('project'),
-            'url'        => 'projects/project',
-            'permission' => 'projects',
-            'position'   => 35,
-            'icon'       => 'fa-solid fa-chart-gantt',
-        ]);
-
-
-        $this->app->add_quick_actions_link([
-            'name'            => _l('task'),
-            'url'             => '#',
-            'custom_url'      => true,
-            'href_attributes' => [
-                'onclick' => 'new_task();return false;',
-            ],
-            'permission' => 'tasks',
-            'position'   => 40,
-            'icon'       => 'fa-regular fa-circle-check',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'            => _l('lead'),
-            'url'             => '#',
-            'custom_url'      => true,
-            'permission'      => 'is_staff_member',
-            'href_attributes' => [
-                'onclick' => 'init_lead(); return false;',
-            ],
-            'position' => 45,
-            'icon'     => 'fa-solid fa-crosshairs',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('expense'),
-            'permission' => 'expenses',
-            'url'        => 'expenses/expense',
-            'position'   => 50,
-            'icon'       => 'fa-solid fa-file-lines',
-        ]);
-
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('contract'),
-            'permission' => 'contracts',
-            'url'        => 'contracts/contract',
-            'position'   => 55,
-            'icon'       => 'fa-solid fa-file-contract',
-        ]);
-
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('kb_article'),
-            'permission' => 'knowledge_base',
-            'url'        => 'knowledge_base/article',
-            'position'   => 60,
-            'icon'       => 'fa-solid fa-circle-info',
-        ]);
-
-        $tickets = [
-            'name'     => _l('ticket'),
-            'url'      => 'tickets/add',
-            'position' => 65,
-            'icon'     => 'fa-solid fa-life-ring',
-        ];
-
-        if (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member()) {
-            $tickets['permission'] = 'is_staff_member';
+        require_once APPPATH.'services/NativeAdminQuickActionsCatalog.php';
+        $restrictTickets=get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member();
+        foreach(NativeAdminQuickActionsCatalog::entries($restrictTickets,_d(date('Y-m-d'))) as $entry){
+            $entry['name']=_l($entry['label']);unset($entry['label']);
+            $this->app->add_quick_actions_link($entry);
         }
-
-        $this->app->add_quick_actions_link($tickets);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('staff_member'),
-            'url'        => 'staff/member',
-            'permission' => 'staff',
-            'position'   => 70,
-            'icon'       => 'fa-regular fa-user',
-        ]);
-
-        $this->app->add_quick_actions_link([
-            'name'       => _l('calendar_event'),
-            'url'        => 'utilities/calendar?new_event=true&date=' . _d(date('Y-m-d')),
-            'permission' => '',
-            'position'   => 75,
-            'icon'       => 'fa-regular fa-calendar',
-        ]);
     }
 }

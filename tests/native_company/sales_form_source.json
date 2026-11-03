@@ -1,0 +1,112 @@
+[
+  {
+    "name": "add_item_to_preview",
+    "source": "assets/js/main.js",
+    "sha256": "f1e337c3dc8b7863ed8355f4d1d4bc44888f1875db62ff8e9c66d56b8512fbf7"
+  },
+  {
+    "name": "_set_item_preview_custom_fields_array",
+    "source": "assets/js/main.js",
+    "sha256": "4702dbf246a1134cab26387bace1ce3931f5ef8f4a09876de9c69bd057e186b9"
+  },
+  {
+    "name": "add_task_to_preview_as_item",
+    "source": "assets/js/main.js",
+    "sha256": "e72c4cdf00b1d4aaa349221f5de9bd64ead43c75ad2e42f2fd6104029b954bdb"
+  },
+  {
+    "name": "clear_item_preview_values",
+    "source": "assets/js/main.js",
+    "sha256": "3dad68a96f813ec015a50032741f8b638f818af6c2c535c733ec0506dad3267e"
+  },
+  {
+    "name": "add_item_to_table",
+    "source": "assets/js/main.js",
+    "sha256": "e0f9f2d9873658e317a18937ea2219534b3beafa338ba4216b4bfac8029e52db"
+  },
+  {
+    "name": "get_taxes_dropdown_template",
+    "source": "assets/js/main.js",
+    "sha256": "7bd220abe3d5e202b12cf5a25b8aa188bdd75611abad8cc79811b02df6278844"
+  },
+  {
+    "name": "init_ajax_project_search_by_customer_id",
+    "source": "assets/js/main.js",
+    "sha256": "7f2c134fa0527daa6f04ea67d9dbe03307a514aade0a5c63b59a83fab2f96c23"
+  },
+  {
+    "name": "init_ajax_projects_search",
+    "source": "assets/js/main.js",
+    "sha256": "0113a6da683c7c97114a236f6df054ab56491ed12063b2636151eff21861d01a"
+  },
+  {
+    "name": "init_items_sortable",
+    "source": "assets/js/main.js",
+    "sha256": "16ef40058c4ac9ed9874b42bff1c78fa6b478ebd6e4dd8c1739bf934158a587d"
+  },
+  {
+    "name": "reorder_items",
+    "source": "assets/js/main.js",
+    "sha256": "4768d6633fde59daca6191cc579fe28893c50aabd8058acbff02b5ed004272a5"
+  },
+  {
+    "name": "get_item_preview_values",
+    "source": "assets/js/main.js",
+    "sha256": "0bff60e51f2a3c288efd0a64265b5e418e5c0e716e7645c385884e02ea329e6f"
+  },
+  {
+    "name": "calculate_total",
+    "source": "assets/js/main.js",
+    "sha256": "2920cc87ef2c9c75a3e3ab1dbbb9101f62331189fbb7e47687a8f1398a0f897a"
+  },
+  {
+    "name": "exclude_tax_from_amount",
+    "source": "assets/js/main.js",
+    "sha256": "596f71918b5c1313b3e13e6f77625f2d37aabf8ef3527f98afc1ad3222fe222d"
+  },
+  {
+    "name": "delete_item",
+    "source": "assets/js/main.js",
+    "sha256": "8d0b8c7904ee2e634f39d6643ce9c4ca6caf2a1f5a1c8c24f3748b4392d8742f"
+  },
+  {
+    "name": "format_money",
+    "source": "assets/js/main.js",
+    "sha256": "2c9972fba2ab68a064c12e340c3d954acd9a1549df38e167918f7338eef68bdf"
+  },
+  {
+    "name": "init_currency",
+    "source": "assets/js/main.js",
+    "sha256": "229f83709e494c930999d4c7f213e1621f01c4af2ad57c7bf0bf55f5e3390bbf"
+  },
+  {
+    "name": "init_currency_symbol",
+    "source": "assets/js/main.js",
+    "sha256": "1fe02848e9170c0068bc1646b3cba2d89800daa3e84f8c1bfafe6d11291f1628"
+  },
+  {
+    "name": "validate_invoice_form",
+    "source": "assets/js/main.js",
+    "sha256": "e1aa993a1e51116d317f5f360cc06dcdc0e52390fb52396415d433470a3818fc"
+  },
+  {
+    "name": "_init_tasks_billable_select",
+    "source": "assets/js/main.js",
+    "sha256": "6d6aab28a2f987ae004c4986ca5dc0efb20050da8ce060950d4dbe9d1cc873e4"
+  },
+  {
+    "name": "clear_billing_and_shipping_details",
+    "source": "assets/js/main.js",
+    "sha256": "3287d999817f6c8d8b9a1227998abfb6494eace5453ef902adcd4f2482beca98"
+  },
+  {
+    "name": "init_billing_and_shipping_details",
+    "source": "assets/js/main.js",
+    "sha256": "bf2a3e63824e16bf721d93674aab2ae27d01fa012eba938a07a7ef3929f7e1f1"
+  },
+  {
+    "name": "ready_handlers",
+    "source": "assets/js/main.js",
+    "sha256": "0f07a2c8434135d0ff2512c25fe449d60cbf3c4aa09d023b63eacb44ea91ed87"
+  }
+]

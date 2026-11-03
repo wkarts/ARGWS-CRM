@@ -11,6 +11,12 @@ class Client_groups_model extends App_Model
         parent::__construct();
     }
 
+    private function isLegacyGroup($id): bool
+    {
+        if(!$this->db->table_exists(db_prefix().'company_customer_group_owners'))return true;
+        return !$this->db->where('group_id',$id)->get(db_prefix().'company_customer_group_owners')->row();
+    }
+
     /**
      * Add new customer group
      * @param array $data $_POST data
@@ -39,6 +45,7 @@ class Client_groups_model extends App_Model
     {
         if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         $this->db->where('customer_id', $id);
+        if($this->db->table_exists(db_prefix().'company_customer_group_owners'))$this->db->where('NOT EXISTS (SELECT 1 FROM '.db_prefix().'company_customer_group_owners o WHERE o.group_id='.db_prefix().'customer_groups.groupid)',null,false);
 
         return $this->db->get(db_prefix().'customer_groups')->result_array();
     }
@@ -50,6 +57,7 @@ class Client_groups_model extends App_Model
      */
     public function get_groups($id = '')
     {
+        if($this->db->table_exists(db_prefix().'company_customer_group_owners'))$this->db->where('NOT EXISTS (SELECT 1 FROM '.db_prefix().'company_customer_group_owners o WHERE o.group_id='.db_prefix().'customers_groups.id)',null,false);
         if (is_numeric($id)) {
             $this->db->where('id', $id);
 
@@ -67,6 +75,7 @@ class Client_groups_model extends App_Model
      */
     public function edit($data)
     {
+        if(!$this->isLegacyGroup($data['id']))return false;
         $this->db->where('id', $data['id']);
         $this->db->update(db_prefix().'customers_groups', [
             'name' => $data['name'],
@@ -87,6 +96,7 @@ class Client_groups_model extends App_Model
      */
     public function delete($id)
     {
+        if(!$this->isLegacyGroup($id))return false;
         $this->db->where('id', $id);
         $this->db->delete(db_prefix().'customers_groups');
         if ($this->db->affected_rows() > 0) {
@@ -112,6 +122,7 @@ class Client_groups_model extends App_Model
     public function sync_customer_groups($id, $groups_in)
     {
         if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
+        foreach((array)$groups_in as $group)if(!$this->isLegacyGroup($group))return false;
         if ($groups_in == false) {
             unset($groups_in);
         }

@@ -96,42 +96,24 @@ function prep_tags_input($tag_names)
  */
 function render_tags($tags)
 {
-    $tags_html = '';
-
     if (!is_array($tags)) {
-       $tags = empty($tags) ? [] : explode(',', $tags);
+        $tags = empty($tags) ? [] : explode(',', $tags);
     }
-
-    $tags = array_filter($tags, function ($value) {
-        return $value !== '';
-    });
-
+    $tags = array_filter($tags, function ($value) { return $value !== ''; });
+    $presentation = [];
     if (count($tags) > 0) {
         $CI = &get_instance();
-
-        $tags_html .= '<div class="tags-labels">';
-        $i   = 0;
-        $len = count($tags);
         foreach ($tags as $tag) {
-            $tag_id  = 0;
+            $tag_id = 0;
             $tag_row = $CI->app_object_cache->get('tag-id-by-name-' . $tag);
             if (!$tag_row) {
                 $tag_row = get_tag_by_name($tag);
-
-                if ($tag_row) {
-                    $CI->app_object_cache->add('tag-id-by-name-' . $tag, $tag_row->id);
-                }
+                if ($tag_row) { $CI->app_object_cache->add('tag-id-by-name-' . $tag, $tag_row->id); }
             }
-
-            if ($tag_row) {
-                $tag_id = is_object($tag_row) ? $tag_row->id : $tag_row;
-            }
-
-            $tags_html .= '<span class="label label-tag tag-id-' . $tag_id . '"><span class="tag">' . e($tag) . '</span><span class="hide">' . ($i != $len - 1 ? ', ' : '') . '</span></span>';
-            $i++;
+            if ($tag_row) { $tag_id = is_object($tag_row) ? $tag_row->id : $tag_row; }
+            $presentation[] = ['id'=>$tag_id, 'name'=>$tag];
         }
-        $tags_html .= '</div>';
     }
-
-    return $tags_html;
+    require_once APPPATH . 'services/TagPresentation.php';
+    return TagPresentation::render($presentation);
 }

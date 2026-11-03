@@ -77,6 +77,7 @@ class Invoice_items_model extends App_Model
      */
     public function get($id = '')
     {
+        if(($catalog=$this->nativeCompanyCatalog())!==null)return $id===''?$catalog->items():(object)$catalog->item($id);
         $columns             = $this->db->list_fields(db_prefix() . 'items');
         $rateCurrencyColumns = '';
         foreach ($columns as $column) {
@@ -104,6 +105,7 @@ class Invoice_items_model extends App_Model
 
     public function get_grouped()
     {
+        if(($catalog=$this->nativeCompanyCatalog())!==null)return $catalog->groupedItems();
         $items = [];
         $this->db->order_by('name', 'asc');
         $groups = $this->db->get(db_prefix() . 'items_groups')->result_array();
@@ -256,6 +258,7 @@ class Invoice_items_model extends App_Model
 
     public function search($q)
     {
+        if(($catalog=$this->nativeCompanyCatalog())!==null)return $catalog->search((string)$q);
         $this->db->select('rate, id, description as name, long_description as subtext');
         $this->db->like('description', $q);
         $this->db->or_like('long_description', $q);
@@ -296,6 +299,7 @@ class Invoice_items_model extends App_Model
 
     public function get_groups()
     {
+        if(($catalog=$this->nativeCompanyCatalog())!==null)return $catalog->groups();
         $this->db->order_by('name', 'asc');
 
         return $this->db->get(db_prefix() . 'items_groups')->result_array();
@@ -343,4 +347,19 @@ class Invoice_items_model extends App_Model
 
         return false;
     }
+    /** Explicit API for authenticated non-UI callers; no ambient session inference. */
+    public function get_for_company(int $issuer,int $actor,$id='')
+    {
+        require_once APPPATH.'services/NativeCompanyCatalogUi.php';
+        $catalog=new NativeCompanyCatalogUi($this->db,db_prefix(),$issuer,$actor);
+        return $id===''?$catalog->items():(object)$catalog->item($id);
+    }
+    private function nativeCompanyCatalog():?NativeCompanyCatalogUi
+    {
+        if(!class_exists('CompanyRequestScope',false)||!CompanyRequestScope::nativeFor(get_instance()))return null;
+        if(!CompanyRequestScope::sealedFor(get_instance()))throw new DomainException('company_catalog_denied');
+        require_once APPPATH.'services/NativeCompanyCatalogUi.php';$context=CompanyRequestScope::context();
+        return new NativeCompanyCatalogUi($this->db,db_prefix(),$context->issuerId(),$context->staffId(),get_instance());
+    }
+
 }

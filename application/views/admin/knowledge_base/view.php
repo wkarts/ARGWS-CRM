@@ -74,7 +74,7 @@ $(function() {
         data.answer = $(this).data('answer');
         data.articleid = '<?php echo e($article->articleid); ?>';
         $.post(admin_url + 'knowledge_base/add_kb_answer', data).done(function(response) {
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
             if (response.success == true) {
                 $(this).focusout();
             }

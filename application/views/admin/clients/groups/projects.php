@@ -3,6 +3,9 @@
     <?= _l('projects'); ?>
 </h4>
 <?php if (isset($client)) { ?>
+<?php if (!empty($native_customers)) { ?>
+<?php $this->load->view('admin/projects/table_html',['class'=>'projects-single-client','client'=>$client,'native_project_custom_fields'=>$native_project_custom_fields,'native_project_table_order'=>$native_project_table_order]); ?>
+<?php } else { ?>
 <?php if (staff_can('create', 'projects')) { ?>
 <a href="<?= admin_url('projects/project?customer_id=' . $client->userid); ?>"
     class="btn btn-primary mbot15<?= $client->active == 0 ? ' disabled' : ''; ?>">
@@ -34,5 +37,6 @@
 </dl>
 <?php
        $this->load->view('admin/projects/table_html', ['class' => 'projects-single-client']);
+}
 }
 ?>

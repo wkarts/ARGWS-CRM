@@ -927,7 +927,7 @@
     "modules/goals/goals.php": "5c04e335d17b5bb89b7a855f6b85a6364dac70a9e3df154cf7e542afee9507ef",
     "modules/hr_payroll/controllers/Hr_payroll.php": "89712afcbbc1f25e7efacda28bbe64fe35a5a6f2f51515d95ed6e53c2d58923f",
     "modules/hr_payroll/hr_payroll.php": "2522bc30121f8cf5d1505b63cc23ce1cd0a0979609580ca876bf1042e43e0686",
-    "modules/hr_payroll/views/includes/company_contributions_list.php": "ba6a09424630793f59739bd3d11d4fffce827ba82115754632393a2fc9f27466",
+    "modules/hr_payroll/views/includes/contributions_list.php": "ba6a09424630793f59739bd3d11d4fffce827ba82115754632393a2fc9f27466",
     "modules/hr_payroll/views/income_tax/income_tax_manage.php": "95d46e8d6ad7e5274410b97d56bb071c7665af7a1db61d7df2ca330dcda4f5d3",
     "modules/hr_profile/controllers/Hr_profile.php": "a2919b087d342e3045a2f5b92435246934ce74083af3bbdaa2ef660b4159d58f",
     "modules/hr_profile/controllers/Participate.php": "fd03cecf3c115e31c293e17cef9b964b6e238ad67451db9dd72ceb7d62086a48",
@@ -1104,7 +1104,7 @@
       "feature": "hr_payroll",
       "capability": "create",
       "paths": [
-        "modules/hr_payroll/views/includes/company_contributions_list.php",
+        "modules/hr_payroll/views/includes/contributions_list.php",
         "modules/hr_payroll/views/income_tax/income_tax_manage.php"
       ]
     },
@@ -1112,7 +1112,7 @@
       "feature": "hr_payroll",
       "capability": "edit",
       "paths": [
-        "modules/hr_payroll/views/includes/company_contributions_list.php",
+        "modules/hr_payroll/views/includes/contributions_list.php",
         "modules/hr_payroll/views/income_tax/income_tax_manage.php"
       ]
     },

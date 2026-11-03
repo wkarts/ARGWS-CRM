@@ -43,6 +43,7 @@
 <div class="modal fade" id="spam_filter" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('spam_filters/filter/' . $rel_type)); ?>
+        <?php if(isset($native_spam)){echo form_hidden('_company_context',$native_spam['context']);echo form_hidden('_native_company_csrf',$native_spam['csrf']);echo form_hidden('request_nonce',$native_spam['nonce']);} ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -129,9 +130,13 @@
         var url = form.action;
         $.post(url, data).done(function(response) {
 
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
 
             if (response.success) {
+                <?php if(isset($native_spam)){ ?>
+                var nextNonce = new Uint8Array(32); window.crypto.getRandomValues(nextNonce);
+                $('input[name="request_nonce"]').val(Array.from(nextNonce).map(function(x){return x.toString(16).padStart(2,'0');}).join(''));
+                <?php } ?>
                 var type = $('select[name="type"]').selectpicker('val');
                 $('.table-' + type).DataTable().ajax.reload();
                 if (type != original_type) {
@@ -166,6 +171,9 @@
     function edit_spam_filter(invoker, id) {
         var type = $(invoker).data('type');
         var value = $(invoker).data('value');
+        <?php if(isset($native_spam)){ ?>
+        $('#spam_filter_additional').append(hidden_input('revision', $(invoker).attr('data-native-revision')));
+        <?php } ?>
         $('#spam_filter_additional').append(hidden_input('id', id));
         $('#spam_filter_additional').append(hidden_input('original_type', type));
         $('#spam_filter select').selectpicker('val', type);

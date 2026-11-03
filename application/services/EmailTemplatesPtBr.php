@@ -49,7 +49,7 @@ final class EmailTemplatesPtBr
     {
         if (self::$sources !== null) return self::$sources;
         $definitions = [];
-        foreach (self::loadJson('company_defaults.json') as $row) {
+        foreach (self::loadJson('defaults.json') as $row) {
             $labels = self::templates()[$row['slug']];
             $definitions[$row['slug']][] = $labels + [
                 'source_name' => $row['name'], 'source_subject' => $row['subject'],

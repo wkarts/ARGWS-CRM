@@ -28,13 +28,23 @@ on:
       - '.github/workflows/recurring-rules.yml'
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   recurrence:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php: ['8.1', '8.5']
-    container: php:${{ matrix.php }}-cli
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
     services:
       mariadb:
         image: mariadb:11.4
@@ -49,11 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Preparar extensões PHP usadas pela aplicação
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends libonig-dev
-          docker-php-ext-install mysqli mbstring
-          rm -rf /var/lib/apt/lists/*
+        run: EXPECTED_PHP=${{ matrix.php }} argws-ci-smoke
       - name: Validar sintaxe
         run: |
           php -v

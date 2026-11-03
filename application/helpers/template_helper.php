@@ -11,7 +11,20 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function html_purify($content)
 {
-    if (empty($content) || hooks()->apply_filters('html_purify_content', true) === false) {
+    if (empty($content)) {
+        return $content;
+    }
+    $nativeCi = &get_instance();
+    $nativeAdmin = class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($nativeCi);
+    $nativePortal = class_exists('PortalRequestScope', false) && PortalRequestScope::nativeFor($nativeCi);
+    if ($nativeAdmin || $nativePortal) {
+        if (($nativeAdmin && ! CompanyRequestScope::sealedFor($nativeCi)) || ($nativePortal && ! PortalRequestScope::sealedFor($nativeCi))) {
+            throw new DomainException('native_html_context_invalid');
+        }
+        require_once APPPATH . 'services/NativeCompanyContentHtml.php';
+        return NativeCompanyContentHtml::purify($content);
+    }
+    if (hooks()->apply_filters('html_purify_content', true) === false) {
         return $content;
     }
 

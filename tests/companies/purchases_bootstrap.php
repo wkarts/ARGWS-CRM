@@ -13,7 +13,7 @@ foreach($purchaseResources as $resource){
         opsBootCheck($autoload===['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]],'Purchase bearer loads only database, without session, models or provider credentials');
         opsBootCheck(CompanyPurchasesScope::activeApi()&&!CompanyPurchasesScope::activePortal(),'API and portal scopes stay distinct');
         $matches=[];foreach($routes as $pattern=>$target)if(str_starts_with($pattern,'company_purchases_api/')&&preg_match('#^'.$pattern.'$#D',$uri)===1)$matches[]=$target;
-        opsBootCheck(count($matches)===1&&str_starts_with($matches[0],'company_purchases_api/index/'.$resource),'Executed native route table has exactly one finite purchase match');
+        opsBootCheck(count($matches)===1&&str_starts_with($matches[0],'purchases_api/index/'.$resource),'Executed native route table has exactly one finite purchase match');
         opsBootCheck(preg_match('#^'.$purchasePattern.'$#D',$uri)===1,'Exact bearer URI matches CSRF exclusion');
     }
 }
@@ -21,7 +21,7 @@ foreach([['company_purchase_portal'],['company_purchase_portal','index']] as $se
     $autoload=opsBootAutoload(opsBootCi('company_purchase_portal','index',$segments),$segments);
     opsBootCheck($autoload===['packages'=>[],'config'=>[],'helper'=>['url','form'],'language'=>[],'drivers'=>['session'],'libraries'=>['database'],'model'=>[]],'Supplier portal uses its finite session/form bootstrap, without legacy hydration');
     opsBootCheck(CompanyPurchasesScope::activePortal()&&!CompanyPurchasesScope::activeApi(),'Portal scope cannot become bearer scope');
-    opsBootCheck(($routes[implode('/',$segments)]??null)==='company_purchase_portal/index','Supplier portal is an executable explicit native route');
+    opsBootCheck(($routes[implode('/',$segments)]??null)==='purchase_portal/index','Supplier portal is an executable explicit native route');
 }
 // Raw request evidence remains independent of decoded/router-derived segments.
 foreach([

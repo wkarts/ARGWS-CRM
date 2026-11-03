@@ -84,7 +84,7 @@ class Payments_model extends App_Model
     public function process_payment($data, $invoiceid = '')
     {
         // BB instruments require an authenticated company portal; reject before invoice hydration or attempts.
-        if (($data['paymentmode'] ?? null) === 'banco_brasil') {
+        if (in_array($data['paymentmode'] ?? null, ['banco_brasil','banco_brasil_api','banco_brasil_cnab'], true)) {
             set_alert('warning', 'Consulte o boleto Banco do Brasil no portal autenticado da empresa.');
             return false;
         }

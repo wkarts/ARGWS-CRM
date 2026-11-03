@@ -1,6 +1,13 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes); ?>
-<div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == Invoices_model::STATUS_CANCELLED))) ? 'hide' : ''; ?>"
+<?php if(!isset($native_invoice_editor_items))$payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes); ?>
+<?php if(isset($native_invoice_editor_items)) {
+    if(!($native_invoice_editor_items instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_invoice_editor_mismatch');
+    $native_invoice_editor_items->assertCurrent();
+} ?>
+<?php $invoice_option = isset($native_invoice_editor_items)
+    ? static function(string $key)use($native_invoice_options):string { if(!array_key_exists($key,$native_invoice_options)||!is_string($native_invoice_options[$key]))throw new DomainException('native_invoice_editor_options_invalid');return$native_invoice_options[$key]; }
+    : 'get_option'; ?>
+<div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == (isset($native_invoice_editor_items) ? 5 : Invoices_model::STATUS_CANCELLED)))) ? 'hide' : ''; ?>"
     id="invoice_top_info">
     <div class="panel_s">
         <div class="panel-body tw-bg-gradient-to-l tw-from-transparent tw-to-neutral-50">
@@ -13,7 +20,7 @@
                 <!--  When invoicing from project area the expenses are not visible here because you can select to bill expenses while trying to invoice project -->
                 <?php if (! isset($invoice_from_project)) { ?>
                 <div id="expenses_to_bill" class="col-md-6">
-                    <?php if (isset($invoice) && $invoice->status != Invoices_model::STATUS_CANCELLED) {
+                    <?php if (isset($invoice) && $invoice->status != (isset($native_invoice_editor_items) ? 5 : Invoices_model::STATUS_CANCELLED)) {
                         $this->load->view('admin/invoices/bill_expenses', ['expenses_to_bill' => $expenses_to_bill]);
                     } ?>
                 </div>
@@ -25,7 +32,7 @@
 <div class="panel_s invoice accounting-template">
     <div class="additional"></div>
     <div class="panel-body">
-        <?php hooks()->do_action('before_render_invoice_template', $invoice ?? null); ?>
+        <?php if(!isset($native_invoice_editor_items))hooks()->do_action('before_render_invoice_template', $invoice ?? null); ?>
         <?php if (isset($invoice)) {
             echo form_hidden('merge_current_invoice', $invoice->id);
         } ?>
@@ -40,16 +47,21 @@
                             data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                             <?php $selected = isset($invoice) ? $invoice->clientid : ($customer_id ?? ''); ?>
                             <?php if ($selected != '') {
-                                $rel_data = get_relation_data('customer', $selected);
-                                $rel_val  = get_relation_values($rel_data, 'customer');
-                                echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                if(isset($native_invoice_editor_items)) {
+                                    if(!isset($native_invoice_customer)||(string)$native_invoice_customer['id']!==(string)$selected)throw new DomainException('native_invoice_editor_customer_invalid');
+                                    echo '<option value="'.e($native_invoice_customer['id']).'" selected>'.e($native_invoice_customer['name']).'</option>';
+                                } else {
+                                    $rel_data = get_relation_data('customer', $selected);
+                                    $rel_val  = get_relation_values($rel_data, 'customer');
+                                    echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                }
                             } ?>
                         </select>
                     </div>
                 </div>
                 <?php
                                         if (! isset($invoice_from_project)) { ?>
-                <div class="form-group select-placeholder projects-wrapper<?php if ((! isset($invoice)) || (isset($invoice) && ! customer_has_projects($invoice->clientid))) {
+                <div class="form-group select-placeholder projects-wrapper<?php if ((! isset($invoice)) || (isset($invoice) && !(isset($native_invoice_editor_items)?$native_invoice_customer_has_projects:customer_has_projects($invoice->clientid)))) {
                     echo (isset($customer_id) && (! isset($project_id) || ! $project_id)) ? ' hide' : '';
                 } ?>">
                     <label
@@ -63,7 +75,7 @@
                                 ($project_id ?? ''); ?>
 
                             <?php if ($project_id) {
-                                echo '<option value="' . $project_id . '" selected>' . e(get_project_name_by_id($project_id)) . '</option>';
+                                echo '<option value="' . e($project_id) . '" selected>' . e(isset($native_invoice_editor_items)?$native_invoice_project_name:get_project_name_by_id($project_id)) . '</option>';
                             } ?>
                         </select>
                     </div>
@@ -133,14 +145,14 @@
                         </address>
                     </div>
                 </div>
-                <?php $next_invoice_number = get_option('next_invoice_number'); ?>
-                <?php $format              = get_option('invoice_number_format'); ?>
+                <?php $next_invoice_number = $invoice_option('next_invoice_number'); ?>
+                <?php $format              = $invoice_option('invoice_number_format'); ?>
                 <?php
 if (isset($invoice)) {
     $format = $invoice->number_format;
 }
 
-$prefix = get_option('invoice_prefix');
+$prefix = $invoice_option('invoice_prefix');
 
 if ($format == 1) {
     $__number = $next_invoice_number;
@@ -179,8 +191,8 @@ if ($format == 1) {
     }
 }
 
-$_is_draft            = (isset($invoice) && $invoice->status == Invoices_model::STATUS_DRAFT) ? true : false;
-$_invoice_number      = str_pad($__number, get_option('number_padding_prefixes'), '0', STR_PAD_LEFT);
+$_is_draft            = (isset($invoice) && $invoice->status == (isset($native_invoice_editor_items) ? 6 : Invoices_model::STATUS_DRAFT)) ? true : false;
+$_invoice_number      = str_pad($__number, $invoice_option('number_padding_prefixes'), '0', STR_PAD_LEFT);
 $isedit               = isset($invoice) ? 'true' : 'false';
 $data_original_number = isset($invoice) ? $invoice->number : 'false';
 
@@ -231,11 +243,12 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                         <?= render_date_input('date', 'invoice_add_edit_date', $value, $date_attrs); ?>
                     </div>
                     <div class="col-md-6">
-                        <?php $value = isset($invoice) ? _d($invoice->duedate) : (get_option('invoice_due_after') != 0 ? _d(date('Y-m-d', strtotime('+' . get_option('invoice_due_after') . ' DAY'))) : ''); ?>
+                        <?php $value = isset($invoice) ? _d($invoice->duedate) : ($invoice_option('invoice_due_after') != 0 ? _d(date('Y-m-d', strtotime('+' . $invoice_option('invoice_due_after') . ' DAY'))) : ''); ?>
                         <?= render_date_input('duedate', 'invoice_add_edit_duedate', $value); ?>
                     </div>
                 </div>
-                <?php if (is_invoices_overdue_reminders_enabled()) { ?>
+                <?php if(isset($native_invoice_editor_items)&&!is_bool($native_invoice_reminders_enabled??null))throw new DomainException('native_invoice_editor_reminders_invalid'); ?>
+                <?php if (isset($native_invoice_editor_items)?$native_invoice_reminders_enabled:is_invoices_overdue_reminders_enabled()) { ?>
                 <div class="form-group">
                     <div class="checkbox checkbox-danger">
                         <input type="checkbox"
@@ -250,7 +263,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                 <?php if (isset($custom_fields_rel_transfer)) {
                     $rel_id = $custom_fields_rel_transfer;
                 } ?>
-                <?= render_custom_fields('invoice', $rel_id); ?>
+                <?= render_custom_fields('invoice', $rel_id, [], isset($native_invoice_editor_items)?['native_purpose'=>isset($invoice)?'edit':'create']:[]); ?>
             </div>
             <div class="col-md-6">
                 <div class="tw-ml-3">
@@ -258,7 +271,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                         <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                             <?= _l('tags'); ?></label>
                         <input type="text" class="tagsinput" id="tags" name="tags"
-                            value="<?= isset($invoice) ? prep_tags_input(get_tags_in($invoice->id, 'invoice')) : ''; ?>"
+                            value="<?= isset($native_invoice_editor_items) ? e($native_invoice_tags??'') : (isset($invoice) ? prep_tags_input(get_tags_in($invoice->id, 'invoice')) : ''); ?>"
                             data-role="tagsinput">
                     </div>
                     <div
@@ -291,6 +304,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                                 } ?>
                             <option
                                 value="<?= e($mode['id']); ?>"
+                                <?php if(isset($native_invoice_editor_items)&&!$mode['selection_available']) { ?>disabled title="<?= e($mode['selection_reason']); ?>"<?php } ?>
                                 <?= e($selected); ?>>
                                 <?= e($mode['name']); ?>
                             </option>
@@ -312,7 +326,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                         <div class="col-md-6">
                             <?php
                                      $currency_attr = ['disabled' => true, 'data-show-subtext' => true];
-$currency_attr                                      = apply_filters_deprecated('invoice_currency_disabled', [$currency_attr], '2.3.0', 'invoice_currency_attributes');
+if(!isset($native_invoice_editor_items))$currency_attr                                      = apply_filters_deprecated('invoice_currency_disabled', [$currency_attr], '2.3.0', 'invoice_currency_attributes');
 
 foreach ($currencies as $currency) {
     if ($currency['isdefault'] == 1) {
@@ -328,13 +342,13 @@ foreach ($currencies as $currency) {
         }
     }
 }
-$currency_attr = hooks()->apply_filters('invoice_currency_attributes', $currency_attr);
+if(!isset($native_invoice_editor_items))$currency_attr = hooks()->apply_filters('invoice_currency_attributes', $currency_attr);
 ?>
                             <?= render_select('currency', $currencies, ['id', 'name', 'symbol'], 'invoice_add_edit_currency', $selected, $currency_attr); ?>
                         </div>
                         <div class="col-md-6">
                             <?php
-                                $selected = isset($invoice) ? $invoice->sale_agent : (get_option('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '');
+                                $selected = isset($invoice) ? $invoice->sale_agent : ($invoice_option('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '');
 
 foreach ($staff as $member) {
     if (isset($invoice) && $invoice->sale_agent == $member['staffid']) {
@@ -504,9 +518,10 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                                 class="text-danger"
                                 data-subtext="<?= _l('invoice_task_billable_timers_found'); ?>"
                                 <?php } else {
-                                    $task_rel_data  = get_relation_data($task_billable['rel_type'], $task_billable['rel_id']);
-                                    $task_rel_value = get_relation_values($task_rel_data, $task_billable['rel_type']); ?>
-                                data-subtext="<?= $task_billable['rel_type'] == 'project' ? '' : $task_rel_value['name']; ?>"
+                                    if(isset($native_invoice_editor_items)){$task_rel_value=['name'=>$task_billable['rel_name']];}
+                                    else {$task_rel_data = get_relation_data($task_billable['rel_type'], $task_billable['rel_id']);
+                                    $task_rel_value = get_relation_values($task_rel_data, $task_billable['rel_type']);} ?>
+                                data-subtext="<?= $task_billable['rel_type'] == 'project' ? '' : e($task_rel_value['name']); ?>"
                                 <?php
                                 } ?>><?= e($task_billable['name']); ?>
                             </option>
@@ -515,7 +530,7 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                         <div class="input-group-addon input-group-addon-bill-tasks-help">
                             <?php
                     if (isset($invoice) && ! empty($invoice->project_id)) {
-                        $help_text = _l('showing_billable_tasks_from_project') . ' ' . get_project_name_by_id($invoice->project_id);
+                        $help_text = _l('showing_billable_tasks_from_project') . ' ' . (isset($native_invoice_editor_items)?$native_invoice_project_name:get_project_name_by_id($invoice->project_id));
                     } else {
                         $help_text = _l('invoice_task_item_project_tasks_not_included');
                     }
@@ -577,7 +592,7 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                             <?= _l('invoice_table_item_description'); ?>
                         </th>
                         <?php
-                  $custom_fields = get_custom_fields('items');
+                  $custom_fields = isset($native_invoice_editor_items) ? $native_invoice_editor_items->definitions() : get_custom_fields('items');
 
 foreach ($custom_fields as $cf) {
     echo '<th width="15%" align="left" class="custom_field">' . e($cf['name']) . '</th>';
@@ -615,7 +630,7 @@ if (isset($invoice) && $invoice->show_quantity_as == 2 || isset($hours_quantity)
                             <textarea name="long_description" rows="4" class="form-control"
                                 placeholder="<?= _l('item_long_description_placeholder'); ?>"></textarea>
                         </td>
-                        <?= render_custom_fields_items_table_add_edit_preview(); ?>
+                        <?= render_custom_fields_items_table_add_edit_preview($native_invoice_editor_items ?? null); ?>
                         <td>
                             <input type="number" name="quantity" min="0" value="1" class="form-control"
                                 placeholder="<?= _l('item_quantity_placeholder'); ?>">
@@ -630,7 +645,7 @@ if (isset($invoice) && $invoice->show_quantity_as == 2 || isset($hours_quantity)
                         </td>
                         <td>
                             <?php
-   $default_tax = unserialize(get_option('default_tax'));
+   $default_tax = unserialize($invoice_option('default_tax'));
 $select         = '<select class="selectpicker display-block tax main-tax" data-width="100%" name="taxname" multiple data-none-selected-text="' . _l('no_tax') . '">';
 
 //  $select .= '<option value=""'.(count($default_tax) == 0 ? ' selected' : '').'>'._l('no_tax').'</option>';
@@ -641,7 +656,7 @@ foreach ($taxes as $tax) {
             $selected = ' selected ';
         }
     }
-    $select .= '<option value="' . $tax['name'] . '|' . $tax['taxrate'] . '"' . $selected . 'data-taxrate="' . $tax['taxrate'] . '" data-taxname="' . $tax['name'] . '" data-subtext="' . $tax['name'] . '">' . $tax['taxrate'] . '%</option>';
+    $select .= '<option value="' . e($tax['name'] . '|' . $tax['taxrate']) . '"' . $selected . 'data-taxrate="' . e($tax['taxrate']) . '" data-taxname="' . e($tax['name']) . '" data-subtext="' . e($tax['name']) . '">' . e($tax['taxrate']) . '%</option>';
 }
 $select .= '</select>';
 echo $select;
@@ -670,7 +685,7 @@ echo $select;
                             if (! is_numeric($item['qty'])) {
                                 $item['qty'] = 1;
                             }
-                            $invoice_item_taxes = get_invoice_item_taxes($item['id']);
+                            $invoice_item_taxes = isset($native_invoice_editor_items) ? $item['taxname'] : get_invoice_item_taxes($item['id']);
                             // passed like string
                             if ($item['id'] == 0) {
                                 $invoice_item_taxes = $item['taxname'];
@@ -682,10 +697,10 @@ echo $select;
                             // order input
                             $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]">';
                             $table_row .= '</td>';
-                            $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . clear_textarea_breaks($item['description']) . '</textarea></td>';
-                            $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . clear_textarea_breaks($item['long_description']) . '</textarea></td>';
+                            $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . (isset($native_invoice_editor_items) ? e(clear_textarea_breaks($item['description'])) : clear_textarea_breaks($item['description'])) . '</textarea></td>';
+                            $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . (isset($native_invoice_editor_items) ? e(clear_textarea_breaks($item['long_description'])) : clear_textarea_breaks($item['long_description'])) . '</textarea></td>';
 
-                            $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']');
+                            $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']', $native_invoice_editor_items ?? null);
 
                             $table_row .= '<td><input type="number" min="0" onblur="calculate_total();" onchange="calculate_total();" data-quantity name="' . $items_indicator . '[' . $i . '][qty]" value="' . $item['qty'] . '" class="form-control">';
 
@@ -695,11 +710,11 @@ echo $select;
                                 $item['unit']     = '';
                             }
 
-                            $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . $item['unit'] . '">';
+                            $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . (isset($native_invoice_editor_items) ? e($item['unit']) : $item['unit']) . '">';
 
                             $table_row .= '</td>';
                             $table_row .= '<td class="rate"><input type="number" data-toggle="tooltip" title="' . _l('numbers_not_formatted_while_editing') . '" onblur="calculate_total();" onchange="calculate_total();" name="' . $items_indicator . '[' . $i . '][rate]" value="' . $item['rate'] . '" class="form-control"></td>';
-                            $table_row .= '<td class="taxrate">' . $this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $invoice_item_taxes, 'invoice', $item['id'], true, $manual) . '</td>';
+                            $table_row .= '<td class="taxrate">' . (isset($native_invoice_editor_items) ? $native_invoice_editor_items->taxDropdown($items_indicator . '[' . $i . '][taxname][]', $item) : $this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $invoice_item_taxes, 'invoice', $item['id'], true, $manual)) . '</td>';
                             $table_row .= '<td class="amount" align="right">' . $amount . '</td>';
                             $table_row .= '<td><a href="#" class="btn btn-danger pull-left !tw-px-3" onclick="delete_item(this,' . $item['id'] . '); return false;"><i class="fa fa-times"></i></a></td>';
                             if (isset($item['task_id'])) {
@@ -815,7 +830,7 @@ echo $select;
                         <td class="total">
                         </td>
                     </tr>
-                    <?php hooks()->do_action('after_admin_invoice_form_total_field', $invoice ?? null); ?>
+                    <?php if(!isset($native_invoice_editor_items))hooks()->do_action('after_admin_invoice_form_total_field', $invoice ?? null); ?>
                 </tbody>
             </table>
         </div>
@@ -830,13 +845,13 @@ echo $select;
     <hr class="hr-panel-separator" />
 
     <div class="panel-body">
-        <?php $value = (isset($invoice) ? $invoice->clientnote : get_option('predefined_clientnote_invoice')); ?>
+        <?php $value = (isset($invoice) ? $invoice->clientnote : $invoice_option('predefined_clientnote_invoice')); ?>
         <?= render_textarea('clientnote', 'invoice_add_edit_client_note', $value); ?>
-        <?php $value = (isset($invoice) ? $invoice->terms : get_option('predefined_terms_invoice')); ?>
+        <?php $value = (isset($invoice) ? $invoice->terms : $invoice_option('predefined_terms_invoice')); ?>
         <?= render_textarea('terms', 'terms_and_conditions', $value, [], [], 'mtop15'); ?>
     </div>
 
-    <?php hooks()->do_action('after_render_invoice_template', $invoice ?? false); ?>
+    <?php if(!isset($native_invoice_editor_items))hooks()->do_action('after_render_invoice_template', $invoice ?? false); ?>
 </div>
 
 <div class="btn-bottom-pusher"></div>

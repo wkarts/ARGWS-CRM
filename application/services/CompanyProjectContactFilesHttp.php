@@ -16,7 +16,9 @@ final class CompanyProjectContactFilesHttp
             if($action==='project_contact_file_upload'){[$name,$bytes]=CompanyOperationFilesHttp::upload();$writer->upload($session,$issuer,$project,$revision,$collection,$key,$name,$bytes);}
             else{$file=$c->input->post('file_key',false);if(!is_string($file))throw new DomainException('company_project_file_unavailable');$writer->hide($session,$issuer,$project,$revision,$collection,$file,$key);}
         }catch(DomainException $denied){$status=match($denied->getMessage()){'company_project_file_stale','company_project_file_request_conflict'=>409,'company_project_file_limit','company_operation_file_limit'=>429,'company_project_file_invalid','company_operation_file_invalid'=>422,default=>404};if($status===404){show_404();return true;}show_error($status===409?'O projeto ou os arquivos mudaram. Reabra seu resultado antes de enviar novamente.':($status===429?'Limite de 20 arquivos ou 20 MiB neste projeto, incluindo ocultos. Consulte a equipe.':'Envie um PDF até 2 MiB ou PNG/JPEG até 512 KiB pelo formulário de anexo.'),$status);return true;}
-        redirect($c->config->site_url('company_portal/index/'.$issuer).'?operation_kind=projects&resource_id='.IssuerPolicy::id($project).'&project_file_receipt='.$key,'location',303);return true;
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($c)){require_once __DIR__.'/NativePortalPresentation.php';require_once __DIR__.'/NativeCompanyResourceId.php';$target=NativePortalPresentation::url('clients/project/'.NativeCompanyResourceId::encode('company_project',IssuerPolicy::id($project))).'&group=project_files&file_receipt='.$key;}
+        else $target=$c->config->site_url('company_portal/index/'.$issuer).'?operation_kind=projects&resource_id='.IssuerPolicy::id($project).'&project_file_receipt='.$key;
+        redirect($target,'location',303);return true;
     }
     private static function headers($c):void{$c->output->set_header('Cache-Control: no-store');$c->output->set_header('X-Content-Type-Options: nosniff');$c->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");}
 }

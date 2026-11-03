@@ -4,7 +4,7 @@ No detalhe de uma fatura própria, **Revisar cópia para nova emissão numerada*
 
 O serviço `CompanyInvoiceCopies` chama exclusivamente `CompanyInvoices::create`, com `originGuard` e participantes explícitos. Não grava invoices, documentos legais, sequências, itens ou tributos por SQL próprio. O documento novo usa a identidade, os ativos de apresentação, os termos e o contador atuais da empresa. Não copia snapshots legais da origem, pagamentos, créditos, estado pago/cancelado, cobranças/provedores, recorrência, arquivos, publicação, autorização de envio ou filas. Não dispara HTTP bancário, e-mail ou automações.
 
-A rota exata é `admin/company_invoice_copies`, método `index`, sem segmentos adicionais. GET/HEAD recebem exatamente uma origem (`source`) ou recibo (`receipt`); não há emissão por GET. O único POST é `issue_reviewed_copy`, com CSRF nativo, contexto selado e CSRF próprio. O serviço aceita somente revisão da origem, datas, observação e confirmação; cliente, moeda, itens, preço, total, número e estado não vêm do formulário.
+A rota exata é `admin/invoices/copy`, método `index`, sem segmentos adicionais. GET/HEAD recebem exatamente uma origem (`source`) ou recibo (`receipt`); não há emissão por GET. O único POST é `issue_reviewed_copy`, com CSRF nativo, contexto selado e CSRF próprio. O serviço aceita somente revisão da origem, datas, observação e confirmação; cliente, moeda, itens, preço, total, número e estado não vêm do formulário.
 
 ## Autoridade e integridade
 

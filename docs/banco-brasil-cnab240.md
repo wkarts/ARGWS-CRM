@@ -1,24 +1,26 @@
 > Evolução 1.0.2: leia também [perfis CNAB 240/400 e migração 102](banco-brasil-cnab400.md). Novas importações agora exigem um perfil explicitamente registrado; históricos 101 não são reatribuídos.
 
+> Estado vigente na PR52: CNAB400 permanece disponível e configurável por empresa, com preparação, reserva, validação, geração e download protegidos por perfil, permissões, CSRF, idempotência e declaração técnica rastreável. A ausência de homologação externa não desativa o recurso nem bloqueia a publicação; apenas impede tratar o arquivo como transmissão ou aceite bancário.
+
 ## Composição436 — fontes operacionais e recuperação
 
 Núcleo4.3.6/436, BB1.1.6/116 e Asaas1.5.2/152 estão em validação sobre435. API16 por componentes integrais e vínculo declarado de retorno240 à mesma origem API usam o writer existente e a mesma identidade canônica; não criam remessa, outro canal ou pagamento automático. Alteração/baixa incerta anterior ou posterior à consulta veta um novo recebimento. Recuperação de processo morto após sending usa consulta independente autorizada, sem reenviar POST/PATCH nem fabricar sucesso pelo vencimento da reserva. A [validação436](companies/pr45-validation-436.md) discrimina fonte congelada, instalação/tracking, testes e CI do próprio SHA.
 
-O canal400 continua indisponível pelas lacunas BRL85–86, juros herdados/contrato e pictureCBR64326–39; trailer641 já foi resolvido. Testes sintéticos e declarações operacionais não demonstram autenticação bancária ou homologação. Nenhum merge, deploy ou transmissão real.
+O canal400 permanece disponível e configurável por empresa, sem transmissão automática ou baixa financeira. As lacunas BRL85–86, juros herdados/contrato e pictureCBR64326–39 continuam como validações técnicas/documentais; não desativam preparação, reserva, geração ou download protegidos. Testes sintéticos e declarações operacionais não demonstram autenticação bancária ou homologação. Nenhum merge, deploy ou envio bancário real.
 
 
 ## Incremento435 — perfis API e prova financeira cruzada
 
 Núcleo4.3.5/435 e móduloBB1.1.5/115 (NOOP de schema); os contratos anteriores e hashes não são reclassificados. Registro API agora oferece juros mensais percentuais e primeiro desconto fixo ou percentual até data, com declaração contratual/capacidade explícita, perfil imutável e consulta coerente da conta. Publicar taxa/oferta não lança juros nem reduz a dívida: recebimento API com ajustes continua em revisão neste incremento. Asaas1.5.1/151 preservado. A [validação435](companies/pr45-validation-435.md) separa testes locais, tracking e CI do próprio SHA.
 
-A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 segue indisponível por BRL85–86, juros herdados/contrato e pictureCBR64326–39 ainda sem confirmação suficiente; trailer641 não é reaberto. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente.
+A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 segue disponível e configurável por empresa, com geração/download dependentes das validações e da declaração técnica local; a homologação externa não é presumida nem bloqueia a publicação. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente.
 
 
 # Banco do Brasil: cobrança e conciliação
 
 ## Estado desta entrega
 
-Histórico405 (estado atual em [matriz](companies/pr45-status.md)): módulo `banco_brasil`, versão **1.0.4**, com migrations nativas **101–104** preservadas. A PR45 já incorporou a PR46; Empresas pertence ao núcleo, sem carregar o módulo histórico issuers. O núcleo avança para **4.0.5/405** com responsabilidade e wizard, descritos em [Empresas](companies/onboarding.md). A instalação usa `App_module_migration`; não há executor paralelo. Este é um recorte revisável do pedido de API de cobrança e CNAB 240, **não a conclusão de ambos os canais**.
+Histórico405 (estado atual em [matriz](companies/pr45-status.md)): módulo `banco_brasil`, versão **1.0.4**, com migrations nativas **101–104** preservadas. A PR45 já incorporou a PR46; Empresas pertence ao núcleo, sem carregar o módulo histórico issuers. O núcleo avança para **4.0.5/405** com responsabilidade e wizard, descritos em [Empresas](companies/onboarding.md). A instalação usa `App_module_migration`; não há executor paralelo. Este recorte mantém o contrato de API/CNAB240 e, na PR52, integra o fluxo CNAB400 por empresa; a execução bancária externa continua fora da prova local.
 
 Implementado e ligado à interface:
 
@@ -27,14 +29,14 @@ Implementado e ligado à interface:
 - Transação própria InnoDB, auditoria atômica e recusa de transação externa. Arquivo reempacotado preserva a proveniência sem duplicar o evento. Mesmo identificador semântico com dados financeiros divergentes exige revisão, revertendo a importação inteira.
 - Guias Autenticação, Ambiente, Convênio, Conta, Cobrança, Remessa, Retorno e Webhook, em português.
 
-Implementado apenas como codec puro exercitado por fixtures:
+Implementado como codec e fluxo local protegido, exercitado por fixtures e testes de integração:
 
-- Gerador de remessa P/Q, carteira 17 simples, convênio de sete posições, arquivo/lote 084/043, moeda Real. Não há endpoint operacional de geração/download/transmissão.
+- Gerador de remessa P/Q, carteira 17 simples, convênio de sete posições, arquivo/lote 084/043, moeda Real. CNAB400 possui endpoints de preparação, reserva, geração, download e declaração de envio manual; não há transmissão automática, baixa financeira ou alegação de homologação.
 
-Ainda indisponível:
+Fora do escopo ou ainda não homologado externamente:
 
 - Executor API, OAuth, cofre de credenciais, webhook BB, consulta canônica pela API, baixa financeira e conciliação automática.
-- Orquestração de emissão de fatura, reserva de Nosso Número, ledger conectado ao core, lote operacional e download auditado. As tabelas `bb_origins` e `bb_batches` reservam o contrato, mas **não constituem funcionalidades conectadas**.
+- Execução bancária externa, aceite do banco e baixa financeira automática. A preparação, reserva de Nosso Número, ledger por empresa, lote, geração e download CNAB400 estão conectados ao core sob as validações e permissões do módulo; `bb_origins` e `bb_batches` preservam a proveniência e a idempotência.
 - Homologação bancária, outros convênios/carteiras/segmentos, parcelamento, alterações, protesto/negativação, juros/multa/desconto e pagamento parcial.
 
 A importação salva observações e **não cria pagamento, não muda a fatura e não envia mensagens**. Arquivo válido estruturalmente não comprova que foi emitido pelo banco: conta e documento no arquivo podem ser forjados. A origem e a evidência bancária exigem conciliação assistida; um evento importado não autoriza uma baixa.

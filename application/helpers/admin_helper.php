@@ -35,7 +35,9 @@ function init_head($aside = true)
 {
     $CI = &get_instance();
     $CI->load->view('admin/includes/head');
-    $CI->load->view('admin/includes/header', ['startedTimers' => $CI->misc_model->get_staff_started_timers()]);
+    require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+    $nativeCompany=NativeCompanyAdminPresentation::current($CI);
+    $CI->load->view('admin/includes/header', $nativeCompany ? [] : ['startedTimers' => $CI->misc_model->get_staff_started_timers()]);
     $CI->load->view('admin/includes/setup_menu');
     if ($aside == true) {
         $CI->load->view('admin/includes/aside');

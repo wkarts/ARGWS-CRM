@@ -73,6 +73,12 @@ final class CompanyContext
     }
 
     public function csrf(): string { return $this->secret(self::CSRF); }
+    /** Separate CSRF purpose; changing company rotates the token's context binding. */
+    public function nativeCsrf(): string
+    {
+        return hash_hmac('sha256', 'native-admin:' . $this->token(), $this->secret('company_native_admin_csrf'));
+    }
+
     public function assertToken($token): void
     {
         if (!is_string($token) || !hash_equals($this->token(), $token)) {

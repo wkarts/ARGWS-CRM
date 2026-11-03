@@ -20,6 +20,20 @@ class App_Router extends MX_Router
 {
     public function locate($segments)
     {
+        // Exact core machine routes must resolve before the legacy api module's
+        // wildcard routes. Authentication still belongs to CompanyApiScope and Api.
+        $action = $segments[1] ?? '';
+        $machineRoute = $this->routes['company_api/' . $action] ?? null;
+        $machineArguments = count($segments) === 2
+            || (count($segments) === 3 && preg_match('/^[1-9][0-9]*$/D', (string) $segments[2]))
+            || (count($segments) === 4 && $action === 'expense_files'
+                && preg_match('/^[1-9][0-9]*$/D', (string) $segments[2])
+                && preg_match('/^[a-f0-9]{64}$/D', (string) $segments[3]));
+        if (($segments[0] ?? null) === 'api' && $machineRoute === 'api/' . $action && $machineArguments) {
+            $this->module = null;
+            $this->directory = '';
+            return $segments;
+        }
         // Empresas is a native controller. Its retained module directory is
         // historical data and must not participate in MX controller/helper lookup.
         if (($segments[0] ?? null) === ADMIN_URI && strtolower((string) ($segments[1] ?? '')) === 'issuers') {

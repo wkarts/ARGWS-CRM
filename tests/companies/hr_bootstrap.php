@@ -15,8 +15,8 @@ foreach(CompanyHrApi::ENDPOINTS as $endpoint){
         opsBootCheck($autoload===['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]]&&CompanyOperationsApiScope::active(),'HR bearer route hydrates only its database');
         opsBootCheck(preg_match('#^'.$hrPattern.'$#D',implode('/',$segments))===1,'Exact HR bearer URI is admitted');
     }
-    opsBootCheck(($routes['company_operations_api/'.$endpoint]??null)==='company_operations_api/'.$endpoint,'HR collection route names its exact native controller method');
-    opsBootCheck(($routes['company_operations_api/'.$endpoint.'/([1-9][0-9]{0,9})']??null)==='company_operations_api/'.$endpoint.'/$1','HR detail route retains the canonical identifier');
+    opsBootCheck(($routes['company_operations_api/'.$endpoint]??null)==='operations_api/'.$endpoint,'HR collection route names its exact native controller method');
+    opsBootCheck(($routes['company_operations_api/'.$endpoint.'/([1-9][0-9]{0,9})']??null)==='operations_api/'.$endpoint.'/$1','HR detail route retains the canonical identifier');
     foreach(['0','01','-1','1e2','2147483648','23.json','23/extra'] as $suffix){
         $segments=['company_operations_api',$endpoint,...explode('/',$suffix)];$denied=false;
         try{opsBootAutoload(opsBootCi('company_operations_api',$endpoint,$segments),$segments);}catch(DomainException $e){$denied=$e->getMessage()==='native_machine_404';}

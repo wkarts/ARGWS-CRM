@@ -85,7 +85,10 @@ def main() -> int:
     output = args.root / args.output
     if args.check:
         if not output.exists() or output.read_text() != encoded:
-            print('Inventory is stale; regenerate and review changed boundaries.'); return 1
+            print('Inventory is stale; regenerate and review changed boundaries.')
+            if not args.full:
+                print('Expected boundary source_sha256: ' + report['source_sha256'])
+            return 1
     else:
         output.parent.mkdir(parents=True, exist_ok=True); output.write_text(encoded)
     print(f"{result['files']} files; {result['unresolved_files']} unresolved; operational_ready={result['operational_ready']}")

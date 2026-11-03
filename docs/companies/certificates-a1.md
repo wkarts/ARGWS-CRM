@@ -15,8 +15,7 @@ reescrito. A implantação real não foi autorizada.
 
 Depois do fechamento do formulário de edição de empresa, incluir
 `APPPATH.'views/admin/issuers/certificate_link.php'` nas views
-`admin/issuers/manage.php` e `admin/companies/registry.php`. O fragmento espera
-`selected` e `can_manage`; só liga a gestão A1 diretamente quando a empresa
+`admin/issuers/manage.php`. O fragmento espera `selected` e `can_manage`; só liga a gestão A1 diretamente quando a empresa
 editada coincide com o contexto ativo. Caso contrário, direciona ao seletor.
 O fragmento fica separado para preservar as alterações simultâneas do wizard.
 

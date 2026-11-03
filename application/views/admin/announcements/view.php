@@ -6,7 +6,7 @@
             <div class="col-md-7">
                 <h4 class="tw-my-0 tw-font-bold tw-text-lg tw-text-neutral-700">
                     <?= e($announcement->name); ?>
-                    <?php if (is_admin()) { ?>
+                    <?php if (isset($native_can_edit) ? $native_can_edit : is_admin()) { ?>
                     <a href="<?= admin_url('announcements/announcement/' . $announcement->announcementid); ?>"
                         class="pull-right tw-font-normal">
                         <small><?= _l('edit'); ?></small>

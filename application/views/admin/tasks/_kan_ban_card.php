@@ -1,4 +1,14 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_task_card)){$item=$native_task_card;$task=$item['row']; ?>
+<li class="task" data-task-id="<?= e($item['id']); ?>"><div class="panel-body"><a class="tw-font-medium" href="<?= e(admin_url('tasks/list_tasks/'.$item['id'])); ?>" onclick="init_task_modal('<?= e($item['id']); ?>');return false;"><?= e($task['name']); ?></a>
+<p><?= e($task['due_date']??''); ?></p><p><?= e(implode(', ',array_map(static fn($member)=>trim($member['firstname'].' '.$member['lastname']),$item['assignees']))); ?></p>
+<?php foreach($item['tags']as$tag){ ?><span class="label label-default"><?= e($tag['name']); ?></span><?php } ?>
+<?php $context=CompanyRequestScope::context();if((new IssuerResourceAccess($this->db,db_prefix()))->can($context->issuerId(),$context->staffId(),'tasks','edit')){ ?>
+<?= form_open(admin_url('tasks/update_order')); ?>
+<?= form_hidden('_company_context',$native_task_context).form_hidden('_native_company_csrf',$native_task_csrf).form_hidden('board_revision',$native_task_board_preference['revision']).form_hidden('native_request_key',bin2hex(random_bytes(32))).form_hidden('task',$item['id']); ?>
+<label for="task-order-<?= e($item['id']); ?>">Posicionar antes de</label><select class="form-control" id="task-order-<?= e($item['id']); ?>" name="before"><option value="">Final do quadro</option><?php foreach($native_task_board['items']as$target)if($target['id']!==$item['id']){ ?><option value="<?= e($target['id']); ?>"><?= e($target['row']['name']); ?></option><?php } ?></select><button class="btn btn-default btn-xs mtop5" type="submit"><?= e(_l('save')); ?></button><?= form_close(); ?>
+<?php } ?></div></li>
+<?php return;} ?>
 <li data-task-id="<?= e($task['id']); ?>" class="task<?php if ($task['current_user_is_assigned']) {
     echo ' current-user-task';
 } if ((! empty($task['duedate']) && $task['duedate'] < date('Y-m-d')) && $task['status'] != Tasks_model::STATUS_COMPLETE) {

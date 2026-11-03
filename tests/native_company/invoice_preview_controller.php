@@ -1,0 +1,19 @@
+<?php
+require __DIR__.'/invoice_native_files.php';
+if(!defined('FCPATH'))define('FCPATH',INVOICE_ATTACHMENTS_FOLDER);
+if(!class_exists('App_Controller',false)){class App_Controller{public $db;public $output;public $input;}}
+final class CompanyRequestScope{public static int$issuer;public static bool$native=true;public static function nativeFor($ci):bool{return self::$native;}public static function context(){return new class{function issuerId():int{return CompanyRequestScope::$issuer;}function staffId():int{return 7;}};}}
+if(!function_exists('show_404')){function show_404(){throw new DomainException('http_not_found');}}
+require APPPATH.'controllers/Download.php';
+final class NativePreviewOutput{public array$headers=[];public string$body='';function set_header($v){$this->headers[]=$v;return$this;}function set_content_type($v){return$this;}function set_output($v){$this->body=$v;return$this;}}
+mkdir($root);mkdir($root.'/42');$png=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAC0lEQVQImWNgwAQAABQAAWX1h1kAAAAASUVORK5CYII=');file_put_contents($root.'/42/preview.png',$png);
+try{
+ $historical=IssuerTransaction::run($db,$p,NativeCompanyInvoiceFiles::tables(),fn()=>NativeCompanyFileRows::insertInOwned($db,$p,['rel_id'=>42,'rel_type'=>'invoice','file_name'=>'preview.png','filetype'=>'image/png','visible_to_customer'=>1,'external'=>null,'external_link'=>null,'thumbnail_link'=>null,'staffid'=>7,'contact_id'=>0,'task_comment_id'=>0,'dateadded'=>'2020-01-01 00:00:00']));NativeCompanyInvoiceFileBackfill::run($db,$p);
+ $controller=(new ReflectionClass(Download::class))->newInstanceWithoutConstructor();$controller->db=$db;$controller->output=new NativePreviewOutput();$controller->input=new class{public string$verb='GET',$path='42/preview.png';function method($u=false){return$this->verb;}function get($k){return$k==='path'?$this->path:'image/png';}};
+ $start=$GLOBALS['essentialChecks'];CompanyRequestScope::$issuer=$principal;$controller->preview_image();essentialCheck($controller->output->body===$png&&in_array('Cache-Control: private, no-store',$controller->output->headers,true),'original preview returns exact verified historical bytes without reopening path');
+ CompanyRequestScope::$issuer=$a;essentialThrows(fn()=>$controller->preview_image(),'http_not_found','other company cannot preview primary legacy file');CompanyRequestScope::$issuer=$principal;
+ CompanyRequestScope::$native=false;essentialThrows(fn()=>$controller->preview_image(),'http_not_found','missing explicit staff lease cannot fall back to global preview');CompanyRequestScope::$native=true;
+ $nativeFiles->remove($principal,7,$historical,1);essentialThrows(fn()=>$controller->preview_image(),'http_not_found','revoked historical sidecar blocks old raw-path preview');essentialCheck(file_get_contents($root.'/42/preview.png')===$png,'revocation never deletes historical filesystem bytes');
+ $mp4=hex2bin('000000206674797069736f6d0000020069736f6d69736f32617663316d703431');file_put_contents($root.'/42/video.mp4',$mp4);$videoId=IssuerTransaction::run($db,$p,NativeCompanyInvoiceFiles::tables(),fn()=>NativeCompanyFileRows::insertInOwned($db,$p,['rel_id'=>42,'rel_type'=>'invoice','file_name'=>'video.mp4','filetype'=>'video/mp4','visible_to_customer'=>1,'external'=>null,'external_link'=>null,'thumbnail_link'=>null,'staffid'=>7,'contact_id'=>0,'task_comment_id'=>0,'dateadded'=>'2020-01-01 00:00:00']));NativeCompanyInvoiceFileBackfill::run($db,$p);$controller->input->path='42/video.mp4';$controller->preview_video();essentialCheck($controller->output->body===$mp4,'original video preview preserves verified native MP4 MIME and bytes without playback claim');
+ echo 'Native invoice preview actual controller: '.($GLOBALS['essentialChecks']-$start).' checks passed.'.PHP_EOL;
+}finally{if(is_file($root.'/42/video.mp4'))unlink($root.'/42/video.mp4');unlink($root.'/42/preview.png');rmdir($root.'/42');rmdir($root);}

@@ -1,4 +1,7 @@
 import hashlib
+import contextlib
+import io
+import os
 import importlib.util
 import json
 import re
@@ -7,6 +10,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('registry_shard', ROOT / 'scripts/ci/run-company-registry-shard.py')
@@ -15,21 +19,31 @@ spec.loader.exec_module(runner)
 
 
 class RegistryShardsTest(unittest.TestCase):
+    def test_real_command_failure_preserves_output_status_and_sanitized_public_cause(self):
+        result = subprocess.CompletedProcess(['php','tests/origin.php'], 19, stdout='Fatal error: missing fixture dependency\npassword=private-fixture-password\norigin.php:27\n')
+        output = io.StringIO()
+        with patch.object(runner.subprocess,'run',return_value=result) as execute,patch.dict(os.environ,{'MYSQL_PASSWORD':'private-fixture-password'}),contextlib.redirect_stdout(output):
+            self.assertIs(runner.execute_logged(result.args,cwd=ROOT,check=False),result)
+        self.assertEqual(execute.call_args.kwargs['stderr'],subprocess.STDOUT)
+        self.assertNotIn('shell',execute.call_args.kwargs)
+        annotation=next(line for line in output.getvalue().splitlines() if line.startswith('::error::'))
+        self.assertIn('missing fixture dependency',annotation);self.assertIn('origin.php:27',annotation)
+        self.assertNotIn('private-fixture-password',annotation)
     def test_exact_pre_sharding_inventory(self):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
         commands = runner.load_commands()
-        self.assertEqual(len(commands), 473)
+        self.assertEqual(len(commands), 472)
         self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
         self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
-                         '1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835')
+                         'ce9d16a30581ef32234d4696afc1f3d98d6d17d86a0290d80d9e98e9a7b3e7cd')
         self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
-                         'c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413')
+                         'a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
-        shards = [runner.select_commands(commands, i) for i in range(1, 5)]
-        self.assertEqual([len(shard) for shard in shards], [119,118,118,118])
+        shards = [runner.select_commands(commands, i) for i in range(1, runner.SHARDS + 1)]
+        self.assertEqual([len(shard) for shard in shards], [95,95,94,94,94])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -81,9 +95,9 @@ class RegistryShardsTest(unittest.TestCase):
                 ['php', 'tests/efi/intent_contract.php'],
                 ['php', 'tests/efi_adoption_http.php'],
                 ['php', 'tests/efi_checkout_preflight.php'],
-                ['php', 'tests/efi/company_accounts_contract.php'],
-                ['php', 'tests/efi/company_controller_contract.php'],
-                ['php', 'tests/efi/company_proof_contract.php'],
+                ['php', 'tests/efi/native_accounts_contract.php'],
+                ['php', 'tests/efi/native_controller_contract.php'],
+                ['php', 'tests/efi/native_proof_contract.php'],
                 ['php', 'tests/issuers_controller.php'],
                 ['php', 'tests/issuers_admin_upgrade_gate.php'],
                 ['php', 'tests/issuers_integration_view.php'],
@@ -114,10 +128,21 @@ class RegistryShardsTest(unittest.TestCase):
                         if line.strip().startswith('php tests/')]
         self.assertEqual(all_external, external, 'no duplicated or moved external invocations')
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
-        self.assertEqual(len(manifest_php), 471)
+        self.assertEqual(len(manifest_php), 470)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 500)
-        self.assertEqual(len(set(map(tuple, combined))), 500)
+        self.assertEqual(len(combined), 499)
+        self.assertEqual(len(set(map(tuple, combined))), 499)
+
+    def test_operational_inventory_runs_once_for_the_matrix(self):
+        source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
+        step = source.split('      - name: Validar inventário operacional uma vez\n')[1].split('      - ')[0]
+        self.assertEqual(re.findall(r'^        if: (.+)$', step, re.M), ["matrix.shard == 1 && matrix.php == '8.1'"])
+        self.assertEqual(step.count('php scripts/company-surface-inventory.php --check'), 1)
+        self.assertEqual(step.count('php scripts/company-surface-inventory.php --full'), 1)
+        syntax = source.split('      - name: Validar sintaxe e controles HTTP\n')[1].split('      - ')[0]
+        self.assertNotIn('company-surface-inventory.php', syntax)
+        upload = source.split('          name: company-operational-surfaces\n')[0].rsplit('      - uses: actions/upload-artifact@v4\n', 1)[1]
+        self.assertIn("if: matrix.shard == 1 && matrix.php == '8.1'", upload)
 
     def test_isolated_module_audit_precedes_long_registry_suite(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -173,12 +198,20 @@ class RegistryShardsTest(unittest.TestCase):
         expected = json.loads(runner.PLAN.read_text())
         self.assertEqual(planner.build_plan(runner.load_commands(), baseline), expected)
         commands = runner.load_commands()
-        old = planner.build_measured_plan(commands[1:], baseline)
-        self.assertEqual(expected['assignments'][1:], old['assignments'], 'all 472 historical placements unchanged')
-        self.assertEqual(expected['assignments'][0], 1, 'unmeasured count tie goes to shard1')
+        historical = planner.historical_measured_commands(commands, expected['unmeasured'], baseline)
+        old = planner.build_measured_plan(historical, baseline)
+        retired = baseline['retired'][0]
+        replay = planner.build_measured_plan(historical, baseline, shards=5)
+        retained_assignments = [assignment for index, assignment in enumerate(replay['assignments']) if index != retired['index']]
+        self.assertEqual(expected['assignments'][1:], retained_assignments, 'each retained placement follows the same paired evidence replayed for five shards')
+        self.assertEqual(old['assignments'][retired['index']], 2, 'retired command occupied shard2')
+        self.assertEqual(expected['assignments'][0], replay['assignments'][retired['index']], 'unmeasured command fills retired shard capacity without inventing a duration')
+        self.assertEqual(expected['retired'], baseline['retired'])
         self.assertEqual(hashlib.sha256((json.dumps(old, indent=2)+'\n').encode()).hexdigest(),
-                         '1a4f54a480af305d6828192a52378796487d387c4fc0890ee9935c56c4411b92')
+                         '16503a60a61942303257d72386271696d7c05a46c67aef4385041acac521ec6b')
         self.assertEqual([len(t) for t in baseline['milliseconds'].values()], [472,472], 'no invented timing')
+        self.assertEqual(retired['argv'], ['php', 'tests/settings/calendar_controller.php'])
+        self.assertNotIn(retired['argv'], commands)
         for invalid in [[], expected['unmeasured'] * 2, [{'argv':['php','tests/not_measured.php']}]]:
             with self.assertRaises(ValueError):
                 planner.build_plan(commands, baseline, unmeasured=invalid)
@@ -200,6 +233,24 @@ class RegistryShardsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             planner.build_plan(runner.load_commands(), changed)
 
+    def test_five_shards_keep_uneven_capacities_and_reject_missing_partition_metadata(self):
+        planner_spec = importlib.util.spec_from_file_location('planner', ROOT / 'scripts/ci/plan-company-registry-shards.py')
+        planner = importlib.util.module_from_spec(planner_spec)
+        planner_spec.loader.exec_module(planner)
+        self.assertEqual(planner.balanced_assignment([10] * 12, shards=5), [1,2,3,4,5,1,2,3,4,5,1,2])
+        for shards in [0, True, 13]:
+            with self.assertRaises(ValueError):
+                planner.balanced_assignment([10] * 12, shards=shards)
+        commands = runner.load_commands()
+        for shards in [None, 4, 6]:
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / 'plan.json'
+                invalid = json.loads(runner.PLAN.read_text())
+                invalid['shards'] = shards
+                path.write_text(json.dumps(invalid))
+                with self.assertRaises(ValueError):
+                    runner.load_assignment(commands, path)
+
     def test_invalid_or_stale_plan_cannot_silently_change_coverage(self):
         commands = runner.load_commands()
         with tempfile.TemporaryDirectory() as directory:
@@ -210,11 +261,11 @@ class RegistryShardsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'plan.json'
             invalid = json.loads(runner.PLAN.read_text())
-            invalid['assignments'][1] = 1  # break 119/118/118/118 capacity
+            invalid['assignments'][1] = invalid['assignments'][1] % runner.SHARDS + 1  # break 94/95 capacities
             path.write_text(json.dumps(invalid))
             with self.assertRaises(ValueError):
                 runner.load_assignment(commands, path)
-        for assignments in [None, [], [1] * (len(commands)-1), [5] * len(commands), [True] * len(commands)]:
+        for assignments in [None, [], [1] * (len(commands)-1), [runner.SHARDS+1] * len(commands), [True] * len(commands)]:
             if assignments is None:
                 continue
             with self.assertRaises(ValueError):
@@ -222,12 +273,17 @@ class RegistryShardsTest(unittest.TestCase):
 
     def test_workflow_preserves_matrix_and_fail_closed_required_names(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
-        self.assertIn('  registry-shards:\n    needs: registry-plan', source)
-        self.assertIn('        shard: [1, 2, 3, 4]', source)
+        self.assertIn("  registry-shards:\n    if: ${{ needs.validation-gate.outputs.run == 'true' }}\n    needs: validation-gate", source)
+        self.assertIn('        shard: [1, 2, 3, 4, 5]', source)
         self.assertIn('      image: ${{ matrix.image }}', source)
         self.assertEqual(source.count("php: ['8.1', '8.5']"), 2)
-        self.assertIn('  registry:\n    if: always()\n    needs: [registry-plan, registry-shards]', source)
-        self.assertIn('test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success', source)
+        self.assertIn('  registry:\n    if: always()\n    needs: [validation-gate, registry-shards]', source)
+        self.assertIn('test "$GATE_RESULT" = success',source)
+        self.assertIn('if [ "$REUSED" = false ]; then',source)
+        self.assertIn('fail-fast: false',source)
+        self.assertIn('max-parallel: 5',source)
+        self.assertIn('timeout-minutes: 30',source)
+        self.assertIn('test "$SHARDS_RESULT" = success', source)
         self.assertNotIn('continue-on-error', source)
         self.assertIn('  pull_request:', source)
         self.assertIn('  push:', source)

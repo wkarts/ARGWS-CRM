@@ -1,6 +1,6 @@
 # Seu Número operacional por origem API
 
-Implementação isolada sobre a composição440, ainda sem número de release atribuído. A integração deverá acrescentar o próximo núcleo e a próxima versão/migration nativa BB; este overlay não é um pacote distribuível versionado. Não houve comunicação bancária real, merge ou deploy.
+Implementação isolada sobre a composição440, ainda sem número de release atribuído. A integração deverá acrescentar o próximo núcleo e a próxima versão/migration nativa BB; este overlay não é um pacote distribuível versionado. Não houve comunicação bancária real, merge ou deploy. CNAB400 permanece disponível e configurável por empresa; este recorte de Seu Número não altera essa disponibilidade.
 
 ## Contrato primário e recorte local
 
@@ -34,7 +34,7 @@ Os aliases e tentativas são preservados nas intenções/resultados e auditoria 
 
 A instrução e sua confirmação não criam pagamento, crédito, abatimento, receita ou estorno. O fence financeiro exige que toda alteração esteja resolvida com contrato/fingerprint e consulta própria, incluindo cadeia de aliases e prova da referência atual. O recebimento posterior continua passando pelo writer canônico e pela equação nominal existente; intenção pendente/corrompida mantém revisão financeira. Recibos antigos são preservados e uma fatura já movimentada não aceita nova alteração de referência.
 
-O alias não autoriza relaxar o vínculo do retornoCNAB240 nem reescrever seus campos de origem. Um retorno cujo identificador divergir do contrato240 existente continua exigindo revisão/adaptação específica. O canalCNAB400 e dinheiroAPI18/19 não são habilitados por este trabalho.
+O alias não autoriza relaxar o vínculo do retornoCNAB240 nem reescrever seus campos de origem. Um retorno cujo identificador divergir do contrato240 existente continua exigindo revisão/adaptação específica. Este trabalho não altera a disponibilidade/configuração por empresa do CNAB400 nem libera transmissão/baixa financeira; dinheiroAPI18/19 continua fora deste recorte.
 
 ## Banco e versão
 

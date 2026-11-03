@@ -1,7 +1,7 @@
 <?php
 /** Reconstructed test support after source recovery. Synthetic storage/transport only. */
 declare(strict_types=1);
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once APPPATH.'vendor/autoload.php';
 
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id IN (41,82)");

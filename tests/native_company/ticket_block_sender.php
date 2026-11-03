@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/ticket_status_endpoint.php';require_once APPPATH.'services/NativeCompanySpamFilters.php';
+foreach(NativeCompanySpamSchema::definitions('tbl')as$table=>$parts)ticketSqliteDdl($table,$parts,$db);$wrapped=new TicketCreateDb($db,NativeCompanySpamSchema::definitions('tbl'));$ci->db=$wrapped;
+$reader=new NativeCompanyTicketRead($wrapped,'tbl');$spam=new NativeCompanySpamFilters($wrapped,'tbl');$ci->router=new class{function fetch_method(){return'block_sender';}};$page=new Tickets();$ticket=$reader->get(2,17,$id);$ci->input->data=['ticketid'=>$id,'revision'=>$ticket['revision_token'],'request_nonce'=>hash('sha256','block-source-http'),'_native_company_csrf'=>'synthetic-csrf'];
+$page->block_sender();kc(json_decode($ci->output->body,true)['success']&&$spam->blockedSenderForTicket(2,17,$id),'actual Tickets block_sender derives sender from authorized source');$page->block_sender();kc(json_decode($ci->output->body,true)['replayed']&&count($spam->listing(2,17,'tickets'))===1,'block replay never duplicates');
+$ci->input->data['sender']='other@example.invalid';$deny(fn()=>$page->block_sender());unset($ci->input->data['sender']);$ci->input->verb='GET';$deny(fn()=>$page->block_sender());$ci->input->verb='POST';$ci->input->data['_native_company_csrf']='bad';$deny(fn()=>$page->block_sender());
+$db->query("INSERT INTO tblissuers_resource_permissions VALUES(2,17,'tickets','edit')");$db->query("INSERT INTO tblcompany_department_members(issuer_id,department_source_kind,department_source_id,staff_id,revision,actor_id,created_at,updated_at) VALUES(2,'company_ticket_department',1,17,1,17,'2026-01-01','2026-01-01')");$db->query('UPDATE tblissuers_installation_identity SET master_staff_id=18');$ci->input->data['_native_company_csrf']='synthetic-csrf';$ci->input->data['request_nonce']=hash('sha256','staff-block-source');
+// Existing ticket editor capability remains narrower than administration of the whole spam catalog.
+$page->block_sender();kc(json_decode($ci->output->body,true)['success'],'authorized non-admin ticket editor can block its proven source');$deny(fn()=>$spam->listing(2,17,'tickets'));
+echo "Original Tickets block_sender real SQLite/controller passed source-derived address, narrower ticket-editor authority, replay, injected sender, GET and CSRF denial. No piping/browser claim.\n";

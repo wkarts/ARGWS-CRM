@@ -16,7 +16,7 @@ $table_data = [
    _l('project_status'),
 ];
 
-$custom_fields = get_custom_fields('projects', ['show_on_table' => 1]);
+$custom_fields = isset($native_project_custom_fields) ? $native_project_custom_fields : get_custom_fields('projects', ['show_on_table' => 1]);
 foreach ($custom_fields as $field) {
     array_push($table_data, [
      'name'     => $field['name'],
@@ -24,10 +24,10 @@ foreach ($custom_fields as $field) {
  ]);
 }
 
-$table_data = hooks()->apply_filters('projects_table_columns', $table_data);
+if(!isset($native_project_custom_fields))$table_data = hooks()->apply_filters('projects_table_columns', $table_data);
 
 render_datatable($table_data, isset($class) ?  $class : 'projects', ['number-index-1'], [
   'data-last-order-identifier' => 'projects',
-  'data-default-order'         => get_table_last_order('projects'),
+  'data-default-order'         => isset($native_project_table_order) ? $native_project_table_order : get_table_last_order('projects'),
   'id'=>$table_id ?? 'projects',
 ]);

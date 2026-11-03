@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanyTaxRate.php';
 
 abstract class App_items_table_template
 {
@@ -10,6 +11,13 @@ abstract class App_items_table_template
      * @var object
      */
     protected $ci;
+    protected $native_items_presentation;
+
+    protected function presentation_filter($name, $value, ...$arguments)
+    {
+        return $this->native_items_presentation ? $value : hooks()->apply_filters($name, $value, ...$arguments);
+    }
+
 
     /**
      * The transaction items
@@ -104,7 +112,7 @@ abstract class App_items_table_template
     {
         $this->ci                      = &get_instance();
         $this->tax_per_item            = get_option('show_tax_per_item') == 1;
-        $this->custom_fields_for_table = get_items_custom_fields_for_table_html($this->transaction->id, $this->type);
+        $this->custom_fields_for_table = $this->native_items_presentation ? $this->native_items_presentation->definitions() : get_items_custom_fields_for_table_html($this->transaction->id, $this->type);
         $this->set_headings();
     }
 
@@ -184,6 +192,7 @@ abstract class App_items_table_template
      */
     protected function get_item_taxes($item)
     {
+        if ($this->native_items_presentation) { return $item['taxes']; }
         $item_taxes = [];
 
         if (defined('INVOICE_PREVIEW_SUBSCRIPTION')) {
@@ -219,15 +228,15 @@ abstract class App_items_table_template
                     $item_tax = '';
                     if ((count($item['taxes']) > 1 && get_option('remove_tax_name_from_item_table') == false) || get_option('remove_tax_name_from_item_table') == false || multiple_taxes_found_for_item($item['taxes'])) {
                         $tmp      = explode('|', $tax['taxname']);
-                        $item_tax = $tmp[0] . ' ' . e(app_format_number($tmp[1])) . '%<br />';
+                        $item_tax = ($this->native_items_presentation ? e($tmp[0]) : $tmp[0]) . ' ' . e($this->native_items_presentation ? NativeCompanyTaxRate::display($tmp[1]) : app_format_number($tmp[1])) . '%<br />';
                     } else {
-                        $item_tax .= e(app_format_number($tax['taxrate'])) . '%';
+                        $item_tax .= e($this->native_items_presentation ? NativeCompanyTaxRate::display($tax['taxrate']) : app_format_number($tax['taxrate'])) . '%';
                     }
 
-                    $itemHTML .= hooks()->apply_filters('item_tax_table_row', $item_tax, $item);
+                    $itemHTML .= $this->presentation_filter('item_tax_table_row', $item_tax, $item);
                 }
             } else {
-                $itemHTML .= hooks()->apply_filters('item_tax_table_row', '0%', $item);
+                $itemHTML .= $this->presentation_filter('item_tax_table_row', '0%', $item);
             }
             $itemHTML .= '</td>';
         }
@@ -433,7 +442,7 @@ abstract class App_items_table_template
         $table_class   = array_unique($this->table_class);
         $table_class[] = $this->type . '-items-preview';
 
-        return '<table class="' . implode(' ', $table_class) . '" data-type="' . $this->type . '">';
+        return '<table class="' . implode(' ', $table_class) . '" data-type="' . $this->type . '"' . ($this->native_items_presentation ? $this->native_items_presentation->attributes() : '') . '>';
     }
 
     /**
@@ -554,7 +563,7 @@ abstract class App_items_table_template
     {
         $exclude = get_option('items_table_amounts_exclude_currency_symbol') == 1 ? true : false;
 
-        return hooks()->apply_filters('items_table_amounts_exclude_currency_symbol', $exclude, [
+        return $this->presentation_filter('items_table_amounts_exclude_currency_symbol', $exclude, [
             'type'        => $this->type,
             'transaction' => $this->transaction,
         ]);
@@ -562,7 +571,7 @@ abstract class App_items_table_template
 
     protected function show_tax_per_item()
     {
-        return $this->tax_per_item && hooks()->apply_filters('show_tax_per_item', true, [
+        return $this->tax_per_item && $this->presentation_filter('show_tax_per_item', true, [
             'type'        => $this->type,
             'transaction' => $this->transaction,
         ]);

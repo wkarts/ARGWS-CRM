@@ -32,7 +32,7 @@ não administra os contatos do proprietário.
 
 ## Recorrência
 
-`admin/company_recurring` agenda entre 1 e 120 faturas, a cada 1 a 12 meses.
+`admin/invoices/recurring` agenda entre 1 e 120 faturas, a cada 1 a 12 meses.
 O vencimento preserva o intervalo em dias da primeira emissão. O dia original do
 mês é uma âncora: 31/janeiro vira 28/fevereiro e depois 31/março; ano bissexto é
 tratado pelo calendário. Cada ocorrência tem chave única por empresa/série/data.

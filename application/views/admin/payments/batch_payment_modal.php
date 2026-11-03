@@ -11,6 +11,7 @@
             </div>
             <?= form_open('admin/payments/add_batch_payment', ['id' => 'batch-payment-form']); ?>
             <div class="modal-body">
+                <?php if(isset($native_payments)){echo form_hidden('request_key',$native_batch_key); ?><p>Até 50 faturas por lote. O lote é confirmado integralmente; uma linha inválida desfaz todos os recebimentos. Os avisos usam a fila da empresa.</p><?php } ?>
                 <div class="row">
                     <div class="col-sm-4">
                         <div class="form-group select-placeholder">
@@ -55,7 +56,7 @@
                                         <td>
                                             <a href="<?= admin_url('invoices/list_invoices/' . e($invoice->id)); ?>"
                                                 target="_blank">
-                                                <?= e(format_invoice_number($invoice->id)) ?>
+                                                <?= e(isset($native_payments)?$invoice->formatted_number:format_invoice_number($invoice->id)) ?>
                                             </a><br>
                                             <a class="text-dark"
                                                 href="<?= admin_url('clients/client/' . e($invoice->clientid)); ?>"
@@ -66,6 +67,7 @@
                                             <input type="hidden"
                                                 name="invoice[<?= $index ?>][invoiceid]"
                                                 value="<?= $invoice->id ?>">
+                                            <?php if(isset($native_payments)){echo form_hidden('invoice['.$index.'][native_revision]',$invoice->native_revision);echo form_hidden('invoice['.$index.'][mode_revision]','');} ?>
                                         </td>
                                         <td class="tw-w-48">
                                             <?= render_date_input('invoice[' . $index . '][date]', '', date(get_current_date_format(true))) ?>
@@ -78,7 +80,7 @@
                                                     <option></option>
                                                     <?php foreach ($invoice->allowed_payment_modes as $mode) { ?>
                                                     <option
-                                                        value="<?= e($mode->id); ?>">
+                                                        value="<?= e($mode->id); ?>" <?= isset($native_payments)?'data-mode-revision="'.e($mode->revision).'"':''; ?>>
                                                         <?= e($mode->name); ?>
                                                     </option>
                                                     <?php } ?>
@@ -119,3 +121,6 @@
         </div>
     </div>
 </div>
+<?php if(isset($native_payments)){ ?><script>
+(function(){var form=document.getElementById('batch-payment-form');form.addEventListener('change',function(event){if(!event.target.name||!event.target.name.endsWith('[paymentmode]'))return;var select=event.target,key=select.name.replace('[paymentmode]','[mode_revision]');form.elements[key].value=select.selectedOptions[0].getAttribute('data-mode-revision')||'';});})();
+</script><?php } ?>
