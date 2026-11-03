@@ -795,7 +795,7 @@ ISSUERS_BROWSER_ARTIFACTS="$work/local447-artifacts" NONCASH_BROWSER_FIXTURES="$
 node tests/banco_brasil_local_noncash_browser_v3.cjs
 
 #448_SHARD_FIXTURE_BEGIN
-if owns_shell providers; then
+if owns_shell sales-pdf; then
 # Self-contained priority/follower scenario creates its own clients and tasks.
 docker exec "$upgrade" mkdir -p /app/tests/settings
 docker cp tests/settings/task_operations_http_fixture.php "$upgrade:/app/tests/settings/task_operations_http_fixture.php"

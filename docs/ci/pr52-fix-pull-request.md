@@ -74,3 +74,6 @@ A coleta de 02/11/2026 às 07:19UTC encontrou 7.506 registros de workflows desde
 A consulta diária foi repetida às20:49UTC:7.770 registros. Os oito primeiros dias mantiveram as contagens;02/11 passou de286 para550. O diagnóstico posterior do núcleo corrigiu o loader simulado dos testes de suporte: o parâmetro opcional e as variáveis herdadas do novo partial agora acompanham o CodeIgniter real. Os três controllers passaram emSQLite/MySQL, com prova adicional dos dois formulários protegidos.
 
 Este complemento não adiciona DDL de produção: a migration136 é NOOP. O núcleo 4.8.4/484 já supera a base 4.7.3/473; seus passos históricos permanecem. A prova estática não substitui tracking real nem homologação financeira. Entrega na PR existente, sem merge, release ou implantação. Filas/caches variam; tempo global só será declarado após a rodada completa.
+
+
+A rodada7e8b31af aprovou22workflows e10/11gruposHTTP, mas providers excedeu60min. A distribuição foi corrigida:89+leitor448 vão para sales-pdf e64 para tasks-domains, sem retirar cobertura.64 repetido com prazo19/11 passou integralmente em418,9s;83contratosCI e38testesNode também passaram. A duração integral da nova distribuição ainda precisa de CI concluído.

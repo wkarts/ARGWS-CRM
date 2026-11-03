@@ -56,7 +56,7 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'distinct isolated'):m.validate(changed,self.source)
  def test_self_contained_transition_timer_has_its_own_reader_in_sales_worker(self):
   self.assertIn(90,self.plan['groups']['sales-pdf']['owned'])
-  self.assertFalse(set([84,85,86,89])&m.selected(self.plan,'sales-pdf'))
+  self.assertFalse(set([84,85,86])&m.selected(self.plan,'sales-pdf'))
   section=self.source.split('#449_SHARD_FIXTURE_BEGIN\n',1)[1].split('#449_SHARD_FIXTURE_END',1)[0]
   owns=next(line for line in self.source.splitlines()if line.startswith('owns_shell()'))
   for group in [*self.plan['groups'],'all']:
@@ -71,7 +71,7 @@ class BrowserPlanTests(unittest.TestCase):
     if prepared:
      self.assertTrue(os.access(shim,os.X_OK));self.assertIn('ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',shim.read_text());self.assertIn('task_timer_http_fixture.php',log.read_text())
  def test_independent_recovery_ticket_and_task_policy_have_balanced_owners(self):
-  for index,owner in [(29,'expenses'),(32,'settings'),(64,'providers'),(72,'settings'),(73,'providers'),(83,'settings'),(84,'banking'),(89,'providers')]:
+  for index,owner in [(29,'expenses'),(32,'settings'),(64,'tasks-domains'),(72,'settings'),(73,'providers'),(83,'settings'),(84,'banking'),(89,'sales-pdf')]:
    self.assertIn(index,self.plan['groups'][owner]['owned'])
   self.assertFalse(set([33,34,84,85,86])&m.selected(self.plan,'providers'))
   section=self.source.split('#448_SHARD_FIXTURE_BEGIN\n',1)[1].split('#448_SHARD_FIXTURE_END',1)[0]
@@ -83,7 +83,7 @@ class BrowserPlanTests(unittest.TestCase):
     body+='docker(){ printf "%s\\n" "$*" >> '+shlex.quote(str(log))+'; }\n'+section
     result=subprocess.run(['bash','-c',body],cwd=ROOT,capture_output=True,text=True)
     self.assertEqual(result.returncode,0,result.stderr)
-    prepared=group in {'providers','all'};shim=root/'task448-php'
+    prepared=group in {'sales-pdf','all'};shim=root/'task448-php'
     self.assertEqual(shim.exists(),prepared)
     if prepared:
      self.assertTrue(os.access(shim,os.X_OK));self.assertIn('task_operations_http_fixture.php',log.read_text())

@@ -198,3 +198,10 @@ Cópia individual73: execução integral Chromium/MySQL aprovada em754,4s após 
 
 
 O envio c369fb9d foi recusado em49s pela auditoria estática de locators: o novo filter({has:autoFollow}) usava um alias indireto não auditado. Foi substituído pelo mesmo seletor CSS explícito dentro do filtro, sem alterar a auditoria ou a ação de GUI. Os38 testes Node do gate de interface passaram; PHP/layout/surface inventory também passaram. O ramoON→OFF da principal foi executado novamente emChromium com o seletor explícito e fotografia financeira exata preservada. A execução completa73 de754,4s continua como prova das mesmas operações/assertivas de cópia; a nova rodada remota prova a árvore exata com a forma explícita do seletor.
+
+
+## Reequilíbrio após o limite do grupo providers
+
+A rodada7e8b31af concluiu22 workflows com sucesso: núcleo45min42s (ambosPHP), banco47min42s (ambos bancos), foco26min42s e10/11gruposHTTP. Providers atingiu60min do job; o workflow terminoucancelado em1h07min37s e o monitorreprovou. Não houve comprovação integral nem resolução da duração nessa rodada. A coleta final verificou os24heads.
+
+O89 de prioridade/seguidores passa para sales-pdf (29min04s na rodada), com leitor448 e contratoBash no mesmo dono; o64 de recuperação passa para tasks-domains (38min17s). São os mesmos103comandos e11workers, sem aumento de limites ou retirada de checks. O prazo da tarefa64 passa a19/11, igual ao projeto e fora das janelas dos testes Calendar85/86. A execução completa64 foi repetida emChromium/MySQL e passou em418,9s, com valores51.00/50.00 exatos dos segundos fechados, claims, arquivo privado, cancelamento/replay, ownership e finanças intactos. Os83contratosCI e38testesNode deinterface passaram antes do envio. O ganho global aguarda a próxima rodada completa.

@@ -17,14 +17,14 @@ O manifest `tests/ci/standalone-browser-plan.json` conserva a cobertura das **10
 
 | Grupo | Domínio |
 |---|---|
-| sales-pdf | Vendas, linhas de recuperação, formatos PDF, recorrência de tarefas, equipe e leads |
+| sales-pdf | Vendas, linhas de recuperação, formatos PDF, prioridade/seguidores, recorrência de tarefas, equipe e leads |
 | projects | Projetos, arquivos e faturamento |
 | support | Contratos, suporte e APIs de operações |
 | expenses | Despesas, importação, relatórios, livro e sub-recursos da API |
 | banking | Portal de horas e sequência completa de navegadores Banco do Brasil |
-| providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA, provas TLS, recuperação operacional, cópia individual, prioridade/seguidores e RH |
+| providers | Gantt do portal, sequência Asaas, ciclo pós-devolução, IA, provas TLS, cópia individual e RH |
 | settings | Marcos do portal, configurações, recuperação, recorrência, cópia de projetos e compras |
-| tasks-domains | Portal de projetos/tarefas, preferências, calendário e timers |
+| tasks-domains | Portal de projetos/tarefas, recuperação operacional e calendário |
 | timers-a | Quatro pares de modalidades em A; recusas entre empresas, CSRF e política desatualizada |
 | timers-b | Quatro pares de modalidades em B e snapshots financeiros |
 | timers-primary | Quatro pares de modalidades na principal e snapshots financeiros |
@@ -78,3 +78,9 @@ Preferências de criação84 também são autossuficientes e usam apenas o onboa
 
 
 Suporte ainda somava60min15s no worker antes da redistribuição. Os cenários29 de sub-recursos e32 de discussão contratual também criam todas as origens e os tokens pela GUI, usando apenas clientes/contatos do onboarding comum. Passam integralmente para expenses e settings, respectivamente. Os casos30/31 conservam arquivos/publicação13/14 no suporte. Não há novos pré-requisitos repetidos nem workers adicionais. Esse reequilíbrio de oito cenários independentes reduz os trechos seriais identificados; o ganho só é confirmado pela rodada remota completa.
+
+
+Na rodada7e8b31af, núcleo passou em45min42s, banco em47min42s e foco em26min42s. Dez gruposHTTP passaram; tarefas/calendário terminou38min17s, vendas/PDF29min04s, e os demais grupos aprovados até44min26s. O grupo providers, acumulando64/73/89 além de seus domínios anteriores, tornou-se o último trecho e fez a janela total ultrapassar uma hora. O89 passa para sales-pdf, que já tem capacidade medida; seu leitor/task448-php acompanha o novo dono. O90 continua sem depender do89: ambos são donos no mesmo worker, sem replay de84/85/86. Mesmos103 comandos e onze workers, cobertura/asserções intactas. A próxima rodada mede a distribuição corrigida.
+
+
+O providers atingiu o limite de60min do job (workflow1h07min37s, monitor1h08min53s), sem completar sua sequência. Para manter margem no worker,64 também passa a tasks-domains, que havia concluído38min17s. Sua tarefa usa prazo19/11, igual ao prazo do próprio projeto, fora das janelas explícitas de Calendar85/86 (outubro e01/11). As comparações de horas/claims, cancelamento/replay, arquivo privado, ownership e finanças não mudam. Calendar conserva suas próprias origens e a recuperação é repetida localmente com o novo prazo antes do envio. O limite de60min e a reprovação de cobertura incompleta permanecem.

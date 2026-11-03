@@ -118,7 +118,7 @@ assert.equal(expectedAt100(3600),'100.00');
    const download=await context.request.post(base+'/admin/projects/portal_rules',{form:await hidden(fileForm)});
    assert.equal(download.status(),200);assert.match(download.headers()['content-type'],/application\/pdf/);assert((await download.body()).equals(pdf));
    // A task with two independently closed timers exercises whole-timer selection and cross-project batch forms.
-   const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'01/11/2026',assignee:actor});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
+   const taskInfo=await createNativeProjectTask(page,base,{projectCanonical:projectInfo.canonical,name:'Recovery439 selected task '+letter+' '+stamp,dueDate:'19/11/2026',assignee:actor});const task=taskInfo.sourceId;await openNativeTask(page,base,taskInfo.canonical);assert.match(task||'',/^[1-9]\d*$/);
    const firstTimer=await makeTimer('tblcompany_task_timers',task,1800),timer1=firstTimer.id;
    const secondTimer=await makeTimer('tblcompany_task_timers',task,1800),timer2=secondTimer.id;
    await page.goto(base+'/admin/projects/time_billing?project='+project);
