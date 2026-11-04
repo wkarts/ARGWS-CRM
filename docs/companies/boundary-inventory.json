@@ -2,12 +2,12 @@
   "format": 1,
   "purpose": "Review inventory only; lexical matches do not establish runtime isolation.",
   "operational_ready": false,
-  "files": 15173,
-  "unresolved_files": 15173,
+  "files": 15174,
+  "unresolved_files": 15174,
   "categories": {
     "core": 1293,
     "translation": 536,
-    "schema_history": 744,
+    "schema_history": 745,
     "dependency_boundary": 9306,
     "presentation": 1673,
     "provisioning": 19,
@@ -50,6 +50,6 @@
     "module:wiki": 78,
     "module:zillapage": 33
   },
-  "source_sha256": "b786de796792d26033561340b7eecc665dc983d57e91c5c71ab3b0b5ae8f1d60",
+  "source_sha256": "e08d74f3933f86cff1639a055b18b74d376828b457f5ab548cf129e50a06d98e",
   "detail_generation": "python scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json"
 }
