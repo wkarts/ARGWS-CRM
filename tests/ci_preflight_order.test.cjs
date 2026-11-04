@@ -4,10 +4,23 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const workflow=fs.readFileSync(path.join(__dirname,'../.github/workflows/deployment-integrity.yml'),'utf8');
+test('required deployment validation starts for every main PR and push',()=>{
+ for(const event of ['pull_request','push']) {
+  const trigger=workflow.match(new RegExp('^  '+event+':\\n((?:^    .*\\n)+)','m'));
+  assert.ok(trigger,'missing required event: '+event);
+  assert.match(trigger[1],/branches:\s*\[[^\]]*\bmain\b/);
+  assert.doesNotMatch(trigger[1],/\b(?:paths|paths-ignore|branches-ignore):/);
+ }
+});
 test('cheap packaging and security contracts run before browser and Rust setup',()=>{
  for(const command of ['tests/test_actions_cache_cleanup.py','tests/test_deployer_release_contract.py','tests/test_package_release.py','tests/test_package_deploy.py']) {
-  assert.equal(workflow.split(command).length-1,3,'two path filters and one execution: '+command);
-  assert.ok(workflow.indexOf('run: python3 -m unittest '+command)<workflow.indexOf('- uses: shivammathur/setup-php@v2'));
+  const execution='        run: python3 -m unittest '+command;
+  assert.equal(workflow.split('\n').filter(line=>line===execution).length,1,'exactly one execution: '+command);
+  const position=workflow.indexOf(execution);
+  const phpSetup=workflow.indexOf('- uses: shivammathur/setup-php@v2');
+  const browserSetup=workflow.indexOf('playwright" install --with-deps chromium');
+  const rustSetup=workflow.indexOf('actions-rust-lang/setup-rust-toolchain@v1');
+  assert.ok(position>=0 && position<phpSetup && position<browserSetup && position<rustSetup,'contract must run before tool setup: '+command);
  }
  assert.ok(workflow.indexOf('actions-rust-lang/setup-rust-toolchain@v1')>workflow.indexOf('run: bash tests/docker_provision_smoke.sh'));
  assert.match(workflow,/cargo \+1\.90\.0 test --manifest-path tools\/argws-crm-deployer\/Cargo.toml/);
