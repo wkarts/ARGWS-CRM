@@ -917,5 +917,11 @@ ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$IS
 ISSUERS_BROWSER_PHP_BINARY="$work/task451-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
 node tests/settings/task_timer_auto_stop_browser.cjs --owner primary
 
+# Offline payment catalogue GUI coverage: no financial transactions or provider calls.
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/payment_modes_browser.cjs
+
 [[ "$browser_index" = "${#browser_commands[@]}" && "$browser_completed" = "$browser_required" ]]
 echo "BROWSER_GROUP_COMPLETE group=$browser_group completed=$browser_completed required=$browser_required invocations=$browser_index"

@@ -23,10 +23,12 @@ class BrowserPlanTests(unittest.TestCase):
  def test_every_original_invocation_is_owned_exactly_once_and_ordered(self):
   m.validate(self.plan,self.source)
   owners=self.plan['common']+[i for g in self.plan['groups'].values() for i in g['owned']]
-  self.assertEqual(sorted(owners),list(range(103)))
+  self.assertEqual(sorted(owners),list(range(104)))
   self.assertEqual(self.plan['invocations'][0]['argv'],self.plan['invocations'][2]['argv'])
   self.assertNotEqual(self.plan['invocations'][0]['database'],self.plan['invocations'][2]['database'])
   self.assertEqual(self.plan['invocations'][56]['argv'][0],'--test')
+  self.assertEqual(self.plan['invocations'][103]['argv'],['tests/companies/payment_modes_browser.cjs'])
+  self.assertIn(103,self.plan['groups']['banking']['owned'])
  def test_missing_duplicate_new_commands_and_unknown_groups_fail_closed(self):
   p=copy.deepcopy(self.plan);p['groups']['sales-pdf']['owned'].pop()
   with self.assertRaises(ValueError):m.validate(p,self.source)

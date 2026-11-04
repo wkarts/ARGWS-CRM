@@ -23,5 +23,11 @@
   "application/views/admin/includes/native_company_layout_tail.php": "8e080fd8d756864a88bd025d4921558981beb405f3a97bab2be58edeccc8a269",
   "tests/asaas_preferences_real_browser.test.cjs": "b015bf6c75c1fbfcfed7594a164f2f032b4965741b3e1ce1b1765629dbc5baaf",
   "tests/helpers/native_browser_forms.cjs": "f7258b7dcf6ba94665f159db9719b30634e93ff5f85b76da2877d00e962e67dd",
-  "tests/companies/asaas_preferences_real_browser.cjs": "96aa664f38646639b24f3be58c0d61949dac3d24591eefd0e07b2714957ece43"
+  "tests/companies/asaas_preferences_real_browser.cjs": "96aa664f38646639b24f3be58c0d61949dac3d24591eefd0e07b2714957ece43",
+  "application/views/admin/paymentmodes/paymentmode.php": "b310126012d5b2c8a1f4689066e2a96c68cbe30d112f2decd3e831bad72bf2a7",
+  "tests/native_payment_mode_transport.test.cjs": "c6e9a85c421776cab75040cd4b0d3df81799ca67819db6dc049dec54b3e68b7e",
+  "tests/companies/payment_modes_browser.cjs": "9e4d4a1d472faa33bad155192210cb48d40b496bf443469c8c5451ee7e022a2f",
+  "tests/ci/standalone-browser-plan.json": "065393e5fe529016fdc3e5513c8ecf1c4227fb56832ba478f40610683fc99464",
+  "tests/ci/test_standalone_browser_plan.py": "e07cd1ee6ea4aa49a0dde5111cd1d76da5a2c1ddbd33b923f870eba14c19ff87",
+  "tests/issuers_standalone_http_smoke.sh": "c293dadff2043c743eec0fdeadeb56e49275369cd3786bbdcedbe6779dd48013"
 }

@@ -105,3 +105,13 @@ As alterações de layout tiveram seus hashes regenerados pelos três geradores 
 Foram executados oito comandos direcionados (todos aprovados), incluindo 39 testes Node e as fixtures PHP de Settings, navegação, layout, cabeçalho e contexto de rota. `http-layout-local.json.gz` preserva logs e resultados, inclusive as reproduções anteriores às correções.
 
 Evidência HTTP adicional de aba7d33: onboarding, certificado, contatos/portal, faturas/PDF/recibos/anexos, créditos e projetos/Gantt passaram nos trechos anteriores às falhas. O job banking passou integralmente, incluindo adaptações BB/CNAB, callback e preferências de tarefas, com transportes sintéticos e sem homologação bancária. Isso não transforma os jobs de timers, despesas, projetos e provedores em aprovados.
+
+## Meios de pagamento: correção funcional adicional
+
+O callback real `manage_payment_modes` sempre executava `JSON.parse(response)`. O controller nativo responde `application/json`, portanto o jQuery entrega um objeto: o cadastro podia persistir, mas o callback lançava `SyntaxError` antes de atualizar a tabela e fechar o modal. A mesma decodificação incondicional já existe na main; não foi atribuída exclusivamente à PR.
+
+A view agora decodifica somente respostas em texto, preservando o backend legado e o retorno JSON nativo. A reprodução executa a função real da view: antes, os dois casos de objeto falham; depois, os seis contratos de transporte/formulário passam. O controller e o serviço passaram por 154 verificações acumuladas em SQLite, incluindo ACL, issuer, revisão, rollback, referências históricas e CSRF.
+
+Foi adicionada a invocação 103 (104 no total) ao grupo HTTP banking: `tests/companies/payment_modes_browser.cjs`. Ela usa somente os formulários reais e registros manuais descartáveis, sem criar pagamentos. Cobre principal/A/B, criação, descrição literal, edição, desativação, exclusão, atualização da tabela/modal, ausência de erros JS, contexto e revisão obsoletos, acesso cruzado, CSRF nativo ausente e rejeição de GET mutante. As consultas diretas são apenas SELECT; nenhuma gravação de fixture substitui o CRUD da interface. A execução HTTP desse teste continua pendente até a conclusão do CI do commit que o contém.
+
+O plano mantém todas as 103 invocações anteriores e acrescenta a nova com um único responsável; 12 testes de cobertura/particionamento passam. Logs locais estão em `meios-pagamento-local.json.gz`.
