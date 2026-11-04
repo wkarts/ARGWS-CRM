@@ -1,0 +1,8 @@
+
+Fatal error: Uncaught RuntimeException: issuer_storage_failed in /workspace/scratch/2f211aa1d1ef/ARGWS-CRM/application/services/issuers/IssuerStorage.php:42
+Stack trace:
+#0 /workspace/scratch/2f211aa1d1ef/ARGWS-CRM/application/services/issuers/IssuerStorage.php(27): IssuerStorage::run(Object(EssentialTestDb), Object(Closure))
+#1 /workspace/scratch/2f211aa1d1ef/ARGWS-CRM/application/services/NativeCompanyHeaderSchema.php(82): IssuerStorage::query(Object(EssentialTestDb), 'CREATE TABLE IF...')
+#2 /workspace/scratch/2f211aa1d1ef/ARGWS-CRM/tests/native_context.php(131): NativeCompanyHeaderSchema::ensure(Object(EssentialTestDb), 'essential_3771d...')
+#3 {main}
+  thrown in /workspace/scratch/2f211aa1d1ef/ARGWS-CRM/application/services/issuers/IssuerStorage.php on line 42

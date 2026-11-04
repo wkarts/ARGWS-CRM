@@ -1,0 +1,3 @@
+{"files": 678, "states": {"unreviewed": 648, "partial": 30}, "operational_rollout": "blocked", "errors": 679}
+exit_code=1
+Operational gate remains blocked. Inventory alone does not prove authorization, document isolation or provider safety.

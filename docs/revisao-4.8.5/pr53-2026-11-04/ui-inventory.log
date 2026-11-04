@@ -1,0 +1,2 @@
+Static UI inventory PASS: 16 views, 6 controllers; kinds={'company-shell': 1, 'partial': 10, 'unresolved-fragment': 1, 'native-shell': 2, 'modal-document': 2}
+Not a PHP render, route authorization, asset load, browser or visual-fidelity test. Unresolved fragments remain documented gaps.

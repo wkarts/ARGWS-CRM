@@ -3,9 +3,9 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
-Module Name: Folha de Pagamento de RH 2024 v1.1.0
+Module Name: Folha de Pagamento de RH 2024 v1.1.1
 Description: Este módulo abrange tudo o que envolve a integração e o pagamento de seus funcionários.
-Version: 1.1.0
+Version: 1.1.1
 Requires at least: 2.3.*
 Author: Wkarts
 Author URI: https://t.me/wkartspro

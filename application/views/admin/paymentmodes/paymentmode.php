@@ -132,7 +132,7 @@
         var data = $(form).serialize();
         var url = form.action;
         $.post(url, data).done(function(response) {
-            response = JSON.parse(response);
+            if (typeof response === 'string') response = JSON.parse(response);
             if (response.success == true) {
                 $('.table-payment-modes').DataTable().ajax.reload();
                 alert_float('success', response.message);

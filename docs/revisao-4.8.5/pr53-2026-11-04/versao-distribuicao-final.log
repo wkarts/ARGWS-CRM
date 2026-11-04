@@ -1,0 +1,9 @@
+..............................................usage: package-release.py [-h] [--base-dir BASE_DIR | --base-zip BASE_ZIP]
+                          [--source-dir SOURCE_DIR] [--repair-tag REPAIR_TAG]
+                          --output-dir OUTPUT_DIR
+package-release.py: error: Reparo exige --base-dir da base histórica verificada.
+................................
+----------------------------------------------------------------------
+Ran 78 tests in 34.823s
+
+OK

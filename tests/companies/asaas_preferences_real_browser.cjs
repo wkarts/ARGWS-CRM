@@ -11,7 +11,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {environment: settingsEnvironment} = require('./asaas_settings_real_browser.cjs');
 
-const NATIVE_TAB_ASSETS = Object.freeze({css: 'assets/builds/vendor-admin.css', script: 'assets/plugins/bootstrap/js/bootstrap.min.js'});
+// The official admin presentation loads Bootstrap from its vendor bundle.
+const NATIVE_TAB_ASSETS = Object.freeze({css: 'assets/builds/vendor-admin.css', script: 'assets/builds/vendor-admin.js'});
 // Called in the real page. Return booleans only; never leak page/account content.
 function nativeTabAssetFacts(assets, doc = document, jq = window.jQuery) {
   const links = doc.querySelectorAll('link[rel="stylesheet"][href*="' + assets.css + '"]');
@@ -227,7 +228,7 @@ async function run(env = process.env) {
           check(response.status() === 200, 'actual nominal preferences render: ' + owner.letter);
           check((response.headers()['cache-control'] || '').includes('no-store'), 'real nominal view prevents cached account/preferences recovery');
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'header confirms the actual active owner');
-          check(await page.locator('body.company-context-shell').count() === 1 && await page.locator('script[src*="assets/js/native-admin-tabs.js"]').count() === 1, 'real company shell and native tabs asset are present');
+          check(await page.locator('body.native-company-admin').count() === 1 && await page.locator('script[src*="assets/js/native-admin-tabs.js"]').count() === 1, 'real official company shell and native tabs asset are present');
           const nativeAssets = await page.evaluate(nativeTabAssetFacts, NATIVE_TAB_ASSETS);
           check(nativeAssets.stylesheet, 'actual native vendor stylesheet is loaded and readable');
           check(nativeAssets.tabStyles, 'actual native vendor stylesheet contains Bootstrap tab visibility rules');

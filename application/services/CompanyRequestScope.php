@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/CompanyContext.php';
 require_once __DIR__ . '/NativeCompanyRoutes.php';
 require_once __DIR__ . '/NativeCompanyResourceId.php';
+require_once __DIR__ . '/NativeSettingsCompatibility.php';
 require_once __DIR__ . '/issuers/IssuerCore.php';
 
 /** Pre-hydration browser boundary, deliberately separate from job/webhook service scopes. */
@@ -25,7 +26,7 @@ final class CompanyRequestScope
             || (class_exists('InstallationMigrationBootstrap', false) && InstallationMigrationBootstrap::isRunning())) { return false; }
         $directory = trim((string) $ci->router->fetch_directory(), '/');
         $class = strtolower((string) $ci->router->fetch_class());
-        if ($class === 'authentication') { return false; }
+        if ($class === 'authentication' && strtolower((string)$ci->router->fetch_method()) !== 'get_qr') { return false; }
         // Module AdminControllers also require the browser boundary. Public/job routes never inspect session.
         return $directory === 'admin' || $ci instanceof AdminController || self::companyBbRoute($ci)
             || self::staffCustomerDownloadRoute($ci);
@@ -255,10 +256,10 @@ final class CompanyRequestScope
             // issuer-owned Google/Microsoft mail authorization forms.
             $sharedSettings = $native && $class === 'settings'
                 && in_array($method,['index','remove_company_logo','remove_signature_image','remove_fv','company_asset','delete_tag','google_mail_oauth','microsoft_mail_oauth'],true);
-            // Global gateway profiles retain their original installation-company
-            // renderer; named companies still cannot enter this global form.
-            if ($sharedSettings && $method === 'index' && self::$context->isPrimary()
-                && $ci->input->get('group', false) === 'payment_gateways') {
+            // Installation-owned settings retain their original primary-company
+            // renderer; named companies cannot enter these global forms.
+            if ($sharedSettings && $method === 'index'
+                && NativeSettingsCompatibility::usesInstallationForm(self::$context->isPrimary(), $ci->input->get('group', false))) {
                 $sharedSettings = false;
             }
             // Customer import/export uses one owned writer and the original
@@ -273,6 +274,9 @@ final class CompanyRequestScope
             $sharedOwnedContract=$native&&self::ownedContractRoute($ci,$class,$method);
             $sharedOwnedClient = $native && self::ownedClientRoute($ci, $class, $method);
             $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method)||self::ownedExpenseRoute($ci,$class,$method));
+            // The offline catalogue already preserves primary historical IDs.
+            // Use its issuer-aware adapter for the primary company as well.
+            $sharedPaymentModes = $native && $class === 'paymentmodes';
             $sharedOwnedLead = $native && $class === 'leads'
                 && in_array($method, ['index', 'file', 'export'], true);
             // Credit notes already dispatch through the bounded native adapter
@@ -291,11 +295,12 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
             if ($staffCustomerDownload && !self::$nativePresentation) self::deny($ci, 'native_customer_file_method_invalid', 405);
+            if ($sharedPaymentModes && !self::$nativePresentation) self::deny($ci, 'native_payment_modes_method_invalid', 405);
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if($sharedInvoiceRecurring&&!self::$nativePresentation)self::deny($ci,'native_invoice_recurring_method_invalid',405);

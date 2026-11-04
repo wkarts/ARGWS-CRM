@@ -638,6 +638,12 @@
         "primary"
       ],
       "database": "argws_upgrade_ci"
+    },
+    {
+      "argv": [
+        "tests/companies/payment_modes_browser.cjs"
+      ],
+      "database": "argws_upgrade_ci"
     }
   ],
   "groups": {
@@ -727,7 +733,8 @@
         82,
         84,
         87,
-        88
+        88,
+        103
       ],
       "prerequisites": []
     },

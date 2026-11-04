@@ -1,0 +1,13 @@
+✔ todos os modelos dos módulos mapeados são PT-BR e preservam HTML e variáveis (16.277752ms)
+✔ módulos antigos e novos usam PT-BR e reconciliação sem apagar personalizações (1.536495ms)
+✔ o rótulo é LGPD e o item de configurações é somente Plataforma (1.294661ms)
+✔ os gatilhos existentes mantêm IDs e mensagens; novos são desativados por padrão (0.383568ms)
+✔ novos 10 eventos correspondem a hooks existentes e usam Connect|API (0.311189ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.329324

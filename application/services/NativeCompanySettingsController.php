@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanySettingsForms.php';
 require_once __DIR__.'/NativeSettingsSections.php';
+require_once __DIR__.'/NativeSettingsCompatibility.php';
 /** Adapter for Settings::index and the existing admin/settings/all template only. */
 final class NativeCompanySettingsController
 {
@@ -188,11 +189,28 @@ final class NativeCompanySettingsController
             $forms=new NativeCompanySettingsForms($ci->db,db_prefix());$forms->authorize($issuer,$actor,'view');
             $group=$ci->input->get('group')?:'general';if(!is_string($group))throw new DomainException('native_settings_invalid');
             $supported=array_fill_keys(NativeCompanySettingsForms::availableGroups(),true);if(!CompanySettingsRuntime::can('edit'))unset($supported['certificates']);
+            $supported['payment_gateways']=true;
+            // The principal retains its original installation controls. Other
+            // issuers never inherit global writers, credentials or cron controls.
+            $installationSettings=CompanySettingsRuntime::canInfrastructure();
+            if($installationSettings)$supported+=array_fill_keys(NativeSettingsCompatibility::PRIMARY_GROUPS,true);
             $sections=NativeSettingsSections::collect();
+            if($installationSettings){
+                $activeModules=array_column(IssuerStorage::query($ci->db,'SELECT module_name FROM '.db_prefix().'modules WHERE active=1')->result_array(),'module_name');
+                $sections=NativeSettingsCompatibility::appendInstallationSections($sections,$activeModules);
+            }
             foreach($sections as$key=>$section){$section['children']=array_values(array_filter($section['children'],static fn($child)=>isset($supported[$child['id']])));if($section['children']===[])unset($sections[$key]);else$sections[$key]=$section;}
             $selected=null;
             foreach($sections as$section)foreach($section['children']as$child)if($child['id']===$group)$selected=$child;
             if($selected===null)throw new DomainException('native_settings_group_unavailable');
+            $selected['installation_controls']=$installationSettings;
+            if($group==='payment_gateways'){
+                if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
+                $selected['view']='admin/settings/includes/native_payment_gateways';
+                $selected['without_submit_button']=true;
+                $ci->load->view('admin/settings/all',['title'=>_l('settings'),'sections'=>$sections,'group'=>$selected,'admin_tabs'=>[],'native_settings'=>true,'native_settings_revision'=>'','native_settings_can_edit'=>false]);
+                return;
+            }
             if($group==='tags'){self::tags($ci,$issuer,$actor,$sections,$selected);return;}
             NativeCompanySettingsForms::fields($group);
             $method=strtoupper($ci->input->method(true));

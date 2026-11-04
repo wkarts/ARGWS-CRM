@@ -68,7 +68,13 @@ $this->confirmBoundary($issuer,$actor,$references,[$written],$this->reservedSequ
 
     /** Search only visible document content; remove private fields before SQL matching. */
     private static function searchablePayloadExpression():string
-    {return "(CASE WHEN json_valid(payload_json) THEN json_remove(payload_json,'$.native_custom_fields','$.native_fields.adminnote') ELSE '' END)";}
+    {
+        // MariaDB can return SQL NULL when JSON_REMOVE traverses a missing
+        // nested parent. Guard each optional path instead of falling back to
+        // the raw payload, which would make private notes searchable.
+        $public="(CASE WHEN json_extract(payload_json,'$.native_custom_fields') IS NULL THEN payload_json ELSE json_remove(payload_json,'$.native_custom_fields') END)";
+        return "(CASE WHEN json_valid(payload_json) THEN (CASE WHEN json_extract(payload_json,'$.native_fields.adminnote') IS NULL THEN ".$public." ELSE json_remove(".$public.",'$.native_fields.adminnote') END) ELSE '' END)";
+    }
 
     /** SQL projection narrows the search before owned-document hydration. Values are never trusted until owned() verifies both snapshots. */
     private function relationNumberExpression(string $kind):string

@@ -20,6 +20,8 @@ final class CompanySettingsRuntime
     public static function issuerId():int{return self::$issuer;}
     public static function staffId():int{return self::$actor;}
     public static function can(string $capability):bool{return$capability==='view'||($capability==='edit'&&self::$edit);}
+    // Actor 2 has company Settings permissions, never installation administration.
+    public static function canInfrastructure():bool{return false;}
 }
 final class CompanyRequestScope
 {
@@ -81,6 +83,7 @@ CompanyRequestScope::$context=new A1SettingsContext();
 $ci=new A1SettingsCi($db);NativeCompanySettingsController::index($ci);$view=end($ci->load->views);
 a1check($view[0]==='admin/settings/all'&&$view[1]['group']['id']==='certificates','official Settings shell owns the certificate group');
 a1check($view[1]['native_settings_certificate']['status']==='unconfigured'&&$view[1]['native_settings_revision']==='0','GET exposes only the selected company safe descriptor and revision');
+a1check($view[1]['group']['installation_controls']===false,'company certificate editor does not inherit installation controls');
 a1check(in_array('Cache-Control: no-store',$ci->output->headers,true),'official certificate GET is not cached');
 
 $ci=new A1SettingsCi($db);$ci->input->verb='DELETE';NativeCompanySettingsController::index($ci);

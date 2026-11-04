@@ -81,7 +81,11 @@ final class NativeCompanyLegacySales
                 'payload'=>['client_id'=>(int)($frame['client']['userid']??0),'currency'=>(int)$row['currency'],'date'=>$row['date'],'due_date'=>$row[$kind==='estimates'?'expirydate':'open_till']??'','note'=>$row['clientnote']??'','items'=>$items],
                 'context'=>['issuer_id'=>$issuer,'identity'=>$frame['identity']+['address'=>$address],'recipient'=>['name'=>$frame['client']['company']??($row['proposal_to']??''),'tax_id'=>$frame['client']['vat']??''],'currency'=>$frame['currency']],
                 'stored_amounts'=>array_intersect_key($row,array_flip(['subtotal','total_tax','discount_total','adjustment','total'])),'pdf_options'=>array_intersect_key($options,array_flip(['pdf_format_estimate','pdf_format_proposal','pdf_font','pdf_font_size'])),'payments'=>$frame['payments'],'history'=>$frame['history']];
-            $result['edit_history']=$this->rows("SELECT id,actor_id,created_at,metadata_json FROM {$this->prefix}issuers_audit WHERE issuer_id=? AND subject_id=? AND event='native_legacy_sales_edited' AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.source')=JSON_EXTRACT(?,'$.source') ORDER BY id DESC LIMIT 200",[$issuer,$id,json_encode(['source'=>$kind],JSON_THROW_ON_ERROR)]);
+            // Compare scalar source names, not JSON expression wrappers: MariaDB
+            // may compare identical JSON_EXTRACT results as unequal. Keep binary
+            // matching on MySQL/MariaDB so another source cannot alias this kind.
+            $source=IssuerStorage::jsonStringColumn($this->db,'metadata_json','source');
+            $result['edit_history']=$this->rows("SELECT id,actor_id,created_at,metadata_json FROM {$this->prefix}issuers_audit WHERE issuer_id=? AND subject_id=? AND event='native_legacy_sales_edited' AND JSON_VALID(metadata_json) AND ".$source."=? ORDER BY id DESC LIMIT 200",[$issuer,$id,$kind]);
             if(self::revision($this->frame($issuer,$actor,$kind,$id))!==$result['revision_token'])throw new DomainException('company_sales_stale');
             return $result;
         });

@@ -18,10 +18,10 @@ function _l(...$args){throw new RuntimeException('Global translation hooks forbi
 function get_option(...$args){throw new RuntimeException('Global options forbidden');}
 function get_instance(){return $GLOBALS['fixture'];}
 class CompanyRequestScope {
- static $ci; static $issuer=2; static $token='2:revision'; static $native=true;
+ static $ci; static $issuer=2; static $token='2:revision'; static $native=true; static $primary=false;
  static function nativeFor($ci){return self::$native && $ci===self::$ci;}
  static function sealedFor($ci){return $ci===self::$ci;}
- static function context(){return new class {function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 17;}};}
+ static function context(){return new class {function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 17;}function isPrimary(){return CompanyRequestScope::$primary;}};}
  static function token(){return self::$token;}
  static function nativeCsrfToken($ci){return 'synthetic-native-csrf';}
  static function nativeRouteAllowed($ci,$route){return in_array($route,['','clients','clients/client','invoices','projects','tasks','tasks/task','settings','todo','departments'],true);}
@@ -55,7 +55,7 @@ class NativeCompanyAuxiliaryUi {
  function todoCounts(){return [0=>5,1=>2];}
 }
 class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function member($issuer,$actor){return $issuer===2&&$actor===17;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
-class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){private $sql;function __construct($sql){$this->sql=$sql;}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
+class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){private $sql;function __construct($sql){$this->sql=$sql;}function result_array(){return [];}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
 class Fixture {
  public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public array $vars=[];
  function __construct(){ $this->config=new class {public bool $csrf=false;function item($key){check($key==='csrf_protection','only infrastructure CSRF config');return $this->csrf;}};$this->security=new class {function get_csrf_token_name(){return 'fixture_csrf';}function get_csrf_hash(){return 'fixture-framework-hash';}};$this->db=new stdClass; $this->session=new class {function has_userdata($key){check($key==='setup-menu-open','only actor UI session key');return true;}function userdata($key){return false;}}; $this->lang=(object)['language'=>[]];$this->load=$this; $this->router=new class {function fetch_class(){return 'dashboard';}function fetch_method(){return 'index';}}; }
@@ -90,6 +90,11 @@ IssuerResourceAccess::$administrative=false;NativeCompanyAdminPresentation::prep
 check(count(array_filter($limited['setup_menu']['support']['children']??[],static fn($child)=>$child['slug']==='departments'))===0,'Departments is hidden when the actor is not an administrator');
 IssuerResourceAccess::$administrative=true;NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);
 check(!isset($data['sidebar_menu']['subscriptions']),'unauthorized/unimplemented entries absent');
+CompanyRequestScope::$primary=true;NativeCompanyAdminPresentation::prepare($ci);$primaryMenu=NativeCompanyAdminPresentation::current($ci);
+check(isset($primaryMenu['setup_menu']['custom-fields'],$primaryMenu['setup_menu']['email-templates'],$primaryMenu['setup_menu']['roles']),'primary administrator retains original installation definitions');
+check(count(array_filter($primaryMenu['setup_menu']['finance']['children'],static fn($item)=>$item['slug']==='currencies'))===1,'primary currency settings preserved');
+CompanyRequestScope::$primary=false;NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);
+check(!isset($data['setup_menu']['custom-fields']),'secondary cannot inherit installation-only pages');
 $app=NativeCompanyAdminPresentation::appConfig($ci);
 check($app['options']['tables_pagination_limit']==='37' && $app['options']['decimal_places']===2 && isset($app['lang']['datatables']['paginate']['next']),'real native tables payload without global hooks');
 check($app['options']['date_format']==='d/m/Y' && $app['options']['has_permission_create_task']===true,'native app uses persisted formatting and actual create ACL');

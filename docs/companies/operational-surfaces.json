@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "dc55153f1eba9c92cc6548d4896c5974ca3e47c63afa42ab72e348ed0654d04e",
+    "source_manifest_sha256": "7b6ffb0a405c3b3af462f539d1f297d80eedc01d4254b31be548c67aabd55533",
     "counts": {
         "modules": 38,
-        "source_files": 4690,
+        "source_files": 4697,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
@@ -1107,7 +1107,7 @@
         {
             "name": "hr_payroll",
             "entry": "modules/hr_payroll/hr_payroll.php",
-            "version": "1.1.0",
+            "version": "1.1.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1816,7 +1816,7 @@
         {
             "name": "purchase",
             "entry": "modules/purchase/purchase.php",
-            "version": "1.5.3",
+            "version": "1.5.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -6504,7 +6504,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 431,
-            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
+            "source_sha256": "c881988937002bfda0c20f4eb92dcaff90437bff73029e7900ee9471dd2f4613",
             "call": "update_option",
             "expression": "'company_logo' . ($type == 'dark' ? '_dark' : '')",
             "state": "requires_call_site_review"
@@ -6512,7 +6512,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 449,
-            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
+            "source_sha256": "c881988937002bfda0c20f4eb92dcaff90437bff73029e7900ee9471dd2f4613",
             "call": "delete_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -6520,7 +6520,7 @@
         {
             "path": "application/controllers/admin/Settings.php",
             "line": 456,
-            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
+            "source_sha256": "c881988937002bfda0c20f4eb92dcaff90437bff73029e7900ee9471dd2f4613",
             "call": "delete_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -6903,8 +6903,8 @@
         },
         {
             "path": "application/views/admin/settings/includes/payment_gateways.php",
-            "line": 40,
-            "source_sha256": "9690d673c79c4d06ddc73c764ba89e3733f86536be464f82f085d943fdfac461",
+            "line": 41,
+            "source_sha256": "006fdf331f0171163e656e1af9fc7a782793cc19129846119fa9afed6b17caed",
             "call": "get_option",
             "expression": "$option['name']",
             "state": "requires_call_site_review"
@@ -7272,7 +7272,7 @@
         {
             "path": "modules/purchase/purchase.php",
             "line": 1256,
-            "source_sha256": "6a676231abb8abced48924eed27962e7810ffb52002ae1183d189b90f6ec16d3",
+            "source_sha256": "e4db0423b9732add3948b16c37b37286b0ca0bbf9e933003ff2c03ff26c230be",
             "call": "get_option",
             "expression": "$main_area",
             "state": "requires_call_site_review"
@@ -8962,7 +8962,7 @@
         },
         {
             "path": "application/controllers/admin/Authentication.php",
-            "source_sha256": "e715c10b6951d5bd1c489bb610263a16e525d2fbff407abe512465251598f66c",
+            "source_sha256": "0697e9413b2e4bf0449ef1ed3b6d0d18f7e2001388d704ddca9f971f5d0e305e",
             "module": null,
             "base_class": "App_Controller",
             "surface": "admin",
@@ -12190,7 +12190,7 @@
         },
         {
             "path": "application/controllers/admin/Settings.php",
-            "source_sha256": "7832c510f85908c07f02285f98f591c6fd7b4b9dafa9b95fc5802043cf897009",
+            "source_sha256": "c881988937002bfda0c20f4eb92dcaff90437bff73029e7900ee9471dd2f4613",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -18503,7 +18503,7 @@
         },
         {
             "path": "modules/hr_payroll/controllers/Hr_payroll.php",
-            "source_sha256": "89712afcbbc1f25e7efacda28bbe64fe35a5a6f2f51515d95ed6e53c2d58923f",
+            "source_sha256": "996cd7871ad8ece8b2754456268487ffc2da3aeeef85fc4c9fd65d7a10312a5e",
             "module": "hr_payroll",
             "base_class": "AdminController",
             "surface": "admin",
@@ -23265,7 +23265,7 @@
         },
         {
             "path": "modules/purchase/controllers/Vendors_portal.php",
-            "source_sha256": "e0161404a54eb4925010ea0c5945afe3eebf56dc461b8231dc09f52c241a70c6",
+            "source_sha256": "cc932b09fd5262d240852bfdc33f899d0813ccc225408ec1e15fe3a2edb7cac9",
             "module": "purchase",
             "base_class": "App_Controller",
             "surface": "public_or_api_or_job",
@@ -29315,7 +29315,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 103
+            "reference_count": 106
         },
         {
             "name": "mrp_manufacturing_orders",

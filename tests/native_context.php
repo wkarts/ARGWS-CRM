@@ -126,6 +126,18 @@ function contextEnvironment($f, ContextSession $session, string $class = 'dashbo
 }
 $f = essentialFixture(); $db = $f->db; $p = $f->prefix;
 essentialSeedSchema($f);
+// The enabled header now reads the real issuer-owned storage installed by 474.
+// MySQL validates the contact foreign key when creating the header tables.
+// Install its original parent DDL; SQLite alone cannot expose this omission.
+if ($db->driver() === 'mysql') {
+    require_once __DIR__.'/support/NativeInstalledSchemaFixture.php';
+    $nativePlan = NativeInstalledSchemaFixture::plan(file_get_contents(dirname(__DIR__).'/install/database.sql'), $p);
+    $db->query($nativePlan['contacts']['create']);
+    foreach ($nativePlan['contacts']['alters'] as $sql) { $db->query($sql); }
+    unset($db->data_cache['table_names']);
+}
+require_once APPPATH.'services/NativeCompanyHeaderSchema.php';
+NativeCompanyHeaderSchema::ensure($db,$p);
 $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,settings_json,created_by,created_at) VALUES(41,'Principal synthetic','12345678000195',1,'{}',7,'2026-10-18')");
 $db->query("INSERT INTO {$p}options VALUES('company_vat','12345678000195')");
 IssuerCore::reconcile($db, $p); IssuerCore::bindInstallationMaster($db, $p, 7);
@@ -235,6 +247,16 @@ CompanyRequestScope::finish();
 essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears finance settings context');
 // Prove the existing Settings URL is explicitly attested before native hydration.
 $db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(54,8,'settings','view'),(54,8,'settings','edit')");
+foreach(['smtp_oauth_google','smtp_oauth_microsoft'] as $oauthController){
+    $ci=contextEnvironment($f,$s,$oauthController,'token','GET');CompanyRequestScope::beforeHydration($ci);
+    essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54,'authenticated OAuth return retains secondary scope');
+    $nativeHeaderCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+}
+$ci=contextEnvironment($f,$s,'authentication','get_qr','POST');$_POST=['_company_context'=>$tokenB,'_native_company_csrf'=>$nativeHeaderCsrf];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci),'two-factor setup uses its existing scoped writer');CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'authentication','get_qr','POST');$_POST=['_company_context'=>$tokenB];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'authentication','admin','GET');essentialCheck(!CompanyRequestScope::interactive($ci),'login keeps its original authentication bootstrap');
+
 $ci = contextEnvironment($f, $s, 'settings', 'index'); hooks()->trace = [];
 CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci) && CompanyRequestScope::sealedFor($ci), 'existing Settings index is native and sealed before controller hydration');
@@ -344,6 +366,17 @@ $ci=contextEnvironment($f,$s,'utilities','view_event','POST');$_POST=['_company_
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken,'_native_company_csrf'=>$principalCalendarCsrf];CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal calendar POST enforces and strips both native boundary tokens');CompanyRequestScope::finish();
+// The actual pre-hydration boundary must select the same offline adapter for principal and secondary.
+$ci=contextEnvironment($f,$s,'paymentmodes','index');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41&&CompanyRequestScope::isolated(),'principal offline catalogue enters the native adapter');
+essentialCheck(hooks()->trace===[],'principal offline catalogue does not bootstrap global gateway hooks');
+$modeToken=CompanyRequestScope::token();$modeCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+foreach(['manage','delete','change_payment_mode_status','change_payment_mode_show_to_client_status']as$modeAction){
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'GET');expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'POST');$_POST=['_company_context'=>$modeToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'POST');$_POST=['_company_context'=>$modeToken,'_native_company_csrf'=>$modeCsrf];CompanyRequestScope::beforeHydration($ci);
+ essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal offline '.$modeAction.' validates and strips both native tokens');CompanyRequestScope::finish();
+}
 foreach(['index','add','ticket']as$ticketAction){$ci=contextEnvironment($f,$s,'tickets',$ticketAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal original Tickets/'.$ticketAction.' selects the bounded historical/owned adapter');CompanyRequestScope::finish();}
 foreach([['projects','billing_rates'],['projects','fixed_billing'],['tasks','billing']]as[$boundedClass,$boundedAction]){$ci=contextEnvironment($f,$s,$boundedClass,$boundedAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::isolated(),'primary bounded '.$boundedClass.'/'.$boundedAction.' retains its native presentation and guards');CompanyRequestScope::finish();}
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();

@@ -1,0 +1,4 @@
+{"files": 678, "states": {"unreviewed": 648, "partial": 30}, "operational_rollout": "blocked", "errors": 0}
+15173 files; 15173 unresolved; operational_ready=False
+{"modules":38,"source_files":4697,"literal_option_keys":680,"dynamic_option_references":160,"controllers":205,"hook_candidates":555,"job_file_candidates":70,"report_file_candidates":304,"table_name_candidates":921,"database_call_candidates":12539}
+Inventory matches; operational readiness remains blocked.

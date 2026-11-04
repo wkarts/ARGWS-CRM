@@ -89,7 +89,7 @@ final class InvoicePaymentWriter
         return \IssuerTransaction::run($this->db,$p,$this->nativeManualModeTables(),function()use($issuer,$actor,$p,$items,$requestKey,$hash,$event):array{
             $acl=new \IssuerResourceAccess($this->db,$p);$acl->lockFinancialIdentity($issuer,$actor);
             foreach([['invoices','view'],['payments','create']]as[$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new \DomainException('company_payment_access_denied');
-            $prior=\IssuerStorage::query($this->db,"SELECT actor_id,metadata_json FROM {$p}issuers_audit WHERE issuer_id=? AND event=? AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$issuer,$event,json_encode(['request_key'=>$requestKey],JSON_THROW_ON_ERROR)])->result_array();
+            $prior=\IssuerStorage::query($this->db,"SELECT actor_id,metadata_json FROM {$p}issuers_audit WHERE issuer_id=? AND event=? AND JSON_VALID(metadata_json) AND ".\IssuerStorage::jsonStringColumn($this->db,'metadata_json','request_key')."=? ORDER BY id",[$issuer,$event,$requestKey])->result_array();
             if(count($prior)>1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
             if($prior){$proof=json_decode($prior[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR);if((int)$prior[0]['actor_id']!==$actor||($proof['input_hash']??null)!==$hash)throw new \DomainException('company_payment_request_conflict');}
             $this->nativeBatchContext=[$issuer,$actor];$ids=[];

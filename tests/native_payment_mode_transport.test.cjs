@@ -4,3 +4,28 @@ function fixture(remove=false){let listener,request,done,fail,always,reloads=0;c
 test('native toggle POST revision, intercepts generic GET, suppresses duplicate while busy',()=>{const f=fixture();f.click();assert.equal(f.request.url,'/admin/paymentmodes/change_payment_mode_status/123/1');assert.equal(f.request.data.revision,'a'.repeat(64));assert.equal(f.prevented,1);assert.equal(f.stopped,1);const old=f.request;f.click();assert.equal(f.request,old);f.success();assert.equal(f.reloads,1);assert.equal(f.target.dataset.busy,undefined);});
 test('failure restores previous state without automatic replay',()=>{const f=fixture();f.click();const request=f.request;f.failure();assert.equal(f.target.checked,false);assert.equal(f.request,request);assert.equal(f.reloads,0);});
 test('native delete remains same URL but POST with revision',()=>{const f=fixture(true);f.click();assert.equal(f.request.url,'/admin/paymentmodes/delete/123');assert.equal(f.request.data.revision,'a'.repeat(64));});
+
+// Execute the actual shared form callback, including jQuery's JSON response type.
+function submitMode(response) {
+ const view=fs.readFileSync('application/views/admin/paymentmodes/paymentmode.php','utf8');
+ const handler=view.slice(view.indexOf('    function manage_payment_modes(form) {')).split('</script>')[0];
+ const form={action:'/admin/paymentmodes/manage'};let request,reloads=0,hidden=0;const alerts=[];
+ const $=value=>{
+  if(value===form)return{serialize:()=> 'name=Synthetic&revision=owned'};
+  if(value==='.table-payment-modes')return{DataTable:()=>({ajax:{reload(){reloads++;}}})};
+  if(value==='#payment_mode_modal')return{modal(action){assert.equal(action,'hide');hidden++;}};
+  throw new Error('Unexpected form selector');
+ };
+ $.post=(url,data)=>{request={url,data};return{done(callback){callback(response);}};};
+ const context={$ ,alert_float:(kind,message)=>alerts.push({kind,message})};vm.createContext(context);vm.runInContext(handler,context);
+ assert.equal(context.manage_payment_modes(form),false,'AJAX submission prevents default navigation');
+ return{request,reloads,hidden,alerts};
+}
+for(const wire of ['json-object','legacy-text'])test('shared mode form accepts '+wire+' without a second JSON decode',()=>{
+ const payload={success:true,message:'Synthetic saved',id:123};const r=submitMode(wire==='legacy-text'?JSON.stringify(payload):payload);
+ assert.deepEqual(r.request,{url:'/admin/paymentmodes/manage',data:'name=Synthetic&revision=owned'});
+ assert.equal(r.reloads,1);assert.equal(r.hidden,1);assert.deepEqual(r.alerts,[{kind:'success',message:'Synthetic saved'}]);
+});
+test('shared mode form does not claim success for a rejected response',()=>{
+ const r=submitMode({success:false,message:'Synthetic rejection'});assert.equal(r.reloads,0);assert.deepEqual(r.alerts,[]);
+});

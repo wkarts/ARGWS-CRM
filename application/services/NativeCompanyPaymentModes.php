@@ -71,9 +71,15 @@ final class NativeCompanyPaymentModes
         return IssuerTransaction::run($this->db,$this->p,$this->tableNames(),function()use($i,$a,$input,$id,$expected){
             $acl=$this->access($i,$a,'edit');$acl->lockFinancialIdentity($i,$a);NativeCompanyPaymentModesSchema::assertValid($this->db,$this->p);
             if($id===null){
-                if($expected!==null)throw new DomainException('native_payment_mode_invalid');$fields=$input+['issuer_id'=>$i,'revision'=>1,'created_by'=>$a];
-                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_payment_modes('.implode(',',array_keys($fields)).') VALUES('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));
-                $source=(int)$this->db->insert_id();$this->assertInserted();$expectedRevision=1;if($source<1)throw new RuntimeException('native_payment_mode_write_unconfirmed');$id=NativeCompanyResourceId::encode('company_payment_mode',$source);
+                if($expected!==null)throw new DomainException('native_payment_mode_invalid');
+                // Primary legacy invoices/expenses still read plain offline IDs.
+                // Keep that catalogue exclusively bound to the proven primary,
+                // with the same issuer lock, ACL, audit and revision protections.
+                $primary=$acl->primaryId()===$i;
+                $table=$primary?'payment_modes':'company_payment_modes';
+                $fields=$primary?$input:$input+['issuer_id'=>$i,'revision'=>1,'created_by'=>$a];
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$table.'('.implode(',',array_keys($fields)).') VALUES('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));
+                $source=(int)$this->db->insert_id();$this->assertInserted();$expectedRevision=$primary?null:1;if($source<1)throw new RuntimeException('native_payment_mode_write_unconfirmed');$id=NativeCompanyResourceId::encode($primary?'payment_mode':'company_payment_mode',$source);
             }else{
                 [$ref,$before,$dto]=$this->row($i,$id);if(!is_string($expected)||!hash_equals($dto['revision'],$expected))throw new DomainException('native_payment_mode_stale');
                 $table=$ref['source_kind']==='company_payment_mode'?'company_payment_modes':'payment_modes';$values=$input;$expectedRevision=null;

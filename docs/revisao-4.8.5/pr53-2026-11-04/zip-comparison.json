@@ -1,0 +1,11 @@
+{
+  "zip_sha256": "42c910b99c2e0306be5d50d5e401b0739ed54cc0b1f4488c980f09a798ac5e7d",
+  "zip_entries": 22108,
+  "pr_files": 78,
+  "identical": 77,
+  "different": [
+    "docs/revisao-4.8.5/comparacao-acoes.csv"
+  ],
+  "missing": [],
+  "vendor_files": 51
+}

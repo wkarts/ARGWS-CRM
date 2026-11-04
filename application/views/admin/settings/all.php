@@ -18,9 +18,9 @@ foreach($sections as $sectionId=>$section) {
         $children[]=['id'=>$child['id'],'name'=>$child['name'],'url'=>admin_url('settings?group='.$child['id']),
             'icon'=>$child['icon']??'fa-regular fa-circle-question','badge'=>$child['badge']??[]];
     }
-    if($sectionId==='general' && !$isNativeSettings) {
+    if($sectionId==='general' && (!$isNativeSettings || !empty($group['installation_controls']))) {
         $children[]=['id'=>'update','name'=>_l('settings_update'),'url'=>admin_url('settings?group=update'),'icon'=>'fa-solid fa-hammer'];
-        if(is_admin()) {
+        if(($isNativeSettings && !empty($group['installation_controls'])) || (!$isNativeSettings && is_admin())) {
             $children[]=['id'=>'argws_platform','name'=>'Plataforma','url'=>admin_url('settings?group=argws_platform'),'icon'=>'fa-solid fa-sliders'];
             $children[]=['id'=>'info','name'=>'Informações do servidor','url'=>admin_url('settings?group=info'),'icon'=>'fa-solid fa-question'];
         }

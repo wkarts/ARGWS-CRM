@@ -80,8 +80,8 @@ final class NativeCompanyAuxiliary
         if($key===null)return[null,null];
         if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_auxiliary_invalid_input');
         $hash=hash('sha256',json_encode([$operation,$payload],JSON_THROW_ON_ERROR));
-        $needle=json_encode(['request_key'=>$key],JSON_THROW_ON_ERROR);
-        $rows=$this->rows("SELECT actor_id,subject_id,metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND event='native_auxiliary_request' AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$this->issuer,$needle]);
+        $needle=$key;
+        $rows=$this->rows("SELECT actor_id,subject_id,metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND event='native_auxiliary_request' AND JSON_VALID(metadata_json) AND ".IssuerStorage::jsonStringColumn($this->db,'metadata_json','request_key')."=? ORDER BY id",[$this->issuer,$needle]);
         if(count($rows)>1)throw new RuntimeException('issuer_auxiliary_audit_unconfirmed');
         if($rows){$row=$rows[0];$receipt=json_decode($row['metadata_json'],true,32,JSON_THROW_ON_ERROR);if((int)$row['actor_id']!==$this->actor||($receipt['operation']??null)!==$operation||!hash_equals((string)($receipt['input_hash']??''),$hash))throw new DomainException('company_auxiliary_request_conflict');return[$hash,(int)$row['subject_id']];}
         return[$hash,null];

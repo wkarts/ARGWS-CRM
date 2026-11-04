@@ -1,4 +1,9 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+if(!empty($nativeOfficialLayout)){
+    echo '</div>';
+    require APPPATH.'views/admin/includes/native_company_official_tail.php';
+    return;
+} ?>
 <?php // Minimal UI dependencies for the same select used in the native header. No legacy app bootstrap.
 foreach (['assets/plugins/jquery/jquery.min.js', 'assets/plugins/bootstrap/js/bootstrap.min.js', 'assets/plugins/bootstrap-select/js/bootstrap-select.min.js'] as $companyLayoutScript) { ?>
 <script src="<?= $companyLayoutEscape(base_url($companyLayoutScript).'?v='.$companyLayoutVersion); ?>"></script>

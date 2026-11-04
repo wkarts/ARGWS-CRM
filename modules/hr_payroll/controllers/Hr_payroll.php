@@ -239,7 +239,7 @@ class hr_payroll extends AdminController {
             }
         }
 
-		$data['tabs']['view'] = 'includes/' . $data['group'];
+		$data['tabs']['view'] = 'includes/' . ($data['group'] === 'company_contributions_list' ? 'contributions_list' : $data['group']);
 
 		$this->load->view('includes/manage_setting', $data);
 	}

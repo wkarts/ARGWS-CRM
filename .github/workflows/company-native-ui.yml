@@ -39,7 +39,10 @@ jobs:
           # fixture is not executed twice for one SHA.
           node --test tests/native_settings_native.test.cjs tests/native_workspace_driver.test.cjs tests/native_selector_driver.test.cjs tests/native_sidebar_toggle.test.cjs
           php tests/native_settings_layout.php
+          php tests/native_settings_native.php
+          php tests/native_navigation_parity.php
           php tests/native_shell_presentation.php
+          php tests/native_operational_layout.php
           node --test tests/native_shell_controls.test.cjs tests/native_navigation_tabs.test.cjs
           php tests/native_settings_certificate_link.php
       - name: Fluxos desktop/mobile, grid e modal
@@ -54,6 +57,7 @@ jobs:
           node tests/native_workspace_browser.cjs
           node tests/native_registry_modal_browser.cjs
           node tests/native_settings_layout.browser.cjs
+          node tests/native_settings_native_browser.cjs
       # Repetição é um teste de estabilidade opcional, não cobertura adicional da PR.
       - name: Verificar estabilidade do modal em execução manual
         if: github.event_name == 'workflow_dispatch'

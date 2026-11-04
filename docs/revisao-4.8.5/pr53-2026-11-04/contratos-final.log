@@ -1,0 +1,47 @@
+✔ PT-BR é o único idioma selecionável e o padrão da instalação (3.229795ms)
+✔ suporte fica em settings administrativos e envia apenas configuração pública (0.62441ms)
+✔ estado nativo dos recursos mantém dependências e bloqueia upload/desinstalação (0.448545ms)
+✔ telemetria de licenciamento e do SDK Stripe fica desativada (107.983484ms)
+✔ migrations novas preservam valores e não reescrevem migrations antigas (0.313132ms)
+✔ FrankenPHP é versionado, genérico e mantém a configuração fora da imagem (0.595087ms)
+✔ ZIP da primeira release usa a base legado e permite reparar os anexos existentes (0.33835ms)
+✔ Asaas exige token no cabeçalho oficial e nunca aceita token por URL (1.472348ms)
+✔ Asaas persiste antes de responder HTTP 200 e reprocessa eventos em CRON (0.687436ms)
+✔ Conciliação usa igualdade decimal exata, sem baixa dupla e com estorno em revisão (0.760065ms)
+✔ Configuração Asaas separa recebedor local do webhook remoto (0.633514ms)
+✔ Rotas de diagnóstico de Pix são protegidas contra GET e acesso anônimo (0.307604ms)
+✔ O CRM opera notificações apenas pelo Conector, sem remover dados legados (0.48471ms)
+✔ O painel mantém nomes funcionais e os slugs internos (2.229238ms)
+✔ interface/API priorizam PT-BR e e-mails preservam idiomas legítimos (0.776509ms)
+✔ A migration é aditiva e conserva HTML e personalizações (1.050362ms)
+✔ Guia da API é local, autenticado e descreve os controladores existentes (0.598622ms)
+✔ Nota fiscal inclui dependências em Docker e nos ZIPs sem Composer em runtime (0.379943ms)
+✔ Suporte preserva widget opcional e aceita WhatsApp, e-mail ou site (0.489136ms)
+✔ todos os modelos dos módulos mapeados são PT-BR e preservam HTML e variáveis (18.697555ms)
+✔ módulos antigos e novos usam PT-BR e reconciliação sem apagar personalizações (1.029651ms)
+✔ o rótulo é LGPD e o item de configurações é somente Plataforma (1.794653ms)
+✔ os gatilhos existentes mantêm IDs e mensagens; novos são desativados por padrão (0.377729ms)
+✔ novos 10 eventos correspondem a hooks existentes e usam Connect|API (0.55125ms)
+✔ client iframe uses its escaped destination directly (1.762986ms)
+✔ legacy proxy route returns 404 without loading or fetching a URL (0.602808ms)
+✔ the insecure proxy archive is not shipped (0.493813ms)
+✔ os 82 modelos originais têm nomes e assuntos PT-BR sem perder campos (4.576669ms)
+✔ cada nó de texto dos corpos HTML é traduzido; layout e merge fields ficam intactos (11.89606ms)
+✔ dicionário não contém campos ausentes, frases repetidas ou tradução em branco (0.626363ms)
+✔ a migração apenas insere ausentes ou atualiza defaults intactos (0.533724ms)
+✔ shared Settings route exposes exactly the native forms backed by owned adapters (3.812988ms)
+✔ native Settings POST enforces selected-company authorization, CSRF and revision (0.321434ms)
+✔ native company identity and custom fields come only from the selected issuer DTO (0.29211ms)
+✔ native and primary Settings use the same native presentation component (0.36502ms)
+✔ certificate entry uses only active company and settings edit permission (0.276165ms)
+✔ standalone shared-shell fixtures declare framework dependencies and fail before emitting warning HTML (6.090234ms)
+✔ shared envelope validates navigation DTO and preserves trusted server form slots (0.416538ms)
+✔ native support settings are owned by the original Settings form, not duplicated in outgoing generic UI (0.20549ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 234.056781

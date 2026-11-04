@@ -47,7 +47,7 @@ final class NativeCompanyFinancialMail
         foreach(['revision','request_key']as$key)if(!is_string($b[$key])||!preg_match('/^[a-f0-9]{64}$/D',$b[$key]))throw new DomainException('native_financial_mail_denied');return self::hash($b);
     }
     private function receipt(int $i,string $key):?array{
-        $needle=json_encode(['request_key'=>$key],JSON_THROW_ON_ERROR);$rows=$this->rows("SELECT metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND event=? AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$i,self::EVENT,$needle]);if(count($rows)>1)throw new RuntimeException('issuer_financial_mail_unconfirmed');return$rows?json_decode($rows[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR):null;
+        $needle=$key;$rows=$this->rows("SELECT metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND event=? AND JSON_VALID(metadata_json) AND ".IssuerStorage::jsonStringColumn($this->db,'metadata_json','request_key')."=? ORDER BY id",[$i,self::EVENT,$needle]);if(count($rows)>1)throw new RuntimeException('issuer_financial_mail_unconfirmed');return$rows?json_decode($rows[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR):null;
     }
     private function recipient(int $i,int $client,int $id):array{
         foreach($this->contacts($i,$client)as$row)if((int)$row['id']===$id){if(!filter_var($row['email'],FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$row['email']))break;return$row;}throw new DomainException('native_financial_mail_denied');
