@@ -37,17 +37,23 @@ final class NativeCompanyAdminPresentation
         // language object from the same trusted catalog used by our own labels.
         $ci->lang->language=array_merge($ci->lang->language,self::$language);
         $menus=['sidebar'=>[], 'setup'=>[]]; $children=[];
+        // Legacy installation pages remain available to the primary company's
+        // administrator. This affects trusted catalog links, never admission
+        // of legacy handlers in a secondary company.
+        $installationMenu=$issuer!==null && $context->isPrimary() && $acl->administrative($issuer,$actor);
         foreach(NativeAdminMenuCatalog::entries() as $entry) {
             if($issuer === null) { continue; }
-            if ($entry['route'] !== null && !CompanyRequestScope::nativeRouteAllowed($ci,$entry['route'])) { continue; }
+            if ($entry['route'] !== null && !$installationMenu && !CompanyRequestScope::nativeRouteAllowed($ci,$entry['route'])) { continue; }
             // The original Departments controller is administrator-only. Do not
             // advertise its native route to ticket viewers who cannot enter it.
             if ($entry['kind'] === 'sidebar_menu' && $entry['slug'] === 'customers') {
                 if (!self::customersMenuAvailable($ci->db,db_prefix(),$issuer,$actor,$acl)) { continue; }
             } elseif ($entry['slug'] === 'departments') {
                 if (!$acl->administrative($issuer,$actor)) { continue; }
-            } elseif ($entry['feature'] !== '' && !$acl->can($issuer,$actor,$entry['feature'],'view')) { continue; }
-            $item=['slug'=>$entry['slug'],'name'=>self::label($entry['label']),'href'=>$entry['route'] === null ? '#' : CompanyRequestScope::adminUrl($ci,$entry['route']), 'icon'=>$entry['icon'],'position'=>$entry['position'],'children'=>[]];
+            } elseif ($entry['slug'] === 'gdpr') {
+                if (!$acl->administrative($issuer,$actor) || !$acl->can($issuer,$actor,'settings','view')) { continue; }
+            } elseif (!$installationMenu && !$entry['collapse'] && $entry['feature'] !== '' && !$acl->can($issuer,$actor,$entry['feature'],'view')) { continue; }
+            $item=['slug'=>$entry['slug'],'name'=>$entry['literal_name']??self::label($entry['label']),'href'=>$entry['route'] === null ? '#' : CompanyRequestScope::adminUrl($ci,$entry['route']), 'icon'=>$entry['icon'],'position'=>$entry['position'],'children'=>[]];
             if($entry['collapse']) { $item['collapse']=true; }
             if($entry['kind']==='sidebar_children') { $children['sidebar'][$entry['parent']][]=$item; }
             elseif($entry['kind']==='setup_children') { $children['setup'][$entry['parent']][]=$item; }
@@ -58,6 +64,10 @@ final class NativeCompanyAdminPresentation
         if($issuer!==null&&CompanyRequestScope::nativeRouteAllowed($ci,'banco_brasil')&&$acl->can($issuer,$actor,'banco_brasil','view')
             &&IssuerStorage::query($ci->db,'SELECT module_name FROM '.db_prefix().'modules WHERE module_name=? AND active=1',['banco_brasil'])->row_array()){
             $menus['sidebar']['banco_brasil']=['slug'=>'banco_brasil','name'=>'Banco do Brasil','href'=>CompanyRequestScope::adminUrl($ci,'banco_brasil'),'icon'=>'fa fa-building-columns','position'=>35,'children'=>[]];
+        }
+        if($installationMenu){
+            require_once __DIR__.'/NativeInstallationModuleMenu.php';
+            NativeInstallationModuleMenu::append($ci,$menus,$children);
         }
         foreach($menus as $type=>&$menu) {
             foreach($menu as $slug=>&$item) {
@@ -110,7 +120,7 @@ final class NativeCompanyAdminPresentation
             self::$data['header_search_history']=NativeCompanyHeaderEndpoints::history($ci,$issuer,$actor);
         }
         if($issuer!==null && self::headerEndpointsAvailable('notifications'))self::refreshNotifications($ci);
-        if($issuer!==null && self::timerEndpointsAvailable())self::$data=array_merge(self::$data,self::timerProjection($ci));
+        if($issuer!==null && $acl->can($issuer,$actor,'tasks','view') && self::timerEndpointsAvailable())self::$data=array_merge(self::$data,self::timerProjection($ci));
         if($issuer!==null&&!$issuerRegistryRoute){
             if(!class_exists('NativeCompanyWorkTags',false))require_once __DIR__.'/NativeCompanyWorkTags.php';
             $tags=(new NativeCompanyWorkTags($ci->db,db_prefix()))->catalog($issuer,$actor);
@@ -182,7 +192,7 @@ final class NativeCompanyAdminPresentation
     private static function timerEndpointsAvailable():bool
     {
         if(!class_exists('NativeCompanyRoutes',false))return false;
-        foreach(['get_staff_started_timers'=>'GET','timer_action'=>'POST','delete_user_unfinished_timesheet'=>'POST'] as $method=>$verb)if(!NativeCompanyRoutes::admits('admin','','tasks',$method,$verb))return false;
+        foreach(['get_staff_started_timers'=>'GET','timer_tracking'=>'POST','delete_user_unfinished_timesheet'=>'POST'] as $method=>$verb)if(!NativeCompanyRoutes::admits('admin','','tasks',$method,$verb))return false;
         return true;
     }
     public static function timerProjection($ci):array

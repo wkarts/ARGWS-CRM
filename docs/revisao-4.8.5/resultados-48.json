@@ -1,0 +1,431 @@
+[
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/companies/native_file_message_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "0.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/build_version.test.cjs"
+    ],
+    "exit": 0,
+    "log": "1.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/compiled_assets.test.cjs"
+    ],
+    "exit": 0,
+    "log": "2.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/department_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "3.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/file_handlers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "4.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/filter_component.test.cjs"
+    ],
+    "exit": 0,
+    "log": "5.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/header_storage.test.cjs"
+    ],
+    "exit": 0,
+    "log": "6.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/invoice_communication_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "7.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/invoice_file_delete_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "8.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/item_order_handlers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "9.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/knowledge_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "10.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/presentation.test.cjs"
+    ],
+    "exit": 0,
+    "log": "11.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/reminder_handlers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "12.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/sales_form_shared.test.cjs"
+    ],
+    "exit": 0,
+    "log": "13.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/switch.test.cjs"
+    ],
+    "exit": 0,
+    "log": "14.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/tables.test.cjs"
+    ],
+    "exit": 0,
+    "log": "15.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_add_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "16.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_block_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "17.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_catalog_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "18.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_lease_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "19.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/todo_handlers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "20.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "21.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_customers_contract.test.cjs"
+    ],
+    "exit": 0,
+    "log": "22.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_dashboard_contract.test.cjs"
+    ],
+    "exit": 0,
+    "log": "23.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_invoice_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "24.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_payment_mode_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "25.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_popup_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "26.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_project_members_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "27.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_task_checklist_templates.test.cjs"
+    ],
+    "exit": 0,
+    "log": "28.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_tasks_shared.test.cjs"
+    ],
+    "exit": 0,
+    "log": "29.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_settings_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "30.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_task_tracking.test.cjs"
+    ],
+    "exit": 0,
+    "log": "31.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/invoice_calculation_differential.test.cjs"
+    ],
+    "exit": 0,
+    "log": "32.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/staff_js.test.cjs"
+    ],
+    "exit": 0,
+    "log": "33.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_task_timer_transport.test.cjs"
+    ],
+    "exit": 0,
+    "log": "34.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_bulk_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "35.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_portal_files.test.cjs"
+    ],
+    "exit": 0,
+    "log": "36.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/ticket_table_initializer.test.cjs"
+    ],
+    "exit": 0,
+    "log": "37.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_related_task_init.test.cjs"
+    ],
+    "exit": 0,
+    "log": "38.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/calendar_handlers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "39.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_mentions_contract.test.cjs"
+    ],
+    "exit": 0,
+    "log": "40.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/task_timer_created_option.test.cjs"
+    ],
+    "exit": 0,
+    "log": "41.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/invoice_official_ui.test.cjs"
+    ],
+    "exit": 0,
+    "log": "42.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_pr52_parity_catalog.test.cjs"
+    ],
+    "exit": 0,
+    "log": "43.log"
+  },
+  {
+    "command": [
+      "node",
+      "--test",
+      "tests/native_company/task_form_helpers.test.cjs"
+    ],
+    "exit": 0,
+    "log": "44.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_navigation_parity.php"
+    ],
+    "exit": 0,
+    "log": "45.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_company/presentation.php"
+    ],
+    "exit": 0,
+    "log": "46.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_context.php"
+    ],
+    "exit": 0,
+    "log": "47.log"
+  }
+]

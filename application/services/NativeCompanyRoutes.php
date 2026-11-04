@@ -5,11 +5,30 @@ declare(strict_types=1);
 /**
  * Native browser entrypoints whose data contracts have explicit company adapters.
  * This is not a router alias: controller names, URLs and native views stay native.
- * Never use this catalogue for jobs, webhooks, public portals or provider callbacks.
+ * Never use this catalogue for jobs, webhooks or public portals. The two SMTP
+ * OAuth routes below are authenticated browser returns with issuer-bound state.
  */
 final class NativeCompanyRoutes
 {
     private const ACTIONS = [
+        'smtp_oauth_google'=>['token'=>['GET','POST']],
+        'smtp_oauth_microsoft'=>['token'=>['GET','POST']],
+        'authentication'=>['get_qr'=>['POST']],
+        // These controllers already have issuer-scoped adapters. Omitting them
+        // from admission made complete features disappear from every menu.
+        'paymentmodes' => [
+            'index'=>['GET','HEAD','POST'], 'manage'=>['POST'], 'delete'=>['POST'],
+            'change_payment_mode_status'=>['POST'], 'change_payment_mode_show_to_client_status'=>['POST'],
+        ],
+        'roles' => ['index'=>['GET','HEAD','POST'], 'role'=>['GET','HEAD','POST'], 'delete'=>['POST']],
+        'knowledge_base' => [
+            'index'=>['GET','HEAD','POST'], 'article'=>['GET','HEAD','POST'],
+            'view'=>['GET','HEAD'], 'manage_groups'=>['GET','HEAD'], 'get_article_by_id_ajax'=>['GET'],
+            'add_kb_answer'=>['POST'], 'change_article_status'=>['POST'], 'update_kan_ban'=>['POST'],
+            'change_group_color'=>['POST'], 'delete_article'=>['POST'], 'group'=>['POST'],
+            'change_group_status'=>['POST'], 'update_groups_order'=>['POST'], 'delete_group'=>['POST'],
+        ],
+        'spam_filters' => ['view'=>['GET','HEAD','POST'], 'filter'=>['POST'], 'delete'=>['POST']],
         'dashboard' => [
             'index' => ['GET', 'HEAD'],
             'weekly_payments_statistics' => ['GET'],
@@ -63,6 +82,17 @@ final class NativeCompanyRoutes
             'sent_smtp_test_email'=>['POST'], 'delete_queued_email'=>['POST'], 'clear_queued_emails'=>['POST'],
         ],
         'misc' => [
+            'search'=>['POST'], 'remove_recent_search'=>['POST'],
+            'notifications_check'=>['GET'], 'set_notifications_read'=>['POST'],
+            'set_notification_read_inline'=>['POST'], 'set_desktop_notification_read'=>['POST'],
+            'mark_all_notifications_as_read_inline'=>['POST'],
+            'set_setup_menu_closed'=>['POST'], 'set_setup_menu_open'=>['POST'],
+            'clear_system_popup'=>['POST'], 'get_relation_data'=>['POST'], 'format_date'=>['POST'],
+            'send_file'=>['POST'], 'update_ei_items_order'=>['POST'],
+            'add_reminder'=>['POST'], 'get_reminders'=>['POST'], 'my_reminders'=>['POST'],
+            'reminders'=>['GET','HEAD'], 'reminders_table'=>['POST'],
+            'delete_reminder'=>['POST'], 'get_reminder'=>['GET'], 'edit_reminder'=>['POST'],
+            'contact_email_exists'=>['POST'],
             'get_currency'=>['GET'], 'get_taxes_dropdown_template'=>['POST'],
             'dismiss_announcement'=>['POST'], 'staff_email_exists'=>['POST'],
             'add_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'],
@@ -183,7 +213,12 @@ final class NativeCompanyRoutes
             'pdf'=>['GET','HEAD'],
             'file'=>['GET','HEAD'],
         ],
-        'gdpr'=>['contact_consent_opt_action'=>['POST']],
+        'gdpr'=>[
+            'index'=>['GET','HEAD'], 'save'=>['POST'], 'enable'=>['POST'],
+            'change_removal_request_status'=>['POST'],
+            'consent_purpose'=>['GET','HEAD','POST'], 'delete_consent_purpose'=>['POST'],
+            'contact_consent_opt_action'=>['POST'],
+        ],
         'invoices'=>[
             'apply_credits'=>['POST'], 'delete'=>['POST'], 'send_overdue_notice'=>['POST'],
             'send_to_email'=>['POST'],
@@ -270,6 +305,9 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
+        // Emails keeps its existing isolated template loader; listing this link
+        // does not admit global email controllers through the native dispatcher.
+        if(in_array($route,['emails','gdpr','paymentmodes','roles','roles/role','knowledge_base','knowledge_base/article','knowledge_base/manage_groups','spam_filters/view/tickets','spam_filters/view/leads','misc/reminders','payments','contracts/types','expenses/categories'],true))return true;
         return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'tickets/add', 'tickets/priorities', 'tickets/statuses', 'tickets/services', 'tickets/predefined_replies', 'tickets/predefined_reply', 'tasks', 'tasks/task', 'projects', 'projects/project', 'clients', 'clients/client', 'clients/import', 'clients/groups', 'clients/all_contacts', 'leads', 'leads/index', 'contracts', 'contracts/contract', 'invoices', 'invoices/list_invoices', 'invoices/invoice', 'invoices/drafts', 'invoices/copy', 'invoices/recurring', 'estimates', 'estimates/list_estimates', 'estimates/estimate', 'proposals', 'proposals/list_proposals', 'proposals/proposal', 'credit_notes', 'credit_notes/list_credit_notes', 'expenses', 'expenses/list_expenses', 'expenses/copy', 'reports', 'payments/post_refund', 'payments/post_refund_manual', 'invoice_items', 'invoice_items/import', 'settings', 'settings/pusher', 'settings/asaas', 'settings/imports', 'settings/efi', 'settings/google_mail_oauth', 'settings/microsoft_mail_oauth', 'settings/api_tokens', 'utilities/calendar', 'banco_brasil', 'staff', 'staff/member', 'staff/hr', 'staff/hr_mine', 'projects/extras', 'projects/portal_rules', 'projects/billing_rates', 'projects/fixed_billing', 'projects/copies', 'projects/time_billing', 'tasks/copies', 'tasks/recurring', 'tasks/standalone', 'tasks/billing', 'tasks/time_batches', 'tickets/ai', 'tickets/connect', 'tickets/connect_api', 'invoices/standalone_billing', 'expenses/purchases'], true);
     }
 }

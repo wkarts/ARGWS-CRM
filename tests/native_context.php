@@ -126,6 +126,9 @@ function contextEnvironment($f, ContextSession $session, string $class = 'dashbo
 }
 $f = essentialFixture(); $db = $f->db; $p = $f->prefix;
 essentialSeedSchema($f);
+// The enabled header now reads the real issuer-owned storage installed by 474.
+require_once APPPATH.'services/NativeCompanyHeaderSchema.php';
+NativeCompanyHeaderSchema::ensure($db,$p);
 $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,settings_json,created_by,created_at) VALUES(41,'Principal synthetic','12345678000195',1,'{}',7,'2026-10-18')");
 $db->query("INSERT INTO {$p}options VALUES('company_vat','12345678000195')");
 IssuerCore::reconcile($db, $p); IssuerCore::bindInstallationMaster($db, $p, 7);
@@ -235,6 +238,16 @@ CompanyRequestScope::finish();
 essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears finance settings context');
 // Prove the existing Settings URL is explicitly attested before native hydration.
 $db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(54,8,'settings','view'),(54,8,'settings','edit')");
+foreach(['smtp_oauth_google','smtp_oauth_microsoft'] as $oauthController){
+    $ci=contextEnvironment($f,$s,$oauthController,'token','GET');CompanyRequestScope::beforeHydration($ci);
+    essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54,'authenticated OAuth return retains secondary scope');
+    $nativeHeaderCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+}
+$ci=contextEnvironment($f,$s,'authentication','get_qr','POST');$_POST=['_company_context'=>$tokenB,'_native_company_csrf'=>$nativeHeaderCsrf];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci),'two-factor setup uses its existing scoped writer');CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'authentication','get_qr','POST');$_POST=['_company_context'=>$tokenB];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'authentication','admin','GET');essentialCheck(!CompanyRequestScope::interactive($ci),'login keeps its original authentication bootstrap');
+
 $ci = contextEnvironment($f, $s, 'settings', 'index'); hooks()->trace = [];
 CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci) && CompanyRequestScope::sealedFor($ci), 'existing Settings index is native and sealed before controller hydration');

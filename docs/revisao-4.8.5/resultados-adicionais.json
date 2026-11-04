@@ -1,0 +1,90 @@
+[
+  {
+    "command": [
+      "node",
+      "tests/native_pwa.test.cjs"
+    ],
+    "exit": 0,
+    "log": "native_pwa.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/argws_platform_contract.test.cjs"
+    ],
+    "exit": 1,
+    "log": "argws_platform_contract.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/native_shell_controls.test.cjs"
+    ],
+    "exit": 0,
+    "log": "native_shell_controls.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/native_settings_native.test.cjs"
+    ],
+    "exit": 0,
+    "log": "native_settings_native.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/native_navigation_tabs.test.cjs"
+    ],
+    "exit": 0,
+    "log": "native_navigation_tabs.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/asaas_settings_dom_harness.test.cjs"
+    ],
+    "exit": 0,
+    "log": "asaas_settings_dom_harness.test.cjs.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/asaas_settings_browser_runtime.test.cjs"
+    ],
+    "exit": 1,
+    "log": "asaas_settings_browser_runtime.test.cjs.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_settings_layout.php"
+    ],
+    "exit": 0,
+    "log": "native_settings_layout.php.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_settings_native.php"
+    ],
+    "exit": 255,
+    "log": "native_settings_native.php.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/native_settings_sections.php"
+    ],
+    "exit": 0,
+    "log": "native_settings_sections.php.log"
+  },
+  {
+    "command": [
+      "php",
+      "tests/asaas_settings_presentation.php"
+    ],
+    "exit": 0,
+    "log": "asaas_settings_presentation.php.log"
+  }
+]

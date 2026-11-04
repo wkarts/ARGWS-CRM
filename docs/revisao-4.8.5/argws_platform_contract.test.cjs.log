@@ -1,0 +1,35 @@
+✔ PT-BR é o único idioma selecionável e o padrão da instalação (7.181214ms)
+✔ suporte fica em settings administrativos e envia apenas configuração pública (0.637979ms)
+✔ estado nativo dos recursos mantém dependências e bloqueia upload/desinstalação (0.366483ms)
+✔ telemetria de licenciamento e do SDK Stripe fica desativada (141.679629ms)
+✔ migrations novas preservam valores e não reescrevem migrations antigas (0.358971ms)
+✖ FrankenPHP é versionado, genérico e mantém a configuração fora da imagem (0.387795ms)
+✔ ZIP da primeira release usa a base legado e permite reparar os anexos existentes (0.39037ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158.325152
+
+✖ failing tests:
+
+test at tests/argws_platform_contract.test.cjs:98:1
+✖ FrankenPHP é versionado, genérico e mantém a configuração fora da imagem (0.387795ms)
+  Error: ENOENT: no such file or directory, open '/workspace/scratch/2f211aa1d1ef/crm/docker/Caddyfile'
+      at Object.readFileSync (node:fs:483:20)
+      at read (/workspace/scratch/2f211aa1d1ef/crm/tests/argws_platform_contract.test.cjs:7:27)
+      at TestContext.<anonymous> (/workspace/scratch/2f211aa1d1ef/crm/tests/argws_platform_contract.test.cjs:101:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/workspace/scratch/2f211aa1d1ef/crm/docker/Caddyfile'
+  }

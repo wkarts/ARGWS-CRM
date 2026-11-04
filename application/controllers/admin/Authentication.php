@@ -278,6 +278,11 @@ class Authentication extends App_Controller
     public function get_qr()
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if(!extension_loaded('imagick')){
+                $this->output->set_status_header(503)->set_header('Cache-Control: no-store');
+                echo '<div class="alert alert-danger">A extensão PHP Imagick é necessária para gerar o QR Code. Ative-a no servidor e tente novamente.</div>';
+                return;
+            }
             require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$data=NativeCompanyStaffEndpoints::googleSetup($this);
             $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/includes/google_two_factor',$data);return;
         }

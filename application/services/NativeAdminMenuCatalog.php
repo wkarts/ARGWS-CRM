@@ -7,7 +7,7 @@ final class NativeAdminMenuCatalog
 {
     public static function entries(): array
     {
-        return [
+        $entries = [
             'sidebar_menu:support' => ['kind'=>'sidebar_menu','parent'=>'support','slug'=>'support','label'=>'support','route'=>'tickets','icon'=>'fa-regular fa-life-ring','position'=>40,'feature'=>'tickets','collapse'=>false],
             'sidebar_menu:dashboard' => ['kind' => 'sidebar_menu', 'parent' => 'dashboard', 'slug' => 'dashboard', 'label' => 'als_dashboard', 'route' => '', 'icon' => 'fa-regular fa-object-group', 'position' => 1, 'feature' => '', 'collapse' => false],
             'sidebar_menu:customers' => ['kind' => 'sidebar_menu', 'parent' => 'customers', 'slug' => 'customers', 'label' => 'als_clients', 'route' => 'clients', 'icon' => 'fa-regular fa-user', 'position' => 5, 'feature' => 'customers', 'collapse' => false],
@@ -72,12 +72,39 @@ final class NativeAdminMenuCatalog
             'setup_children:estimate-request-forms' => ['kind' => 'setup_children', 'parent' => 'estimate_request', 'slug' => 'estimate-request-forms', 'label' => 'acs_estimate_request_forms', 'route' => 'estimate_request/forms', 'icon' => '', 'position' => 5, 'feature' => 'estimate_request', 'collapse' => false],
             'setup_children:estimate-request-statuses' => ['kind' => 'setup_children', 'parent' => 'estimate_request', 'slug' => 'estimate-request-statuses', 'label' => 'acs_estimate_request_statuses_submenu', 'route' => 'estimate_request/statuses', 'icon' => '', 'position' => 10, 'feature' => 'estimate_request', 'collapse' => false],
         ];
+        // Keep 4.8.4's scoped workspaces reachable from the original CRM menus.
+        $extra = [
+            ['sidebar_children','projects','project-list','Visão geral','projects','projects'],
+            ['sidebar_children','projects','project-extras','Recursos do projeto','projects/extras','projects'],
+            ['sidebar_children','projects','project-portal','Portal do projeto','projects/portal_rules','projects'],
+            ['sidebar_children','projects','project-rates','Taxas horárias','projects/billing_rates','projects'],
+            ['sidebar_children','projects','project-fixed','Faturamento por preço fixo','projects/fixed_billing','projects'],
+            ['sidebar_children','projects','project-time','Faturamento de horas','projects/time_billing','projects'],
+            ['sidebar_children','tasks','task-list','Todas as tarefas','tasks','tasks'],
+            ['sidebar_children','tasks','task-standalone','Tarefas avulsas','tasks/standalone','tasks'],
+            ['sidebar_children','tasks','task-recurring','Tarefas recorrentes','tasks/recurring','tasks'],
+            ['sidebar_children','tasks','task-billing','Faturamento de tarefas','tasks/billing','tasks'],
+            ['sidebar_children','tasks','task-time-batches','Horas entre projetos e tarefas avulsas','tasks/time_batches','tasks'],
+            ['sidebar_children','reports','company-reports','Relatórios da empresa','reports','reports'],
+            ['sidebar_children','utilities','company-reminders','Lembretes','misc/reminders',''],
+            ['setup_menu','integrations','integrations','Integrações',null,''],
+            ['setup_children','integrations','company-asaas','Asaas','settings/asaas','settings'],
+            ['setup_children','integrations','company-efi','Efí','settings/efi','settings'],
+            ['setup_children','integrations','company-google-mail','E-mail Google','settings/google_mail_oauth','settings'],
+            ['setup_children','integrations','company-microsoft-mail','E-mail Microsoft','settings/microsoft_mail_oauth','settings'],
+        ];
+        foreach($extra as $i=>[$kind,$parent,$slug,$name,$route,$feature]){
+            $entries[$kind.':'.$slug]=['kind'=>$kind,'parent'=>$parent,'slug'=>$slug,'label'=>'','literal_name'=>$name,
+                'route'=>$route,'icon'=>'','position'=>100+$i,'feature'=>$feature,'collapse'=>$route===null];
+        }
+        return $entries;
     }
+
     public static function legacy(string $key): array
     {
         $e = self::entries()[$key] ?? null;
         if (!$e) { throw new LogicException('Unknown native menu entry'); }
-        $item = ['name'=>_l($e['label']), 'position'=>$e['position'], 'badge'=>[]];
+        $item = ['name'=>$e['literal_name']??_l($e['label']), 'position'=>$e['position'], 'badge'=>[]];
         if ($e['route'] !== null) { $item['href'] = admin_url($e['route']); }
         if ($e['icon'] !== '') { $item['icon'] = $e['icon']; }
         if ($e['collapse']) { $item['collapse'] = true; }

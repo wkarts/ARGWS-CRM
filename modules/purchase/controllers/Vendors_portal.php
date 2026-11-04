@@ -343,7 +343,7 @@ class Vendors_portal extends App_Controller
         $data['client'] = $this->purchase_model->get_vendor(get_vendor_user_id());
         $data['title'] = _l('client_company_info');
         $this->data($data);
-        $this->view('vendor_portal/vendors/company_profile');
+        $this->view('vendor_portal/vendors/profile');
         $this->layout();
     }
 

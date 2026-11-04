@@ -23,8 +23,15 @@ $controller->security=new class{function get_csrf_token_name(){return'csrf_token
 $controller->load=new class{public array $views=[];function helper($names){}function model($name){throw new RuntimeException('Global settings model must not load');}function view($name,$data){$this->views[]=[$name,$data];}};
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 $view=end($controller->load->views);essentialCheck($view[0]==='admin/settings/all'&&$view[1]['group']['view']==='admin/settings/includes/localization','same existing native form and shell selected');
-$visible=[];foreach($view[1]['sections']as$section)foreach($section['children']as$child)$visible[]=$child['id'];sort($visible);$supported=NativeCompanySettingsForms::availableGroups();sort($supported);essentialCheck($visible===$supported,'native Settings navigation exposes exactly groups with owned native form adapters');
-essentialCheck(!in_array('payment_gateways',$visible,true),'unadapted native Settings links are not rendered as dead forms');
+$visible=[];foreach($view[1]['sections']as$section)foreach($section['children']as$child)$visible[]=$child['id'];sort($visible);$supported=array_merge(NativeCompanySettingsForms::availableGroups(),['payment_gateways']);sort($supported);essentialCheck($visible===$supported,'native Settings navigation exposes exactly groups with owned native form adapters');
+essentialCheck(in_array('payment_gateways',$visible,true),'owned gateway directory is visible alongside native forms');
+$controller->input->query=['group'=>'payment_gateways'];
+CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
+$gatewayView=end($controller->load->views);
+essentialCheck($gatewayView[1]['group']['view']==='admin/settings/includes/native_payment_gateways' && !$gatewayView[1]['native_settings_can_edit'],'secondary gateway directory never renders global credential controls');
+$controller->input->verb='POST';
+try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Gateway directory mutation accepted');}catch(NativeSettingsHttpError $e){essentialCheck($e->getCode()===405,'directory cannot mutate global gateways');}
+$controller->input->query=['group'=>'localization'];
 $controller->input->verb='POST';$controller->input->body=['settings'=>$locale,'native_settings_revision'=>$view[1]['native_settings_revision']];
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Missing CSRF accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'native controller rejects missing CSRF');}
 essentialCheck($controller->session->flash===[],'denied native save emits no success flash');
@@ -40,7 +47,7 @@ $pageA=$forms->page($a,7,'company');$pageB=$forms->page($b,7,'company');
 essentialCheck($companyA['native_settings_company_values']===$pageA['values']&&$companyB['native_settings_company_values']===$pageB['values'],'same native company form receives only the selected company identity DTO');
 essentialCheck($companyA['native_settings_company_field_definitions']===$pageA['custom_field_definitions']&&$companyB['native_settings_company_field_definitions']===$pageB['custom_field_definitions']&&$companyB['native_settings_company_field_definitions']===[],'company custom field definitions stay with their owner');
 CompanyRequestScope::$issuer=$a;
-$controller->input->verb='GET';$controller->input->query=['group'=>'payment_gateways'];try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Unadapted group rendered');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'unadapted gateway group is denied before rendering a global provider form');}
+$controller->input->verb='GET';$controller->input->query=['group'=>'cronjob'];try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Unadapted group rendered');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'installation Cron form remains unavailable to secondary companies');}
 CompanyRequestScope::$issuer=$b;
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Mismatched lease accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'request and options lease must agree before read/write');}
 echo "Native Settings actual controller uses original views, lease isolation, POST CSRF/revision and303 passed.\n";

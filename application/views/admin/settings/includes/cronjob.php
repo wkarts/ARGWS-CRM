@@ -6,7 +6,7 @@
     <div class="horizontal-tabs">
         <ul class="nav nav-tabs nav-tabs-horizontal" role="tablist">
             <li role="presentation" class="active">
-                <a href="#cron_command" aria-controls="cron_command" role="tab" data-toggle="tab">Command</a>
+                <a href="#cron_command" aria-controls="cron_command" role="tab" data-toggle="tab">Comando</a>
             </li>
             <li role="presentation">
                 <a href="#set_invoice" aria-controls="set_invoice" role="tab"
@@ -46,12 +46,12 @@
 <div class="tab-content mtop15">
     <div role="tabpanel" class="tab-pane active" id="cron_command">
         <div class="alert alert-info tw-mb-0">
-            <span class="bold text-info">CRON COMMAND: wget -q -O-
+            <span class="bold text-info" translate="no">Cron: wget -q -O-
                 <?= site_url('cron/index' . (defined('APP_CRON_KEY') ? '/' . APP_CRON_KEY : '')); ?></span><br />
             <?php if (is_admin()) { ?>
             <a href="<?= admin_url('misc/run_cron_manually'); ?>"
                 class="alert-link">
-                Run Cron Manually
+                Executar Cron manualmente
             </a>
             <?php } ?>
         </div>

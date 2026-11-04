@@ -1,0 +1,11 @@
+ARGWS CRM 4.8.5 — REVISÃO LOCAL PARA HOMOLOGAÇÃO
+
+Leia docs/revisao-4.8.5/comparacao.html antes de aplicar.
+
+Esta entrega contém a aplicação completa derivada da 4.8.4, correções de navegação, definições, telas e rotas, mantendo issuer_id, PWA e identidade. Não é uma certificação de equivalência total multiempresa com a 4.0.2. Vários módulos legados ainda precisam de adaptação para empresas secundárias.
+
+Preserve app-config.php, APP_ENC_KEY, configurações de ambiente e uploads existentes. Faça backup do banco/código e use homologação. Atualize pelo executor nativo do núcleo até 485 e dos módulos purchase até 1.5.4 e hr_payroll até 1.1.1. Nenhuma migration antiga foi alterada. As novas migrations são NOOP.
+
+Nenhuma ação no GitHub, publicação de imagem ou implantação foi executada. Os exemplos de contêiner não representam imagem 4.8.5 publicada.
+
+Evidências: docs/revisao-4.8.5/. Os limites incluem ausência de validação real com MySQL/navegador, provedores externos e desempenho.

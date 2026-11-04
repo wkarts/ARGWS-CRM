@@ -1,0 +1,36 @@
+/* Existing operational content inside the official CRM shell. No menu overrides. */
+.native-company-admin .company-settings-card {
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    overflow-wrap: anywhere;
+}
+.native-company-admin .company-settings-card h1 { font-size: 20px; font-weight: 600; margin: 0 0 20px; }
+.native-company-admin .company-settings-card h2 { font-size: 17px; font-weight: 500; margin: 24px 0 12px; }
+.native-company-admin .company-settings-card h3 { font-size: 15px; margin: 20px 0 12px; }
+.native-company-admin .company-settings-card form { margin-bottom: 16px; }
+.native-company-admin .company-settings-card form > label,
+.native-company-admin .company-settings-card fieldset > label { display: block; margin-bottom: 5px; }
+.native-company-admin .company-settings-card form > .form-control,
+.native-company-admin .company-settings-card fieldset > .form-control { margin-bottom: 15px; }
+.native-company-admin .company-settings-card fieldset { min-width: 0; margin: 20px 0; }
+.native-company-admin .company-settings-card legend { font-size: 15px; font-weight: 500; padding-bottom: 8px; }
+.native-company-admin .company-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 16px; }
+.native-company-admin .company-settings-grid > * { min-width: 0; }
+.native-company-admin .company-settings-grid .form-group { margin: 0; }
+.native-company-admin .company-settings-nav { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+.native-company-admin .company-settings-actions { margin-top: 24px; }
+.native-company-admin .company-settings-card input:not([type=hidden]),
+.native-company-admin .company-settings-card select,
+.native-company-admin .company-settings-card textarea { max-width: 100%; }
+.native-company-admin .company-settings-card .table-responsive { width: 100%; min-width: 0; }
+.native-company-admin .company-settings-card pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.native-company-admin .company-lead-board { grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); }
+@media (max-width: 767px) {
+    .native-company-admin .company-settings-card { padding: 15px; }
+    .native-company-admin .company-settings-card button { max-width: 100%; white-space: normal; }
+}

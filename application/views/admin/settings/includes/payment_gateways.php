@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active())$this->load->view('admin/settings/includes/native_payment_gateways'); ?>
 <div class="horizontal-scrollable-tabs panel-full-width-tabs">
     <div class="scroller arrow-left tw-rounded-tl-md"><i class="fa fa-angle-left"></i></div>
     <div class="scroller arrow-right tw-rounded-tr-md"><i class="fa fa-angle-right"></i></div>
