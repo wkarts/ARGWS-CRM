@@ -127,6 +127,15 @@ function contextEnvironment($f, ContextSession $session, string $class = 'dashbo
 $f = essentialFixture(); $db = $f->db; $p = $f->prefix;
 essentialSeedSchema($f);
 // The enabled header now reads the real issuer-owned storage installed by 474.
+// MySQL validates the contact foreign key when creating the header tables.
+// Install its original parent DDL; SQLite alone cannot expose this omission.
+if ($db->driver() === 'mysql') {
+    require_once __DIR__.'/support/NativeInstalledSchemaFixture.php';
+    $nativePlan = NativeInstalledSchemaFixture::plan(file_get_contents(dirname(__DIR__).'/install/database.sql'), $p);
+    $db->query($nativePlan['contacts']['create']);
+    foreach ($nativePlan['contacts']['alters'] as $sql) { $db->query($sql); }
+    unset($db->data_cache['table_names']);
+}
 require_once APPPATH.'services/NativeCompanyHeaderSchema.php';
 NativeCompanyHeaderSchema::ensure($db,$p);
 $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,settings_json,created_by,created_at) VALUES(41,'Principal synthetic','12345678000195',1,'{}',7,'2026-10-18')");

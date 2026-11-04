@@ -64,7 +64,7 @@ A classificação por ação é deliberadamente conservadora: presença/rota nã
 ## Limites concretos
 
 - Ainda faltam adaptações completas dos módulos legados e configurações indicados acima. Abrir suas rotas agora permitiria executar consultas/gravações globais; a revisão não fez essa liberação.
-- Chromium local foi obtido, mas a inicialização falhou com `socket() failed: Operation not permitted` no processo singleton. A validação visual nova depende do job browser do CI. Não houve homologação autenticada desktop/mobile/PWA.
+- Chromium local foi obtido, mas a inicialização falhou com `socket() failed: Operation not permitted` no processo singleton. O job browser remoto 41844529810 passou no SHA d453e8e, incluindo a nova fixture de Settings. Não houve homologação autenticada desktop/mobile/PWA.
 - MariaDB 10.11.7 foi executado em banco descartável `issuer_native_module_audit`, exclusivamente por TCP. Isso não comprova todos os comportamentos de MySQL 8, que permanecem sob o CI correspondente.
 - PHP local 8.3.6; os jobs remotos usam as versões fixadas 8.1/8.5. Foram necessários pacotes de timezone legado para `Brazil/East`; a falha anterior ao ajuste era do runtime local, sem mudança na validação da aplicação.
 - Resultados históricos em `docs/revisao-4.8.5/resultados-*` permanecem intactos. Os recibos nesta subpasta identificam somente execuções desta rodada.
@@ -87,3 +87,7 @@ A classificação por ação é deliberadamente conservadora: presença/rota nã
 | Chromium local | Impedido pelo socket Unix do ambiente; não aprovado localmente |
 
 A suíte SQLite foi seguida por regressões direcionadas do endurecimento final de tipos JSON; a rodada MariaDB final usa esse endurecimento. A validação remota da árvore publicada é obrigatória e pode revelar outras falhas. Os números acima não representam execução de cada ação da matriz, nem homologação externa.
+
+## Reconciliação complementar do CI
+
+A revisão dos 13 hashes, os inventários regenerados e a correção da fixture de contexto em MySQL estão documentados em [revisao-inventarios.md](revisao-inventarios.md). Todos os bloqueios de prontidão operacional permanecem ativos.
