@@ -38,6 +38,16 @@ essentialThrows(fn()=>$modes->delete($a,7,$edited['id'],$edited['revision']),'na
 $db->query('UPDATE '.$p.'invoices SET allowed_payment_modes=? WHERE id=?',[serialize([]),$branded]);
 $modes->delete($a,7,$edited['id'],$edited['revision']);essentialThrows(fn()=>$modes->get($a,7,$edited['id']),'native_payment_mode_denied','unreferenced owned mode deleted without touching another issuer');
 $primary=(new IssuerResourceAccess($db,$p))->primaryId();
+$newPrimary=$modes->save($primary,7,array_replace($input,['name'=>'Primary compatible offline']));
+essentialCheck($newPrimary['source_kind']==='payment_mode'&&(string)$newPrimary['id']===(string)$newPrimary['source_id'],'primary creation keeps IDs readable by existing invoice/expense models');
+essentialCheck($db->query('SELECT name FROM '.$p.'payment_modes WHERE id=?',[$newPrimary['id']])->row_array()['name']==='Primary compatible offline','primary mode remains in the original catalogue read by legacy consumers');
+essentialThrows(fn()=>$modes->get($a,7,$newPrimary['id']),'native_payment_mode_denied','secondary cannot read a newly created primary legacy-compatible mode');
+$newPrimaryEdited=$modes->save($primary,7,array_replace($input,['name'=>'Primary reviewed']),$newPrimary['id'],$newPrimary['revision']);
+essentialThrows(fn()=>$modes->save($primary,7,$input,$newPrimary['id'],$newPrimary['revision']),'native_payment_mode_stale','primary legacy-compatible edit retains optimistic revision');
+$primaryBefore=$db->query('SELECT * FROM '.$p.'payment_modes ORDER BY id')->result_array();$db->failOn='INSERT INTO '.$p.'issuers_audit';
+try{essentialThrows(fn()=>$modes->save($primary,7,$input),'issuer_storage_failed','primary late audit failure rolls back create');}finally{$db->failOn=null;}
+essentialCheck($db->query('SELECT * FROM '.$p.'payment_modes ORDER BY id')->result_array()===$primaryBefore,'primary rollback leaves the original catalogue intact');
+$modes->delete($primary,7,$newPrimaryEdited['id'],$newPrimaryEdited['revision']);
 $db->query('INSERT INTO '.$p.'payment_modes(name,description,active,show_on_pdf,selected_by_default,invoices_only,expenses_only) VALUES(?,?,1,1,0,0,0)',['Synthetic historical offline','Legacy description']);$legacyId=(int)$db->insert_id();
 $legacy=$modes->get($primary,7,$legacyId);
 $db->query('INSERT INTO '.$p.'invoicepaymentrecords(invoiceid,amount,paymentmode,date,transactionid,note,daterecorded) VALUES(42,1,?,?,?,?,?)',[(string)$legacyId,'2026-10-25','synthetic-mode-veto','','2026-10-25 00:00:00']);$legacyPayment=(int)$db->insert_id();

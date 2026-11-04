@@ -274,6 +274,9 @@ final class CompanyRequestScope
             $sharedOwnedContract=$native&&self::ownedContractRoute($ci,$class,$method);
             $sharedOwnedClient = $native && self::ownedClientRoute($ci, $class, $method);
             $sharedOwnedOperational = $native && (self::ownedOperationalRoute($ci,$class,$method)||self::ownedPaymentsRoute($ci,$class,$method)||self::ownedExpenseRoute($ci,$class,$method));
+            // The offline catalogue already preserves primary historical IDs.
+            // Use its issuer-aware adapter for the primary company as well.
+            $sharedPaymentModes = $native && $class === 'paymentmodes';
             $sharedOwnedLead = $native && $class === 'leads'
                 && in_array($method, ['index', 'file', 'export'], true);
             // Credit notes already dispatch through the bounded native adapter
@@ -292,11 +295,12 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
             if ($staffCustomerDownload && !self::$nativePresentation) self::deny($ci, 'native_customer_file_method_invalid', 405);
+            if ($sharedPaymentModes && !self::$nativePresentation) self::deny($ci, 'native_payment_modes_method_invalid', 405);
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if($sharedInvoiceRecurring&&!self::$nativePresentation)self::deny($ci,'native_invoice_recurring_method_invalid',405);

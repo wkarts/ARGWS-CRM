@@ -4277,7 +4277,7 @@
       "evidence": ""
     },
     "application/services/CompanyRequestScope.php": {
-      "sha256": "e2e3e28aa3a3a50ba6185b4a23cfb1c494cfd47246bd7234cf30ceb45ad0816e",
+      "sha256": "b908628b4947817065f28f77fa5a16c45fba72dfd774c1dfb972037e512d957b",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -5480,7 +5480,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyPaymentModes.php": {
-      "sha256": "ce415e69e28b7ed22feac2f4a690573ecb5340ffe367fbb553ee7e9831227997",
+      "sha256": "0580fcac69b9a3d7dc7fa663391e6148a9eea4c825721072e070137922b910fb",
       "categories": [
         "invoice_table",
         "payments"
@@ -5490,8 +5490,8 @@
         14,
         40,
         53,
-        92,
-        93
+        98,
+        99
       ],
       "state": "unreviewed",
       "evidence": ""

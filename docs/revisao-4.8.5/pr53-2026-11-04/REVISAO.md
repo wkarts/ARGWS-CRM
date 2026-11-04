@@ -115,3 +115,15 @@ A view agora decodifica somente respostas em texto, preservando o backend legado
 Foi adicionada a invocação 103 (104 no total) ao grupo HTTP banking: `tests/companies/payment_modes_browser.cjs`. Ela usa somente os formulários reais e registros manuais descartáveis, sem criar pagamentos. Cobre principal/A/B, criação, descrição literal, edição, desativação, exclusão, atualização da tabela/modal, ausência de erros JS, contexto e revisão obsoletos, acesso cruzado, CSRF nativo ausente e rejeição de GET mutante. As consultas diretas são apenas SELECT; nenhuma gravação de fixture substitui o CRUD da interface. A execução HTTP desse teste continua pendente até a conclusão do CI do commit que o contém.
 
 O plano mantém todas as 103 invocações anteriores e acrescenta a nova com um único responsável; 12 testes de cobertura/particionamento passam. Logs locais estão em `meios-pagamento-local.json.gz`.
+
+## Mesmo catálogo protegido na empresa principal
+
+A revisão do caminho real mostrou que a principal ainda entrava no controller legado de meios manuais. `CompanyRequestScope` agora admite o catálogo finito de `paymentmodes` pelo mesmo adaptador das secundárias; verbos não admitidos recebem 405, e POST exige contexto e CSRF antes da hidratação. Não se liberam rotas de módulos globais.
+
+Para preservar consumidores antigos, a criação de meios na **principal comprovada** mantém `payment_modes` e IDs simples. Esse armazenamento de compatibilidade já pertence exclusivamente à identidade principal; leitura/gravação passam por ACL, lock, revisão e auditoria vinculada ao issuer. As secundárias continuam em `company_payment_modes` com `issuer_id` e IDs separados. Meios próprios já existentes na principal continuam visíveis. Não houve migração, renumeração, duplicação nem exclusão de dados. Essa compatibilidade é explícita: não se afirma que todas as tabelas legadas passaram a ter uma coluna `issuer_id`.
+
+A escolha evita criar meios invisíveis aos leitores legados de faturas/despesas da principal. O teste real de navegador confere os dois armazenamentos, verifica negação principal→A e A→B, e continua sem transações financeiras. Contratos PHP passaram em SQLite e MariaDB 10.11.7: contexto 151 verificações e serviço/controller 160 verificações acumuladas. Os 12 contratos Node de formulário/transporte também passaram. Recibos em `meios-pagamento-principal.json.gz`; CI HTTP permanece exigido.
+
+## Rodada MariaDB complementar
+
+Uma execução adicional do catálogo de 472 comandos completou 208 com sucesso e parou no comando 209 (`asaas_refund_schema.php`) pelo limite local de 180 segundos. Os demais comandos não foram executados nessa rodada; ela também atravessou alterações intermediárias, portanto não é recibo da árvore final. O caso foi reexecutado em banco MariaDB novo e passou tanto no código atual quanto na main, sem ampliar timeout ou retirar verificações. Não foi reproduzida uma regressão nesse caso isolado; a suíte longa local permanece incompleta. Resultados e logs foram preservados em `mariadb-complementar.json.gz`. O CI MySQL/PHP 8.1/8.5 continua obrigatório para o SHA publicado.

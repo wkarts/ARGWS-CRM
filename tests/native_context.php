@@ -366,6 +366,17 @@ $ci=contextEnvironment($f,$s,'utilities','view_event','POST');$_POST=['_company_
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken,'_native_company_csrf'=>$principalCalendarCsrf];CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal calendar POST enforces and strips both native boundary tokens');CompanyRequestScope::finish();
+// The actual pre-hydration boundary must select the same offline adapter for principal and secondary.
+$ci=contextEnvironment($f,$s,'paymentmodes','index');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41&&CompanyRequestScope::isolated(),'principal offline catalogue enters the native adapter');
+essentialCheck(hooks()->trace===[],'principal offline catalogue does not bootstrap global gateway hooks');
+$modeToken=CompanyRequestScope::token();$modeCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+foreach(['manage','delete','change_payment_mode_status','change_payment_mode_show_to_client_status']as$modeAction){
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'GET');expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'POST');$_POST=['_company_context'=>$modeToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+ $ci=contextEnvironment($f,$s,'paymentmodes',$modeAction,'POST');$_POST=['_company_context'=>$modeToken,'_native_company_csrf'=>$modeCsrf];CompanyRequestScope::beforeHydration($ci);
+ essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal offline '.$modeAction.' validates and strips both native tokens');CompanyRequestScope::finish();
+}
 foreach(['index','add','ticket']as$ticketAction){$ci=contextEnvironment($f,$s,'tickets',$ticketAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal original Tickets/'.$ticketAction.' selects the bounded historical/owned adapter');CompanyRequestScope::finish();}
 foreach([['projects','billing_rates'],['projects','fixed_billing'],['tasks','billing']]as[$boundedClass,$boundedAction]){$ci=contextEnvironment($f,$s,$boundedClass,$boundedAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::isolated(),'primary bounded '.$boundedClass.'/'.$boundedAction.' retains its native presentation and guards');CompanyRequestScope::finish();}
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();
