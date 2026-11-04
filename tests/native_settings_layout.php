@@ -25,6 +25,7 @@ $renderer=new class {
  public function render(){return strictFixtureRender(function(){
   $sections=['general'=>['title'=>'Geral','children'=>[
    ['id'=>'company','name'=>'Informações da Empresa','icon'=>'fa-solid fa-bars-staggered'],
+   ['id'=>'cronjob','name'=>'Cron Job','icon'=>'fa-solid fa-clock'],
    ['id'=>'email','name'=>'Servidor SMTP','icon'=>'fa-regular fa-envelope','badge'=>['value'=>'2','type'=>'info']],
   ]]];
   $group=['id'=>'email','name'=>'Servidor SMTP','view'=>'synthetic-fields'];
@@ -34,6 +35,8 @@ $renderer=new class {
 $html=$renderer->render();
 if($GLOBALS['layoutHooks']!==['before_settings_group_view','after_settings_group_view','settings_group_end'])throw new RuntimeException('Native hooks changed');
 foreach(['id="settings-form"','enctype="multipart/form-data"','name="synthetic_csrf"','settings-group-update','settings-group-argws_platform','settings-group-info','aria-current="page"','bg-info'] as $required)if(!str_contains($html,$required))throw new RuntimeException('Missing native contract '.$required);
+$document=new DOMDocument();@$document->loadHTML($html);$xpath=new DOMXPath($document);
+if($xpath->query('//li[@class="settings-group-cronjob"][@translate="no"]')->length!==1||$xpath->query('//li[@class="settings-group-email"][@translate]')->length!==0)throw new RuntimeException('Only the technical Cron entry disables translation');
 $base=['title'=>'Settings','heading'=>'Safe','active'=>'email','content'=>'<form id="trusted"></form>','sections'=>[['title'=>'Group','children'=>[['id'=>'email','name'=>'<script>bad</script>','url'=>'/admin/settings?group=email','icon'=>'fa fa-envelope']]]]];
 $render=static function($settingsPresentation){return strictFixtureRender(static function()use($settingsPresentation){require APPPATH.'views/admin/settings/presentation_layout.php';});};
 $safe=$render($base);if(str_contains($safe,'<script>bad</script>')||!str_contains($safe,'&lt;script&gt;'))throw new RuntimeException('Labels not escaped');

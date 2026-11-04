@@ -1,0 +1,14 @@
+No syntax errors detected in application/services/CompanySales.php
+No syntax errors detected in application/services/InvoicePaymentWriter.php
+No syntax errors detected in application/services/NativeCompanyAuxiliary.php
+No syntax errors detected in application/services/NativeCompanyContractMail.php
+No syntax errors detected in application/services/NativeCompanyFinancialMail.php
+No syntax errors detected in application/services/NativeCompanyLegacySales.php
+No syntax errors detected in application/services/issuers/IssuerStorage.php
+No syntax errors detected in application/views/admin/settings/presentation_layout.php
+No syntax errors detected in tests/companies/native_payment_modes.php
+No syntax errors detected in tests/companies/native_pr52_actions_mysql.php
+No syntax errors detected in tests/companies/native_sales_history.php
+No syntax errors detected in tests/companies/sales.php
+No syntax errors detected in tests/native_settings_layout.php
+No syntax errors detected in tests/native_settings_native.php

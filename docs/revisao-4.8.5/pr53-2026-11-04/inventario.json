@@ -1,0 +1,13 @@
+{
+  "base": "3c35555a94e7ba7eaaad8abd7a78a59c48504d7b",
+  "head_analisado": "c0e8efdc9f3eb8cb15297c94163bb67b12dabce2",
+  "acoes": 2743,
+  "metodos_presentes": 2742,
+  "rotas_admitidas": 425,
+  "estados_secundaria": {
+    "nao_testado": 1477,
+    "ausente": 841,
+    "parcialmente_implementado": 425
+  },
+  "limite": "Inventário estático, não execução individual das ações; complementar pela matriz funcional e recibos de testes."
+}

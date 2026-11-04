@@ -30,7 +30,7 @@ final class NativeCompanyContractMail
     }
     private function receipt(int $issuer,int $id,string $key):?array
     {
-        $needle=json_encode(['request_key'=>$key],JSON_THROW_ON_ERROR);$rows=$this->rows("SELECT metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND subject_id=? AND event=? AND JSON_VALID(metadata_json) AND JSON_EXTRACT(metadata_json,'$.request_key')=JSON_EXTRACT(?,'$.request_key') ORDER BY id",[$issuer,$id,self::EVENT,$needle]);if(count($rows)>1)throw new RuntimeException('issuer_contract_mail_unconfirmed');return$rows?json_decode($rows[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR):null;
+        $needle=$key;$rows=$this->rows("SELECT metadata_json FROM {$this->p}issuers_audit WHERE issuer_id=? AND subject_id=? AND event=? AND JSON_VALID(metadata_json) AND ".IssuerStorage::jsonStringColumn($this->db,'metadata_json','request_key')."=? ORDER BY id",[$issuer,$id,self::EVENT,$needle]);if(count($rows)>1)throw new RuntimeException('issuer_contract_mail_unconfirmed');return$rows?json_decode($rows[0]['metadata_json'],true,32,JSON_THROW_ON_ERROR):null;
     }
     private static function binding(array $b):string
     {

@@ -69,6 +69,30 @@ echo 'Sales/recurrence recovery, worker, PDF, origin: '.$GLOBALS['essentialCheck
 $guarded=$salesInput;$guarded['client_id']=$ca;$calls=0;$guardKey=hash('sha256','guard-positive');$guard=function()use(&$calls,$db){essentialCheck($db->pdo->inTransaction(),'origin guard executes within canonical writer transaction');++$calls;};$guardId=(new CompanyInvoices($db,$p))->create($a,7,$guarded,$guardKey,$guard);essentialCheck($calls===2,'origin veto runs before effects and before successful confirmation');(new CompanyInvoices($db,$p))->create($a,7,$guarded,$guardKey,$guard);essentialCheck($calls===4,'durable invoice retries revalidate origin twice');
 $before=(int)$db->query('SELECT COUNT(*) n FROM '.$p.'invoices')->row()->n;$calls=0;essentialThrows(fn()=>(new CompanyInvoices($db,$p))->create($a,7,$guarded,hash('sha256','guard-reject-late'),function()use(&$calls){if(++$calls===2)throw new DomainException('company_sales_origin_changed');}),'company_sales_origin_changed','late origin veto rolls back canonical invoice snapshot items and number');essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'invoices')->row()->n===$before,'late veto leaves no financial document');
 $called=false;essentialThrows(fn()=>(new CompanyInvoices($db,$p))->create($a,12,$guarded,hash('sha256','guard-no-authority'),function()use(&$called){$called=true;}),'company_invoice_access_denied','origin guard cannot grant invoice authority to revoked staff');essentialCheck(!$called,'authorization occurs before invoking an origin guard');
+$scalar=IssuerStorage::jsonStringColumn($db,'metadata_json','source');
+foreach([
+ ['{"source":"estimates"}',1],['{"source":"ESTIMATES"}',0],['{"source":["estimates"]}',0],
+ ['{"source":null}',0],['{"source":0}',0],['{}',0],['invalid-json',0],
+] as [$metadata,$expected]){
+ $matched=$db->query('SELECT COUNT(*) n FROM (SELECT ? AS metadata_json) scalar_fixture WHERE '.$scalar.'=?',[$metadata,'estimates'])->row()->n;
+ essentialCheck((int)$matched===$expected,'JSON source comparison is exact, typed and safe for absent/malformed metadata');
+}
+foreach([['metadata_json; DROP TABLE staff','source'],['metadata_json',"source') OR 1=1 --"]] as [$column,$key]){
+ try{IssuerStorage::jsonStringColumn($db,$column,$key);throw new RuntimeException('unsafe SQL identifier admitted');}
+ catch(InvalidArgumentException $expected){essentialCheck(true,'JSON identifier injection rejected before SQL');}
+}
+// Exercise the exact SQL projection on both PDO engines. Missing parents must
+// retain public content; private notes/custom fields must never become a fallback.
+$projection=(new ReflectionMethod(CompanySales::class,'searchablePayloadExpression'))->invoke(null);
+foreach([
+    ['note'=>'public-projection-needle'],
+    ['note'=>'public-projection-needle','native_fields'=>['adminnote'=>'private-note-needle']],
+    ['note'=>'public-projection-needle','native_custom_fields'=>['hidden'=>'private-field-needle']],
+    ['note'=>'public-projection-needle','native_fields'=>['adminnote'=>'private-note-needle'],'native_custom_fields'=>['hidden'=>'private-field-needle']],
+] as $projectionPayload){
+    $visible=$db->query('SELECT '.$projection.' AS visible_payload FROM (SELECT ? AS payload_json) projection_fixture',[json_encode($projectionPayload,JSON_THROW_ON_ERROR)])->row()->visible_payload;
+    essentialCheck(is_string($visible)&&str_contains($visible,'public-projection-needle')&&!str_contains($visible,'private-note-needle')&&!str_contains($visible,'private-field-needle'),'SQL search projection preserves public text and excludes both private paths');
+}
 $searchSale=$sales->create($a,7,'proposals',array_replace($salesInput,['note'=>'unique-literal-needle-45']),hash('sha256','sales-search'));essentialCheck(count($sales->page($a,7,'proposals',0,'unique-literal-needle-45')['items'])===1&&$sales->page($b,7,'proposals',0,'unique-literal-needle-45')['items']===[],'sales search predicates remain within company and document kind');essentialCheck($sales->page($a,7,'proposals',0,'%_')['items']===[],'search wildcards are treated as literal user text');
 echo 'Canonical origin guard / sales search: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
 

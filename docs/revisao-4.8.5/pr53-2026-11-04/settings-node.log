@@ -1,0 +1,16 @@
+✔ shared Settings route exposes exactly the native forms backed by owned adapters (1.678618ms)
+✔ native Settings POST enforces selected-company authorization, CSRF and revision (0.246191ms)
+✔ native company identity and custom fields come only from the selected issuer DTO (0.200071ms)
+✔ native and primary Settings use the same native presentation component (0.251218ms)
+✔ certificate entry uses only active company and settings edit permission (0.207242ms)
+✔ standalone shared-shell fixtures declare framework dependencies and fail before emitting warning HTML (0.449407ms)
+✔ shared envelope validates navigation DTO and preserves trusted server form slots (0.403648ms)
+✔ native support settings are owned by the original Settings form, not duplicated in outgoing generic UI (0.235655ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.31274

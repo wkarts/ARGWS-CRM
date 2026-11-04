@@ -1,0 +1,4196 @@
+{
+  "sha": null,
+  "phase": "sqlite",
+  "nested_coverage": {
+    "tests/companies/portal_operations_controller.php": "tests/companies/contract_discussions_controller.php",
+    "tests/companies/native_contact_controller.php": "tests/companies/native_all_contacts.php",
+    "tests/companies/native_contact_form.php": "tests/companies/native_all_contacts.php",
+    "tests/companies/native_contact_mail.php": "tests/companies/native_all_contacts.php",
+    "tests/companies/native_task_timer_picker.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_task_project_data.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_task_form_milestones.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_project_task_edit_form.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_task_edit_form.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_task_form_http.php": "tests/companies/native_billable_task_selection.php",
+    "tests/companies/native_blank_timer_assignment.php": "tests/companies/native_blank_timer_candidates.php",
+    "tests/companies/native_blank_timers.php": "tests/companies/native_blank_timer_candidates.php",
+    "tests/issuers_core_support.php": "tests/companies/native_blank_timer_candidates.php",
+    "tests/companies/native_clients_controller.php": "tests/companies/native_client_billing_controller.php",
+    "tests/companies/native_clients.php": "tests/companies/native_client_billing_controller.php",
+    "tests/companies/native_client_settings_policy.php": "tests/companies/native_client_settings_view.php",
+    "tests/companies/native_clients_settings.php": "tests/companies/native_clients_settings_controller.php",
+    "tests/companies/native_client_settings_fields.php": "tests/companies/native_clients_settings_controller.php",
+    "tests/companies/native_consents.php": "tests/companies/native_consent_source_upgrade.php",
+    "tests/companies/native_contacts.php": "tests/companies/native_contact_creation_attestation.php",
+    "tests/companies/native_contact_assignments.php": "tests/companies/native_contact_email_probe.php",
+    "tests/companies/native_contact_message.php": "tests/companies/native_contact_message_worker.php",
+    "tests/companies/contracts_controller.php": "tests/companies/native_contract_actions.php",
+    "tests/companies/native_contract_mail.php": "tests/companies/native_contract_mail_worker.php",
+    "tests/companies/native_assigned_custom_fields.php": "tests/companies/native_custom_field_helper_scope.php",
+    "tests/companies/native_customer_delete_references.php": "tests/companies/native_customer_delete_writer.php",
+    "tests/companies/native_customer_files_controller.php": "tests/companies/native_customer_files_view.php",
+    "tests/companies/native_customer_files.php": "tests/companies/native_customer_files_view.php",
+    "tests/companies/native_customer_assignments.php": "tests/companies/native_customer_files_view.php",
+    "tests/companies/native_invoice_table_controller.php": "tests/companies/native_customer_invoice_table_scope.php",
+    "tests/companies/native_invoice_rows.php": "tests/companies/native_customer_invoice_table_scope.php",
+    "tests/companies/native_projects_controller.php": "tests/companies/native_customer_project_table_scope.php",
+    "tests/companies/native_project_rows.php": "tests/companies/native_customer_project_table_scope.php",
+    "tests/companies/native_project_page.php": "tests/companies/native_customer_project_table_scope.php",
+    "tests/companies/native_project_choices.php": "tests/companies/native_customer_project_table_scope.php",
+    "tests/companies/native_customer_views.php": "tests/companies/native_customer_related_tabs.php",
+    "tests/companies/native_portal_customer_upload.php": "tests/companies/native_customer_upload_mail.php",
+    "tests/companies/native_portal_customer_files.php": "tests/companies/native_customer_upload_mail.php",
+    "tests/companies/native_contact_mail_worker.php": "tests/companies/native_customer_upload_mail_worker.php",
+    "tests/companies/native_customer_vault_controller.php": "tests/companies/native_customer_vault_view.php",
+    "tests/native_dashboard_presenter.php": "tests/companies/native_dashboard_primary_lineage.php",
+    "tests/companies/native_invoice_related_tasks.php": "tests/companies/native_draft_related_tasks.php",
+    "tests/companies/native_task_index_rows.php": "tests/companies/native_draft_related_tasks.php",
+    "tests/companies/native_task_index_page.php": "tests/companies/native_draft_related_tasks.php",
+    "tests/companies/native_task_index_projection.php": "tests/companies/native_draft_related_tasks.php",
+    "tests/companies/native_task_ticket_form.php": "tests/companies/native_draft_related_tasks.php",
+    "tests/companies/native_estimate_portal_decisions.php": "tests/companies/native_estimate_decision_http.php",
+    "tests/companies/native_estimate_form_tags.php": "tests/companies/native_estimate_form_fields.php",
+    "tests/companies/native_estimate_form_create.php": "tests/companies/native_estimate_form_fields.php",
+    "tests/companies/native_estimate_persisted_fields.php": "tests/companies/native_estimate_form_fields.php",
+    "tests/companies/native_estimate_portal_signatures.php": "tests/companies/native_estimate_portal_auto_convert.php",
+    "tests/companies/native_misc_settings.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_preferences.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_form_read.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_form_transaction.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_native_profile.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_commands_storage.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/native_company/staff_read.php": "tests/companies/native_estimate_request_forms.php",
+    "tests/companies/native_invoice_expense_billability.php": "tests/companies/native_expense_billability_schema.php",
+    "tests/companies/native_file_message.php": "tests/companies/native_file_message_invoice.php",
+    "tests/companies/native_invoice_table_factory.php": "tests/companies/native_filter_controller.php",
+    "tests/companies/native_invoice_read.php": "tests/companies/native_filter_controller.php",
+    "tests/companies/native_consent_controller.php": "tests/companies/native_gdpr_preferences_controller.php",
+    "tests/companies/native_invoice_fields.php": "tests/companies/native_invoice_agent_writes.php",
+    "tests/companies/invoice_drafts.php": "tests/companies/native_invoice_agent_writes.php",
+    "tests/companies/invoice_recurring_native.php": "tests/companies/native_invoice_calculation_recurring.php",
+    "tests/companies/native_invoice_draft_creation_tags.php": "tests/companies/native_invoice_created_reminders.php",
+    "tests/companies/native_invoice_draft_creation_fields.php": "tests/companies/native_invoice_created_reminders.php",
+    "tests/companies/native_invoice_draft_line_fields.php": "tests/companies/native_invoice_created_reminders.php",
+    "tests/companies/native_invoice_draft_lines.php": "tests/companies/native_invoice_created_reminders.php",
+    "tests/companies/native_invoice_totals_controller.php": "tests/companies/native_invoice_dates_controller.php",
+    "tests/companies/native_invoice_project.php": "tests/companies/native_invoice_dates_controller.php",
+    "tests/companies/native_invoice_draft_references.php": "tests/companies/native_invoice_draft_custom_fields.php",
+    "tests/companies/native_invoice_commands.php": "tests/companies/native_invoice_draft_header_transfer.php",
+    "tests/companies/native_invoice_editor_items.php": "tests/companies/native_invoice_editor_tax_rows.php",
+    "tests/companies/native_invoice_issue_commands.php": "tests/companies/native_invoice_form_number_cas.php",
+    "tests/companies/native_invoice_created_metadata.php": "tests/companies/native_invoice_form_number_cas.php",
+    "tests/companies/native_invoice_form_data.php": "tests/companies/native_invoice_form_view.php",
+    "tests/companies/native_invoice_form_post.php": "tests/companies/native_invoice_issued_form_update.php",
+    "tests/companies/native_invoice_item_custom_fields.php": "tests/companies/native_invoice_items_renderer.php",
+    "tests/companies/native_invoice_draft_table.php": "tests/companies/native_invoice_options.php",
+    "tests/companies/native_invoice_draft_projection.php": "tests/companies/native_invoice_options.php",
+    "tests/companies/native_payment_notice_delivery.php": "tests/companies/native_invoice_payment_controller.php",
+    "tests/companies/native_invoice_creation_preferences.php": "tests/companies/native_invoice_payment_selection.php",
+    "tests/companies/native_invoice_selected_reversal.php": "tests/companies/native_invoice_preview_credits.php",
+    "tests/companies/native_invoice_file_controller.php": "tests/companies/native_invoice_preview_files.php",
+    "tests/companies/native_invoice_preview_recurring.php": "tests/companies/native_invoice_preview_metadata.php",
+    "tests/native_company/primary_notes_reminders.php": "tests/companies/native_invoice_preview_reminders.php",
+    "tests/native_company/primary_auxiliary.php": "tests/companies/native_invoice_preview_reminders.php",
+    "tests/native_company/auxiliary_contract.php": "tests/companies/native_invoice_preview_reminders.php",
+    "tests/companies/native_invoice_cancel_controller.php": "tests/companies/native_invoice_reopen.php",
+    "tests/companies/native_work_tags.php": "tests/companies/native_invoice_tags.php",
+    "tests/companies/native_invoice_task_selectors.php": "tests/companies/native_invoice_task_preview.php",
+    "tests/companies/native_invoice_form_controller.php": "tests/companies/native_invoice_task_preview.php",
+    "tests/companies/native_invoice_draft_line_inheritance.php": "tests/companies/native_invoice_update_commands.php",
+    "tests/companies/native_invoice_calculation_provenance.php": "tests/companies/native_invoice_zero_balance.php",
+    "tests/companies/native_payment_modes.php": "tests/companies/native_payment_mode_controller.php",
+    "tests/companies/native_portal_profile_controller.php": "tests/companies/native_portal_announcements_controller.php",
+    "tests/companies/native_portal_avatar.php": "tests/companies/native_portal_announcements_controller.php",
+    "tests/companies/native_portal_profile.php": "tests/companies/native_portal_announcements_controller.php",
+    "tests/companies/native_portal_registration.php": "tests/companies/native_portal_announcements_controller.php",
+    "tests/companies/native_portal_identity.php": "tests/companies/native_portal_audit.php",
+    "tests/companies/native_portal_authentication.php": "tests/companies/native_portal_authentication_actions.php",
+    "tests/companies/native_portal_remember.php": "tests/companies/native_portal_authentication_actions.php",
+    "tests/companies/native_portal_scope.php": "tests/companies/native_portal_branding.php",
+    "tests/companies/native_portal_consent_ledger.php": "tests/companies/native_portal_consent_controller.php",
+    "tests/companies/native_portal_consent_capability.php": "tests/companies/native_portal_consent_controller.php",
+    "tests/companies/native_portal_historical_verification.php": "tests/companies/native_portal_historical_reset.php",
+    "tests/companies/native_portal_verification.php": "tests/companies/native_portal_historical_reset.php",
+    "tests/companies/native_portal_files_scope.php": "tests/companies/native_portal_home.php",
+    "tests/companies/native_portal_files_controller.php": "tests/companies/native_portal_home.php",
+    "tests/companies/native_portal_invoices.php": "tests/companies/native_portal_legacy_estimates.php",
+    "tests/companies/native_privacy_requests.php": "tests/companies/native_portal_privacy_controller.php",
+    "tests/companies/native_portal_registration_controller.php": "tests/companies/native_portal_verification_controller.php",
+    "tests/companies/native_project_form_state.php": "tests/companies/native_project_contact_index_sqlite.php",
+    "tests/companies/native_project_create_fields.php": "tests/companies/native_project_contact_index_sqlite.php",
+    "tests/companies/native_project_create.php": "tests/companies/native_project_contact_index_sqlite.php",
+    "tests/companies/native_project_metadata_rate.php": "tests/companies/native_project_contact_index_sqlite.php",
+    "tests/companies/native_project_form.php": "tests/companies/native_project_copy.php",
+    "tests/companies/native_project_related_tasks.php": "tests/companies/native_project_detail_metrics.php",
+    "tests/companies/native_project_file_upload_types.php": "tests/companies/native_project_file_download.php",
+    "tests/companies/native_project_relation_options.php": "tests/companies/native_project_mentions_legacy.php",
+    "tests/companies/native_project_detail_hours.php": "tests/companies/native_project_overview_component.php",
+    "tests/companies/native_project_timer_projection.php": "tests/companies/native_project_overview_component.php",
+    "tests/companies/native_sales_dates.php": "tests/companies/native_sales_dates_controller.php",
+    "tests/companies/native_sales_settings.php": "tests/companies/native_sales_primary_controller_fixture.php",
+    "tests/companies/native_sales_number_formats.php": "tests/companies/native_sales_search_bounds.php",
+    "tests/companies/native_settings_forms.php": "tests/companies/native_settings_controller.php",
+    "tests/companies/native_customer_download_scope.php": "tests/companies/native_staff_download_scope.php",
+    "tests/companies/native_dashboard_preferences.php": "tests/companies/native_table_order.php",
+    "tests/companies/native_task_form_writer.php": "tests/companies/native_task_board_move.php",
+    "tests/companies/native_task_create_fields.php": "tests/companies/native_task_form_payload.php",
+    "tests/companies/native_task_relation_option.php": "tests/companies/native_task_index_read.php",
+    "tests/companies/native_task_timer_read.php": "tests/companies/native_task_index_read.php",
+    "tests/companies/native_task_main_filters.php": "tests/companies/native_task_index_view.php",
+    "tests/companies/native_task_related_filters.php": "tests/companies/native_task_index_view.php",
+    "tests/companies/native_task_related_table.php": "tests/companies/native_task_index_view.php",
+    "tests/companies/native_task_checklist_visibility.php": "tests/companies/native_task_items_presentation.php",
+    "tests/companies/native_task_items_controller.php": "tests/companies/native_task_items_presentation.php",
+    "tests/companies/native_task_items_commands.php": "tests/companies/native_task_items_presentation.php",
+    "tests/companies/native_task_items_initialization.php": "tests/companies/native_task_items_presentation.php",
+    "tests/companies/native_task_item_schema.php": "tests/companies/native_task_items_presentation.php",
+    "tests/companies/native_task_checklist_templates.php": "tests/companies/native_task_new_form.php",
+    "tests/companies/native_task_status_controller.php": "tests/companies/native_task_priority_controller.php",
+    "tests/companies/native_task_related_rows.php": "tests/companies/native_task_related_controller.php",
+    "tests/companies/native_task_related_page.php": "tests/companies/native_task_related_controller.php",
+    "tests/companies/native_task_index_controller.php": "tests/companies/native_task_scoped_db.php",
+    "tests/companies/native_task_workflow_defaults.php": "tests/companies/native_task_settings_form.php",
+    "tests/companies/native_task_form_followers.php": "tests/companies/native_task_settings_owned.php",
+    "tests/companies/native_task_timer_operations.php": "tests/companies/native_task_timer_tracking_controller.php",
+    "tests/companies/native_work_mentions.php": "tests/companies/native_task_tracking_stats.php",
+    "tests/native_company/calendar_event_mail.php": "tests/native_company/calendar_event_batch.php",
+    "tests/native_company/knowledge_read.php": "tests/native_company/calendar_presentation.php",
+    "tests/native_company/primary_catalog.php": "tests/native_company/catalog_client_currencies.php",
+    "tests/native_company/primary_catalog_models.php": "tests/native_company/catalog_principal_native.php",
+    "tests/native_company/primary_announcements.php": "tests/native_company/catalog_principal_native.php",
+    "tests/native_company/departments_write.php": "tests/native_company/departments_controller.php",
+    "tests/native_company/departments_read.php": "tests/native_company/departments_controller.php",
+    "tests/native_company/header_storage.php": "tests/native_company/header_privacy.php",
+    "tests/native_company/catalog_invoice_editor.php": "tests/native_company/invoice_catalog_lookup.php",
+    "tests/native_company/invoice_native_files.php": "tests/native_company/invoice_download_controller.php",
+    "tests/native_company/invoice_attachment_owned.php": "tests/native_company/invoice_download_controller.php",
+    "tests/native_company/knowledge_write.php": "tests/native_company/knowledge_controller.php",
+    "tests/native_company/legacy_item_order.php": "tests/native_company/legacy_item_order_controller.php",
+    "tests/native_company/settings_email.php": "tests/native_company/mail_oauth_endpoint.php",
+    "tests/native_company/relation_directory.php": "tests/native_company/relation_endpoints.php",
+    "tests/native_company/ticket_preferences.php": "tests/native_company/settings_tickets.php",
+    "tests/native_company/ticket_catalog.php": "tests/native_company/settings_tickets.php",
+    "tests/native_company/spam_filters.php": "tests/native_company/spam_controller.php",
+    "tests/native_company/ticket_create.php": "tests/native_company/spam_controller.php",
+    "tests/native_company/ticket_catalog_schema.php": "tests/native_company/spam_schema.php",
+    "tests/native_company/staff_self_endpoint.php": "tests/native_company/staff_email_endpoint.php",
+    "tests/native_company/staff_self.php": "tests/native_company/staff_email_endpoint.php",
+    "tests/native_company/staff_member_page.php": "tests/native_company/staff_inactive_administration.php",
+    "tests/native_company/staff_native_creation.php": "tests/native_company/staff_inactive_administration.php",
+    "tests/native_company/staff_invite_creation.php": "tests/native_company/staff_invite_authentication.php",
+    "tests/native_company/staff_timesheets.php": "tests/native_company/staff_projects.php",
+    "tests/native_company/staff_form_command.php": "tests/native_company/staff_remove_avatar_command.php",
+    "tests/native_company/staff_roles_endpoints.php": "tests/native_company/staff_role_changed.php",
+    "tests/native_company/staff_roles.php": "tests/native_company/staff_role_changed.php",
+    "tests/native_company/ticket_table_order.php": "tests/native_company/task_table_order.php",
+    "tests/native_company/ticket_read.php": "tests/native_company/task_ticket_relation_authority.php",
+    "tests/native_company/presentation.php": "tests/native_company/ticket_assets.php",
+    "tests/native_company/ticket_status_endpoint.php": "tests/native_company/ticket_block_sender.php",
+    "tests/native_company/ticket_add_page.php": "tests/native_company/ticket_block_sender.php",
+    "tests/native_company/ticket_catalog_delete.php": "tests/native_company/ticket_bootstrap.php",
+    "tests/native_company/ticket_contacts.php": "tests/native_company/ticket_contact_endpoint.php",
+    "tests/native_company/ticket_deletion.php": "tests/native_company/ticket_deletion_downstream.php",
+    "tests/native_company/ticket_reply.php": "tests/native_company/ticket_deletion_downstream.php",
+    "tests/native_company/ticket_edit_endpoint.php": "tests/native_company/ticket_deletion_endpoint.php",
+    "tests/native_company/ticket_thread_render.php": "tests/native_company/ticket_detail_page.php",
+    "tests/native_company/ticket_files.php": "tests/native_company/ticket_download_controller.php",
+    "tests/native_company/ticket_table_factory.php": "tests/native_company/ticket_filters_controller.php",
+    "tests/native_company/ticket_filters.php": "tests/native_company/ticket_filters_controller.php",
+    "tests/native_company/ticket_index_read.php": "tests/native_company/ticket_index_controller.php",
+    "tests/native_company/ticket_settings_merge.php": "tests/native_company/ticket_index_controller.php",
+    "tests/native_company/ticket_settings_merge_endpoint.php": "tests/native_company/ticket_merge_preview.php",
+    "tests/native_company_custom_fields_storage.php": "tests/native_company_custom_fields_search.php",
+    "tests/native_invoice_status_presentation.php": "tests/native_invoice_quick_stats.php"
+  },
+  "records": [
+    {
+      "command": [
+        "php",
+        "tests/native_installed_schema_fixture.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.033
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_auxiliary_constraint_names.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.041
+    },
+    {
+      "command": [
+        "php",
+        "tests/tcpdf_gd_compatibility.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.067
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_all_contacts.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.865
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_assigned_contact_mail.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.764
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_blank_timer_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.04
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_form_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.195
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_billing_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.171
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_status.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.132
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_creation_attestation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.121
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_delete.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.045
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_email_probe.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.977
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_image.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.96
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_message_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.846
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.094
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_tab.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.896
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_table_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.813
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_creation_attestation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.078
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_custom_field_helper_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.029
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_custom_fields_creation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.08
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_admin_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.204
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_audit.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.17
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_files_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.391
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_groups.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.097
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_map.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.246
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_registration.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.834
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_registration_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.801
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_table_projection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.134
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_vault.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.45
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_vault_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.353
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_dashboard_primary_lineage.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.146
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_dashboard_ticket_report.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.18
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_events.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.059
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_file_message_invoice.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.814
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_file_message_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.803
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_file_message_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.889
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_filter_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.58
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_filters.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.864
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_fixture_version_boundary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.044
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_gdpr_preferences_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.015
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_agent_writes.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.842
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_agents.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.519
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_communication_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.252
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_communication_state.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.339
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_created_line_proof.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.326
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_created_reminders.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.478
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_custom_columns.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.51
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_dates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.42
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_custom_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.932
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_header_transfer.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.213
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_tags.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.842
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_editor_tax_rows.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.662
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_item_order.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.324
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_items_renderer.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.438
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_manage.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.312
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_number_snapshot.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.398
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_optional_due.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.794
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_options.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.367
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_pdf.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.894
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_project_reference.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.163
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_project_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.41
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_reopen.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.488
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_rules.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.491
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_sequence_editor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.576
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_sequence_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.416
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_table_order.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.595
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_tags.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.088
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_update_commands.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.514
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_misc_contact_email.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.71
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_payment_mode_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.515
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_audit.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.039
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_authentication_actions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.148
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_branding.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.869
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_constructor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.79
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_custom_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.717
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_formatting.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.804
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_historical_reset.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.874
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_legal.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.065
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.728
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_registration_locale.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.765
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_registration_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.147
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_verification_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.745
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_verification_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.858
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_legacy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.8
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_audit_receipt.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.183
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_billing_read.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.111
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_deadline.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.166
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_form_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.412
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_form_financial_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.635
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_members_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.702
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_metadata.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.088
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_metadata_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.042
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_rate_compositor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.243
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_summary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.188
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_time_billing_read.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.163
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_update_atomic.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.206
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_settings_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.208
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_context.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.34
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_table_order.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.051
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_checklist_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.611
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_finished_form.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.928
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_form_payload.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.565
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_form_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.04
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_historical_snapshot.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.494
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_new_form.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.459
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_reference_preflight.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.078
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_template_selection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.793
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_tasks_timer_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.236
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_timer_policy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.053
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_work_assignments_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.064
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_dashboard_payments.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.057
+    },
+    {
+      "command": [
+        "php",
+        "tests/issuers_core_upgrade.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.029
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/audit_ignored_insert.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.143
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/proposals_list_acl.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.027
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/auxiliary_historical_actors.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.143
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/calendar_event_batch.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.649
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/calendar_endpoints.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.088
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/calendar_event_mail_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.277
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/calendar_event_oauth.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.149
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/calendar_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.042
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_client_currencies.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.172
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_currency_identity.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.155
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_currency_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.129
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_custom_creation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.165
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_import_reference.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.136
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_principal_native.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.124
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_tax_dropdown.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.147
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/catalog_tax_selections.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.119
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/currency_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.111
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/currency_native_model.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.155
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/currency_reference_catalog.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.158
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/departments_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.058
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/departments_delete.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.052
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/departments_imap.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.04
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/departments_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.027
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/file_content.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.042
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_knowledge_fk_indexes.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.023
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_legacy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.039
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_privacy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.04
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_search.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.089
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/invoice_download_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.879
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/invoice_preview_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.243
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/item_order_input.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.034
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.113
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_feedback.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.127
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_inflight_lineage.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.03
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_mutations.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.107
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_order.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.112
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.043
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_public.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.044
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/knowledge_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.034
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/legacy_item_order_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.939
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/legacy_sales_boundary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.733
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/mail_dispatch_fence.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.06
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/mail_oauth_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.159
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/mail_queue.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.104
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/mail_test.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.171
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/model_bootstrap.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.085
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/native_translation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.051
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/portal_announcements.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.37
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/presentation_options.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.023
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/primary_catalog_items.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.218
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/quick_actions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/registration_notifications.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.037
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/relation_endpoints.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.087
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/relation_operations.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.422
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/relation_sales.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.114
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/reminder_listing_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.187
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/reminder_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.136
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/resource_financial_lineage.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.423
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/resource_sales_boundary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.154
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/search_estimate_items.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.188
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_calendar.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.593
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_email_transport.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.214
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_email_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.204
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_google.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.612
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_invoices.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.203
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_sales_general.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.192
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/settings_tickets.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.166
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/source_ignored_insert.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.14
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/spam_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.218
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/spam_matcher.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/spam_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/table_wire.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.022
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_assets.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.033
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_auxiliary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.339
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_block_sender.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.408
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_bootstrap.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.074
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_catalog_backfill.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.1
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_catalog_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.151
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_catalog_status.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.057
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_contact_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.063
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_creation_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.255
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_customer_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.025
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_download_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.222
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_edit_message.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.39
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_ids.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.034
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_lease.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.427
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_lease_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.476
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_notification_composition.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.25
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_public_capability.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.23
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_reference_composition.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.274
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_relation_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.307
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_relation_paging.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.99
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_reply_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.048
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_updates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.316
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/timer_projection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.037
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/todo_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.134
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_custom_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.046
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_custom_fields_search.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.172
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_filter_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.083
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_formatting.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.038
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_migration_orchestration.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_resource_id.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_resource_references.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.091
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_routes.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.03
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_settings_defaults.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.093
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company_upload_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.078
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_dashboard_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_dashboard_widget_acl.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.076
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_cleanup_contract.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.043
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_datatable.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.054
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_dates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.035
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_fields_contract.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.031
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_item_resource_id.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.028
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_quick_stats.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.035
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_rules.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.029
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_table_header.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.033
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_table_row.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.034
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_invoice_totals.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.028
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_payment_mode_row.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.035
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_project_metadata_input.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.025
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_project_row_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.031
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_project_rules.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_project_stats_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.031
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_project_tabs.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.03
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_sales_number_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.032
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_settings_sections.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.033
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_staff_avatar.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_tag_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.025
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_task_form_values.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.035
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_task_form_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.043
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_task_relation_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.072
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_timer_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.031
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_work_status_catalog.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.08
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_work_status_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.04
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/native_assets.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.17
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/google_mail_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.561
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/native_gdpr_settings.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.103
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/native_knowledge_option.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.078
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_number_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.153
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_number_parent.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.499
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_file_delete.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.529
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_blank_timer_candidates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.175
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_consent_source_upgrade.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.822
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_sequence_editor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.516
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_form_number_cas.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.38
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_form_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.531
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_payment_choices.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.665
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_reminder_sources.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.474
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_announcements_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.359
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_avatar_primary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.398
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_company.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.297
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_company_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.274
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_consent_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.341
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_mentions_legacy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.126
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_tracking_lineages.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.088
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_tracking_stats.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.019
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_invite_authentication.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.881
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_invite_oauth.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.059
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_invite_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.13
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_invite_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.184
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_rates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.124
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_role_changed.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.196
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_deletion_downstream.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.489
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_deletion_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.659
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_lifecycle_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.025
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_metrics.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.512
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_reply_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.446
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_settings.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.516
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_settings_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.537
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_settings_render.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.498
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_billable_task_selection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.659
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_bb_candidates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.442
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_payment_selection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.776
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_settings_form.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.963
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_settings_owned.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.688
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/invoice_catalog_lookup.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.271
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_self_two_factor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.145
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_calculation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.025
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_calculation_recurring.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.416
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_privacy_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.712
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_mail.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.802
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_mail_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.911
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_profile_tabs.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.173
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_settings_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.074
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_clients_settings_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.364
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_request_forms.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.319
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_task_preview.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.841
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_zero_balance.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.722
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_staff_projects_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.295
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_timer_tracking_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.511
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_timer_header_revisions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.055
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/available_languages.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.027
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_authentication_constructor.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_email_endpoint.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.111
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_google_setup.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.153
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_projects.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.178
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_remove_avatar_command.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.501
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_self_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.205
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_bulk_delete.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.625
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_bulk_update.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.886
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_filter_table.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.162
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_merge_preview.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.851
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_rules.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.028
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_expense_billability_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.477
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_mail_identifiers.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.037
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_ticket_writer.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.401
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_inactive_administration.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.486
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_member_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.095
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_status.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.34
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_timer_actions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.459
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/task_ticket_relation_authority.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.227
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_summary.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.733
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_table_row_extraction.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.026
+    },
+    {
+      "command": [
+        "php",
+        "tests/invoice_issuer_http_files.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.17
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_provider_origin_fence.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.322
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_table.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.404
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/header_schema_sqlite.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.046
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_files_owned.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.902
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_upload_mail.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.532
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_upload_mail_identifiers.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.037
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_upload_mail_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.944
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_project_delete_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.591
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_project_delete_policy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.619
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_task_delete_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.761
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_task_delete_policy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.741
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_priority_audit_receipt.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.409
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_related_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.157
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_related_helper.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.806
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_ticket_list.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.81
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_hidden_columns.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.187
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_notifications_page.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.12
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_public_profile.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.559
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/staff_timesheet_report.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.281
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/task_table_order.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.231
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_filters_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.226
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_index_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.263
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_index_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 4.254
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_row_projection.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.786
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_table_structure.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.192
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_weekly_chart.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.719
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_related_task_rules.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.03
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_task_members_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.027
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_task_row_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "php",
+        "tests/invoice_issuer_discovery.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.062
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_read_marker_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.1
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_create_contact.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.237
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_sequence_preferences.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.01
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_primary_controller_fixture.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.348
+    },
+    {
+      "command": [
+        "php",
+        "tests/banco_brasil_cnab400_comparison_sqlite.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.403
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_settings_views.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.201
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_settings_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.058
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_dates_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.094
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_table_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.193
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_delete_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.86
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_groups_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.202
+    },
+    {
+      "command": [
+        "php",
+        "tests/banco_brasil_cnab400_preparation_sqlite.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.44
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contact_directory_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.833
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_menu_permissions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.189
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_status_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.213
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_status_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.211
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_home.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.76
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_search_bounds.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 7.126
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_individual_customer.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.208
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_individual_customer_import.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.181
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/client_imports_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.163
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_lookup_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.222
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_form_input.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.033
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_dates_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.933
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_project.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.97
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_delete_guard.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.25
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_index_read.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.097
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_index_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.077
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_scoped_db.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.844
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_delete_writer.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.141
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_related_status.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.23
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_data.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.347
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_priority_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.516
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_delete_inventory.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.028
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_form_fields.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 6.392
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_project_table_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.375
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_invoice_table_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.176
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_related_tabs.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.219
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_detail_facts.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.18
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_selected_payment.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.688
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_payment_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.728
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_detail_metrics.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.114
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_files.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.122
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_credits.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.483
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_reminders.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.167
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_metadata.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.861
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_signature_schema.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.969
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_decision_http.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.576
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_portal_auto_convert.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.234
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_preview_copy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.844
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_overview_component.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.618
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_contact_index_sqlite.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.945
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_items_presentation.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.784
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_items_view.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.604
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_copy_metadata.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.396
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_portal_notifications.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.35
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_detail_files.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.129
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_estimate_portal_pagination.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.389
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_project_download.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.473
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_file_download.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.172
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_reply_attachments.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.544
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_detail_page.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.661
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_company/ticket_create_attachments.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.267
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/contract_discussions_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.451
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_copy_recurring.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.995
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/asaas_checkout_portal.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.902
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_detail_guard.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.348
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_clients_literal_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.17
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_contacts_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.543
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_estimates_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.426
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_detail_read.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.484
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_portal_legacy_estimates.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.094
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_ticket_tab.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.231
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_draft_related_tasks.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.903
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_staff_download_scope.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.331
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_history_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.313
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_copy.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.826
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contract_actions.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 3.105
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_contract_mail_worker.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.58
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_detail_portal_authorship.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.576
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_client_update_controller.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.217
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/contracts_value_branding.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 1.712
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_issued_form_update.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 2.254
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_table_legacy_filter.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.072
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_pr52_completion_regression.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.037
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_task_board_move.php"
+      ],
+      "exit": 0,
+      "php_diagnostics": false,
+      "seconds": 0.498
+    }
+  ],
+  "complete": true,
+  "success": true
+}

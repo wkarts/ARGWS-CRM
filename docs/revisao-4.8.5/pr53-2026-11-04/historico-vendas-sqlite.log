@@ -1,0 +1,10 @@
+Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.
+Financial origin/ACL boundaries: 30 cumulative checks passed.
+Invoice legacy/PDF provenance: 33 cumulative checks passed.
+Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.
+Owned branding snapshots/PDF: 63 cumulative checks passed.
+Company sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.
+Sales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.
+Canonical origin guard / sales search: 148 cumulative checks passed.
+Sales/recurrence principal and legacy distinction: 152 cumulative checks passed.
+Native sales history/collision/edit/PDF/isolation: 175 cumulative checks passed (sqlite).

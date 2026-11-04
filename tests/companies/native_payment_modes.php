@@ -1,6 +1,19 @@
 <?php
 require __DIR__.'/native_invoice_read.php';
 require_once APPPATH.'services/NativeCompanyPaymentModes.php';
+// SQLite does not enforce the complete InnoDB table set at transaction entry.
+// Install the actual missing parents before exercising the same writer on MySQL.
+if($db->driver()==='mysql'){
+    require_once __DIR__.'/../support/NativeInstalledSchemaFixture.php';
+    $nativePlan=NativeInstalledSchemaFixture::plan(file_get_contents(dirname(__DIR__,2).'/install/database.sql'),$p);
+    if(!$db->table_exists($p.'expenses')){
+        $db->query($nativePlan['expenses']['create']);
+        foreach($nativePlan['expenses']['alters'] as $sql)$db->query($sql);
+        unset($db->data_cache['table_names']);
+    }
+    require_once APPPATH.'services/CompanyInvoiceDraftsSchema.php';
+    CompanyInvoiceDraftsSchema::ensure($db,$p);
+}
 NativeCompanyPaymentModesSchema::ensure($db,$p);NativeCompanyPaymentModesSchema::ensure($db,$p);
 $modes=new NativeCompanyPaymentModes($db,$p);$input=['name'=>'Synthetic bank transfer','description'=>"Synthetic line\nSecond <literal>",'active'=>1,'show_on_pdf'=>1,'selected_by_default'=>1,'invoices_only'=>1,'expenses_only'=>0];
 $modeA=$modes->save($a,7,$input);$modeB=$modes->save($b,7,array_replace($input,['name'=>'B private mode']));

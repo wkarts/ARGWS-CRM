@@ -1,0 +1,6 @@
+
+Fatal error: Uncaught TypeError: class@anonymous(): Argument #1 ($group) must be of type string, array given, called in <workspace>/ARGWS-CRM-main-verification/tests/native_settings_native.php on line 9 and defined in <workspace>/ARGWS-CRM-main-verification/tests/settings/settings_model_controller.php:52
+Stack trace:
+#0 <workspace>/ARGWS-CRM-main-verification/tests/native_settings_native.php(9): class@anonymous->render(Array)
+#1 {main}
+  thrown in <workspace>/ARGWS-CRM-main-verification/tests/settings/settings_model_controller.php on line 52

@@ -28,8 +28,8 @@ foreach ($settingsPresentation['sections'] as $section) {
      <div><h4 class="tw-mt-0 tw-mb-4 tw-text-sm tw-text-neutral-500 tw-font-medium"><?= $settingsEscape($section['title']); ?></h4>
       <ul class="tw-space-y-2">
       <?php foreach ($section['children'] as $child) { $selected=$settingsPresentation['active']===$child['id']; ?>
-       <li class="settings-group-<?= $settingsEscape($child['id']); ?>"><a href="<?= $settingsEscape($child['url']); ?>" <?= $selected?'aria-current="page"':''; ?> class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= $selected?'tw-text-neutral-800':'tw-text-neutral-600'; ?>">
-        <i class="<?= $settingsEscape($child['icon']); ?> fa-fw fa-lg tw-mr-0.5 group-hover:tw-text-neutral-800 <?= $selected?'tw-text-neutral-800':'tw-text-neutral-500'; ?>"></i><span <?= $child['id']==='cronjob'?'translate="no"':''; ?>><?= $settingsEscape($child['name']); ?></span>
+       <li class="settings-group-<?= $settingsEscape($child['id']); ?>" <?= $child['id']==='cronjob'?'translate="no"':''; ?>><a href="<?= $settingsEscape($child['url']); ?>" <?= $selected?'aria-current="page"':''; ?> class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= $selected?'tw-text-neutral-800':'tw-text-neutral-600'; ?>">
+        <i class="<?= $settingsEscape($child['icon']); ?> fa-fw fa-lg tw-mr-0.5 group-hover:tw-text-neutral-800 <?= $selected?'tw-text-neutral-800':'tw-text-neutral-500'; ?>"></i><span><?= $settingsEscape($child['name']); ?></span>
         <?php if (isset($child['badge']['value']) && $child['badge']['value']!=='') {
             $type=$child['badge']['type']??'info'; if(!in_array($type,['info','success','warning','danger','primary','default'],true))$type='info';
             $color=$child['badge']['color']??''; if(!is_string($color)||!preg_match('/^#[a-fA-F0-9]{6}$/D',$color))$color=''; ?>

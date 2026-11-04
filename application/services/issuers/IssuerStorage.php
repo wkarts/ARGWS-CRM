@@ -5,6 +5,18 @@ declare(strict_types=1);
 /** Query boundary: SQL, bindings and identifiers never escape via framework HTML/query logs. */
 final class IssuerStorage
 {
+    /** Exact JSON string comparison across SQLite, MySQL and MariaDB. */
+    public static function jsonStringColumn($db,string $column,string $key): string
+    {
+        if(!preg_match('/^[a-z_][a-z0-9_]*$/D',$column)||!preg_match('/^[a-z_][a-z0-9_]*$/D',$key))throw new InvalidArgumentException('Invalid JSON column or key');
+        $connection=$db->pdo??$db->conn_id??null;
+        $driver=$connection instanceof PDO?$connection->getAttribute(PDO::ATTR_DRIVER_NAME):(string)($db->dbdriver??'');
+        if(!in_array($driver,['sqlite','mysql','mysqli'],true))throw new RuntimeException('issuer_storage_unsupported');
+        $value="JSON_EXTRACT(".$column.",'$.".$key."')";
+        $type="JSON_TYPE(".$column.",'$.".$key."')='text'";
+        if($driver!=='sqlite'){$type="JSON_TYPE(".$value.")='STRING'";$value='BINARY JSON_UNQUOTE('.$value.')';}
+        return '(CASE WHEN JSON_VALID('.$column.') THEN (CASE WHEN '.$type.' THEN '.$value.' ELSE NULL END) ELSE NULL END)';
+    }
     /** MySQL NULL and MariaDB's unquoted SQL expression NULL; never a missing key or quoted literal. */
     public static function sqlNullDefault(array $column): bool
     {

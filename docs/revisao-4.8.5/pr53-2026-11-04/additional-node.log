@@ -1,0 +1,17 @@
+✔ PT-BR é o único idioma selecionável e o padrão da instalação (2.815914ms)
+✔ suporte fica em settings administrativos e envia apenas configuração pública (0.476949ms)
+✔ estado nativo dos recursos mantém dependências e bloqueia upload/desinstalação (0.293663ms)
+✔ telemetria de licenciamento e do SDK Stripe fica desativada (73.828184ms)
+✔ migrations novas preservam valores e não reescrevem migrations antigas (0.25845ms)
+✔ FrankenPHP é versionado, genérico e mantém a configuração fora da imagem (0.332481ms)
+✔ ZIP da primeira release usa a base legado e permite reparar os anexos existentes (0.392792ms)
+✔ browser jobs consume the same immutable tools image without repeated installation (1.623937ms)
+✔ CI supplies a verified paired executable and cannot silently take the no-browser skip (0.28496ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 167.172077

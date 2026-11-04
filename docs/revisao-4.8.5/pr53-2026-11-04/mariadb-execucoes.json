@@ -1,0 +1,167 @@
+{
+  "runtime": "MariaDB 10.11.7 / PHP 8.3.6",
+  "transport": "TCP local, banco descartável issuer_native_module_audit",
+  "records": [
+    {
+      "command": [
+        "php",
+        "tests/companies/native_migration474_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 13.66
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.13
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_file_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_invoice_draft_projection_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 14.46
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_audit_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 3.07
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_file_message_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.19
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_ticket_customer_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.22
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_consent_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.3
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_privacy_mail_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.21
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_customer_upload_mail_schema_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 0.24
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_sales_search_concurrency.php"
+      ],
+      "exit": 0,
+      "seconds": 8.64
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_project_contact_index_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 8.08
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_pr52_actions_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 123.94
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_pr52_financial_pdf_mysql.php"
+      ],
+      "exit": 0,
+      "seconds": 36.1
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_payment_modes.php"
+      ],
+      "exit": 0,
+      "seconds": 6.1
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_settings_controller.php"
+      ],
+      "exit": 0,
+      "seconds": 4.87
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_migration_tracking.php"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "command": [
+        "php",
+        "tests/native_settings_native.php"
+      ],
+      "exit": 0,
+      "seconds": 4.28
+    },
+    {
+      "command": [
+        "php",
+        "tests/issuers_migration.php"
+      ],
+      "exit": 0,
+      "seconds": 0.27
+    },
+    {
+      "command": [
+        "php",
+        "tests/issuers_onboarding_concurrency.php"
+      ],
+      "exit": 0,
+      "seconds": 1.8
+    }
+  ],
+  "success": true
+}
