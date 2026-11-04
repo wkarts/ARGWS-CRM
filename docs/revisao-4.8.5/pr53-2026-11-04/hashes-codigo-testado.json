@@ -16,5 +16,6 @@
   "tests/native_settings_native.php": "8d1ec103e93f0196094cb22e0d5b4d78131fd89e6a5d84c387338c3ed4079b3c",
   "tests/native_settings_native_browser.cjs": "e40c197210696ae37b5a9e4f6727851ab5e1fc8456e3952ff78ed9404692b029",
   "tests/native_context.php": "532be84824b1a5e63718861090a174d714badec2fc1bc301126a804892036941",
-  "tests/issuers_core_support.php": "3d243e2edaf7b9c8637814810ce6d37d9e91cc908f1ac24ae2112d358b629e50"
+  "tests/issuers_core_support.php": "3d243e2edaf7b9c8637814810ce6d37d9e91cc908f1ac24ae2112d358b629e50",
+  "tests/certificates/controller.php": "44e0481901dfdcd27f5a1cc7b8c37e2fe1540557d05888822b047f7c047f48cb"
 }
