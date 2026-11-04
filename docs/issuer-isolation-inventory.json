@@ -6773,7 +6773,7 @@
       "evidence": ""
     },
     "application/views/admin/includes/native_company_layout_head.php": {
-      "sha256": "e9f513457fabe569f234d62dafa11c0ee53713f1dcbe41c8d277f4d068392a23",
+      "sha256": "b8b2862fe26a26d0412f2d14b0dc71fa244f91ae8501b014fd6b5c98d8e832b3",
       "categories": [
         "customer_privacy",
         "invoice_table"

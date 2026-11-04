@@ -3,7 +3,7 @@ $nativeOfficialLayout=class_exists('NativeCompanyAdminPresentation',false)
     && function_exists('get_instance') && NativeCompanyAdminPresentation::current(get_instance())!==null;
 if($nativeOfficialLayout){
     require APPPATH.'views/admin/includes/native_company_official_head.php';
-    echo '<section class="company-settings-card" data-company-workspace>';
+    echo '<div class="company-settings-card" data-company-workspace>';
     return;
 }
 // Native public assets and structural containers, without hydrating legacy financial menus/hooks.

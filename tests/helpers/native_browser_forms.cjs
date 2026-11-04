@@ -173,7 +173,9 @@ async function addNativeTaskComment(page, text) {
 }
 
 async function toggleNativeTaskTimer(page) {
-    const button = page.locator('button[onclick*="timer_action"]').first();
+    // The shared header also renders blank-timer buttons in its dropdowns.
+    // Exercise the open task's control, retaining Playwright's strict locator.
+    const button = page.locator('[data-native-task-detail] button[onclick*="timer_action"]');
     await nativeTaskCommand(page, 'timer_tracking', () => button.click());
 }
 

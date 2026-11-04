@@ -224,11 +224,13 @@ test('all executable browser suites use immediate choice without a second helper
 
 
 test('real preferences asset contract matches native layout before expensive integration', () => {
-  const head=fs.readFileSync('application/views/admin/includes/native_company_layout_head.php','utf8');
-  const tail=fs.readFileSync('application/views/admin/includes/native_company_layout_tail.php','utf8');
-  assert.ok(head.includes("'"+NATIVE_TAB_ASSETS.css+"'"));
-  assert.ok(tail.includes("'"+NATIVE_TAB_ASSETS.script+"'"));
-  assert.ok(!head.includes("'assets/plugins/bootstrap/css/bootstrap.min.css'"),'no obsolete standalone CSS assumption');
+  const presentation=fs.readFileSync('application/services/NativeCompanyAdminPresentation.php','utf8');
+  assert.ok(presentation.includes("'"+NATIVE_TAB_ASSETS.css+"'"));
+  assert.ok(presentation.includes("'"+NATIVE_TAB_ASSETS.script+"'"));
+  assert.ok(presentation.includes("'assets/js/native-admin-tabs.js'"));
+  const bundle=fs.readFileSync(NATIVE_TAB_ASSETS.script,'utf8');
+  assert.ok(bundle.includes('bs.tab'),'official vendor bundle includes Bootstrap tabs');
+  assert.ok(!presentation.includes("'assets/plugins/bootstrap/css/bootstrap.min.css'"),'no obsolete standalone CSS assumption');
   const css=fs.readFileSync(NATIVE_TAB_ASSETS.css,'utf8');
   assert.match(css,/\.tab-content>\.tab-pane\{display:none\}/);
   assert.match(css,/\.tab-content>\.active\{display:block\}/);

@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 if(!empty($nativeOfficialLayout)){
-    echo '</section>';
+    echo '</div>';
     require APPPATH.'views/admin/includes/native_company_official_tail.php';
     return;
 } ?>

@@ -42,6 +42,7 @@ jobs:
           php tests/native_settings_native.php
           php tests/native_navigation_parity.php
           php tests/native_shell_presentation.php
+          php tests/native_operational_layout.php
           node --test tests/native_shell_controls.test.cjs tests/native_navigation_tabs.test.cjs
           php tests/native_settings_certificate_link.php
       - name: Fluxos desktop/mobile, grid e modal

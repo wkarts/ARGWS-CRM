@@ -35,25 +35,25 @@ Os 17 workflows iniciais tinham 4 sucessos, 6 falhas e 7 cancelamentos. Logs com
 
 ## Matriz funcional
 
-“Implementado” abaixo refere-se ao fluxo delimitado com evidência citada, não à homologação completa do módulo. Testes usam dados sintéticos, I/O de framework substituído e bancos reais PDO; não equivalem a navegação autenticada em instalação completa.
+“Implementado” abaixo refere-se ao fluxo delimitado com evidência citada, não à homologação completa do módulo. Os testes locais usam dados sintéticos e I/O de framework substituído. Os fluxos explicitamente indicados como HTTP/Chromium abaixo foram executados em instalação descartável completa no CI; não representam homologação de provedores externos nem de todos os módulos.
 
 | Recurso da 4.0.2 | Melhoria 4.8.4/4.8.5 preservada | Principal | Secundárias A/B | Evidência e pendência |
 |---|---|---|---|---|
 | Meios de pagamento manuais | IDs de origem, issuer_id, revisão e auditoria | Implementado no serviço; histórico preservado | Implementado no serviço; CRUD/negação cruzada | `native_payment_modes.php`, SQLite e MariaDB; UI HTTP completa não testada |
 | Gateways | Credenciais e adaptadores próprios de Asaas/Efí/BB | Parcial: formulário de instalação preservado | Parcial: diretório somente leitura e integrações admitidas | `native_settings_controller.php`; sem operação de provedor real; não equivale a todos os gateways antigos |
-| Definições gerais, empresa e localização | DTOs próprios, ACL, revisão e assets | Implementado nos adaptadores testados | Implementado nos adaptadores testados | `native_settings_forms.php`, `native_settings_controller.php`; verificar instalação completa |
+| Definições gerais, empresa e localização | DTOs próprios, ACL, revisão e assets | Implementado nos adaptadores testados | Implementado nos adaptadores testados | `native_settings_forms.php`, `native_settings_controller.php`; sondagem HTTP dos grupos em principal/A/B aprovada no SHA aba7d33; gravações completas ainda sob a suíte |
 | SMTP, Google/Microsoft e fila | Segredos isolados, estado OAuth vinculado, worker revalida | Parcial | Parcial | `settings_email.php`, fixture oficial e workers; sem autenticação/envio externo |
 | Cron, atualização e plataforma | Controles de instalação protegidos; termo Cron | Preservados; homologação da instalação pendente | Não aplicável como configuração global da empresa | Não copiar credenciais ou controle global para secundárias |
 | Assinaturas, notas de crédito, leads, E-Sign: configurações | Formulários globais recuperados na principal | Parcial | Ausente como conjunto equivalente de formulários próprios | Não confundir operação nativa de créditos/leads com todas as suas configurações |
 | Vendas, contratos e histórico | Origem explícita, números/IDs separados, preservação do legado | Parcial; casos sintéticos de histórico/edição/PDF | Parcial; casos de CRUD/ACL/concorrência | Suítes `sales`, `native_sales_history`, `native_pr52_actions_mysql`; cobertura não abrange todas as ações |
-| Faturas, despesas, pagamentos e PDFs | Livro financeiro e recibos próprios, snapshots e idempotência | Parcial | Parcial | Suítes focused SQLite e MySQL; nenhuma transação financeira externa |
-| Anexos, exportações e tarefas em segundo plano | Proveniência, permissões e revalidação | Parcial | Parcial | Testes de arquivos, portais, mail worker e exports do manifesto; mídia global/exportação em lote não equivalentes integralmente |
+| Faturas, despesas, pagamentos e PDFs | Livro financeiro e recibos próprios, snapshots e idempotência | Parcial | Parcial | Suítes focused SQLite/MySQL e HTTP/Chromium A/B: faturas, recibos manuais, créditos, despesas e PDF aprovados em aba7d33; nenhuma transação financeira externa |
+| Anexos, exportações e tarefas em segundo plano | Proveniência, permissões e revalidação | Parcial | Parcial | Anexo privado upload/preview/download e revogação no portal aprovados por HTTP/Chromium em aba7d33; workers/exports no manifesto; mídia global/exportação em lote não equivalentes integralmente |
 | Relatórios | Relatórios nativos por empresa | Parcial | Parcial | Catálogo/serviços preservados; subações legadas não integralmente adaptadas ou testadas |
 | Contabilidade e financeiro legado | Código e menus principais conservados | Não testado em aplicação instalada | Ausente no despacho administrativo multiempresa | Controladores dos módulos sem adaptação integral; não liberados por simples menu |
 | Frota, compras e RH completos | Correções de views e melhorias existentes mantidas | Não testado em aplicação instalada | Ausente no despacho administrativo multiempresa | `accounting`, `finance`, `fleet`, `purchase`, `hr_payroll`; funcionalidades nativas pontuais de compras/RH não substituem os módulos completos |
 | ACL, CSRF e acesso cruzado | Política por issuer, ator, recurso e verbo | Parcial, com casos negativos executados | Parcial, com A/B e restrições executadas | Não é certificação de segurança de 2.743 ações |
 | Identidade visual e PWA | Arquivos e mecanismos existentes preservados | Não testado como PWA instalado | Não testado como PWA instalado | Contratos do CI não substituem instalação desktop/mobile e cache/logout real |
-| Instalação e atualização completas | Caminho de migrations preservado | Não testado end-to-end | Não testado end-to-end | DDL/tracking/concorrência testados isoladamente; falta implantação descartável completa com navegação |
+| Instalação e atualização | Caminho de migrations preservado | Implementado nos cenários descartáveis executados | Onboarding e seleção A/B executados | CI aba7d33: instalação limpa, upgrade de schema antigo, login e navegação desktop/mobile aprovados; não cobre todo banco legado de produção |
 
 ## Inventário de ações
 
@@ -64,7 +64,7 @@ A classificação por ação é deliberadamente conservadora: presença/rota nã
 ## Limites concretos
 
 - Ainda faltam adaptações completas dos módulos legados e configurações indicados acima. Abrir suas rotas agora permitiria executar consultas/gravações globais; a revisão não fez essa liberação.
-- Chromium local foi obtido, mas a inicialização falhou com `socket() failed: Operation not permitted` no processo singleton. O job browser remoto 41844529810 passou no SHA d453e8e, incluindo a nova fixture de Settings. Não houve homologação autenticada desktop/mobile/PWA.
+- Chromium local foi obtido, mas a inicialização falhou com `socket() failed: Operation not permitted` no processo singleton. O job browser remoto 41844529810 passou no SHA d453e8e, incluindo a nova fixture de Settings. No SHA aba7d33, os grupos HTTP avançaram por instalação/upgrade e navegação autenticada desktop/mobile; PWA instalado e paridade integral continuam sem homologação.
 - MariaDB 10.11.7 foi executado em banco descartável `issuer_native_module_audit`, exclusivamente por TCP. Isso não comprova todos os comportamentos de MySQL 8, que permanecem sob o CI correspondente.
 - PHP local 8.3.6; os jobs remotos usam as versões fixadas 8.1/8.5. Foram necessários pacotes de timezone legado para `Brazil/East`; a falha anterior ao ajuste era do runtime local, sem mudança na validação da aplicação.
 - Resultados históricos em `docs/revisao-4.8.5/resultados-*` permanecem intactos. Os recibos nesta subpasta identificam somente execuções desta rodada.
@@ -91,3 +91,17 @@ A suíte SQLite foi seguida por regressões direcionadas do endurecimento final 
 ## Reconciliação complementar do CI
 
 A revisão dos 13 hashes, os inventários regenerados e a correção da fixture de contexto em MySQL estão documentados em [revisao-inventarios.md](revisao-inventarios.md). Todos os bloqueios de prontidão operacional permanecem ativos.
+
+## Regressões HTTP após os preflights
+
+No SHA `aba7d3321af1750644bb495a5c319fa5d3d5ec8d`, a execução real de stacks revelou três causas adicionais. Os logs completos de seis jobs falhos e do grupo banking aprovado estão em `http-intermediario.json.gz` (run 41847769895). Não são resultados do commit posterior.
+
+- Cronômetros: o helper global selecionava o primeiro botão `timer_action`, que agora pertence ao dropdown oculto do cabeçalho. O helper foi direcionado ao controle da tarefa aberta, com seleção estrita. Timeout, resposta POST, sucesso e revisão continuam exigidos. Probe DOM sintético falha antes e passa depois; aprovação HTTP depende da nova rodada.
+- Importação/faturamento: o contêiner do layout oficial foi trocado de `section` para `div`, preservando classes e `data-company-workspace`. Cada tela mantém sua seção funcional e seus formulários originais. A renderização real de importações com I/O sintético cobre 28 verificações, inclusive preview, confirmação, multipart, ownership de tokens e modo somente leitura; falha antes e passa depois.
+- Preferências Asaas: o browser exigia a classe do antigo layout separado e o script Bootstrap avulso. Agora exige `body.native-company-admin`, o bundle oficial `vendor-admin.js`, plugin Bootstrap funcional e uma única inclusão de `native-admin-tabs.js`. Os testes de CSSOM, abas, teclado, viewport, CSRF, A/B e ausência de mutações permanecem; 20 testes locais do contrato passaram. Não foi acrescentado um asset duplicado à aplicação.
+
+As alterações de layout tiveram seus hashes regenerados pelos três geradores oficiais; nenhum limite foi promovido para pronto. O gate de prontidão continua bloqueado (648 não revisados, 30 parciais). A verificação oficial dos inventários passou.
+
+Foram executados oito comandos direcionados (todos aprovados), incluindo 39 testes Node e as fixtures PHP de Settings, navegação, layout, cabeçalho e contexto de rota. `http-layout-local.json.gz` preserva logs e resultados, inclusive as reproduções anteriores às correções.
+
+Evidência HTTP adicional de aba7d33: onboarding, certificado, contatos/portal, faturas/PDF/recibos/anexos, créditos e projetos/Gantt passaram nos trechos anteriores às falhas. O job banking passou integralmente, incluindo adaptações BB/CNAB, callback e preferências de tarefas, com transportes sintéticos e sem homologação bancária. Isso não transforma os jobs de timers, despesas, projetos e provedores em aprovados.
