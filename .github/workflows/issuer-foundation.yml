@@ -2,82 +2,8 @@ name: Empresas no núcleo
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths:
-      - application/**
-      - modules/issuers/**
-      - modules/asaas/**
-      - modules/pige_bridge/**
-      - modules/finance/**
-      - modules/accounting/**
-      - modules/purchase/**
-      - tests/purchase_mail_language.php
-      - modules/ma/**
-      - tests/ma_email_template_localization.php
-      - tests/ma_email_assets.php
-      - tests/ma_email_interface.test.cjs
-      - scripts/build-ma-email-templates-ptbr.py
-      - scripts/check-ma-email-assets.py
-      - tests/issuers*.php
-      - tests/native_registry_lookup*.php
-      - tests/native_context.php
-      - tests/native_email_catalog.test.cjs
-      - scripts/generate-company-email-catalog.cjs
-      - install/database.sql
-      - tests/settings/**
-      - tests/companies/**
-      - tests/companies*.cjs
-      - tests/issuers_standalone_http_smoke.sh
-      - scripts/inventory-company-boundaries.py
-      - scripts/company-surface-inventory.php
-      - tests/test_company_boundary_inventory.py
-      - docs/companies/**
-      - tests/test_module_migration_convention.py
-      - docs/module-migrations.md
-      - docs/issuer-essential-module.md
-      - scripts/ci/run-company-registry-shard.py
-      - scripts/ci/plan-company-registry-shards.py
-      - tests/ci/**
-      - docker/ci/**
-      - .github/workflows/issuer-foundation.yml
   push:
     branches: [main, develop]
-    paths:
-      - application/**
-      - modules/issuers/**
-      - modules/asaas/**
-      - modules/pige_bridge/**
-      - modules/finance/**
-      - modules/accounting/**
-      - modules/purchase/**
-      - tests/purchase_mail_language.php
-      - modules/ma/**
-      - tests/ma_email_template_localization.php
-      - tests/ma_email_assets.php
-      - tests/ma_email_interface.test.cjs
-      - scripts/build-ma-email-templates-ptbr.py
-      - scripts/check-ma-email-assets.py
-      - tests/issuers*.php
-      - tests/native_registry_lookup*.php
-      - tests/native_context.php
-      - tests/native_email_catalog.test.cjs
-      - scripts/generate-company-email-catalog.cjs
-      - install/database.sql
-      - tests/settings/**
-      - tests/companies/**
-      - tests/companies*.cjs
-      - tests/issuers_standalone_http_smoke.sh
-      - scripts/inventory-company-boundaries.py
-      - scripts/company-surface-inventory.php
-      - tests/test_company_boundary_inventory.py
-      - docs/companies/**
-      - tests/test_module_migration_convention.py
-      - docs/module-migrations.md
-      - docs/issuer-essential-module.md
-      - scripts/ci/run-company-registry-shard.py
-      - scripts/ci/plan-company-registry-shards.py
-      - tests/ci/**
-      - docker/ci/**
-      - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
 concurrency:

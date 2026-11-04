@@ -2,10 +2,8 @@ name: Native company experience focused
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['application/**', 'assets/**', 'modules/**', 'docs/**', 'resources/**', 'tests/**', 'scripts/**', 'tools/**', 'deploy/**', 'docker/**', 'install/**', 'package*.json', 'webpack.mix.js', 'Dockerfile', '.dockerignore', 'compose.yaml', '.github/workflows/**']
   push:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['application/**', 'assets/**', 'modules/**', 'docs/**', 'resources/**', 'tests/**', 'scripts/**', 'tools/**', 'deploy/**', 'docker/**', 'install/**', 'package*.json', 'webpack.mix.js', 'Dockerfile', '.dockerignore', 'compose.yaml', '.github/workflows/**']
   workflow_dispatch:
 permissions:
   contents: read
