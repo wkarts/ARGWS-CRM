@@ -109,13 +109,15 @@ final class NativeCompanyCatalog
         $this->readItems();$query=self::text($query,191,true);$q='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';
         $rows=$this->rows("SELECT id,rate,description AS name,long_description AS subtext FROM ".$this->p."company_items WHERE issuer_id=? AND description LIKE ? ESCAPE '!' ORDER BY description,id LIMIT 100",[$this->issuer,$q]);$this->readItems();return$rows;
     }
-    public function itemTable(int $start,int $length,string $query=''):array
+    public function itemTable(int $start,int $length,string $query='',array $orders=[],array $definitions=[]):array
     {
-        $this->readItems();if($start<0||$start>100000||$length<1||$length>100)throw new DomainException('company_catalog_invalid');
-        $where='issuer_id=?';$args=[$this->issuer];$total=(int)$this->rows('SELECT COUNT(*) AS n FROM '.$this->p.'company_items WHERE '.$where,$args)[0]['n'];
-        if($query!==''){$query=self::text($query,191);$where.=" AND description LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';}
-        $filtered=(int)$this->rows('SELECT COUNT(*) AS n FROM '.$this->p.'company_items WHERE '.$where,$args)[0]['n'];$rows=[];
-        foreach($this->rows('SELECT id FROM '.$this->p.'company_items WHERE '.$where.' ORDER BY description,id LIMIT '.$length.' OFFSET '.$start,$args)as$row)$rows[]=$this->item($row['id']);
+        $this->readItems();require_once __DIR__.'/NativeCompanyCatalogTableQuery.php';
+        $plan=NativeCompanyCatalogTableQuery::plan($this->db,$this->p,$this->issuer,$this->actor,false,$start,$length,$query,$orders,$definitions);
+        $total=(int)$this->rows($plan['total'],$plan['total_args'])[0]['n'];
+        $filtered=(int)$this->rows($plan['filtered'],$plan['filtered_args'])[0]['n'];$rows=[];
+        foreach($this->rows($plan['ids'],$plan['ids_args'])as$row)$rows[]=$this->item($row['id']);
+        $this->readItems();
+        if($definitions&&(new NativeCompanyCustomFields($this->db,$this->p))->definitions($this->issuer,$this->actor,'items',['active'=>1])!==$definitions)throw new DomainException('company_catalog_columns_changed');
         return['total'=>$total,'filtered'=>$filtered,'rows'=>$rows];
     }
     public function baseCurrency():array{return$this->currencyReference()->baseCurrency();}

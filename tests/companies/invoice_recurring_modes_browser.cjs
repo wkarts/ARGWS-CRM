@@ -23,7 +23,11 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await submit(page,page.locator('button[type=submit]'));
   const form=action=>page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')});
   async function select(issuer){await page.goto(url+'/admin/');await selectCompanyOption(page, String(issuer));}
-  async function schedule(owner,mode,principal,cycles,notificationProbed=false){await page.goto(url+'/admin/invoices/recurring');const f=form('create');await f.locator('select[name="invoice[client_id]"]').selectOption(String(owner.client));await f.locator('select[name="invoice[currency]"]').selectOption({label:'BRL'});await f.locator('input[name="invoice[date]"]').fill('2026-01-01');await f.locator('input[name="invoice[due_date]"]').fill('2026-01-10');await f.locator('input[name="invoice[items][0][description]"]').fill('Private recurring mode '+mode);await f.locator('input[name="invoice[items][0][rate]"]').fill('10.10');await f.locator('input[name=cycles]').fill(String(cycles));await f.locator('select[name=mode]').selectOption(mode);await f.locator('input[name=principal_invoice_id]').fill(String(principal));assert.equal(await f.locator('#schedule-send[name=send][type=checkbox]').count(),1,'actual notification checkbox is a valid named form control');assert.equal(await f.locator('#schedule-send').isChecked(),false,'notifications are opt-in');
+  async function schedule(owner,mode,principal,cycles,notificationProbed=false){
+   const [tableResponse]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/invoices/table'&&new URL(r.url()).searchParams.get('recurring')==='1'),page.goto(url+'/admin/invoices/recurring')]);
+   assert.equal(tableResponse.status(),200,'original recurring directory loads actual owned schedule data');
+   assert.equal(await page.locator('.table-recurring-invoices thead th').count(),8,'original recurring table keeps eight functional columns');
+   await submit(page,page.getByRole('link',{name:'Nova recorrência',exact:true}));const f=form('create');await f.locator('select[name="invoice[client_id]"]').selectOption(String(owner.client));await f.locator('select[name="invoice[currency]"]').selectOption({label:'BRL'});await f.locator('input[name="invoice[date]"]').fill('2026-01-01');await f.locator('input[name="invoice[due_date]"]').fill('2026-01-10');await f.locator('input[name="invoice[items][0][description]"]').fill('Private recurring mode '+mode);await f.locator('input[name="invoice[items][0][rate]"]').fill('10.10');await f.locator('input[name=cycles]').fill(String(cycles));await f.locator('select[name=mode]').selectOption(mode);await f.locator('input[name=principal_invoice_id]').fill(String(principal));assert.equal(await f.locator('#schedule-send[name=send][type=checkbox]').count(),1,'actual notification checkbox is a valid named form control');assert.equal(await f.locator('#schedule-send').isChecked(),false,'notifications are opt-in');
    if(mode==='draft'&&!notificationProbed){
     const before=sql('SELECT CONCAT((SELECT COUNT(*) FROM tblcompany_invoice_schedules),"/",(SELECT COUNT(*) FROM tblinvoices),"/",(SELECT COALESCE(SUM(next_number),0) FROM tblissuers_sequences),"/",(SELECT COUNT(*) FROM tblmail_queue))');
     await f.locator('#schedule-send').check();assert.equal(await f.evaluate(x=>new FormData(x).get('send')),'1','real browser form includes checked notification');
@@ -32,7 +36,20 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
     // Validation page does not repopulate a failed form: reopen and refill the independent valid attempt.
     return schedule(owner,mode,principal,cycles,true);
    }
-   await submit(page,f.locator('button[type=submit]'));const id=invoiceScheduleId(page.url());if(!id){fs.writeFileSync(output+'/mode-create-failure.html',await page.content());throw Error('Schedule create remained at '+page.url()+': '+await page.locator('body').innerText());}assert.match(id||'',/^[1-9]\d*$/);return{id,url:page.url(),run:await hidden(form('run'))};}
+   await submit(page,f.locator('button[type=submit]'));const id=invoiceScheduleId(page.url());if(!id){fs.writeFileSync(output+'/mode-create-failure.html',await page.content());throw Error('Schedule create remained at '+page.url()+': '+await page.locator('body').innerText());}assert.match(id||'',/^[1-9]\d*$/);
+   const saved={id,url:page.url(),run:await hidden(form('run'))};
+   if(!notificationProbed){
+    await page.goto(url+'/admin/invoices/recurring');
+    const table=page.locator('.table-recurring-invoices');await table.waitFor();
+    await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/invoices/table'),page.locator('.dataTables_filter input').fill('Série #'+id)]);
+    const [preview]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/invoices/recurring_preview/'+id),page.locator('a[onclick="init_recurring_schedule('+id+'); return false;"]').click()]);
+    assert.equal(preview.status(),200,'typed schedule split preview is served by actual HTTP');
+    await page.locator('#invoice #invoice-schedule-detail').waitFor();
+    assert.equal(await page.locator('#invoice #wrapper').count(),0,'split preview does not nest another application shell');
+    await page.screenshot({path:output+'/invoice-recurring-directory.png',fullPage:true});
+    await page.goto(saved.url);
+   }
+   return saved;}
   const own={};
   for(const letter of['a','b']){
    const owner=own[letter]={...fixture.owners[letter]};await select(owner.issuer);
@@ -58,8 +75,8 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
    const issued=sql('SELECT invoice_id FROM tblcompany_invoice_drafts WHERE id='+owner.private);assert.match(issued,/^[1-9]\d*$/);assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+issued),'11.10','explicit issue uses saved reviewed values');await page.goto(draft.url);assert.equal(await page.getByRole('link',{name:'Abrir fatura',exact:true}).count(),1);
    const pdf=await context.request.get(url+'/admin/invoices/pdf/'+issued+'?output_type=I');assert.equal(pdf.status(),200);assert((await pdf.body()).subarray(0,4).equals(Buffer.from('%PDF')));
   }
-  await select(own.b.issuer);await page.goto(url+'/admin/invoices/recurring');const current=await hidden(form('create'));
-  assert.equal((await context.request.get(url+'/admin/invoices/recurring?schedule='+own.a.draft.id)).status(),403);const foreignDraft=await context.request.get(url+'/admin/invoices/drafts?draft='+own.a.private);assert.equal(foreignDraft.status(),404,'private Drafts controller conceals foreign IDs with its exact unavailable contract');assert(!(await foreignDraft.text()).includes('Private recurring mode draft'),'foreign draft bytes remain undisclosed');
+  await select(own.b.issuer);await page.goto(url+'/admin/invoices/recurring?new=1');const current=await hidden(form('create'));
+  assert.equal((await context.request.get(url+'/admin/invoices/recurring?schedule='+own.a.draft.id)).status(),403);assert.equal((await context.request.get(url+'/admin/invoices/recurring_preview/'+own.a.draft.id)).status(),403,'foreign split preview remains denied after switch');const foreignDraft=await context.request.get(url+'/admin/invoices/drafts?draft='+own.a.private);assert.equal(foreignDraft.status(),404,'private Drafts controller conceals foreign IDs with its exact unavailable contract');assert(!(await foreignDraft.text()).includes('Private recurring mode draft'),'foreign draft bytes remain undisclosed');
   assert.equal((await context.request.post(url+'/admin/invoices/recurring',{form:{...current,action:'run',schedule_id:own.a.paid.id,request_key:key('cross-'+batch)}})).status(),403);
   assert.equal((await context.request.post(url+'/admin/invoices/recurring',{form:own.a.paid.run})).status(),409);
   assert.equal((await context.request.post(url+'/admin/invoices/recurring',{form:{...current,action:'create',company_invoice_schedule_csrf:'invalid'}})).status(),403);

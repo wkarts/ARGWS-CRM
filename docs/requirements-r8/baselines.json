@@ -1,0 +1,376 @@
+{
+  "format": 1,
+  "functional_reference": {
+    "tag": "v4.0.2",
+    "commit": "aa58b832b3c5ed04a599caacba125b056c081ba7"
+  },
+  "destination": {
+    "branch": "main",
+    "version": "4.8.8",
+    "commit": "3cd2ac577a969840c94b019f602cb69d710c0e78"
+  },
+  "proposed_core_version": "4.8.9",
+  "scope": "Exact protected identity and PWA source/assets comparison; not proof of visual or live PWA equivalence.",
+  "files": [
+    {
+      "path": "application/config/branding.php",
+      "base_sha256": "067686f39df1a86392ef919f4b7cdd77567afb0074468d0d026dc17d6437584c",
+      "working_sha256": "067686f39df1a86392ef919f4b7cdd77567afb0074468d0d026dc17d6437584c",
+      "unchanged": true
+    },
+    {
+      "path": "application/helpers/app_branding_helper.php",
+      "base_sha256": "e6eb9695d00c2d46a8d39c67e68f1a46e400f468f6fbbb5c71d209e8103bc96b",
+      "working_sha256": "e6eb9695d00c2d46a8d39c67e68f1a46e400f468f6fbbb5c71d209e8103bc96b",
+      "unchanged": true
+    },
+    {
+      "path": "application/helpers/installer_branding_helper.php",
+      "base_sha256": "7dfdb345e64d12bf8203b4473655a2217b18f984377f2b9c25e81a566aeb2923",
+      "working_sha256": "7dfdb345e64d12bf8203b4473655a2217b18f984377f2b9c25e81a566aeb2923",
+      "unchanged": true
+    },
+    {
+      "path": "application/helpers/pwa_helper.php",
+      "base_sha256": "d506813000f0455a1f042f0018bed95a560640994bef83d30e71e51fb46e6d76",
+      "working_sha256": "d506813000f0455a1f042f0018bed95a560640994bef83d30e71e51fb46e6d76",
+      "unchanged": true
+    },
+    {
+      "path": "application/services/NativePwaIdentity.php",
+      "base_sha256": "9d134c7ca823959c27e53b534717e256d14a5548a32e57c80cb33520e4feaf63",
+      "working_sha256": "9d134c7ca823959c27e53b534717e256d14a5548a32e57c80cb33520e4feaf63",
+      "unchanged": true
+    },
+    {
+      "path": "application/views/includes/pwa.php",
+      "base_sha256": "9032d3271444aed71f04bf4bdd139ca1f2625e7965919aeb92f82c917b0f4680",
+      "working_sha256": "9032d3271444aed71f04bf4bdd139ca1f2625e7965919aeb92f82c917b0f4680",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/forms.css",
+      "base_sha256": "27911a95d3408f6c5684825e122eb7f5adc95a8d505ca661ceadf789d3e00281",
+      "working_sha256": "27911a95d3408f6c5684825e122eb7f5adc95a8d505ca661ceadf789d3e00281",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/forms.min.css",
+      "base_sha256": "92395453382704c7d1fd842bde517b6242007d80c2e348aa2c7f098299b59af4",
+      "working_sha256": "92395453382704c7d1fd842bde517b6242007d80c2e348aa2c7f098299b59af4",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/reset.css",
+      "base_sha256": "b9dce6995fab20bd54cb9c0a586330cd2f11e0b832168e47ae2c4fbb0e4b9e49",
+      "working_sha256": "b9dce6995fab20bd54cb9c0a586330cd2f11e0b832168e47ae2c4fbb0e4b9e49",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/reset.min.css",
+      "base_sha256": "b1922b0ad3bdb8e3d8a5c9a86566d806f8d95aac367787b550249ae4d19062ac",
+      "working_sha256": "b1922b0ad3bdb8e3d8a5c9a86566d806f8d95aac367787b550249ae4d19062ac",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/style.css",
+      "base_sha256": "0ce00651e61fc5a2861e8ae6d99d23fb0294633511cbe1d5df543d9d61399711",
+      "working_sha256": "0ce00651e61fc5a2861e8ae6d99d23fb0294633511cbe1d5df543d9d61399711",
+      "unchanged": true
+    },
+    {
+      "path": "assets/css/style.min.css",
+      "base_sha256": "8cfc6914f70dfdfec53feb95791a37ebc03bd71b897aa2ee20c5a86695fe3a64",
+      "working_sha256": "8cfc6914f70dfdfec53feb95791a37ebc03bd71b897aa2ee20c5a86695fe3a64",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/IDENTIDADE-V2-ORIGEM.txt",
+      "base_sha256": "495a60c756e0b17424672255b5e467c8a8f7d3a36e78fe45ee03697f2c9d6873",
+      "working_sha256": "495a60c756e0b17424672255b5e467c8a8f7d3a36e78fe45ee03697f2c9d6873",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/favicon-16.png",
+      "base_sha256": "3497b574ba5267ccfc3595f9c067524dc20953ec1f967bf1d337620c96c42cd0",
+      "working_sha256": "3497b574ba5267ccfc3595f9c067524dc20953ec1f967bf1d337620c96c42cd0",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/favicon-32.png",
+      "base_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "working_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/favicon.ico",
+      "base_sha256": "36b3013e6bc9058716d58accca9c937cf56398db1ad0f564e3ea2f673f1929ee",
+      "working_sha256": "36b3013e6bc9058716d58accca9c937cf56398db1ad0f564e3ea2f673f1929ee",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/favicon.png",
+      "base_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "working_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/icone-app-azul.png",
+      "base_sha256": "3a4b54e51e3ff5a32d9851eed646b16eb9efb78c9bf9b7b6b745483b723d45a3",
+      "working_sha256": "3a4b54e51e3ff5a32d9851eed646b16eb9efb78c9bf9b7b6b745483b723d45a3",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/favicon/favicon-16.png",
+      "base_sha256": "3497b574ba5267ccfc3595f9c067524dc20953ec1f967bf1d337620c96c42cd0",
+      "working_sha256": "3497b574ba5267ccfc3595f9c067524dc20953ec1f967bf1d337620c96c42cd0",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/favicon/favicon-32.png",
+      "base_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "working_sha256": "6e4a12a8c12f06b34053f6acbe5fdef997193bad05cb9993518b2a87963eca4b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/favicon/favicon.ico",
+      "base_sha256": "36b3013e6bc9058716d58accca9c937cf56398db1ad0f564e3ea2f673f1929ee",
+      "working_sha256": "36b3013e6bc9058716d58accca9c937cf56398db1ad0f564e3ea2f673f1929ee",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/fontes/OFL-Inter.txt",
+      "base_sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57",
+      "working_sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/fontes/ORIGEM.txt",
+      "base_sha256": "75de2c7ce35f5ccebef61d2453dfb6468d420f4131b8c555255ef3d8ad6ce939",
+      "working_sha256": "75de2c7ce35f5ccebef61d2453dfb6468d420f4131b8c555255ef3d8ad6ce939",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/icone-app-azul.png",
+      "base_sha256": "3a4b54e51e3ff5a32d9851eed646b16eb9efb78c9bf9b7b6b745483b723d45a3",
+      "working_sha256": "3a4b54e51e3ff5a32d9851eed646b16eb9efb78c9bf9b7b6b745483b723d45a3",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/logo-horizontal-colorido.png",
+      "base_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "working_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/logo-horizontal-monocromatico.png",
+      "base_sha256": "37ab368fe3074bbc41aabae8cb3df55758721c342207a90d74c8d99e290dae29",
+      "working_sha256": "37ab368fe3074bbc41aabae8cb3df55758721c342207a90d74c8d99e290dae29",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/logo-horizontal-negativo.png",
+      "base_sha256": "ba9b5da6e16281dfa479baf2dac3ad95cf847319886e18f63afd73802463ca3a",
+      "working_sha256": "ba9b5da6e16281dfa479baf2dac3ad95cf847319886e18f63afd73802463ca3a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/simbolo-colorido.png",
+      "base_sha256": "738501547e0b489155c2d52eddf528649033400fcc6ee1a41a7bb09a95726410",
+      "working_sha256": "738501547e0b489155c2d52eddf528649033400fcc6ee1a41a7bb09a95726410",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/simbolo-monocromatico.png",
+      "base_sha256": "0cf9c68771cb8be73a8d826fe57d9446011e5026ad7d60560d1f1d8de157d00b",
+      "working_sha256": "0cf9c68771cb8be73a8d826fe57d9446011e5026ad7d60560d1f1d8de157d00b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/png/simbolo-negativo.png",
+      "base_sha256": "0fd9b3d388e624b2bd54747cb518aec53dab7198b60b9c88fdc90da9b9fabb6b",
+      "working_sha256": "0fd9b3d388e624b2bd54747cb518aec53dab7198b60b9c88fdc90da9b9fabb6b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/pwa/apple-touch-icon-180.png",
+      "base_sha256": "a6f1e8577186887bdf30e12715db2bec417f49a7c5bfaedeaeb2efa433ebb5f0",
+      "working_sha256": "a6f1e8577186887bdf30e12715db2bec417f49a7c5bfaedeaeb2efa433ebb5f0",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/pwa/icon-192.png",
+      "base_sha256": "d058514d30034d738c3a8a0ab2a96cfaca6c56ec1564577938e9f8a6c5b2926a",
+      "working_sha256": "d058514d30034d738c3a8a0ab2a96cfaca6c56ec1564577938e9f8a6c5b2926a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/pwa/icon-512.png",
+      "base_sha256": "30255a7d2eafbed6f5881e77c771125fcd97e6b5495ce9e524c5f223fe49c43e",
+      "working_sha256": "30255a7d2eafbed6f5881e77c771125fcd97e6b5495ce9e524c5f223fe49c43e",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/pwa/icon-maskable-512.png",
+      "base_sha256": "becfefdf58fc2bcdae4fcfa2d818c4ac68067239e5b15673e5b8a6d6008719a2",
+      "working_sha256": "becfefdf58fc2bcdae4fcfa2d818c4ac68067239e5b15673e5b8a6d6008719a2",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/icone-app-azul.svg",
+      "base_sha256": "ffce198722763dd2dac37f93db93a46cb5badb0c122142fbb45dd3c31a8ef155",
+      "working_sha256": "ffce198722763dd2dac37f93db93a46cb5badb0c122142fbb45dd3c31a8ef155",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/logo-horizontal-colorido.svg",
+      "base_sha256": "f724165594610bed48afd85b581d983e06adff93064c02d629f542b1bbabeeb6",
+      "working_sha256": "f724165594610bed48afd85b581d983e06adff93064c02d629f542b1bbabeeb6",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/logo-horizontal-monocromatico.svg",
+      "base_sha256": "49629693f98dfa8c2d7e2e50bcf0b464088d7b5b3927972d7aa787b5e90d92da",
+      "working_sha256": "49629693f98dfa8c2d7e2e50bcf0b464088d7b5b3927972d7aa787b5e90d92da",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/logo-horizontal-negativo.svg",
+      "base_sha256": "72bb007cd60d194629d4e81c43576f62ef27a3e48bca59f47896599f106b350d",
+      "working_sha256": "72bb007cd60d194629d4e81c43576f62ef27a3e48bca59f47896599f106b350d",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/simbolo-colorido.svg",
+      "base_sha256": "6d7899a1c5a487321b14ecf2a4f86ea9287ad64fd89f3a35b7d7ea80c65d895a",
+      "working_sha256": "6d7899a1c5a487321b14ecf2a4f86ea9287ad64fd89f3a35b7d7ea80c65d895a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/simbolo-monocromatico.svg",
+      "base_sha256": "480c5a01f3605b40c6043571c49155c084a36128acc584c4fa109c0df4ea679d",
+      "working_sha256": "480c5a01f3605b40c6043571c49155c084a36128acc584c4fa109c0df4ea679d",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/identity-v2/svg/simbolo-negativo.svg",
+      "base_sha256": "aa096539e194404ffc017731bb75cb61f014c25b370ccd5fa75149eb0fd5b9e6",
+      "working_sha256": "aa096539e194404ffc017731bb75cb61f014c25b370ccd5fa75149eb0fd5b9e6",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-dark.png",
+      "base_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "working_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-horizontal-colorido.svg",
+      "base_sha256": "f724165594610bed48afd85b581d983e06adff93064c02d629f542b1bbabeeb6",
+      "working_sha256": "f724165594610bed48afd85b581d983e06adff93064c02d629f542b1bbabeeb6",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-horizontal-monocromatico.svg",
+      "base_sha256": "49629693f98dfa8c2d7e2e50bcf0b464088d7b5b3927972d7aa787b5e90d92da",
+      "working_sha256": "49629693f98dfa8c2d7e2e50bcf0b464088d7b5b3927972d7aa787b5e90d92da",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-horizontal-negativo.svg",
+      "base_sha256": "72bb007cd60d194629d4e81c43576f62ef27a3e48bca59f47896599f106b350d",
+      "working_sha256": "72bb007cd60d194629d4e81c43576f62ef27a3e48bca59f47896599f106b350d",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-light.png",
+      "base_sha256": "ba9b5da6e16281dfa479baf2dac3ad95cf847319886e18f63afd73802463ca3a",
+      "working_sha256": "ba9b5da6e16281dfa479baf2dac3ad95cf847319886e18f63afd73802463ca3a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/logo-mark-light.png",
+      "base_sha256": "0fd9b3d388e624b2bd54747cb518aec53dab7198b60b9c88fdc90da9b9fabb6b",
+      "working_sha256": "0fd9b3d388e624b2bd54747cb518aec53dab7198b60b9c88fdc90da9b9fabb6b",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/simbolo-colorido.svg",
+      "base_sha256": "6d7899a1c5a487321b14ecf2a4f86ea9287ad64fd89f3a35b7d7ea80c65d895a",
+      "working_sha256": "6d7899a1c5a487321b14ecf2a4f86ea9287ad64fd89f3a35b7d7ea80c65d895a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/simbolo-monocromatico.svg",
+      "base_sha256": "480c5a01f3605b40c6043571c49155c084a36128acc584c4fa109c0df4ea679d",
+      "working_sha256": "480c5a01f3605b40c6043571c49155c084a36128acc584c4fa109c0df4ea679d",
+      "unchanged": true
+    },
+    {
+      "path": "assets/images/argws/simbolo-negativo.svg",
+      "base_sha256": "aa096539e194404ffc017731bb75cb61f014c25b370ccd5fa75149eb0fd5b9e6",
+      "working_sha256": "aa096539e194404ffc017731bb75cb61f014c25b370ccd5fa75149eb0fd5b9e6",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/apple-touch-icon-180.png",
+      "base_sha256": "a6f1e8577186887bdf30e12715db2bec417f49a7c5bfaedeaeb2efa433ebb5f0",
+      "working_sha256": "a6f1e8577186887bdf30e12715db2bec417f49a7c5bfaedeaeb2efa433ebb5f0",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/icon-192.png",
+      "base_sha256": "d058514d30034d738c3a8a0ab2a96cfaca6c56ec1564577938e9f8a6c5b2926a",
+      "working_sha256": "d058514d30034d738c3a8a0ab2a96cfaca6c56ec1564577938e9f8a6c5b2926a",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/icon-512.png",
+      "base_sha256": "30255a7d2eafbed6f5881e77c771125fcd97e6b5495ce9e524c5f223fe49c43e",
+      "working_sha256": "30255a7d2eafbed6f5881e77c771125fcd97e6b5495ce9e524c5f223fe49c43e",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/icon-maskable-512.png",
+      "base_sha256": "becfefdf58fc2bcdae4fcfa2d818c4ac68067239e5b15673e5b8a6d6008719a2",
+      "working_sha256": "becfefdf58fc2bcdae4fcfa2d818c4ac68067239e5b15673e5b8a6d6008719a2",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/install.js",
+      "base_sha256": "e746e536ad36e859901f3b5892013cd537790952dd9f09c6d6a80f6299860c1e",
+      "working_sha256": "e746e536ad36e859901f3b5892013cd537790952dd9f09c6d6a80f6299860c1e",
+      "unchanged": true
+    },
+    {
+      "path": "assets/pwa/worker.js",
+      "base_sha256": "a4a3af4f3b4d22b5cb35fe3d69adcaf58c94c3e29c1ce7289d06347994a9d84d",
+      "working_sha256": "a4a3af4f3b4d22b5cb35fe3d69adcaf58c94c3e29c1ce7289d06347994a9d84d",
+      "unchanged": true
+    },
+    {
+      "path": "assets/themes/perfex/css/style.css",
+      "base_sha256": "0eb3a7cde16eb20cc4178842ba30e517214ef3f8528ee9f7fcee4fbc36ec6664",
+      "working_sha256": "0eb3a7cde16eb20cc4178842ba30e517214ef3f8528ee9f7fcee4fbc36ec6664",
+      "unchanged": true
+    },
+    {
+      "path": "assets/themes/perfex/css/style.min.css",
+      "base_sha256": "1ef12c6d2db8527d593d1799702dba1fef2eabc5247a466687fa0f2623cce6fc",
+      "working_sha256": "1ef12c6d2db8527d593d1799702dba1fef2eabc5247a466687fa0f2623cce6fc",
+      "unchanged": true
+    },
+    {
+      "path": "install/logo.png",
+      "base_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "working_sha256": "6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9",
+      "unchanged": true
+    },
+    {
+      "path": "pwa.php",
+      "base_sha256": "5e968ddec8db30f0a921de8f16d7292eb6e698b5499761122e1d54ec2aa22e73",
+      "working_sha256": "5e968ddec8db30f0a921de8f16d7292eb6e698b5499761122e1d54ec2aa22e73",
+      "unchanged": true
+    }
+  ]
+}

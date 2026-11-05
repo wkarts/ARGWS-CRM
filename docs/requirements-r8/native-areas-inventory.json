@@ -1,0 +1,3682 @@
+{
+  "reference": {
+    "tag": "v4.0.2",
+    "commit": "aa58b832b3c5ed04a599caacba125b056c081ba7"
+  },
+  "target_base": {
+    "branch": "main",
+    "version": "4.8.8",
+    "commit": "3cd2ac577a969840c94b019f602cb69d710c0e78"
+  },
+  "generated_from": "working tree before PR publication; source inventory, not runtime evidence",
+  "areas": {
+    "assinaturas": {
+      "controller": "application/controllers/admin/Subscriptions.php",
+      "actions_402": [
+        "cancel",
+        "create",
+        "delete",
+        "edit",
+        "index",
+        "resume",
+        "send_to_email",
+        "sync",
+        "table"
+      ],
+      "actions_current": [
+        "cancel",
+        "create",
+        "delete",
+        "edit",
+        "index",
+        "resume",
+        "send_to_email",
+        "sync",
+        "table"
+      ],
+      "view_calls_402": [
+        "admin/subscriptions/manage",
+        "admin/subscriptions/subscription"
+      ],
+      "view_calls_current": [
+        "admin/subscriptions/manage",
+        "admin/subscriptions/subscription"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Subscriptions.php",
+          "ref_402_blob": "6f575d340ed50b8521af6f1405011b73da5ed768",
+          "main_488_blob": "6f575d340ed50b8521af6f1405011b73da5ed768",
+          "working_blob": "6f575d340ed50b8521af6f1405011b73da5ed768",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/form.php",
+          "ref_402_blob": "22c7312e35362c7126144f292aa2fd4f5031f8a6",
+          "main_488_blob": "22c7312e35362c7126144f292aa2fd4f5031f8a6",
+          "working_blob": "22c7312e35362c7126144f292aa2fd4f5031f8a6",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/manage.php",
+          "ref_402_blob": "e46fcd968f6de5f3a369fb5f7e2e3de382067e93",
+          "main_488_blob": "e46fcd968f6de5f3a369fb5f7e2e3de382067e93",
+          "working_blob": "e46fcd968f6de5f3a369fb5f7e2e3de382067e93",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/send_to_client.php",
+          "ref_402_blob": "880809b0e106a865b95fed384f472e8d49218452",
+          "main_488_blob": "880809b0e106a865b95fed384f472e8d49218452",
+          "working_blob": "880809b0e106a865b95fed384f472e8d49218452",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/subscription.php",
+          "ref_402_blob": "d6b7e6f3a4ab14d9063e8422a3d508d264550b9d",
+          "main_488_blob": "d6b7e6f3a4ab14d9063e8422a3d508d264550b9d",
+          "working_blob": "d6b7e6f3a4ab14d9063e8422a3d508d264550b9d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/subscriptions/table_html.php",
+          "ref_402_blob": "e9085b8988588c3f81d26aa6e755504b177fea63",
+          "main_488_blob": "e9085b8988588c3f81d26aa6e755504b177fea63",
+          "working_blob": "e9085b8988588c3f81d26aa6e755504b177fea63",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "despesas": {
+      "controller": "application/controllers/admin/Expenses.php",
+      "actions_402": [
+        "add_expense_attachment",
+        "bulk_action",
+        "categories",
+        "category",
+        "convert_to_invoice",
+        "copy",
+        "delete",
+        "delete_category",
+        "delete_expense_attachment",
+        "expense",
+        "get_customer_change_data",
+        "get_expense_data_ajax",
+        "get_expenses_total",
+        "import",
+        "index",
+        "list_expenses",
+        "pdf",
+        "table"
+      ],
+      "actions_current": [
+        "add_expense_attachment",
+        "bulk_action",
+        "categories",
+        "category",
+        "convert_to_invoice",
+        "copy",
+        "delete",
+        "delete_category",
+        "delete_expense_attachment",
+        "expense",
+        "get_customer_change_data",
+        "get_expense_data_ajax",
+        "get_expenses_total",
+        "import",
+        "index",
+        "list_expenses",
+        "pdf",
+        "purchases",
+        "table"
+      ],
+      "view_calls_402": [
+        "admin/expenses/expense",
+        "admin/expenses/expense_preview_template",
+        "admin/expenses/expenses_total_template",
+        "admin/expenses/import",
+        "admin/expenses/manage",
+        "admin/expenses/manage_categories"
+      ],
+      "view_calls_current": [
+        "admin/expenses/expense",
+        "admin/expenses/expense_preview_template",
+        "admin/expenses/expenses_total_template",
+        "admin/expenses/import",
+        "admin/expenses/manage",
+        "admin/expenses/manage_categories"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Expenses.php",
+          "ref_402_blob": "c0542e3c7f8a70bea559e70f0c8afa985a3cc51f",
+          "main_488_blob": "d72032af1953e0f8634d257b65263808a2fddb3d",
+          "working_blob": "9b8ce4819d710d0dcfd8917cb24c58976e558e0e",
+          "comparison_402": "changed",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/_bulk_actions_modal.php",
+          "ref_402_blob": "5c62c7e3720d42ae3362556677646618e847648b",
+          "main_488_blob": "5c62c7e3720d42ae3362556677646618e847648b",
+          "working_blob": "5c62c7e3720d42ae3362556677646618e847648b",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/billing.php",
+          "ref_402_blob": null,
+          "main_488_blob": "78615c76d1bd63cb27cc05cfc26084d14688e7eb",
+          "working_blob": "78615c76d1bd63cb27cc05cfc26084d14688e7eb",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/copy.php",
+          "ref_402_blob": null,
+          "main_488_blob": "13e1187476b57360e3fd80cd537d83d1757a7d77",
+          "working_blob": "13e1187476b57360e3fd80cd537d83d1757a7d77",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/expense.php",
+          "ref_402_blob": "bbe401e45320b10d2410ffb52bb525aff6172664",
+          "main_488_blob": "bbe401e45320b10d2410ffb52bb525aff6172664",
+          "working_blob": "ac91869c0432e027197d28b229339602eff60a02",
+          "comparison_402": "changed",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/expense_category.php",
+          "ref_402_blob": "165322c94115977b61eeb9c32480d22c486b65b0",
+          "main_488_blob": "165322c94115977b61eeb9c32480d22c486b65b0",
+          "working_blob": "165322c94115977b61eeb9c32480d22c486b65b0",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/expense_pdf.php",
+          "ref_402_blob": "75e273c054e4be35eea2e83dc0786ca6d2e8915c",
+          "main_488_blob": "75e273c054e4be35eea2e83dc0786ca6d2e8915c",
+          "working_blob": "75e273c054e4be35eea2e83dc0786ca6d2e8915c",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/expense_preview_template.php",
+          "ref_402_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
+          "main_488_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
+          "working_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/expense_recurring_options.php",
+          "ref_402_blob": "7231fcde3a18ddf19dbf68efd9535d00d13f696d",
+          "main_488_blob": "7231fcde3a18ddf19dbf68efd9535d00d13f696d",
+          "working_blob": "7231fcde3a18ddf19dbf68efd9535d00d13f696d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/expenses_total_template.php",
+          "ref_402_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
+          "main_488_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
+          "working_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/fields.php",
+          "ref_402_blob": null,
+          "main_488_blob": "9d439a8e0f7b2345b847ecd46d648b4d557131b3",
+          "working_blob": "6e74531a6e5649929d528af17ec1a4679a36276a",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/filter_by_template.php",
+          "ref_402_blob": "a68d6766e8d28dd713edb8e886f18b2c6719689e",
+          "main_488_blob": "a68d6766e8d28dd713edb8e886f18b2c6719689e",
+          "working_blob": "a68d6766e8d28dd713edb8e886f18b2c6719689e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/import.php",
+          "ref_402_blob": "f94516c4dd394fb60ad1e95318369cb004b347e7",
+          "main_488_blob": "d7fcfd497847ea188aa65effb41a2dce02631ec7",
+          "working_blob": "d7fcfd497847ea188aa65effb41a2dce02631ec7",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/manage.php",
+          "ref_402_blob": "78f5b5665c457f474e9916f979c3153804046070",
+          "main_488_blob": "78f5b5665c457f474e9916f979c3153804046070",
+          "working_blob": "78f5b5665c457f474e9916f979c3153804046070",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/manage_categories.php",
+          "ref_402_blob": "84915828258b3160f520673d305b08961471e7db",
+          "main_488_blob": "84915828258b3160f520673d305b08961471e7db",
+          "working_blob": "84915828258b3160f520673d305b08961471e7db",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/native.php",
+          "ref_402_blob": null,
+          "main_488_blob": "6de82499adff24c3eb8f693c0d07a446e566f410",
+          "working_blob": "bed81ab904da67a85d04d6d241231c7d3134013b",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_purchases.php",
+          "ref_402_blob": null,
+          "main_488_blob": "40ac3f9375c83d03b4d3f3c2ada297f09b92c468",
+          "working_blob": "40ac3f9375c83d03b4d3f3c2ada297f09b92c468",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/native_purchases_payable.php",
+          "ref_402_blob": null,
+          "main_488_blob": "33a38e1e9b552cdd0eaac87a56f2b3dba11abeeb",
+          "working_blob": "33a38e1e9b552cdd0eaac87a56f2b3dba11abeeb",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/native_purchases_workspace.php",
+          "ref_402_blob": null,
+          "main_488_blob": "8f9718494f19ad7ef7a403dd5e34415939e70f18",
+          "working_blob": "8f9718494f19ad7ef7a403dd5e34415939e70f18",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/recurring.php",
+          "ref_402_blob": null,
+          "main_488_blob": "286084264b7ead8f8fa806f99757354bd6e91350",
+          "working_blob": "286084264b7ead8f8fa806f99757354bd6e91350",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/table_html.php",
+          "ref_402_blob": "6dc03b074314ab744dc839c888d00c602074422f",
+          "main_488_blob": "6dc03b074314ab744dc839c888d00c602074422f",
+          "working_blob": "6dc03b074314ab744dc839c888d00c602074422f",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "contratos": {
+      "controller": "application/controllers/admin/Contracts.php",
+      "actions_402": [
+        "add_comment",
+        "add_contract_attachment",
+        "add_external_attachment",
+        "add_note",
+        "clear_signature",
+        "contract",
+        "copy",
+        "delete",
+        "delete_contract_attachment",
+        "delete_contract_type",
+        "delete_renewal",
+        "edit_comment",
+        "get_comments",
+        "get_notes",
+        "get_template",
+        "index",
+        "mark_as_signed",
+        "pdf",
+        "remove_comment",
+        "renew",
+        "save_contract_data",
+        "send_to_email",
+        "table",
+        "type",
+        "types",
+        "unmark_as_signed"
+      ],
+      "actions_current": [
+        "add_comment",
+        "add_contract_attachment",
+        "add_external_attachment",
+        "add_note",
+        "clear_signature",
+        "contract",
+        "copy",
+        "delete",
+        "delete_contract_attachment",
+        "delete_contract_type",
+        "delete_renewal",
+        "edit_comment",
+        "file",
+        "get_comments",
+        "get_notes",
+        "get_template",
+        "index",
+        "mark_as_signed",
+        "pdf",
+        "remove_comment",
+        "renew",
+        "save_contract_data",
+        "send_to_email",
+        "table",
+        "type",
+        "types",
+        "unmark_as_signed"
+      ],
+      "view_calls_402": [
+        "admin/contracts/comments_template",
+        "admin/contracts/contract",
+        "admin/contracts/manage",
+        "admin/contracts/manage_types",
+        "admin/contracts/templates/",
+        "admin/includes/sales_notes_template"
+      ],
+      "view_calls_current": [
+        "admin/contracts/comments_template",
+        "admin/contracts/contract",
+        "admin/contracts/manage",
+        "admin/contracts/manage_types",
+        "admin/contracts/templates/",
+        "admin/includes/sales_notes_template"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Contracts.php",
+          "ref_402_blob": "e6946f6a1de7d120b0f74537a378f172e1bb9887",
+          "main_488_blob": "73735d088ea863c99e24b00cf52816d984f7333f",
+          "working_blob": "73735d088ea863c99e24b00cf52816d984f7333f",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/comments_template.php",
+          "ref_402_blob": "59510fe8f8e4d00d8d6f05d35b535c74729e8a22",
+          "main_488_blob": "59510fe8f8e4d00d8d6f05d35b535c74729e8a22",
+          "working_blob": "59510fe8f8e4d00d8d6f05d35b535c74729e8a22",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/contract.php",
+          "ref_402_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
+          "main_488_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
+          "working_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/contract_type.php",
+          "ref_402_blob": "34550e8d7f5a2c017f1787fb0bd0be1c4c4e7b83",
+          "main_488_blob": "34550e8d7f5a2c017f1787fb0bd0be1c4c4e7b83",
+          "working_blob": "34550e8d7f5a2c017f1787fb0bd0be1c4c4e7b83",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/filters.php",
+          "ref_402_blob": "1de1c12f6e11091d1e35122fbdfd01be4ab65074",
+          "main_488_blob": "1de1c12f6e11091d1e35122fbdfd01be4ab65074",
+          "working_blob": "1de1c12f6e11091d1e35122fbdfd01be4ab65074",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/manage.php",
+          "ref_402_blob": "31690f56eeea800c22b00e45f21aa697f98966fd",
+          "main_488_blob": "240b913def56f6cefc202196d93dc2a2777044c3",
+          "working_blob": "8d257028472ea984fc378d31b6d814c012606423",
+          "comparison_402": "changed",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/contracts/manage_types.php",
+          "ref_402_blob": "6594c691e9035408c0df38a83836cecdbd82458c",
+          "main_488_blob": "5404d97930e6ee232c93524b7b133308aa7171b5",
+          "working_blob": "5404d97930e6ee232c93524b7b133308aa7171b5",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/native.php",
+          "ref_402_blob": null,
+          "main_488_blob": "2fe0a413b969a798468a43f68c6dbb4eed96796b",
+          "working_blob": "55cb8fc861031582fbd5f859d38e54668c9a2515",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/contracts/native_comments.php",
+          "ref_402_blob": null,
+          "main_488_blob": "597df0fcee21418c39bc5ff617b6043519adec4e",
+          "working_blob": "597df0fcee21418c39bc5ff617b6043519adec4e",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/native_table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "de0165e13d4d6f0a81959aa54c5bfe067b991c18",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/contracts/owned_directory.php",
+          "ref_402_blob": null,
+          "main_488_blob": "168bd68eb7d51c2f02811be56aa2915a3ca923b1",
+          "working_blob": "168bd68eb7d51c2f02811be56aa2915a3ca923b1",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/renew_contract.php",
+          "ref_402_blob": "ca11fb5d27259d972472b06c825a88e949bd8a8d",
+          "main_488_blob": "ca11fb5d27259d972472b06c825a88e949bd8a8d",
+          "working_blob": "ca11fb5d27259d972472b06c825a88e949bd8a8d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/send_to_client.php",
+          "ref_402_blob": "a191563296af4181fa73f1a26d8239b3bbb2b906",
+          "main_488_blob": "a191563296af4181fa73f1a26d8239b3bbb2b906",
+          "working_blob": "a191563296af4181fa73f1a26d8239b3bbb2b906",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/table_html.php",
+          "ref_402_blob": "735f732e1d7aadcae192f57fa3a8038388e27ed3",
+          "main_488_blob": "735f732e1d7aadcae192f57fa3a8038388e27ed3",
+          "working_blob": "b2ff44a95cbecb8b9cc423e6f4c06cfeda85119f",
+          "comparison_402": "changed",
+          "changed_this_pr": true
+        }
+      ]
+    },
+    "projetos": {
+      "controller": "application/controllers/admin/Projects.php",
+      "actions_402": [
+        "add_discussion_comment",
+        "add_edit_members",
+        "add_expense",
+        "add_external_file",
+        "bulk_action_files",
+        "change_activity_visibility",
+        "change_file_visibility",
+        "change_milestone_color",
+        "copy",
+        "delete",
+        "delete_discussion",
+        "delete_discussion_comment",
+        "delete_milestone",
+        "delete_note",
+        "discussion",
+        "discussions",
+        "download_all_files",
+        "edit_note",
+        "expenses",
+        "export_project_data",
+        "file",
+        "gantt",
+        "get_discussion_comments",
+        "get_invoice_project_data",
+        "get_pre_invoice_project_info",
+        "get_rel_project_data",
+        "get_staff_names_for_mentions",
+        "index",
+        "invoice_project",
+        "mark_as",
+        "mass_stop_timers",
+        "milestone",
+        "milestones",
+        "milestones_kanban",
+        "milestones_kanban_load_more",
+        "pin_action",
+        "project",
+        "remove_file",
+        "remove_team_member",
+        "save_note",
+        "staff_projects",
+        "table",
+        "timesheet",
+        "timesheet_task_assignees",
+        "timesheets",
+        "update_discussion_comment",
+        "update_file_data",
+        "update_milestones_order",
+        "update_task_milestone",
+        "upload_file",
+        "view",
+        "view_project_as_client"
+      ],
+      "actions_current": [
+        "add_discussion_comment",
+        "add_edit_members",
+        "add_expense",
+        "add_external_file",
+        "billing_rates",
+        "bulk_action_files",
+        "change_activity_visibility",
+        "change_file_visibility",
+        "change_milestone_color",
+        "copies",
+        "copy",
+        "delete",
+        "delete_discussion",
+        "delete_discussion_comment",
+        "delete_milestone",
+        "delete_note",
+        "discussion",
+        "discussions",
+        "download_all_files",
+        "edit_note",
+        "expenses",
+        "export_project_data",
+        "extras",
+        "file",
+        "fixed_billing",
+        "gantt",
+        "get_discussion_comments",
+        "get_invoice_project_data",
+        "get_pre_invoice_project_info",
+        "get_rel_project_data",
+        "get_staff_names_for_mentions",
+        "index",
+        "invoice_project",
+        "mark_as",
+        "mass_stop_timers",
+        "milestone",
+        "milestones",
+        "milestones_kanban",
+        "milestones_kanban_load_more",
+        "pin_action",
+        "portal_rules",
+        "project",
+        "remove_file",
+        "remove_team_member",
+        "save_note",
+        "staff_projects",
+        "table",
+        "time_billing",
+        "timesheet",
+        "timesheet_task_assignees",
+        "timesheets",
+        "update_discussion_comment",
+        "update_file_data",
+        "update_milestones_order",
+        "update_task_milestone",
+        "upload_file",
+        "view",
+        "view_project_as_client"
+      ],
+      "view_calls_402": [
+        "admin/projects/_file",
+        "admin/projects/_milestone_kanban_card",
+        "admin/projects/gantt",
+        "admin/projects/invoice_project",
+        "admin/projects/manage",
+        "admin/projects/milestones_kan_ban",
+        "admin/projects/project",
+        "admin/projects/project_pre_invoice_settings",
+        "admin/projects/view"
+      ],
+      "view_calls_current": [
+        "admin/projects/_file",
+        "admin/projects/_milestone_kanban_card",
+        "admin/projects/gantt",
+        "admin/projects/invoice_project",
+        "admin/projects/manage",
+        "admin/projects/milestones_kan_ban",
+        "admin/projects/project",
+        "admin/projects/project_pre_invoice_settings",
+        "admin/projects/view"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Projects.php",
+          "ref_402_blob": "4e31993f873d3c9a237dbcccbf30f0b314d93266",
+          "main_488_blob": "070dc1e5713bf51b09040d4349d2807d7171efff",
+          "working_blob": "070dc1e5713bf51b09040d4349d2807d7171efff",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_file.php",
+          "ref_402_blob": "e51398ae08443695fbdf06f4aa7a694bbfd60c63",
+          "main_488_blob": "e51398ae08443695fbdf06f4aa7a694bbfd60c63",
+          "working_blob": "e51398ae08443695fbdf06f4aa7a694bbfd60c63",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_mark_tasks_finished.php",
+          "ref_402_blob": "3d1444108fa505c9fda846f7ef5cd15c9656cf40",
+          "main_488_blob": "3d1444108fa505c9fda846f7ef5cd15c9656cf40",
+          "working_blob": "3d1444108fa505c9fda846f7ef5cd15c9656cf40",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_milestone_kanban_card.php",
+          "ref_402_blob": "27027c3f4b9808ee3f91e971911b201581d4c6ff",
+          "main_488_blob": "27027c3f4b9808ee3f91e971911b201581d4c6ff",
+          "working_blob": "27027c3f4b9808ee3f91e971911b201581d4c6ff",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_project_expenses_overview.php",
+          "ref_402_blob": "f788785e2f0041abfc5d5627ec219b2af2145011",
+          "main_488_blob": "f788785e2f0041abfc5d5627ec219b2af2145011",
+          "working_blob": "f788785e2f0041abfc5d5627ec219b2af2145011",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_project_overview_description_list.php",
+          "ref_402_blob": "d09e73e46624bcec19571bb01be7a6e4117b4e5f",
+          "main_488_blob": "43423651020c2bc2d298178f37040090170a2196",
+          "working_blob": "43423651020c2bc2d298178f37040090170a2196",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_project_timesheets_chart.php",
+          "ref_402_blob": "3f899f6833cea6da17a13ededb0eb2e94799da80",
+          "main_488_blob": "e30ea8ec56e73dffafb511ba6437b74607600cc7",
+          "working_blob": "e30ea8ec56e73dffafb511ba6437b74607600cc7",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/_project_vault_entries.php",
+          "ref_402_blob": "9bb6bac1c640fe3bdb45276a348290f3ddf3693a",
+          "main_488_blob": "9bb6bac1c640fe3bdb45276a348290f3ddf3693a",
+          "working_blob": "9bb6bac1c640fe3bdb45276a348290f3ddf3693a",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/copy_settings.php",
+          "ref_402_blob": "30754d337aed471bc872c20e9b222d4737589e70",
+          "main_488_blob": "4d9a059c706ee2057187bd8435ce284deab80ec3",
+          "working_blob": "4d9a059c706ee2057187bd8435ce284deab80ec3",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/export_data_pdf.php",
+          "ref_402_blob": "46b4c9aa1510575d74f11b26737ef09adff9efb3",
+          "main_488_blob": "46b4c9aa1510575d74f11b26737ef09adff9efb3",
+          "working_blob": "46b4c9aa1510575d74f11b26737ef09adff9efb3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/gantt.php",
+          "ref_402_blob": "fcd6a2b0ba031bf556608cdaa8e34ce0c9d49e67",
+          "main_488_blob": "fcd6a2b0ba031bf556608cdaa8e34ce0c9d49e67",
+          "working_blob": "fcd6a2b0ba031bf556608cdaa8e34ce0c9d49e67",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/invoice_project.php",
+          "ref_402_blob": "0519d2b07ce262a0a53597bd212928461805151f",
+          "main_488_blob": "0519d2b07ce262a0a53597bd212928461805151f",
+          "working_blob": "0519d2b07ce262a0a53597bd212928461805151f",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/manage.php",
+          "ref_402_blob": "794706b74a714a0237fbcb31c7a6b87e8bfc00e5",
+          "main_488_blob": "7501fd32dce35bae9b5feec5ae292a3c6dcee3e2",
+          "working_blob": "7501fd32dce35bae9b5feec5ae292a3c6dcee3e2",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/milestone.php",
+          "ref_402_blob": "a1f0adeec079bebe220d6a9c9634a4782a5d90de",
+          "main_488_blob": "a1f0adeec079bebe220d6a9c9634a4782a5d90de",
+          "working_blob": "a1f0adeec079bebe220d6a9c9634a4782a5d90de",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/milestones_kan_ban.php",
+          "ref_402_blob": "3623b603ac7e835de7ec08ce4f4f551665cc7021",
+          "main_488_blob": "3623b603ac7e835de7ec08ce4f4f551665cc7021",
+          "working_blob": "3623b603ac7e835de7ec08ce4f4f551665cc7021",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_billing_rates.php",
+          "ref_402_blob": null,
+          "main_488_blob": "5b63ab7e1f7220e3990aa025b54bdce5250bd22a",
+          "working_blob": "5b63ab7e1f7220e3990aa025b54bdce5250bd22a",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_contact_file_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "c71e19e48427b2bae13b529626df771c0050d200",
+          "working_blob": "c71e19e48427b2bae13b529626df771c0050d200",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_copies.php",
+          "ref_402_blob": null,
+          "main_488_blob": "b8ddddf3e6c4a2926c214e7418cea97e65e30a73",
+          "working_blob": "b8ddddf3e6c4a2926c214e7418cea97e65e30a73",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_discussion_extras.php",
+          "ref_402_blob": null,
+          "main_488_blob": "aed4a5dff2a70110a64cb655158558ddd977a3a2",
+          "working_blob": "aed4a5dff2a70110a64cb655158558ddd977a3a2",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_discussions.php",
+          "ref_402_blob": null,
+          "main_488_blob": "0d72d4d7b5e9c02e3e77b601a868bbeb8c5e392f",
+          "working_blob": "0d72d4d7b5e9c02e3e77b601a868bbeb8c5e392f",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_expenses.php",
+          "ref_402_blob": null,
+          "main_488_blob": "ea296b32b8cfd6f35c928ce83357fa24aff80be6",
+          "working_blob": "ea296b32b8cfd6f35c928ce83357fa24aff80be6",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_extras.php",
+          "ref_402_blob": null,
+          "main_488_blob": "bc3801f8431125a0c9b276f1cd380874cd796d67",
+          "working_blob": "bc3801f8431125a0c9b276f1cd380874cd796d67",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_fixed_billing.php",
+          "ref_402_blob": null,
+          "main_488_blob": "7fd4612006db647f66d23760008770673eb5eba8",
+          "working_blob": "7fd4612006db647f66d23760008770673eb5eba8",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_gantt_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "018f4a91c592aa2179aec56ab9dbab4e177da7c2",
+          "working_blob": "018f4a91c592aa2179aec56ab9dbab4e177da7c2",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_milestone_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "c75d05022c2d5c4875530316d84c179179a776f5",
+          "working_blob": "c75d05022c2d5c4875530316d84c179179a776f5",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_notes.php",
+          "ref_402_blob": null,
+          "main_488_blob": "012f64e5076adb8ded45bfe66a90e1722998b458",
+          "working_blob": "012f64e5076adb8ded45bfe66a90e1722998b458",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_portal_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "9621a7bc6f774ac6a53af6d992813a4c1a00afca",
+          "working_blob": "9621a7bc6f774ac6a53af6d992813a4c1a00afca",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_section.php",
+          "ref_402_blob": null,
+          "main_488_blob": "b64399cad95871ef5eb400d926eac3fafa0b9c63",
+          "working_blob": "b64399cad95871ef5eb400d926eac3fafa0b9c63",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_task_authorship.php",
+          "ref_402_blob": null,
+          "main_488_blob": "12531132d488aa7733b3b79e1973593d02f3e938",
+          "working_blob": "12531132d488aa7733b3b79e1973593d02f3e938",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_task_write_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "08ff8c459dbba3de27558b4fcf55a232bce273e2",
+          "working_blob": "08ff8c459dbba3de27558b4fcf55a232bce273e2",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_time_billing.php",
+          "ref_402_blob": null,
+          "main_488_blob": "30c8569a7ac9558b562ce3e58e863cd38c1fda29",
+          "working_blob": "30c8569a7ac9558b562ce3e58e863cd38c1fda29",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/native_timesheet_rules.php",
+          "ref_402_blob": null,
+          "main_488_blob": "9a2a0f5e2abcae26cf1b1034b0dd6de27f40b311",
+          "working_blob": "9a2a0f5e2abcae26cf1b1034b0dd6de27f40b311",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/pinned.php",
+          "ref_402_blob": "7dce4b7ae2f99c49606eb14dad3267a07c4107ed",
+          "main_488_blob": "7dce4b7ae2f99c49606eb14dad3267a07c4107ed",
+          "working_blob": "7dce4b7ae2f99c49606eb14dad3267a07c4107ed",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project.php",
+          "ref_402_blob": "6a8395dda7e310698a3067873373fcfee077be34",
+          "main_488_blob": "4a27ced054a32f999f00b331779eee30da5adbdf",
+          "working_blob": "4a27ced054a32f999f00b331779eee30da5adbdf",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_activity.php",
+          "ref_402_blob": "8221b454551c004ac17d01edf4a50760ed08592d",
+          "main_488_blob": "8221b454551c004ac17d01edf4a50760ed08592d",
+          "working_blob": "8221b454551c004ac17d01edf4a50760ed08592d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_contracts.php",
+          "ref_402_blob": "594381ce2d9000c136928da4ef01fcb49de55f30",
+          "main_488_blob": "594381ce2d9000c136928da4ef01fcb49de55f30",
+          "working_blob": "594381ce2d9000c136928da4ef01fcb49de55f30",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_credit_notes.php",
+          "ref_402_blob": "db4b7e80da518d6e8cc4a81443507a7a87a9ecb1",
+          "main_488_blob": "db4b7e80da518d6e8cc4a81443507a7a87a9ecb1",
+          "working_blob": "db4b7e80da518d6e8cc4a81443507a7a87a9ecb1",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_discussion.php",
+          "ref_402_blob": "8c46d9e3e2ceb4de361a385adb8453805f29379c",
+          "main_488_blob": "8c46d9e3e2ceb4de361a385adb8453805f29379c",
+          "working_blob": "8c46d9e3e2ceb4de361a385adb8453805f29379c",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_discussions.php",
+          "ref_402_blob": "9ed287cf563df1cd89ee712bd6c4ad7aab820367",
+          "main_488_blob": "644ea43cf45d5f1d6a8b0a75046992236fb499a3",
+          "working_blob": "644ea43cf45d5f1d6a8b0a75046992236fb499a3",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_estimates.php",
+          "ref_402_blob": "26dc6f9107da7e879e9539de1c69d5560f93bcdd",
+          "main_488_blob": "26dc6f9107da7e879e9539de1c69d5560f93bcdd",
+          "working_blob": "26dc6f9107da7e879e9539de1c69d5560f93bcdd",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_expenses.php",
+          "ref_402_blob": "d1c898f783f64ad8ca876d58291b4b829e55485e",
+          "main_488_blob": "d1c898f783f64ad8ca876d58291b4b829e55485e",
+          "working_blob": "d1c898f783f64ad8ca876d58291b4b829e55485e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_files.php",
+          "ref_402_blob": "3f8c7d8230c82559707e9b61c8cfbb08f02a29d3",
+          "main_488_blob": "3f8c7d8230c82559707e9b61c8cfbb08f02a29d3",
+          "working_blob": "3f8c7d8230c82559707e9b61c8cfbb08f02a29d3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_gantt.php",
+          "ref_402_blob": "bb232bfd34235120741a949b13f6b62610f97a3f",
+          "main_488_blob": "e4147958f6b603d817b6e0d247454c8b2236ea71",
+          "working_blob": "e4147958f6b603d817b6e0d247454c8b2236ea71",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_invoices.php",
+          "ref_402_blob": "75abbdb9b51c5836492d0a1331ac0cd40a972f0c",
+          "main_488_blob": "75abbdb9b51c5836492d0a1331ac0cd40a972f0c",
+          "working_blob": "75abbdb9b51c5836492d0a1331ac0cd40a972f0c",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_milestones.php",
+          "ref_402_blob": "4f9b91c3fdf63a4aa0b3502a8767a7147f6cdfef",
+          "main_488_blob": "27a15f6ded28f8781794c2c79bceee70e71a5ac2",
+          "working_blob": "27a15f6ded28f8781794c2c79bceee70e71a5ac2",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_notes.php",
+          "ref_402_blob": "f1ce258fdeef1ae32928e269e6598524b35c08da",
+          "main_488_blob": "f1ce258fdeef1ae32928e269e6598524b35c08da",
+          "working_blob": "f1ce258fdeef1ae32928e269e6598524b35c08da",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_overview.php",
+          "ref_402_blob": "9f0975fa3c35fed1950abdb848e2a7347530c2a3",
+          "main_488_blob": "1100876611ac79e0cc5ef294600d258f2bee6e36",
+          "working_blob": "1100876611ac79e0cc5ef294600d258f2bee6e36",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_pre_invoice_settings.php",
+          "ref_402_blob": "dffc2244a5481e570ba4df21981e6190fe057e76",
+          "main_488_blob": "dffc2244a5481e570ba4df21981e6190fe057e76",
+          "working_blob": "dffc2244a5481e570ba4df21981e6190fe057e76",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_proposals.php",
+          "ref_402_blob": "083ba1024f3be53a19a2f4d3340a44e89b81a5bd",
+          "main_488_blob": "083ba1024f3be53a19a2f4d3340a44e89b81a5bd",
+          "working_blob": "083ba1024f3be53a19a2f4d3340a44e89b81a5bd",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_subscriptions.php",
+          "ref_402_blob": "b5d18d86d5cfb606b909c1c03fa776bd3f24d70c",
+          "main_488_blob": "b5d18d86d5cfb606b909c1c03fa776bd3f24d70c",
+          "working_blob": "b5d18d86d5cfb606b909c1c03fa776bd3f24d70c",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_tabs.php",
+          "ref_402_blob": "d66ba3499d5753174dbd484a994f0c8fe01db01d",
+          "main_488_blob": "d66ba3499d5753174dbd484a994f0c8fe01db01d",
+          "working_blob": "d66ba3499d5753174dbd484a994f0c8fe01db01d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_tasks.php",
+          "ref_402_blob": "748ea48898b733dfb6a1ce39a6df9d374a3f904e",
+          "main_488_blob": "9c734713cbe14dada9f0eb8f02c54093dc931dc7",
+          "working_blob": "9c734713cbe14dada9f0eb8f02c54093dc931dc7",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_tickets.php",
+          "ref_402_blob": "6fc54b85f200d2f1c316170d7cd067a445755576",
+          "main_488_blob": "6fc54b85f200d2f1c316170d7cd067a445755576",
+          "working_blob": "6fc54b85f200d2f1c316170d7cd067a445755576",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/project_timesheets.php",
+          "ref_402_blob": "3be1cde75d30cb691ba6a12ac66d94e4dcae0a69",
+          "main_488_blob": "f6e09935d9b1b526773b5c57dffd97ddfef88871",
+          "working_blob": "f6e09935d9b1b526773b5c57dffd97ddfef88871",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/stats.php",
+          "ref_402_blob": "93d27fea86d10eb35fd0ee0e92d079f5b197b991",
+          "main_488_blob": "586784d98c7e5d8077442b60277e943aea29e988",
+          "working_blob": "586784d98c7e5d8077442b60277e943aea29e988",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/table_html.php",
+          "ref_402_blob": "c14464d73ee5925656778fb0df4fcd5aa6be2c92",
+          "main_488_blob": "1df7e20d4b0467db53a9a7bb060d4fc355e82882",
+          "working_blob": "1df7e20d4b0467db53a9a7bb060d4fc355e82882",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/timesheet.php",
+          "ref_402_blob": "70919fdfe547b6f4a81cec3c5bd85cd9f672f6b4",
+          "main_488_blob": "70919fdfe547b6f4a81cec3c5bd85cd9f672f6b4",
+          "working_blob": "70919fdfe547b6f4a81cec3c5bd85cd9f672f6b4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/projects/view.php",
+          "ref_402_blob": "b280a2612a38e9f2a0ea918099eb428a0a76c931",
+          "main_488_blob": "30de4f429d316c45444d3368f32a0ba7a718e1c4",
+          "working_blob": "30de4f429d316c45444d3368f32a0ba7a718e1c4",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "tarefas": {
+      "controller": "application/controllers/admin/Tasks.php",
+      "actions_402": [
+        "add_checklist_item",
+        "add_external_attachment",
+        "add_reminder",
+        "add_task_assignees",
+        "add_task_comment",
+        "add_task_followers",
+        "ajax_search_assign_task_to_timer",
+        "bulk_action",
+        "change_milestone",
+        "change_priority",
+        "checkbox_action",
+        "copy",
+        "delete_checklist_item",
+        "delete_reminder",
+        "delete_task",
+        "delete_timesheet",
+        "delete_user_unfinished_timesheet",
+        "detailed_overview",
+        "download_files",
+        "edit_comment",
+        "edit_reminder",
+        "gantt_date_update",
+        "get_billable_task_data",
+        "get_billable_tasks_by_customer_id",
+        "get_billable_tasks_by_project",
+        "get_staff_names_for_mentions",
+        "get_staff_started_timers",
+        "get_task_by_id",
+        "get_task_data",
+        "index",
+        "init_checklist_items",
+        "init_relation_tasks",
+        "kanban",
+        "list_tasks",
+        "log_time",
+        "make_public",
+        "mark_as",
+        "remove_assignee",
+        "remove_checklist_item_template",
+        "remove_comment",
+        "remove_follower",
+        "remove_task_attachment",
+        "save_checklist_assigned_staff",
+        "save_checklist_item_template",
+        "switch_kanban",
+        "table",
+        "task",
+        "task_single_inline_update",
+        "task_tracking_stats",
+        "tasks_kanban_load_more",
+        "timer_tracking",
+        "unmark_complete",
+        "update_checklist_item",
+        "update_checklist_order",
+        "update_order",
+        "update_tags",
+        "update_task_description",
+        "update_timesheet",
+        "upload_file"
+      ],
+      "actions_current": [
+        "add_checklist_item",
+        "add_external_attachment",
+        "add_reminder",
+        "add_task_assignees",
+        "add_task_comment",
+        "add_task_followers",
+        "ajax_search_assign_task_to_timer",
+        "billing",
+        "bulk_action",
+        "change_milestone",
+        "change_priority",
+        "checkbox_action",
+        "checklist_command",
+        "checklist_visibility",
+        "copies",
+        "copy",
+        "delete_checklist_item",
+        "delete_reminder",
+        "delete_task",
+        "delete_timesheet",
+        "delete_user_unfinished_timesheet",
+        "detailed_overview",
+        "download_files",
+        "edit_comment",
+        "edit_reminder",
+        "gantt_date_update",
+        "get_billable_task_data",
+        "get_billable_tasks_by_customer_id",
+        "get_billable_tasks_by_project",
+        "get_staff_names_for_mentions",
+        "get_staff_started_timers",
+        "get_task_by_id",
+        "get_task_data",
+        "index",
+        "init_checklist_items",
+        "init_relation_tasks",
+        "kanban",
+        "list_tasks",
+        "log_time",
+        "make_public",
+        "mark_as",
+        "recurring",
+        "remove_assignee",
+        "remove_checklist_item_template",
+        "remove_comment",
+        "remove_follower",
+        "remove_task_attachment",
+        "save_checklist_assigned_staff",
+        "save_checklist_item_template",
+        "standalone",
+        "switch_kanban",
+        "table",
+        "task",
+        "task_single_inline_update",
+        "task_tracking_stats",
+        "tasks_kanban_load_more",
+        "time_batches",
+        "timer_tracking",
+        "unmark_complete",
+        "update_checklist_item",
+        "update_checklist_order",
+        "update_order",
+        "update_tags",
+        "update_task_description",
+        "update_timesheet",
+        "upload_file"
+      ],
+      "view_calls_402": [
+        "admin/tasks/_kan_ban_card",
+        "admin/tasks/checklist_items_template",
+        "admin/tasks/detailed_overview",
+        "admin/tasks/kan_ban",
+        "admin/tasks/manage",
+        "admin/tasks/started_timers",
+        "admin/tasks/task",
+        "admin/tasks/tracking_stats",
+        "admin/tasks/view_task_template"
+      ],
+      "view_calls_current": [
+        "admin/tasks/_kan_ban_card",
+        "admin/tasks/checklist_items_template",
+        "admin/tasks/detailed_overview",
+        "admin/tasks/kan_ban",
+        "admin/tasks/manage",
+        "admin/tasks/started_timers",
+        "admin/tasks/task",
+        "admin/tasks/tracking_stats",
+        "admin/tasks/view_task_template"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Tasks.php",
+          "ref_402_blob": "82bd7d9dc561b7d653fbefb6b880ee4f4569bc0b",
+          "main_488_blob": "fc9fb72d0b7bdb6cd47e74276eb7ecc274de315b",
+          "working_blob": "fc9fb72d0b7bdb6cd47e74276eb7ecc274de315b",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/_bulk_actions.php",
+          "ref_402_blob": "d9c854e63499e1636a83bf2116e92aa233bfecf2",
+          "main_488_blob": "22a2ffe9355be8305de107b5d5ba6275a2299cf2",
+          "working_blob": "22a2ffe9355be8305de107b5d5ba6275a2299cf2",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/_kan_ban_card.php",
+          "ref_402_blob": "0b19959725a28f8645a24157f7e649fb1c6d2b7e",
+          "main_488_blob": "be5da1599f2baef4a774157502a47af5c7dbff30",
+          "working_blob": "be5da1599f2baef4a774157502a47af5c7dbff30",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/_summary.php",
+          "ref_402_blob": "06e448137e4e7e7ba234870da7e595a5c81ebf8d",
+          "main_488_blob": "92bb0f5f1eabb28e143ffc4ed5bbbf8e5296823e",
+          "working_blob": "92bb0f5f1eabb28e143ffc4ed5bbbf8e5296823e",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/_table.php",
+          "ref_402_blob": "e1ef85d63dfd2b1f9ba6f52bd2d45c4f7c13dbcb",
+          "main_488_blob": "28aa3ab6a7d6cac3fd4b8b3210ac5230d8c9de32",
+          "working_blob": "28aa3ab6a7d6cac3fd4b8b3210ac5230d8c9de32",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/checklist_items_template.php",
+          "ref_402_blob": "c2109eb93444af8ca148e012b8148ef2d67c3792",
+          "main_488_blob": "17107360e670faa372b625a6f20bfea6153fd380",
+          "working_blob": "17107360e670faa372b625a6f20bfea6153fd380",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/detailed_overview.php",
+          "ref_402_blob": "e8d36d58f4d6182e131b4c5261e39a77ac38802e",
+          "main_488_blob": "e8d36d58f4d6182e131b4c5261e39a77ac38802e",
+          "working_blob": "e8d36d58f4d6182e131b4c5261e39a77ac38802e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/filters.php",
+          "ref_402_blob": "7be6f9f5a145b28b42e3d6668693add934f0b309",
+          "main_488_blob": "7be6f9f5a145b28b42e3d6668693add934f0b309",
+          "working_blob": "7be6f9f5a145b28b42e3d6668693add934f0b309",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/kan_ban.php",
+          "ref_402_blob": "fa969f60f3a556d309539b8a0a26472f4645656f",
+          "main_488_blob": "6d7bd0b0c8f56e8126a07b5841ebacac8b64b5fd",
+          "working_blob": "6d7bd0b0c8f56e8126a07b5841ebacac8b64b5fd",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/manage.php",
+          "ref_402_blob": "0006df6d8166302ced9052ce2ddf6ddcc123c6f4",
+          "main_488_blob": "814a87e696b76d2d343c227d35438c51c3a8db95",
+          "working_blob": "814a87e696b76d2d343c227d35438c51c3a8db95",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/modal_mount.php",
+          "ref_402_blob": null,
+          "main_488_blob": "3a1d2c5746f64750d7e4c6c776522b5ed39f5e34",
+          "working_blob": "3a1d2c5746f64750d7e4c6c776522b5ed39f5e34",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_billing.php",
+          "ref_402_blob": null,
+          "main_488_blob": "df8398f499c57849fe957e433d2bc3927e6959c0",
+          "working_blob": "df8398f499c57849fe957e433d2bc3927e6959c0",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_copies.php",
+          "ref_402_blob": null,
+          "main_488_blob": "f4f0a849311e126228e2a10238a8c142bc845212",
+          "working_blob": "f4f0a849311e126228e2a10238a8c142bc845212",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_fields.php",
+          "ref_402_blob": null,
+          "main_488_blob": "0d9e9587ad777b891f2633e7f583ec8cdc1a855f",
+          "working_blob": "0d9e9587ad777b891f2633e7f583ec8cdc1a855f",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_recurring.php",
+          "ref_402_blob": null,
+          "main_488_blob": "4668b4cdc10a321608a955da61418626d218b595",
+          "working_blob": "4668b4cdc10a321608a955da61418626d218b595",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_standalone.php",
+          "ref_402_blob": null,
+          "main_488_blob": "37f7902f679cd6d8bc50ceada48d2fba9faac920",
+          "working_blob": "37f7902f679cd6d8bc50ceada48d2fba9faac920",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/native_time_batches.php",
+          "ref_402_blob": null,
+          "main_488_blob": "aee7d1853d707406e52cda34f0e085e20a76694c",
+          "working_blob": "aee7d1853d707406e52cda34f0e085e20a76694c",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/started_timers.php",
+          "ref_402_blob": "12eae5bdab38d109946c5945d0d1b77ccbbb2897",
+          "main_488_blob": "afd0e543474702d435f85ae4bddfa8f08bc7dc14",
+          "working_blob": "afd0e543474702d435f85ae4bddfa8f08bc7dc14",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/task.php",
+          "ref_402_blob": "f45379267638363d54fc6c20cb07dc46925f29cc",
+          "main_488_blob": "c89e6c33bf730c3c7b958c5c2b59230040f67023",
+          "working_blob": "c89e6c33bf730c3c7b958c5c2b59230040f67023",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/tasks_filter_by.php",
+          "ref_402_blob": "f915b565d017c02a4f854660553c14e4ebb72768",
+          "main_488_blob": "f915b565d017c02a4f854660553c14e4ebb72768",
+          "working_blob": "f915b565d017c02a4f854660553c14e4ebb72768",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/tracking_stats.php",
+          "ref_402_blob": "1c922a5a9913dd25c61cfbc0dd05da5b9b441105",
+          "main_488_blob": "0a9b0f038705c980bcdb312fdaa5fb3393a783e4",
+          "working_blob": "0a9b0f038705c980bcdb312fdaa5fb3393a783e4",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tasks/view_task_template.php",
+          "ref_402_blob": "600a80e9764cf36ea74b3e8d04caa0d13c30d0e1",
+          "main_488_blob": "f642a87dc0c9e2fe8bbdf77655749d71fd471290",
+          "working_blob": "f642a87dc0c9e2fe8bbdf77655749d71fd471290",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "suporte": {
+      "controller": "application/controllers/admin/Tickets.php",
+      "actions_402": [
+        "add",
+        "block_sender",
+        "bulk_action",
+        "change_status_ajax",
+        "check_staff_replying",
+        "delete",
+        "delete_attachment",
+        "delete_predefined_reply",
+        "delete_priority",
+        "delete_service",
+        "delete_ticket_reply",
+        "delete_ticket_status",
+        "edit_message",
+        "get_predefined_reply_ajax",
+        "index",
+        "predefined_replies",
+        "predefined_reply",
+        "priorities",
+        "priority",
+        "service",
+        "services",
+        "status",
+        "statuses",
+        "ticket",
+        "ticket_change_data",
+        "update_single_ticket_settings",
+        "update_staff_replying"
+      ],
+      "actions_current": [
+        "add",
+        "ai",
+        "block_sender",
+        "bulk_action",
+        "change_status_ajax",
+        "check_staff_replying",
+        "connect",
+        "connect_api",
+        "delete",
+        "delete_attachment",
+        "delete_predefined_reply",
+        "delete_priority",
+        "delete_service",
+        "delete_ticket_reply",
+        "delete_ticket_status",
+        "edit_message",
+        "get_predefined_reply_ajax",
+        "index",
+        "predefined_replies",
+        "predefined_reply",
+        "priorities",
+        "priority",
+        "service",
+        "services",
+        "status",
+        "statuses",
+        "ticket",
+        "ticket_change_data",
+        "update_single_ticket_settings",
+        "update_staff_replying"
+      ],
+      "view_calls_402": [
+        "admin/tickets/add",
+        "admin/tickets/list",
+        "admin/tickets/predefined_replies/manage",
+        "admin/tickets/predefined_replies/reply",
+        "admin/tickets/priorities/manage",
+        "admin/tickets/services/manage",
+        "admin/tickets/single",
+        "admin/tickets/tickets_statuses/manage"
+      ],
+      "view_calls_current": [
+        "admin/tickets/add",
+        "admin/tickets/list",
+        "admin/tickets/predefined_replies/manage",
+        "admin/tickets/predefined_replies/reply",
+        "admin/tickets/priorities/manage",
+        "admin/tickets/services/manage",
+        "admin/tickets/single",
+        "admin/tickets/tickets_statuses/manage"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Tickets.php",
+          "ref_402_blob": "076f540d529ce4d29a34de0c1c75963c9a1b3714",
+          "main_488_blob": "d5613ccf0ed596e3eb1d1178053347110da01e26",
+          "working_blob": "d5613ccf0ed596e3eb1d1178053347110da01e26",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/add.php",
+          "ref_402_blob": "e67936d10351495d80f73ca037a61b3484008dfc",
+          "main_488_blob": "de201390276ae0efd8eba7d4bbb1f79baa7f8196",
+          "working_blob": "de201390276ae0efd8eba7d4bbb1f79baa7f8196",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/list.php",
+          "ref_402_blob": "ebd4ff1a066116218f371452c52d6c2dd1d01b85",
+          "main_488_blob": "1cb8dbe173c02de7e38aebb25b582ec716deb8b8",
+          "working_blob": "1cb8dbe173c02de7e38aebb25b582ec716deb8b8",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/native_ai.php",
+          "ref_402_blob": null,
+          "main_488_blob": "8710ec8c656b6991c76af1b61c0c66c35dc58565",
+          "working_blob": "8710ec8c656b6991c76af1b61c0c66c35dc58565",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/native_connect.php",
+          "ref_402_blob": null,
+          "main_488_blob": "b53294f152809c38f0ae02fa1dcfeffe3533f694",
+          "working_blob": "b53294f152809c38f0ae02fa1dcfeffe3533f694",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/native_connect_api.php",
+          "ref_402_blob": null,
+          "main_488_blob": "587d471ef2696880494407ba648d08bfa17c924d",
+          "working_blob": "587d471ef2696880494407ba648d08bfa17c924d",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ai_ticket_modals.php",
+          "ref_402_blob": "a99963c14fecfef89be9e5aa6a21f14529a27325",
+          "main_488_blob": "a99963c14fecfef89be9e5aa6a21f14529a27325",
+          "working_blob": "a99963c14fecfef89be9e5aa6a21f14529a27325",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/portal-support-actions.php",
+          "ref_402_blob": null,
+          "main_488_blob": "2b0e8ae77c33d936dcac1eb734632423c0f7eda7",
+          "working_blob": "2b0e8ae77c33d936dcac1eb734632423c0f7eda7",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-history-message.php",
+          "ref_402_blob": "427e07d3d5ac9747e8e143356f10ea85ed3f62ab",
+          "main_488_blob": "32e8eccc9dff4e191918853653156be9ac568cf5",
+          "working_blob": "32e8eccc9dff4e191918853653156be9ac568cf5",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-history-replies.php",
+          "ref_402_blob": "3206c5937024bebbd5c894e577d10b19bc22e31d",
+          "main_488_blob": "6fd60e3cd68e6fc4e1352fe6ec068bd18640130d",
+          "working_blob": "6fd60e3cd68e6fc4e1352fe6ec068bd18640130d",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-settings.php",
+          "ref_402_blob": "effd363c7a2058428d8404503b11d32a40f4343e",
+          "main_488_blob": "a97b34f76c45006366d2d4213c5ab240de822bc5",
+          "working_blob": "a97b34f76c45006366d2d4213c5ab240de822bc5",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-tabpanel-add-reply.php",
+          "ref_402_blob": "24a41c72b66cf93e88d778b7654a88e4d944ff03",
+          "main_488_blob": "24a41c72b66cf93e88d778b7654a88e4d944ff03",
+          "working_blob": "24a41c72b66cf93e88d778b7654a88e4d944ff03",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-tabpanel-notes.php",
+          "ref_402_blob": "929e8512b72fa795658e98bedb45ee290d49cddc",
+          "main_488_blob": "929e8512b72fa795658e98bedb45ee290d49cddc",
+          "working_blob": "929e8512b72fa795658e98bedb45ee290d49cddc",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-tabpanel-other-tickets.php",
+          "ref_402_blob": "6ccc77f89d1080e43954f3edc923add837e14dd4",
+          "main_488_blob": "6ccc77f89d1080e43954f3edc923add837e14dd4",
+          "working_blob": "6ccc77f89d1080e43954f3edc923add837e14dd4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-tabpanel-reminders.php",
+          "ref_402_blob": "f83fef5283133879b44f3cf6b5839a2f61c6605f",
+          "main_488_blob": "f83fef5283133879b44f3cf6b5839a2f61c6605f",
+          "working_blob": "f83fef5283133879b44f3cf6b5839a2f61c6605f",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/partials/ticket-tabpanel-tasks.php",
+          "ref_402_blob": "3f734290789802d4a52ea713604c77a870556cc5",
+          "main_488_blob": "3f734290789802d4a52ea713604c77a870556cc5",
+          "working_blob": "3f734290789802d4a52ea713604c77a870556cc5",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/predefined_replies/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/predefined_replies/manage.php",
+          "ref_402_blob": "6f7d588099ec8a478b165849a850b35fe3cbc93d",
+          "main_488_blob": "6f7d588099ec8a478b165849a850b35fe3cbc93d",
+          "working_blob": "6f7d588099ec8a478b165849a850b35fe3cbc93d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/predefined_replies/reply.php",
+          "ref_402_blob": "39e728f7d54fa30be222ea5f59a931faa911684e",
+          "main_488_blob": "07e63b3d657c8bdfa4ce353e0aa76ba439331121",
+          "working_blob": "07e63b3d657c8bdfa4ce353e0aa76ba439331121",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/predefined_replies/table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": "1ac48ce4b1f9fbdbfeddb1923862550bbdb02dd3",
+          "working_blob": "1ac48ce4b1f9fbdbfeddb1923862550bbdb02dd3",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/priorities/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/priorities/manage.php",
+          "ref_402_blob": "0bd8fc21925d0e503c59d9cdee0b0ffc80b6da18",
+          "main_488_blob": "8a765e46004f53fa2a3bb4cf75b281d62ea138ed",
+          "working_blob": "8a765e46004f53fa2a3bb4cf75b281d62ea138ed",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/services/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/services/manage.php",
+          "ref_402_blob": "0d0c091db5533f00fa7855ee82983338cc762396",
+          "main_488_blob": "0d0c091db5533f00fa7855ee82983338cc762396",
+          "working_blob": "0d0c091db5533f00fa7855ee82983338cc762396",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/services/service.php",
+          "ref_402_blob": "a19fa8ab6851439ada6996879064771491ed6652",
+          "main_488_blob": "0a80e004aa11ce2f3a237231f6912ef6279086d1",
+          "working_blob": "0a80e004aa11ce2f3a237231f6912ef6279086d1",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/services/table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": "0176b9d6dd75e145dfc6202c914b44f066984d37",
+          "working_blob": "0176b9d6dd75e145dfc6202c914b44f066984d37",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/single.php",
+          "ref_402_blob": "9e1da338b42f1e88340add8afa2284418e374985",
+          "main_488_blob": "f32421d8ce77534e2ede780b703197d308016ba5",
+          "working_blob": "f32421d8ce77534e2ede780b703197d308016ba5",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/summary.php",
+          "ref_402_blob": "fffbb7f3218785a1879acc03a5a7bac4ec2bd75b",
+          "main_488_blob": "ce736b357cc1807750e666c391d5195d1e46eb02",
+          "working_blob": "ce736b357cc1807750e666c391d5195d1e46eb02",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": "4c1b27c5b049ff28185927397484ef204e1bcf06",
+          "working_blob": "4c1b27c5b049ff28185927397484ef204e1bcf06",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/tickets_statuses/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/tickets/tickets_statuses/manage.php",
+          "ref_402_blob": "97ff7b1b934e42513d974536e453b5da0a26a280",
+          "main_488_blob": "005ceb9b4429fb7631872ca1630f0ef61c2bfecf",
+          "working_blob": "005ceb9b4429fb7631872ca1630f0ef61c2bfecf",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "leads": {
+      "controller": "application/controllers/admin/Leads.php",
+      "actions_402": [
+        "add_activity",
+        "add_external_attachment",
+        "add_lead_attachment",
+        "add_note",
+        "bulk_action",
+        "change_status_color",
+        "convert_to_customer",
+        "delete",
+        "delete_attachment",
+        "delete_form",
+        "delete_note",
+        "delete_source",
+        "delete_status",
+        "download_files",
+        "email_integration",
+        "email_integration_folders",
+        "export",
+        "form",
+        "forms",
+        "get_convert_data",
+        "import",
+        "index",
+        "kanban",
+        "lead",
+        "leads_kanban_load_more",
+        "mark_as_junk",
+        "mark_as_lost",
+        "save_form_data",
+        "source",
+        "sources",
+        "status",
+        "statuses",
+        "switch_kanban",
+        "table",
+        "test_email_integration",
+        "unmark_as_junk",
+        "unmark_as_lost",
+        "update_all_proposal_emails_linked_to_lead",
+        "update_lead_status",
+        "update_status_order",
+        "validate_unique_field"
+      ],
+      "actions_current": [
+        "add_activity",
+        "add_external_attachment",
+        "add_lead_attachment",
+        "add_note",
+        "bulk_action",
+        "change_status_color",
+        "convert_to_customer",
+        "delete",
+        "delete_attachment",
+        "delete_form",
+        "delete_note",
+        "delete_source",
+        "delete_status",
+        "download_files",
+        "email_integration",
+        "email_integration_folders",
+        "export",
+        "file",
+        "form",
+        "forms",
+        "get_convert_data",
+        "import",
+        "index",
+        "kanban",
+        "lead",
+        "leads_kanban_load_more",
+        "mark_as_junk",
+        "mark_as_lost",
+        "save_form_data",
+        "source",
+        "sources",
+        "status",
+        "statuses",
+        "switch_kanban",
+        "table",
+        "test_email_integration",
+        "unmark_as_junk",
+        "unmark_as_lost",
+        "update_all_proposal_emails_linked_to_lead",
+        "update_lead_status",
+        "update_status_order",
+        "validate_unique_field"
+      ],
+      "view_calls_402": [
+        "admin/includes/modals/reminder",
+        "admin/leads/_kan_ban_card",
+        "admin/leads/convert_to_customer",
+        "admin/leads/email_integration",
+        "admin/leads/formbuilder",
+        "admin/leads/forms",
+        "admin/leads/import",
+        "admin/leads/kan-ban",
+        "admin/leads/lead",
+        "admin/leads/manage_leads",
+        "admin/leads/manage_sources",
+        "admin/leads/manage_statuses"
+      ],
+      "view_calls_current": [
+        "admin/includes/modals/reminder",
+        "admin/leads/_kan_ban_card",
+        "admin/leads/convert_to_customer",
+        "admin/leads/email_integration",
+        "admin/leads/formbuilder",
+        "admin/leads/forms",
+        "admin/leads/import",
+        "admin/leads/kan-ban",
+        "admin/leads/lead",
+        "admin/leads/manage_leads",
+        "admin/leads/manage_sources",
+        "admin/leads/manage_statuses",
+        "admin/leads/native"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Leads.php",
+          "ref_402_blob": "6e68a5cff9c5ab457acd93570f2c9425636eeb27",
+          "main_488_blob": "dcde165e28ca2c4ff5ca3dbcc1849704015c192d",
+          "working_blob": "07a2a36d314c7f75af2e1f55663fc7a50845d664",
+          "comparison_402": "changed",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/_kan_ban_card.php",
+          "ref_402_blob": "d8bb37373012f023a2c0fd0176fe2b3e6b7f80e4",
+          "main_488_blob": "d8bb37373012f023a2c0fd0176fe2b3e6b7f80e4",
+          "working_blob": "d8bb37373012f023a2c0fd0176fe2b3e6b7f80e4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/convert_to_customer.php",
+          "ref_402_blob": "5b8fca44d6cf74802ac0cdc0613790226bdf28a3",
+          "main_488_blob": "5b8fca44d6cf74802ac0cdc0613790226bdf28a3",
+          "working_blob": "5b8fca44d6cf74802ac0cdc0613790226bdf28a3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/email_integration.php",
+          "ref_402_blob": "53d72c35bf59d22f9972cf2cbbbc8bf20d544265",
+          "main_488_blob": "53d72c35bf59d22f9972cf2cbbbc8bf20d544265",
+          "working_blob": "53d72c35bf59d22f9972cf2cbbbc8bf20d544265",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/formbuilder.php",
+          "ref_402_blob": "1da32a699d2f0f926ae46cf08d2df0a7e748f520",
+          "main_488_blob": "1da32a699d2f0f926ae46cf08d2df0a7e748f520",
+          "working_blob": "1da32a699d2f0f926ae46cf08d2df0a7e748f520",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/forms.php",
+          "ref_402_blob": "885300a86fc93a74dc65346abbcc597037f2e6f3",
+          "main_488_blob": "885300a86fc93a74dc65346abbcc597037f2e6f3",
+          "working_blob": "885300a86fc93a74dc65346abbcc597037f2e6f3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/import.php",
+          "ref_402_blob": "bdb9208b132b59df060d8ac6805691945efb3942",
+          "main_488_blob": "bdb9208b132b59df060d8ac6805691945efb3942",
+          "working_blob": "bdb9208b132b59df060d8ac6805691945efb3942",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/kan-ban.php",
+          "ref_402_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
+          "main_488_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
+          "working_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/lead.php",
+          "ref_402_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
+          "main_488_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
+          "working_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/leads_attachments_template.php",
+          "ref_402_blob": "9d7f29ffcb2301d865f58cb9b7ca3a5aa09d657b",
+          "main_488_blob": "9d7f29ffcb2301d865f58cb9b7ca3a5aa09d657b",
+          "working_blob": "9d7f29ffcb2301d865f58cb9b7ca3a5aa09d657b",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/manage_leads.php",
+          "ref_402_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
+          "main_488_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
+          "working_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/manage_sources.php",
+          "ref_402_blob": "0f0434c1a935383ae8550faa6d895da0a1d3d4cb",
+          "main_488_blob": "0f0434c1a935383ae8550faa6d895da0a1d3d4cb",
+          "working_blob": "0f0434c1a935383ae8550faa6d895da0a1d3d4cb",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/manage_statuses.php",
+          "ref_402_blob": "736847a2869269a10b7049c7613e2f64bcc2fd60",
+          "main_488_blob": "736847a2869269a10b7049c7613e2f64bcc2fd60",
+          "working_blob": "736847a2869269a10b7049c7613e2f64bcc2fd60",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/native.php",
+          "ref_402_blob": null,
+          "main_488_blob": "f84fb94d36245d57d22f0031071efb5e0802ded3",
+          "working_blob": "a3306bbe113cbcc3621ecb399c03a46bc761f0a3",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_fields.php",
+          "ref_402_blob": null,
+          "main_488_blob": "49a293d2806d2591e7420c173fe7e9ec38f7d9d7",
+          "working_blob": "49a293d2806d2591e7420c173fe7e9ec38f7d9d7",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/profile.php",
+          "ref_402_blob": "afd8bf22736dce4e7f292ac484e158c7a7ae1259",
+          "main_488_blob": "afd8bf22736dce4e7f292ac484e158c7a7ae1259",
+          "working_blob": "afd8bf22736dce4e7f292ac484e158c7a7ae1259",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/status.php",
+          "ref_402_blob": "1928cc20f1ab34a587224212184593ceca2ec0a9",
+          "main_488_blob": "1928cc20f1ab34a587224212184593ceca2ec0a9",
+          "working_blob": "1928cc20f1ab34a587224212184593ceca2ec0a9",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "pedido_orcamento": {
+      "controller": "application/controllers/admin/Estimate_request.php",
+      "actions_402": [
+        "convert",
+        "delete",
+        "delete_form",
+        "delete_status",
+        "form",
+        "forms",
+        "index",
+        "save_form_data",
+        "status",
+        "statuses",
+        "table",
+        "update_assigned_staff",
+        "update_request_status",
+        "update_tags",
+        "view"
+      ],
+      "actions_current": [
+        "convert",
+        "delete",
+        "delete_form",
+        "delete_status",
+        "form",
+        "forms",
+        "index",
+        "save_form_data",
+        "status",
+        "statuses",
+        "table",
+        "update_assigned_staff",
+        "update_request_status",
+        "update_tags",
+        "view"
+      ],
+      "view_calls_402": [
+        "admin/estimate_request/estimate_request",
+        "admin/estimate_request/formbuilder",
+        "admin/estimate_request/forms",
+        "admin/estimate_request/manage_request",
+        "admin/estimate_request/manage_statuses"
+      ],
+      "view_calls_current": [
+        "admin/estimate_request/estimate_request",
+        "admin/estimate_request/formbuilder",
+        "admin/estimate_request/forms",
+        "admin/estimate_request/manage_request",
+        "admin/estimate_request/manage_statuses"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Estimate_request.php",
+          "ref_402_blob": "41809be184c8d526df84b7dc9795af521e19e8e6",
+          "main_488_blob": "41809be184c8d526df84b7dc9795af521e19e8e6",
+          "working_blob": "41809be184c8d526df84b7dc9795af521e19e8e6",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/convert_estimate_request.php",
+          "ref_402_blob": "160ac35b3b84d61815066945f3913e7dbc9d161a",
+          "main_488_blob": "160ac35b3b84d61815066945f3913e7dbc9d161a",
+          "working_blob": "160ac35b3b84d61815066945f3913e7dbc9d161a",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/estimate_request.php",
+          "ref_402_blob": "16c6a29e54aa589e9116a5f5151ac8f94e087ac0",
+          "main_488_blob": "16c6a29e54aa589e9116a5f5151ac8f94e087ac0",
+          "working_blob": "16c6a29e54aa589e9116a5f5151ac8f94e087ac0",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/estimate_request_attachments_template.php",
+          "ref_402_blob": "bd97ebbc12414f5d4964fd1afb69e3ab62109db4",
+          "main_488_blob": "bd97ebbc12414f5d4964fd1afb69e3ab62109db4",
+          "working_blob": "bd97ebbc12414f5d4964fd1afb69e3ab62109db4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/formbuilder.php",
+          "ref_402_blob": "9ad0c141a5516b2acf5c1447edc2f8bf37daa115",
+          "main_488_blob": "9ad0c141a5516b2acf5c1447edc2f8bf37daa115",
+          "working_blob": "9ad0c141a5516b2acf5c1447edc2f8bf37daa115",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/forms.php",
+          "ref_402_blob": "64498b29edba0923860acce23891c7307e2cf0c2",
+          "main_488_blob": "64498b29edba0923860acce23891c7307e2cf0c2",
+          "working_blob": "64498b29edba0923860acce23891c7307e2cf0c2",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/manage_request.php",
+          "ref_402_blob": "08b35db8f71627c720632034fc48551592b56adb",
+          "main_488_blob": "08b35db8f71627c720632034fc48551592b56adb",
+          "working_blob": "08b35db8f71627c720632034fc48551592b56adb",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/manage_statuses.php",
+          "ref_402_blob": "3a89458476b5dcdb0c66e67e7a84bb591cf2d57b",
+          "main_488_blob": "3a89458476b5dcdb0c66e67e7a84bb591cf2d57b",
+          "working_blob": "3a89458476b5dcdb0c66e67e7a84bb591cf2d57b",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/estimate_request/status.php",
+          "ref_402_blob": "098fb296650b332aa3ea92a4e9fcf6e867630318",
+          "main_488_blob": "098fb296650b332aa3ea92a4e9fcf6e867630318",
+          "working_blob": "098fb296650b332aa3ea92a4e9fcf6e867630318",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitarios": {
+      "controller": "application/controllers/admin/Utilities.php",
+      "actions_402": [
+        "activity_log",
+        "bulk_pdf_exporter",
+        "calendar",
+        "clear_activity_log",
+        "clear_pipe_log",
+        "delete_event",
+        "get_calendar_data",
+        "media",
+        "media_connector",
+        "pipe_log",
+        "view_event"
+      ],
+      "actions_current": [
+        "activity_log",
+        "bulk_pdf_exporter",
+        "calendar",
+        "clear_activity_log",
+        "clear_pipe_log",
+        "delete_event",
+        "get_calendar_data",
+        "media",
+        "media_connector",
+        "pipe_log",
+        "view_event"
+      ],
+      "view_calls_402": [
+        "admin/utilities/activity_log",
+        "admin/utilities/bulk_pdf_exporter",
+        "admin/utilities/calendar",
+        "admin/utilities/event",
+        "admin/utilities/media",
+        "admin/utilities/ticket_pipe_log"
+      ],
+      "view_calls_current": [
+        "admin/utilities/activity_log",
+        "admin/utilities/bulk_pdf_exporter",
+        "admin/utilities/calendar",
+        "admin/utilities/event",
+        "admin/utilities/media",
+        "admin/utilities/ticket_pipe_log"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Utilities.php",
+          "ref_402_blob": "65be5f74050963f9872123b3d8edeea05f3c76a5",
+          "main_488_blob": "a18c639f72d9ae03ea8abac7819d0202a2a8c41c",
+          "working_blob": "a18c639f72d9ae03ea8abac7819d0202a2a8c41c",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/activity_log.php",
+          "ref_402_blob": "41dfcbdb46fc4b86a6ab464b8d9dcc3305f0e50c",
+          "main_488_blob": "41dfcbdb46fc4b86a6ab464b8d9dcc3305f0e50c",
+          "working_blob": "41dfcbdb46fc4b86a6ab464b8d9dcc3305f0e50c",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/all_reminders.php",
+          "ref_402_blob": "051faf85357d9d7feb37229a181e84a6bbd2ac02",
+          "main_488_blob": "051faf85357d9d7feb37229a181e84a6bbd2ac02",
+          "working_blob": "051faf85357d9d7feb37229a181e84a6bbd2ac02",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/bulk_pdf_exporter.php",
+          "ref_402_blob": "31ffbcd6da8463230fed892a34a152bab4a2f62e",
+          "main_488_blob": "31ffbcd6da8463230fed892a34a152bab4a2f62e",
+          "working_blob": "31ffbcd6da8463230fed892a34a152bab4a2f62e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/calendar.php",
+          "ref_402_blob": "4878cff429a6480a09a75d0932d4d62b2675c36e",
+          "main_488_blob": "f7502378b66fcedc0073039205645bfb7a923620",
+          "working_blob": "f7502378b66fcedc0073039205645bfb7a923620",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/calendar_filters.php",
+          "ref_402_blob": "7b0475045b5de5c46ed5f5ff2804f8d08dbc0bda",
+          "main_488_blob": "1ce928991395bb23014b58b14a58c35648393159",
+          "working_blob": "1ce928991395bb23014b58b14a58c35648393159",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/calendar_template.php",
+          "ref_402_blob": "93b87cdebe32495c855c6997ab57265bb144591a",
+          "main_488_blob": "2e5a89d6f91f9e7bb70dea989288925b966666cf",
+          "working_blob": "2e5a89d6f91f9e7bb70dea989288925b966666cf",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/event.php",
+          "ref_402_blob": "681d9e3f0283884c62df332b3a19c5f47475e8ed",
+          "main_488_blob": "e89f1e9ab80ad0e3f077c24f407bfae517046560",
+          "working_blob": "e89f1e9ab80ad0e3f077c24f407bfae517046560",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/event_mount.php",
+          "ref_402_blob": null,
+          "main_488_blob": "b887bc1c09bdcffaa25e60345af127497dbaccb5",
+          "working_blob": "b887bc1c09bdcffaa25e60345af127497dbaccb5",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/media.php",
+          "ref_402_blob": "6f07aa8ae3bac4e947e1d4f2e869dc84c18f4d85",
+          "main_488_blob": "6f07aa8ae3bac4e947e1d4f2e869dc84c18f4d85",
+          "working_blob": "6f07aa8ae3bac4e947e1d4f2e869dc84c18f4d85",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/utilities/ticket_pipe_log.php",
+          "ref_402_blob": "94d6f61f006a51a81b1bb878bbe5e2c97d4d1df9",
+          "main_488_blob": "94d6f61f006a51a81b1bb878bbe5e2c97d4d1df9",
+          "working_blob": "94d6f61f006a51a81b1bb878bbe5e2c97d4d1df9",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "anuncios": {
+      "controller": "application/controllers/admin/Announcements.php",
+      "actions_402": [
+        "announcement",
+        "delete",
+        "index",
+        "view"
+      ],
+      "actions_current": [
+        "announcement",
+        "delete",
+        "index",
+        "view"
+      ],
+      "view_calls_402": [
+        "admin/announcements/announcement",
+        "admin/announcements/manage",
+        "admin/announcements/view"
+      ],
+      "view_calls_current": [
+        "admin/announcements/announcement",
+        "admin/announcements/manage",
+        "admin/announcements/view"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Announcements.php",
+          "ref_402_blob": "d6732df17d84870ffa9889bea456e551c24c4d51",
+          "main_488_blob": "aff2eedee3b0f87e3c98f8e1ddc0e28458b84c21",
+          "working_blob": "aff2eedee3b0f87e3c98f8e1ddc0e28458b84c21",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/announcements/announcement.php",
+          "ref_402_blob": "f259db5618dbac6db9e641b26b1c403f940fd54c",
+          "main_488_blob": "020a1db26f6c0f037b266b6f7ea0d80053faa6b2",
+          "working_blob": "020a1db26f6c0f037b266b6f7ea0d80053faa6b2",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/announcements/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/announcements/manage.php",
+          "ref_402_blob": "072b851a34b0a46bfe309dea3f79de031a4c9f61",
+          "main_488_blob": "6bdf7d7aa76cc9f4da3e8e1382eb4335bf7fd43d",
+          "working_blob": "6bdf7d7aa76cc9f4da3e8e1382eb4335bf7fd43d",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/announcements/view.php",
+          "ref_402_blob": "a32ed2f0f74a4f28d5af954e8245bc91d2641d04",
+          "main_488_blob": "e8e9948fd35547078a3bee5eedbcd5a7234f4c3a",
+          "working_blob": "e8e9948fd35547078a3bee5eedbcd5a7234f4c3a",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "tarefas_pessoais": {
+      "controller": "application/controllers/admin/Todo.php",
+      "actions_402": [
+        "change_todo_status",
+        "delete_todo_item",
+        "get_by_id",
+        "index",
+        "todo",
+        "update_todo_items_order"
+      ],
+      "actions_current": [
+        "change_todo_status",
+        "delete_todo_item",
+        "get_by_id",
+        "index",
+        "todo",
+        "update_todo_items_order"
+      ],
+      "view_calls_402": [
+        "admin/todos/all"
+      ],
+      "view_calls_current": [
+        "admin/todos/all"
+      ],
+      "files": [
+        {
+          "path": "application/controllers/admin/Todo.php",
+          "ref_402_blob": "9cf4862f82ccdca4f8bd459b0e349e3da22a2f28",
+          "main_488_blob": "1f69939e789c4369a75b868d6171e70b62ae7f22",
+          "working_blob": "1f69939e789c4369a75b868d6171e70b62ae7f22",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/todos/_todo.php",
+          "ref_402_blob": "45898f4d659f0fa2651d7a222df1eeb18330ece5",
+          "main_488_blob": "3335be0e953022662ea877f0bf95e16ea0598b33",
+          "working_blob": "3335be0e953022662ea877f0bf95e16ea0598b33",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/todos/all.php",
+          "ref_402_blob": "31503ed56c10be3a3f9f0a0cf7fe5c41e5ce6f83",
+          "main_488_blob": "867d9ba437ca2d9e36ebcf5fa1a3ee6333d78264",
+          "working_blob": "867d9ba437ca2d9e36ebcf5fa1a3ee6333d78264",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/todos/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitario_goals": {
+      "controllers": [
+        {
+          "path": "modules/goals/controllers/Goals.php",
+          "actions_402": [
+            "delete",
+            "goal",
+            "index",
+            "notify"
+          ],
+          "actions_current": [
+            "delete",
+            "goal",
+            "index",
+            "notify"
+          ],
+          "view_calls_402": [
+            "goal",
+            "manage"
+          ],
+          "view_calls_current": [
+            "goal",
+            "manage"
+          ]
+        }
+      ],
+      "files": [
+        {
+          "path": "modules/goals/controllers/Goals.php",
+          "ref_402_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+          "main_488_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+          "working_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/controllers/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/goals.php",
+          "ref_402_blob": "d9f7c136959c0faa8e848a9e0815cfa1997784c2",
+          "main_488_blob": "beb57d3ef670893cde987c9550b86773868d4167",
+          "working_blob": "beb57d3ef670893cde987c9550b86773868d4167",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/models/Goals_model.php",
+          "ref_402_blob": "18fc38d8a11e6e822183f87dcfc85ed5ca4cbc89",
+          "main_488_blob": "9ab890b15c38c6eda82ecb9c2d7c3dda88609560",
+          "working_blob": "9ab890b15c38c6eda82ecb9c2d7c3dda88609560",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/models/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/views/goal.php",
+          "ref_402_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+          "main_488_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+          "working_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/views/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/views/manage.php",
+          "ref_402_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+          "main_488_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+          "working_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/views/table.php",
+          "ref_402_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+          "main_488_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+          "working_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/goals/views/widget.php",
+          "ref_402_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+          "main_488_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+          "working_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitario_backup": {
+      "controllers": [
+        {
+          "path": "modules/backup/controllers/Backup.php",
+          "actions_402": [
+            "delete",
+            "download",
+            "index",
+            "make_backup_db",
+            "update_auto_backup_options"
+          ],
+          "actions_current": [
+            "delete",
+            "download",
+            "index",
+            "make_backup_db",
+            "update_auto_backup_options"
+          ],
+          "view_calls_402": [
+            "backup"
+          ],
+          "view_calls_current": [
+            "backup"
+          ]
+        }
+      ],
+      "files": [
+        {
+          "path": "modules/backup/backup.php",
+          "ref_402_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+          "main_488_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+          "working_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/backup/controllers/Backup.php",
+          "ref_402_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+          "main_488_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+          "working_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/backup/controllers/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/backup/views/backup.php",
+          "ref_402_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+          "main_488_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+          "working_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/backup/views/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitario_surveys": {
+      "controllers": [
+        {
+          "path": "modules/surveys/controllers/Participate.php",
+          "actions_402": [
+            "index"
+          ],
+          "actions_current": [
+            "index"
+          ],
+          "view_calls_402": [],
+          "view_calls_current": []
+        },
+        {
+          "path": "modules/surveys/controllers/Surveys.php",
+          "actions_402": [
+            "add_box_description",
+            "add_email_to_list",
+            "add_survey_question",
+            "change_survey_status",
+            "delete",
+            "delete_mail_list",
+            "import_emails",
+            "index",
+            "mail_list",
+            "mail_list_view",
+            "mail_lists",
+            "remove_box_description",
+            "remove_email_from_mail_list",
+            "remove_list_custom_field",
+            "remove_question",
+            "remove_survey_send",
+            "results",
+            "send",
+            "survey",
+            "update_question",
+            "update_survey_questions_orders"
+          ],
+          "actions_current": [
+            "add_box_description",
+            "add_email_to_list",
+            "add_survey_question",
+            "change_survey_status",
+            "delete",
+            "delete_mail_list",
+            "import_emails",
+            "index",
+            "mail_list",
+            "mail_list_view",
+            "mail_lists",
+            "remove_box_description",
+            "remove_email_from_mail_list",
+            "remove_list_custom_field",
+            "remove_question",
+            "remove_survey_send",
+            "results",
+            "send",
+            "survey",
+            "update_question",
+            "update_survey_questions_orders"
+          ],
+          "view_calls_402": [
+            "surveys/all",
+            "surveys/mail_lists/list",
+            "surveys/mail_lists/list_view",
+            "surveys/mail_lists/manage",
+            "surveys/results",
+            "surveys/survey"
+          ],
+          "view_calls_current": [
+            "surveys/all",
+            "surveys/mail_lists/list",
+            "surveys/mail_lists/list_view",
+            "surveys/mail_lists/manage",
+            "surveys/results",
+            "surveys/survey"
+          ]
+        }
+      ],
+      "files": [
+        {
+          "path": "modules/surveys/controllers/Participate.php",
+          "ref_402_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+          "main_488_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+          "working_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/controllers/Surveys.php",
+          "ref_402_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+          "main_488_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+          "working_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/controllers/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/models/Surveys_model.php",
+          "ref_402_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+          "main_488_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+          "working_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/models/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/surveys.php",
+          "ref_402_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+          "main_488_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+          "working_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/all.php",
+          "ref_402_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+          "main_488_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+          "working_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/mail_lists/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/mail_lists/list.php",
+          "ref_402_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+          "main_488_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+          "working_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/mail_lists/list_view.php",
+          "ref_402_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+          "main_488_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+          "working_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/mail_lists/manage.php",
+          "ref_402_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+          "main_488_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+          "working_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/participate.php",
+          "ref_402_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+          "main_488_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+          "working_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/results.php",
+          "ref_402_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+          "main_488_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+          "working_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/settings_tab.php",
+          "ref_402_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+          "main_488_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+          "working_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/settings_tab_content.php",
+          "ref_402_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+          "main_488_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+          "working_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/survey.php",
+          "ref_402_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+          "main_488_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+          "working_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/tables/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/tables/mail_list_view.php",
+          "ref_402_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+          "main_488_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+          "working_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/tables/mail_lists.php",
+          "ref_402_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+          "main_488_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+          "working_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/surveys/views/tables/surveys.php",
+          "ref_402_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+          "main_488_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+          "working_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitario_exports": {
+      "controllers": [
+        {
+          "path": "modules/exports/controllers/Exports.php",
+          "actions_402": [
+            "index"
+          ],
+          "actions_current": [
+            "index"
+          ],
+          "view_calls_402": [],
+          "view_calls_current": []
+        }
+      ],
+      "files": [
+        {
+          "path": "modules/exports/controllers/Exports.php",
+          "ref_402_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+          "main_488_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+          "working_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/exports/controllers/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/exports/exports.php",
+          "ref_402_blob": "ba0a3bd4bd64ac3cf90c615d36f67fd92214889b",
+          "main_488_blob": "8d550ff89131d86874757d834437d8a0b2c766c2",
+          "working_blob": "8d550ff89131d86874757d834437d8a0b2c766c2",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/exports/views/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/exports/views/manage.php",
+          "ref_402_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+          "main_488_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+          "working_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    },
+    "utilitario_einvoice": {
+      "controllers": [
+        {
+          "path": "modules/einvoice/controllers/Einvoice.php",
+          "actions_402": [
+            "export",
+            "output",
+            "template",
+            "validate_and_save",
+            "validate_template_ajax"
+          ],
+          "actions_current": [
+            "export",
+            "output",
+            "template",
+            "validate_and_save",
+            "validate_template_ajax"
+          ],
+          "view_calls_402": [
+            "einvoice/bulk_export",
+            "einvoice/template"
+          ],
+          "view_calls_current": [
+            "einvoice/bulk_export",
+            "einvoice/template"
+          ]
+        }
+      ],
+      "files": [
+        {
+          "path": "modules/einvoice/controllers/Einvoice.php",
+          "ref_402_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+          "main_488_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+          "working_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/controllers/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/einvoice.php",
+          "ref_402_blob": "7a3fc99d470defe0f910c3c127fdb2072cd276bc",
+          "main_488_blob": "0ff0cfbf76b839ca5a55a7678f781ac90b5bee0c",
+          "working_blob": "0ff0cfbf76b839ca5a55a7678f781ac90b5bee0c",
+          "comparison_402": "changed",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/bulk_export.php",
+          "ref_402_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+          "main_488_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+          "working_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/buttons/credit_note.php",
+          "ref_402_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+          "main_488_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+          "working_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/buttons/invoice.php",
+          "ref_402_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+          "main_488_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+          "working_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/index.html",
+          "ref_402_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "main_488_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "working_blob": "b702fbc3967b4f49eddb394723822973f2f80fb4",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/settings.php",
+          "ref_402_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+          "main_488_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+          "working_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/table.php",
+          "ref_402_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+          "main_488_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+          "working_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/template.php",
+          "ref_402_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+          "main_488_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+          "working_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        },
+        {
+          "path": "modules/einvoice/views/template_variables.php",
+          "ref_402_blob": "02b519800017358e7475b9a34bacf4b843471689",
+          "main_488_blob": "02b519800017358e7475b9a34bacf4b843471689",
+          "working_blob": "02b519800017358e7475b9a34bacf4b843471689",
+          "comparison_402": "identical",
+          "changed_this_pr": false
+        }
+      ]
+    }
+  },
+  "method": "Static source inventory: public controller methods and literal view calls; exact reference/main/current blobs for the selected controller/view/model/entrypoint files and all first-party PHP utility layers (excluding vendor/language). Runtime capability is reported separately in native-areas.md.",
+  "current_service_paths": [
+    "application/services/NativeCompanyContractRules.php",
+    "application/services/NativeCompanyContractIndex.php",
+    "application/services/NativeCompanyContractTable.php",
+    "application/services/NativeCompanyContractTableFactory.php",
+    "application/services/NativeCompanyContractsController.php",
+    "application/services/NativeCompanyProjectPage.php",
+    "application/services/NativeCompanyProjectOriginalHttp.php",
+    "application/services/NativeCompanyExpensesController.php",
+    "application/services/NativeCompanyExpenseOriginalForm.php",
+    "application/services/NativeCompanyExpenseOriginalHttp.php",
+    "application/services/NativeCompanyExpenseFormValues.php",
+    "application/services/NativeCompanyCustomFields.php",
+    "application/services/CompanyExpenses.php",
+    "application/services/CompanyExpenseRecurring.php",
+    "application/services/NativeCompanyAuxiliaryUi.php",
+    "application/services/NativeCompanyCalendarEndpoints.php"
+  ],
+  "utility_resource_layers": {
+    "goals": [
+      {
+        "path": "modules/goals/controllers/Goals.php",
+        "working_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+        "ref_402_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+        "main_488_blob": "484a4fe045543cffa54d441dbc1f4863bc7cbde6",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/goals.php",
+        "working_blob": "beb57d3ef670893cde987c9550b86773868d4167",
+        "ref_402_blob": "d9f7c136959c0faa8e848a9e0815cfa1997784c2",
+        "main_488_blob": "beb57d3ef670893cde987c9550b86773868d4167",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/install.php",
+        "working_blob": "8edd83067a3dd5950aabf5392679ef4ba3896276",
+        "ref_402_blob": "8edd83067a3dd5950aabf5392679ef4ba3896276",
+        "main_488_blob": "8edd83067a3dd5950aabf5392679ef4ba3896276",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/migrations/231_version_231.php",
+        "working_blob": "69fe97ded4ea4a62f4d084fca430e2df84347287",
+        "ref_402_blob": null,
+        "main_488_blob": "69fe97ded4ea4a62f4d084fca430e2df84347287",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/models/Goals_model.php",
+        "working_blob": "9ab890b15c38c6eda82ecb9c2d7c3dda88609560",
+        "ref_402_blob": "18fc38d8a11e6e822183f87dcfc85ed5ca4cbc89",
+        "main_488_blob": "9ab890b15c38c6eda82ecb9c2d7c3dda88609560",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/views/goal.php",
+        "working_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+        "ref_402_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+        "main_488_blob": "2cd07e613a8ae48bc004c5abb7c682ea9c502680",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/views/manage.php",
+        "working_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+        "ref_402_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+        "main_488_blob": "861d648d0f15da53c02258b29f5e10d9075ded8e",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/views/table.php",
+        "working_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+        "ref_402_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+        "main_488_blob": "c6cd7a60ae20ea83e0e6b31e6cf0c4064b321971",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/goals/views/widget.php",
+        "working_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+        "ref_402_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+        "main_488_blob": "d3db48aeb3559f591af1c52bc5401fb76f179c06",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      }
+    ],
+    "backup": [
+      {
+        "path": "modules/backup/backup.php",
+        "working_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+        "ref_402_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+        "main_488_blob": "17f66d0bcdc5814738f66f6b7259b5e2b33bed84",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/backup/controllers/Backup.php",
+        "working_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+        "ref_402_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+        "main_488_blob": "812cf9646d2f7231704d53432ca17119d45f3a72",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/backup/install.php",
+        "working_blob": "0cd6c707d3c50c4fd474477416da944848d3e63f",
+        "ref_402_blob": "0cd6c707d3c50c4fd474477416da944848d3e63f",
+        "main_488_blob": "0cd6c707d3c50c4fd474477416da944848d3e63f",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/backup/libraries/Backup_module.php",
+        "working_blob": "f160a2e350fda6cd655300443e90d889305086fe",
+        "ref_402_blob": "f160a2e350fda6cd655300443e90d889305086fe",
+        "main_488_blob": "f160a2e350fda6cd655300443e90d889305086fe",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/backup/views/backup.php",
+        "working_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+        "ref_402_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+        "main_488_blob": "43ae1f9bd8608c4e9eb41c99e54d083bb0208eda",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      }
+    ],
+    "surveys": [
+      {
+        "path": "modules/surveys/config/routes.php",
+        "working_blob": "a3b3f5b7d5cf5010ae654b9a53e6c44f0d8d4841",
+        "ref_402_blob": "a3b3f5b7d5cf5010ae654b9a53e6c44f0d8d4841",
+        "main_488_blob": "a3b3f5b7d5cf5010ae654b9a53e6c44f0d8d4841",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/controllers/Participate.php",
+        "working_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+        "ref_402_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+        "main_488_blob": "ca5d5ff10b00ade1f4f816d39299db66acea6063",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/controllers/Surveys.php",
+        "working_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+        "ref_402_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+        "main_488_blob": "bca367b9fc89fe79c388e3b779359a78433ff32e",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/install.php",
+        "working_blob": "092c42fdb8bca22966cbd7077412e28d2d122af2",
+        "ref_402_blob": "092c42fdb8bca22966cbd7077412e28d2d122af2",
+        "main_488_blob": "092c42fdb8bca22966cbd7077412e28d2d122af2",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/libraries/Surveys_module.php",
+        "working_blob": "2de7fbf33eaeb9535128d43d149704b5a25b9db3",
+        "ref_402_blob": "2de7fbf33eaeb9535128d43d149704b5a25b9db3",
+        "main_488_blob": "2de7fbf33eaeb9535128d43d149704b5a25b9db3",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/models/Surveys_model.php",
+        "working_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+        "ref_402_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+        "main_488_blob": "81d4f4694cc4d21e86d0ed940600abd6fb96e0b3",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/surveys.php",
+        "working_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+        "ref_402_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+        "main_488_blob": "5119f0d562ab44d804f75fff4f9b630db3dd1c78",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/all.php",
+        "working_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+        "ref_402_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+        "main_488_blob": "cf62ca1a2156888335927516b2e03eb7b745499a",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/mail_lists/list.php",
+        "working_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+        "ref_402_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+        "main_488_blob": "43890cef0d066214f32d859ff0f9af5378c17667",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/mail_lists/list_view.php",
+        "working_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+        "ref_402_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+        "main_488_blob": "0d4d721c4e3a8272ef4697a65c4394e7729b07f1",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/mail_lists/manage.php",
+        "working_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+        "ref_402_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+        "main_488_blob": "26d75394f5e2e8f19dcbf6596ee29ddd9b74fc5d",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/participate.php",
+        "working_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+        "ref_402_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+        "main_488_blob": "25cb0b58a973f558f2f9ca6b5c0790e7a2c4de27",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/results.php",
+        "working_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+        "ref_402_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+        "main_488_blob": "d4b8b0fc35102eb25629eafc7893515805570e89",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/settings_tab.php",
+        "working_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+        "ref_402_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+        "main_488_blob": "d9ced8a68bfc32eaa59c21c82d4c795162fef492",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/settings_tab_content.php",
+        "working_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+        "ref_402_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+        "main_488_blob": "c3fcbb39c1bccb85721549b9e64ef8218d07cb17",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/survey.php",
+        "working_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+        "ref_402_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+        "main_488_blob": "403411358ec18e04464d2a9e2930d46b24d3ed96",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/tables/mail_list_view.php",
+        "working_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+        "ref_402_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+        "main_488_blob": "81c73167a3e4a140148789a6bd3e7c1a8e6821c3",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/tables/mail_lists.php",
+        "working_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+        "ref_402_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+        "main_488_blob": "53d90a9d3944005de98ea35e007466cf78149242",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/surveys/views/tables/surveys.php",
+        "working_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+        "ref_402_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+        "main_488_blob": "1e77101ad0df75bfafd037a5eac563cc04fc4faa",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      }
+    ],
+    "exports": [
+      {
+        "path": "modules/exports/controllers/Exports.php",
+        "working_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+        "ref_402_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+        "main_488_blob": "794b4a7043fc3f3c3833c85d960e52c42d79933a",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/exports.php",
+        "working_blob": "8d550ff89131d86874757d834437d8a0b2c766c2",
+        "ref_402_blob": "ba0a3bd4bd64ac3cf90c615d36f67fd92214889b",
+        "main_488_blob": "8d550ff89131d86874757d834437d8a0b2c766c2",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/install.php",
+        "working_blob": "0a62fe0c45e84662759b778a7ed34d596a998de3",
+        "ref_402_blob": null,
+        "main_488_blob": "0a62fe0c45e84662759b778a7ed34d596a998de3",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/libraries/Exports_module.php",
+        "working_blob": "9feae39e7ab315b3da36b8347ebf3f128377f702",
+        "ref_402_blob": "9feae39e7ab315b3da36b8347ebf3f128377f702",
+        "main_488_blob": "9feae39e7ab315b3da36b8347ebf3f128377f702",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/migrations/101_version_101.php",
+        "working_blob": "ee1ef9ada0e674d5cd38800d2e823cfda9da3e05",
+        "ref_402_blob": null,
+        "main_488_blob": "ee1ef9ada0e674d5cd38800d2e823cfda9da3e05",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/CSVExport.php",
+        "working_blob": "add1678cd72c7e13c4606ac7afa6fe1c77106218",
+        "ref_402_blob": "add1678cd72c7e13c4606ac7afa6fe1c77106218",
+        "main_488_blob": "add1678cd72c7e13c4606ac7afa6fe1c77106218",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/ContactCSVExport.php",
+        "working_blob": "0fe8175b98b6034a68727070d1842ac8403835a2",
+        "ref_402_blob": "e4324adc7676080db64883ccec2e78e5f69326aa",
+        "main_488_blob": "0fe8175b98b6034a68727070d1842ac8403835a2",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/CustomerCSVExport.php",
+        "working_blob": "416c58a1eaae95dfedf850b0c655274a04d681ae",
+        "ref_402_blob": "5cef4051d9f5902ccf802a7fe71562528e82f96f",
+        "main_488_blob": "416c58a1eaae95dfedf850b0c655274a04d681ae",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/ExpenseCSVExport.php",
+        "working_blob": "a86b34e3b12be64af20aac5dd2a28e1e7802a29b",
+        "ref_402_blob": "efeb6f175cbc7213789566df1369c0a7e4b85d1b",
+        "main_488_blob": "a86b34e3b12be64af20aac5dd2a28e1e7802a29b",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/LeadCSVExport.php",
+        "working_blob": "676466cadd7ea255a292c7bd35b5c122d3a00502",
+        "ref_402_blob": "676466cadd7ea255a292c7bd35b5c122d3a00502",
+        "main_488_blob": "676466cadd7ea255a292c7bd35b5c122d3a00502",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/services/PaymentCSVExport.php",
+        "working_blob": "14e3f16c7fec4d60db50ebd00e89dc349bcc3b30",
+        "ref_402_blob": "82e0ff124f67b20ad4114889522b299fd655ef31",
+        "main_488_blob": "14e3f16c7fec4d60db50ebd00e89dc349bcc3b30",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/exports/views/manage.php",
+        "working_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+        "ref_402_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+        "main_488_blob": "5f87c0186233bf1ef0eade92478ac3ce73524842",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      }
+    ],
+    "einvoice": [
+      {
+        "path": "modules/einvoice/controllers/Einvoice.php",
+        "working_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+        "ref_402_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+        "main_488_blob": "ee953a6a07a4f20f19dab5da32a27df7159b2598",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/einvoice.php",
+        "working_blob": "0ff0cfbf76b839ca5a55a7678f781ac90b5bee0c",
+        "ref_402_blob": "7a3fc99d470defe0f910c3c127fdb2072cd276bc",
+        "main_488_blob": "0ff0cfbf76b839ca5a55a7678f781ac90b5bee0c",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/helpers/einvoice_helper.php",
+        "working_blob": "682be516300b4a4505bebc3203da33c8d5b824b3",
+        "ref_402_blob": "682be516300b4a4505bebc3203da33c8d5b824b3",
+        "main_488_blob": "682be516300b4a4505bebc3203da33c8d5b824b3",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/install.php",
+        "working_blob": "11f52814c480e1c0d760ed5b4cf24ada9534631b",
+        "ref_402_blob": null,
+        "main_488_blob": "11f52814c480e1c0d760ed5b4cf24ada9534631b",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/migrations/101_version_101.php",
+        "working_blob": "ee1ef9ada0e674d5cd38800d2e823cfda9da3e05",
+        "ref_402_blob": null,
+        "main_488_blob": "ee1ef9ada0e674d5cd38800d2e823cfda9da3e05",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/migrations/102_version_102.php",
+        "working_blob": "043c3c133edbcef966acc79d497dc664272bc038",
+        "ref_402_blob": null,
+        "main_488_blob": "043c3c133edbcef966acc79d497dc664272bc038",
+        "comparison_402": "new_since_402",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/AppLogger.php",
+        "working_blob": "c3a48fe0b81a92b0531b836b5e52d6cdcd5a6049",
+        "ref_402_blob": "c3a48fe0b81a92b0531b836b5e52d6cdcd5a6049",
+        "main_488_blob": "c3a48fe0b81a92b0531b836b5e52d6cdcd5a6049",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/BulkExporter.php",
+        "working_blob": "1ac133ef5c42e1fce119f41a4d9c511a17ba13c8",
+        "ref_402_blob": "83daa398dba0478f65a353beca1efb33f8c3af50",
+        "main_488_blob": "1ac133ef5c42e1fce119f41a4d9c511a17ba13c8",
+        "comparison_402": "changed",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/BulkExporterConfig.php",
+        "working_blob": "cefc5612601570225947e12fd9672a9b7fc0a7f0",
+        "ref_402_blob": "cefc5612601570225947e12fd9672a9b7fc0a7f0",
+        "main_488_blob": "cefc5612601570225947e12fd9672a9b7fc0a7f0",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/Company.php",
+        "working_blob": "200a82592f6fffb4c48024ea223944b18b583f29",
+        "ref_402_blob": "200a82592f6fffb4c48024ea223944b18b583f29",
+        "main_488_blob": "200a82592f6fffb4c48024ea223944b18b583f29",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/CreditNote.php",
+        "working_blob": "7819fcef5bdbbe5869f9060493dd0b1760b91977",
+        "ref_402_blob": "7819fcef5bdbbe5869f9060493dd0b1760b91977",
+        "main_488_blob": "7819fcef5bdbbe5869f9060493dd0b1760b91977",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/Customer.php",
+        "working_blob": "5bbadc507af6ae1d9845a7f2647076105112c904",
+        "ref_402_blob": "5bbadc507af6ae1d9845a7f2647076105112c904",
+        "main_488_blob": "5bbadc507af6ae1d9845a7f2647076105112c904",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/Data.php",
+        "working_blob": "4ff0fa74ab0747b1cf7b6c324505e235d0feec0a",
+        "ref_402_blob": "4ff0fa74ab0747b1cf7b6c324505e235d0feec0a",
+        "main_488_blob": "4ff0fa74ab0747b1cf7b6c324505e235d0feec0a",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/Invoice.php",
+        "working_blob": "27824ee89d9c2eb0f7b1dbd312b017a1f66cba62",
+        "ref_402_blob": "27824ee89d9c2eb0f7b1dbd312b017a1f66cba62",
+        "main_488_blob": "27824ee89d9c2eb0f7b1dbd312b017a1f66cba62",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/Data/Item.php",
+        "working_blob": "a89986eccbc8d05d993651afbeda535ad300e565",
+        "ref_402_blob": "a89986eccbc8d05d993651afbeda535ad300e565",
+        "main_488_blob": "a89986eccbc8d05d993651afbeda535ad300e565",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/EinvoiceHandler.php",
+        "working_blob": "2a7f2866ceef4366502e558dd6b07e568f274729",
+        "ref_402_blob": "2a7f2866ceef4366502e558dd6b07e568f274729",
+        "main_488_blob": "2a7f2866ceef4366502e558dd6b07e568f274729",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/src/OutputWriter.php",
+        "working_blob": "1d50ba3b72b473acac904eec4656e0978cd79275",
+        "ref_402_blob": "1d50ba3b72b473acac904eec4656e0978cd79275",
+        "main_488_blob": "1d50ba3b72b473acac904eec4656e0978cd79275",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/bulk_export.php",
+        "working_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+        "ref_402_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+        "main_488_blob": "8413d0de566b4b927fe2d42f3849332e3050db0f",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/buttons/credit_note.php",
+        "working_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+        "ref_402_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+        "main_488_blob": "78b36fc6f008d439e26232bbb24206562235d364",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/buttons/invoice.php",
+        "working_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+        "ref_402_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+        "main_488_blob": "2ddf5957ae1d8f76554e52aa67921187fd5019c4",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/settings.php",
+        "working_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+        "ref_402_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+        "main_488_blob": "2b281db76a841f9fbd67a0cc384d646549cf0f13",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/table.php",
+        "working_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+        "ref_402_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+        "main_488_blob": "b0e4f19aa9f31f74ecd560326003f857269c2cc7",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/template.php",
+        "working_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+        "ref_402_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+        "main_488_blob": "28d12a0ed3de911b9ecdf8536bb55c10018810c2",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      },
+      {
+        "path": "modules/einvoice/views/template_variables.php",
+        "working_blob": "02b519800017358e7475b9a34bacf4b843471689",
+        "ref_402_blob": "02b519800017358e7475b9a34bacf4b843471689",
+        "main_488_blob": "02b519800017358e7475b9a34bacf4b843471689",
+        "comparison_402": "identical",
+        "changed_this_pr": false
+      }
+    ]
+  }
+}

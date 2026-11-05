@@ -2573,6 +2573,82 @@
     [
       "php",
       "tests/companies/asaas_remote_webhooks.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_payments_table_view.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_payments_table_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_index.php"
+    ],
+    [
+      "php",
+      "tests/integration_admin_authorization.php"
+    ],
+    [
+      "php",
+      "tests/native_r8_routes.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_credit_directory.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_credit_controller.php"
+    ],
+    [
+      "php",
+      "tests/native_lead_navigation.php"
+    ],
+    [
+      "php",
+      "tests/native_company/catalog_table.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_navigation.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_custom_fields.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_original_form.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_original_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_credit_form.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_recurring_directory.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_recurring_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_table.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_fields_transport.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_page_custom_fields.php"
     ]
   ],
   "node": [
@@ -2800,6 +2876,26 @@
       "node",
       "--test",
       "tests/native_company/task_form_helpers.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company_context.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/knowledge_kanban.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/credit_editor.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/expense_form.test.cjs"
     ]
   ],
   "mysql": [
@@ -2858,6 +2954,22 @@
     [
       "php",
       "tests/companies/native_pr52_financial_pdf_mysql.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_projection_mysql.php"
+    ],
+    [
+      "php",
+      "tests/native_company/catalog_table.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_page_custom_fields.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_index.php"
     ]
   ],
   "browser": [
@@ -2928,6 +3040,10 @@
     [
       "node",
       "tests/asaas_remote_webhook_form.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/context_tabs.browser.cjs"
     ]
   ]
 }

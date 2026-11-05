@@ -5,9 +5,22 @@ require_once __DIR__.'/NativeCompanyInvoicePaymentForm.php';
 require_once __DIR__.'/NativeCompanyInvoiceFormInput.php';
 require_once __DIR__.'/CompanyFinancialDocumentPdf.php';
 require_once __DIR__.'/CompanySettingsFormats.php';
+require_once __DIR__.'/NativeCompanyDataTableWire.php';
+require_once __DIR__.'/NativeCompanyTableOrder.php';
 /** Finite original Payments route composition. No global payment model in a secondary company. */
 final class NativeCompanyPaymentsHttp
 {
+    private static function render($ci, string $view, array $data): string
+    {
+        $level = ob_get_level();
+        try {
+            return $ci->load->view($view, $data, true);
+        } finally {
+            // A failed view must never leave a partially rendered admin shell in the response.
+            while (ob_get_level() > $level) { ob_end_clean(); }
+        }
+    }
+
     private static function post($ci):array{
         CompanyRequestScope::assertNativeMutation($ci);$post=$ci->input->post(null,false)?:[];
         unset($post['_company_context'],$post['_native_company_csrf']);if(isset($ci->security))unset($post[$ci->security->get_csrf_token_name()]);return$post;
@@ -20,17 +33,53 @@ final class NativeCompanyPaymentsHttp
             if(in_array($action,['index','list_payments'],true)){
                 if(!in_array($verb,['GET','HEAD'],true))throw new DomainException('native_payment_method_denied');
                 if(!$acl->can($i,$a,'payments','view')||!$acl->can($i,$a,'invoices','view'))throw new DomainException('native_payment_denied');
-                $ci->load->view('admin/payments/manage',['title'=>_l('payments'),'native_payments'=>true]);return;
+                $ci->output->set_output(self::render($ci,'admin/payments/manage',['title'=>_l('payments'),'native_payments'=>true]));return;
             }
             if($action==='table'){
-                $post=self::post($ci);foreach(['draw','start','length']as$field)if(isset($post[$field])&&(!is_string($post[$field])||!preg_match('/^(0|[1-9][0-9]*)$/D',$post[$field])||($field==='start'&&strlen($post[$field])>18)))throw new DomainException('native_payment_table_invalid');
-                $start=(int)($post['start']??0);$length=(int)($post['length']??25);if($length<1||$length>500)throw new DomainException('native_payment_table_invalid');
-                $searchData=$post['search']??[];if(!is_array($searchData))throw new DomainException('native_payment_table_invalid');$search=$searchData['value']??'';if(!is_string($search)||strlen($search)>500||!in_array($searchData['regex']??false,[false,'false','0',0],true))throw new DomainException('native_payment_table_invalid');
-                $fields=['id','formatted_number','paymentmethod','transactionid','company','amount','date'];$orders=$post['order']??[['column'=>'0','dir'=>'desc']];if(!is_array($orders)||!array_is_list($orders)||count($orders)>7)throw new DomainException('native_payment_table_invalid');$mapped=[];
-                foreach($orders as$order){$column=(string)($order['column']??'');if(!isset($fields[$column])||!in_array($order['dir']??null,['asc','desc'],true))throw new DomainException('native_payment_table_invalid');$mapped[]=['field'=>$fields[$column],'dir'=>$order['dir']];}
-                $client=$id===null||$id===''?null:IssuerPolicy::id($id);$page=$service->listingPage($i,$a,$client,$start,$length,$search,$mapped);$out=[];$e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
-                foreach($page['rows']as$row)$out[]=['<a href="'.$e(CompanyRequestScope::adminUrl($ci,'payments/payment/'.$row['id'])).'">'.$e($row['id']).'</a>','<a href="'.$e(CompanyRequestScope::adminUrl($ci,'invoices/list_invoices/'.$row['invoiceid'])).'">'.$e($row['formatted_number']).'</a>',$e($row['paymentmethod']?:$row['paymentmode']),$e($row['transactionid']),$e($row['company']),$e($row['currency'].' '.$row['amount']),$e($row['date'])];
-                $ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'iTotalRecords'=>$page['total'],'iTotalDisplayRecords'=>$page['filtered'],'aaData'=>$out],JSON_THROW_ON_ERROR));return;
+                $post = self::post($ci);
+                if (isset($post['last_order_identifier']) && $post['last_order_identifier'] !== 'payments') { throw new DomainException('native_payment_table_invalid'); }
+                unset($post['last_order_identifier']);
+                $request = NativeCompanyDataTableWire::request($post, ['id','formatted_number','paymentmethod','transactionid','company','amount','date']);
+                $mapped = array_map(static fn($order) => ['field'=>$order['field'],'dir'=>$order['direction']], $request['orders']);
+                $client = $id === null || $id === '' ? null : IssuerPolicy::id($id);
+                $offset = $request['start'];
+                $remaining = $request['length'];
+                $rows = [];
+                $counts = null;
+                $seen = [];
+                do {
+                    $limit = $remaining === -1 ? 500 : min($remaining, 500);
+                    $page = $service->listingPage($i, $a, $client, $offset, $limit, $request['search'], $mapped);
+                    $currentCounts = [$page['total'], $page['filtered']];
+                    if ($counts !== null && $currentCounts !== $counts) { throw new DomainException('native_payment_stale'); }
+                    $counts = $currentCounts;
+                    foreach ($page['rows'] as $row) {
+                        if (isset($seen[$row['id']])) { throw new DomainException('native_payment_stale'); }
+                        $seen[$row['id']] = true;
+                        $rows[] = $row;
+                    }
+                    $read = count($page['rows']);
+                    $offset += $read;
+                    if ($remaining !== -1) { $remaining -= $read; }
+                    if ($read === 0 && $offset < $page['filtered']) { throw new DomainException('native_payment_stale'); }
+                } while ($read > 0 && $offset < $page['filtered'] && $remaining !== 0);
+                $out = [];
+                $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8');
+                $customers = $acl->can($i, $a, 'customers', 'view');
+                foreach ($rows as $row) {
+                    $paymentUrl = $e(CompanyRequestScope::adminUrl($ci, 'payments/payment/'.$row['id']));
+                    $customer = $e($row['company']);
+                    if ($customers) { $customer = '<a href="'.$e(CompanyRequestScope::adminUrl($ci, 'clients/client/'.$row['clientid'])).'">'.$customer.'</a>'; }
+                    $out[] = [
+                        '<a href="'.$paymentUrl.'" class="tw-font-medium">'.$e($row['id']).'</a><div class="row-options"><a href="'.$paymentUrl.'">'.$e(_l('view')).'</a></div>',
+                        '<a href="'.$e(CompanyRequestScope::adminUrl($ci, 'invoices/list_invoices/'.$row['invoiceid'])).'">'.$e($row['formatted_number']).'</a>',
+                        $e($row['paymentmethod'] ?: $row['paymentmode']), $e($row['transactionid']), $customer,
+                        '<span class="tw-font-medium">'.$e(app_format_money($row['amount'], $row['currency'])).'</span>', $e(_d($row['date'])),
+                        'DT_RowClass' => 'has-row-options',
+                    ];
+                }
+                if (isset($post['order']) && get_option('save_last_order_for_tables') === '1') { (new NativeCompanyTableOrder($ci->db, $p, $i, $a))->save('payments', $post['order'], 7); }
+                $ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>$request['draw'],'iTotalRecords'=>$page['total'],'iTotalDisplayRecords'=>$page['filtered'],'aaData'=>$out],JSON_THROW_ON_ERROR));return;
             }
             if($action==='batch_payment_modal'){
                 if(!in_array($verb,['GET','HEAD'],true)||!$acl->can($i,$a,'payments','create'))throw new DomainException('native_payment_denied');
@@ -67,7 +116,7 @@ final class NativeCompanyPaymentsHttp
                 if($verb==='POST'){$post=self::post($ci);if(array_diff(array_keys($post),['note','revision','request_key'])||!is_string($post['note']??null)||!is_string($post['revision']??null)||!is_string($post['request_key']??null))throw new DomainException('native_payment_invalid');$service->saveNote($i,$a,$id,$post['revision'],$post['note'],$post['request_key']);redirect(CompanyRequestScope::adminUrl($ci,'payments/payment/'.(int)$id),'location',303);return;}
                 if(!in_array($verb,['GET','HEAD'],true))throw new DomainException('native_payment_method_denied');$caps=[];foreach(['edit','delete']as$cap)$caps[$cap]=$acl->can($i,$a,'payments',$cap);
                 $record=$data['payment'];$doc=$data['invoice'];$payment=(object)($record+['paymentid'=>(int)$id,'invoiceid'=>$doc['invoice_id'],'name'=>$record['paymentmethod']?:$record['paymentmode']]);$payment->amount=$record['effective_amount'];$payment->note=$data['note'];$payment->invoice=(object)['id'=>$doc['invoice_id'],'clientid'=>$doc['recipient']['client_id'],'currency_name'=>$doc['currency'],'date'=>$doc['date'],'total'=>$doc['totals']['total'],'status'=>$doc['status']];
-                $html=$ci->load->view('admin/payments/payment',['native_payment'=>$data,'native_payment_caps'=>$caps,'payment'=>$payment,'payment_modes'=>[],'title'=>'Pagamento #'.(int)$id],true);if($service->read($i,$a,$id)!==$data)throw new DomainException('native_payment_stale');$ci->output->set_output($html);return;
+                $html=self::render($ci,'admin/payments/payment',['native_payment'=>$data,'native_payment_caps'=>$caps,'payment'=>$payment,'payment_modes'=>[],'title'=>'Pagamento #'.(int)$id]);if($service->read($i,$a,$id)!==$data)throw new DomainException('native_payment_stale');$ci->output->set_output($html);return;
             }
             throw new DomainException('native_payment_invalid');
         }catch(Throwable $error){$reason=$error->getMessage();$status=$error instanceof DomainException?(preg_match('/stale|conflict|exceeds|balance/',$reason)?409:(preg_match('/denied|csrf|access/',$reason)?403:422)):503;show_error('Não foi possível confirmar este pagamento, sua revisão ou suas permissões.',$status);}

@@ -138,9 +138,10 @@ function currentContract(page) {
     sql("INSERT INTO tblcontracts(id,content,description,subject,client,datestart,dateend,contract_type,project_id,addedfrom,dateadded,isexpirynotified,contract_value,trash,not_visible_to_client,hash,signed,signature,marked_as_signed) VALUES(" + principalOwned.raw + ",'<p>Colliding historical body</p>','Collision proof','Browser colliding historical contract'," + legacyClient + ",'2020-01-01','2030-01-01',NULL,NULL,17,UTC_TIMESTAMP(),0,20.00,0,0,MD5('browser-colliding-primary-contract'),0,NULL,0)");
 
     await page.goto(url + '/admin/contracts');
-    const ownedLink = page.locator('#company-owned-contracts a[href$="/contracts/contract/' + principalOwned.canonical + '"]');
-    assert.equal(await ownedLink.count(), 1, 'principal official index unions a typed company-owned contract into the legacy screen');
-    assert((await page.locator('#company-owned-contracts').innerText()).includes('Browser principal owned contract'));
+    const ownedLink = page.locator('.table-contracts a.tw-truncate[href$="/contracts/contract/' + principalOwned.canonical + '"]');
+    await ownedLink.waitFor({ state: 'visible' });
+    assert.equal(await ownedLink.count(), 1, 'principal original table unions the typed company-owned contract with historical rows');
+    assert((await page.locator('.table-contracts').innerText()).includes('Browser principal owned contract'));
     await page.goto(url + '/admin/contracts/contract/' + principalOwned.raw);
     assert.equal(await page.locator('#contract-form input[name=subject]').inputValue(), 'Browser colliding historical contract', 'raw colliding ID remains on the original legacy editor');
     await page.goto(url + '/admin/contracts/contract/' + principalOwned.canonical);

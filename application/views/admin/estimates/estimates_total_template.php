@@ -52,7 +52,7 @@
     <?php
 foreach ($totals as $key => $data) {
     $class = estimate_status_color_class($data['status']);
-    $name  = estimate_status_by_id($data['status']); ?>
+    $name  = !empty($native_company_sales_manage)?NativeCompanySalesTable::statusLabel('estimates',(int)$data['status']):estimate_status_by_id($data['status']); ?>
     <div
         class="tw-border tw-border-solid tw-border-neutral-300/80 tw-rounded-md tw-bg-white odd:last:tw-col-span-2 md:odd:last:tw-col-auto">
         <div class="tw-px-4 tw-py-5 sm:tw-px-4 sm:tw-py-2">

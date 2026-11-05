@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$expense->paymentmode ?? '']); ?>
+<?php $native_expense_form = $native_expense_form ?? false; ?>
+<?php if (!$native_expense_form) $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$expense->paymentmode ?? '']); ?>
 <?php init_head(); ?>
 
 <?php $hideTaxFields   = ! isset($expense) || ($expense->tax == 0 && $expense->tax2 == 0); ?>
@@ -18,7 +19,15 @@
             <?php if (isset($expense)) {
                 echo form_hidden('is_edit', 'true');
             } ?>
-            <?= form_open_multipart($this->uri->uri_string(), ['id' => 'expense-form', 'class' => 'dropzone dropzone-manual']); ?>
+            <?= form_open_multipart($native_expense_form ? $native_expense_form_action : $this->uri->uri_string(), ['id' => 'expense-form', 'class' => 'dropzone dropzone-manual']); ?>
+            <?php if ($native_expense_form) { ?>
+            <?= form_hidden('native_expense_form', NativeCompanyExpenseOriginalForm::WIRE); ?>
+            <?= form_hidden('native_expenses_csrf', $native_expenses_csrf); ?>
+            <?= form_hidden('request_key', $native_expense_request_key); ?>
+            <?= form_hidden('expense_id', $native_expense_id); ?>
+            <?= form_hidden('revision', $native_expense_revision); ?>
+            <div id="native-expense-form-error" class="alert alert-danger hide" role="alert"></div>
+            <?php } ?>
             <div class="panel_s">
                 <div class="panel-body">
                     <?php if (isset($expense) && $expense->recurring_from != null) {
@@ -27,6 +36,9 @@
                     } ?>
                     <div
                         class="tw-bg-neutral-50 tw-overflow-hidden tw-rounded-t-md tw-p-6 tw-border-b -tw-mt-6 -tw-mx-6 tw-border-solid tw-border-neutral-200 tw-mb-4">
+                        <?php if ($native_expense_form) foreach ($native_expense_files as $file) { ?>
+                        <div class="tw-flex tw-gap-x-2 tw-items-center tw-mb-2"><i class="fa-solid fa-paperclip tw-text-neutral-500"></i><a class="tw-truncate tw-block" href="<?= e(admin_url('expenses/list_expenses/'.$native_expense_id.'?source=company&file='.$file['file_key'])); ?>"><?= e($file['filename']); ?></a></div>
+                        <?php } ?>
                         <?php if (isset($expense) && $expense->attachment !== '') { ?>
                         <div class="row">
                             <div class="col-md-10">
@@ -50,14 +62,14 @@
                             <?php } ?>
                         </div>
                         <?php } ?>
-                        <?php if (! isset($expense) || (isset($expense) && $expense->attachment == '')) { ?>
+                        <?php if ((!$native_expense_form || $native_expense_can_upload) && (! isset($expense) || (isset($expense) && $expense->attachment == ''))) { ?>
                         <div id="dropzoneDragArea" class="dz-default dz-message">
                             <span><?= _l('expense_add_edit_attach_receipt'); ?></span>
                         </div>
                         <div class="dropzone-previews"></div>
                         <?php } ?>
                     </div>
-                    <?php if ($hideRecurring) { ?>
+                    <?php if ($hideRecurring && (!$native_expense_form || $native_expense_can_recur)) { ?>
                     <a href="#" class="tw-mb-4 -tw-mt-1 tw-block"
                         onclick="return onExpenseAddFieldClick(this, 'expenseRecurringOptions')">
                         +
@@ -67,9 +79,17 @@
                     <div id="expenseRecurringOptions"
                         style="<?= $hideRecurring ? 'display:none' : ''; ?>">
                         <?php $this->load->view('admin/expenses/expense_recurring_options'); ?>
+                        <?php if ($native_expense_form) { ?>
+                        <div id="native-expense-invoice-options" class="hide">
+                            <?= render_input('native_due_days', 'Prazo de vencimento da fatura (dias)', '', 'number', ['min'=>0,'max'=>366]); ?>
+                            <div id="native-expense-contact-options" class="hide">
+                                <?= render_select('native_contact_id', $native_expense_customer['recurring_contacts'], ['id', ['firstname','lastname']], 'Contato para envio da fatura', ''); ?>
+                            </div>
+                        </div>
+                        <?php } ?>
                     </div>
 
-                    <?php hooks()->do_action('before_expense_form_name', $expense ?? null); ?>
+                    <?php if (!$native_expense_form) hooks()->do_action('before_expense_form_name', $expense ?? null); ?>
 
                     <?php if ($hideName) { ?>
                     <a href="#" class="tw-mb-4 -tw-mt-1 tw-block"
@@ -122,7 +142,10 @@
 
                     <div class="tw-mt-6">
                         <?php $selected = (isset($expense) ? $expense->category : ''); ?>
-                        <?php if (is_admin() || get_option('staff_members_create_inline_expense_categories') == '1') {
+                        <?php if ($native_expense_form) {
+                            $group=$native_expense_can_create_category?'<div class="input-group-btn"><a class="btn btn-default" href="'.e(admin_url('expenses/categories?source=company')).'" title="'.e(_l('expense_categories')).'"><i class="fa fa-plus"></i></a></div>':'';
+                            echo $group!==''?render_select_with_input_group('category',$categories,['id','name'],'expense_category',$selected,$group):render_select('category',$categories,['id','name'],'expense_category',$selected);
+                        } elseif (is_admin() || get_option('staff_members_create_inline_expense_categories') == '1') {
                             echo render_select_with_input_group('category', $categories, ['id', 'name'], 'expense_category', $selected, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_category();return false;"><i class="fa fa-plus"></i></a></div>');
                         } else {
                             echo render_select('category', $categories, ['id', 'name'], 'expense_category', $selected);
@@ -146,7 +169,7 @@
                             <?php
 $currency_attr = ['disabled' => true, 'data-show-subtext' => true, 'data-width' => '120px'];
 
-$currency_attr = apply_filters_deprecated('expense_currency_disabled', [$currency_attr], '2.3.0', 'expense_currency_attributes');
+if (!$native_expense_form) $currency_attr = apply_filters_deprecated('expense_currency_disabled', [$currency_attr], '2.3.0', 'expense_currency_attributes');
 
 foreach ($currencies as $currency) {
     if ($currency['isdefault'] == 1) {
@@ -158,7 +181,7 @@ foreach ($currencies as $currency) {
         }
         if ($expense->billable == 0) {
             if ($expense->clientid) {
-                $c = $this->clients_model->get_customer_default_currency($expense->clientid);
+                $c = $native_expense_form ? $customer_currency : $this->clients_model->get_customer_default_currency($expense->clientid);
                 if ($c != 0) {
                     $customer_currency = $c;
                 }
@@ -166,7 +189,7 @@ foreach ($currencies as $currency) {
         }
     } else {
         if (isset($customer_id)) {
-            $c = $this->clients_model->get_customer_default_currency($customer_id);
+            $c = $native_expense_form ? $customer_currency : $this->clients_model->get_customer_default_currency($customer_id);
             if ($c != 0) {
                 $customer_currency = $c;
             }
@@ -176,7 +199,7 @@ foreach ($currencies as $currency) {
         }
     }
 }
-$currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency_attr);
+if (!$native_expense_form) $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency_attr);
 ?>
                             <div id="expense_currency" class="tw-self-end">
                                 <?= render_select('currency', $currencies, ['id', 'name', 'symbol'], '', $selected, $currency_attr); ?>
@@ -294,9 +317,10 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
                             data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                             <?php $selected = (isset($expense) ? $expense->clientid : ($customer_id ?? '')); ?>
                             <?php if ($selected != '') {
-                                $rel_data = get_relation_data('customer', $selected);
-                                $rel_val  = get_relation_values($rel_data, 'customer');
-                                echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                if ($native_expense_form) echo '<option value="'.e($selected).'" selected>'.e($native_expense_customer['client_name']).'</option>';
+                                else { $rel_data = get_relation_data('customer', $selected);
+                                    $rel_val  = get_relation_values($rel_data, 'customer');
+                                    echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>'; }
                             } ?>
                         </select>
                     </div>
@@ -331,14 +355,14 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
                                 data-live-search="true" data-width="100%"
                                 data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                                 <?php if (isset($expense) && $expense->project_id) {
-                                    echo '<option value="' . $expense->project_id . '" selected>' . e(get_project_name_by_id($expense->project_id)) . '</option>';
+                                    echo '<option value="' . e($expense->project_id) . '" selected>' . e($native_expense_form ? $native_expense_project_name : get_project_name_by_id($expense->project_id)) . '</option>';
                                 } ?>
                             </select>
                         </div>
                     </div>
 
                     <?php $rel_id = (isset($expense) ? $expense->expenseid : false); ?>
-                    <?= render_custom_fields('expenses', $rel_id); ?>
+                    <?= render_custom_fields('expenses', $rel_id, [], $native_expense_form ? ['native_purpose'=>isset($expense)?'edit':'create'] : []); ?>
 
                     <div class="text-right">
                         <button type="submit" class="btn btn-primary">
@@ -348,15 +372,18 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
                 </div>
             </div>
 
-            <?php hooks()->do_action('before_expense_form_template_close', $expense ?? null); ?>
+            <?php if (!$native_expense_form) hooks()->do_action('before_expense_form_template_close', $expense ?? null); ?>
             <?= form_close(); ?>
         </div>
 
     </div>
 </div>
-<?php $this->load->view('admin/expenses/expense_category'); ?>
+<?php if (!$native_expense_form) $this->load->view('admin/expenses/expense_category'); ?>
 <?php init_tail(); ?>
 <script>
+    var nativeExpenseForm = <?= $native_expense_form ? 'true' : 'false'; ?>;
+    var nativeExpenseSaved = null;
+    var nativeExpenseBusy = false;
     var customer_currency = '';
     Dropzone.options.expenseForm = false;
     var expenseDropzone;
@@ -373,6 +400,24 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
         let formEl = $('#' + id).find('textarea,input,select');
         formEl.focus()
         return false;
+    }
+
+    function nativeExpenseError(xhr, fallback) {
+        nativeExpenseBusy = false;
+        $('#expense-form button[type="submit"]').prop('disabled', false);
+        var message = xhr && xhr.responseJSON && xhr.responseJSON.message;
+        var box = $('#native-expense-form-error').empty().removeClass('hide');
+        box.text(typeof message === 'string' ? message : fallback);
+        if (nativeExpenseSaved) {
+            box.append(' ').append($('<a>', { href: nativeExpenseSaved.url, class: 'alert-link' }).text('Abrir a despesa salva'));
+        }
+    }
+
+    function nativeExpenseRecurringInputs() {
+        if (!nativeExpenseForm) return;
+        var invoice = $('#create_invoice_billable').prop('checked') && $('#repeat_every').val() !== '' && $('#billable').prop('checked');
+        $('#native-expense-invoice-options').toggleClass('hide', !invoice);
+        $('#native-expense-contact-options').toggleClass('hide', !invoice || !$('#send_invoice_to_customer').prop('checked'));
     }
 
     $(function() {
@@ -397,13 +442,26 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
                 previewsContainer: '.dropzone-previews',
                 addRemoveLinks: true,
                 maxFiles: 1,
+                sending: function(file, xhr, formData) {
+                    if (!nativeExpenseForm) return;
+                    if (!nativeExpenseSaved) throw new Error('native_expense_parent_unconfirmed');
+                    formData.set('expense_id', nativeExpenseSaved.expenseid);
+                    formData.set('request_key', nativeExpenseSaved.upload_key);
+                    formData.set('native_expense_form', 'original_expense_v1');
+                },
                 success: function(file, response) {
-                    response = JSON.parse(response);
+                    try { response = typeof response === 'string' ? JSON.parse(response) : response; }
+                    catch (error) { if (nativeExpenseForm) nativeExpenseError(null, 'A despesa foi salva, mas o comprovante não foi confirmado. Abra a despesa para conferir os anexos.'); return; }
+                    if (nativeExpenseForm && (!response || response.success !== true || typeof response.url !== 'string')) { nativeExpenseError(null, 'O comprovante não foi confirmado. Abra a despesa para conferir os anexos.'); return; }
                     if (this.getUploadingFiles().length === 0 && this.getQueuedFiles()
                         .length ===
                         0) {
                         window.location.assign(response.url);
                     }
+                },
+                error: function(file, response, xhr) {
+                    if (nativeExpenseForm) nativeExpenseError(xhr, 'A despesa foi salva, mas o comprovante não foi confirmado. Abra a despesa para conferir os anexos.');
+                    else alert_float('danger', 'Não foi possível enviar o comprovante.');
                 },
             }));
         }
@@ -420,6 +478,7 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
 
         $('input[name="billable"]').on('change', function() {
             do_billable_checkbox();
+            nativeExpenseRecurringInputs();
         });
 
         $('#repeat_every').on('change', function() {
@@ -429,7 +488,10 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
             } else {
                 $('.billable_recurring_options').addClass('hide');
             }
+            nativeExpenseRecurringInputs();
         });
+
+        $('#create_invoice_billable, #send_invoice_to_customer').on('change', nativeExpenseRecurringInputs);
 
         // hide invoice recurring options on page load
         $('#repeat_every').trigger('change');
@@ -550,6 +612,10 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
         var projectAjax = $('select[name="project_id"]');
         var clonedProjectsAjaxSearchSelect = projectAjax.html('').clone();
         var projectsWrapper = $('.projects-wrapper');
+        if (nativeExpenseForm) {
+            customer_currency = '';
+            $('#native_contact_id').empty().append($('<option>', { value: '' })).selectpicker('refresh');
+        }
         projectAjax.selectpicker('destroy').remove();
         projectAjax = clonedProjectsAjaxSearchSelect;
         $('#project_ajax_search_wrapper').append(clonedProjectsAjaxSearchSelect);
@@ -558,7 +624,7 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
             set_base_currency();
             projectsWrapper.addClass('hide');
         }
-        $.get(admin_url + 'expenses/get_customer_change_data/' + customer_id, function(response) {
+        $.get(admin_url + 'expenses/get_customer_change_data/' + customer_id + (nativeExpenseForm ? '?source=company' : ''), function(response) {
             if (customer_id && response.customer_has_projects) {
                 projectsWrapper.removeClass('hide');
             } else {
@@ -572,10 +638,26 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
                 customer_currency = '';
                 set_base_currency();
             }
-        }, 'json');
+            if (nativeExpenseForm) {
+                var contacts = $('#native_contact_id');
+                (response.recurring_contacts || []).forEach(function(contact) {
+                    contacts.append($('<option>', { value: String(contact.id) }).text(contact.firstname + ' ' + contact.lastname));
+                });
+                contacts.selectpicker('refresh');
+            }
+        }, 'json').fail(function(xhr) {
+            if (nativeExpenseForm) nativeExpenseError(xhr, 'Não foi possível confirmar o cliente nesta empresa. Selecione-o novamente.');
+        });
     }
 
     function expenseSubmitHandler(form) {
+
+        if (nativeExpenseForm && nativeExpenseBusy) return false;
+        if (nativeExpenseForm) {
+            nativeExpenseBusy = true;
+            $('#native-expense-form-error').addClass('hide').empty();
+            $('#expense-form button[type="submit"]').prop('disabled', true);
+        }
 
         selectCurrency.prop('disabled', false);
 
@@ -584,13 +666,23 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
         $('input[name="date"]').prop('disabled', false);
 
         $.post(form.action, $(form).serialize()).done(function(response) {
-            response = JSON.parse(response);
+            try { response = typeof response === 'string' ? JSON.parse(response) : response; }
+            catch (error) { if (nativeExpenseForm) nativeExpenseError(null, 'Não foi possível confirmar a gravação. Reabra a despesa antes de tentar novamente.'); return; }
+            if (nativeExpenseForm) {
+                if (!response || response.success !== true || !response.expenseid || !response.url) {
+                    nativeExpenseError(null, 'Não foi possível confirmar a gravação. Reabra a despesa antes de tentar novamente.');
+                    return;
+                }
+                nativeExpenseSaved = response;
+            }
             if (response.expenseid) {
                 if (typeof(expenseDropzone) !== 'undefined') {
                     if (expenseDropzone.getQueuedFiles().length > 0) {
                         expenseDropzone.options.url = admin_url + 'expenses/add_expense_attachment/' + response
                             .expenseid;
                         expenseDropzone.processQueue();
+                    } else if (nativeExpenseForm && (expenseDropzone.getRejectedFiles().length > 0 || expenseDropzone.getFilesWithStatus(Dropzone.ERROR).length > 0)) {
+                        nativeExpenseError(null, 'A despesa foi salva, mas há um comprovante recusado. Abra a despesa para conferir os anexos.');
                     } else {
                         window.location.assign(response.url);
                     }
@@ -600,6 +692,8 @@ $currency_attr = hooks()->apply_filters('expense_currency_attributes', $currency
             } else {
                 window.location.assign(response.url);
             }
+        }).fail(function(xhr) {
+            if (nativeExpenseForm) nativeExpenseError(xhr, 'Não foi possível confirmar a gravação. Confira os campos e reabra a despesa antes de tentar novamente.');
         });
         return false;
     }

@@ -26,7 +26,7 @@
                         <div
                             class="tw-bg-white tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center odd:last:tw-col-span-2 md:odd:last:tw-col-auto">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= count($expiring); ?>
+                                <?= isset($native_contract_index) ? e($count_expiring) : count($expiring); ?>
                             </span>
                             <span
                                 class="text-warning"><?= _l('contract_summary_about_to_expire'); ?></span>
@@ -49,11 +49,14 @@
                 </div>
                 <div class="_buttons">
                     <?php if (staff_can('create', 'contracts')) { ?>
-                    <a href="<?= admin_url('contracts/contract'); ?>"
+                    <a href="<?= admin_url('contracts/contract'.(isset($native_contract_index)&&empty($native_contract_primary)?'?source=company':'')); ?>"
                         class="btn btn-primary pull-left display-block">
                         <i class="fa-regular fa-plus tw-mr-1"></i>
                         <?= _l('new_contract'); ?>
                     </a>
+                    <?php if(!empty($native_contract_primary)){ ?>
+                    <a href="<?= admin_url('contracts/contract?source=company'); ?>" class="btn btn-default pull-left tw-ml-2">Novo contrato com portal</a>
+                    <?php } ?>
                     <?php } ?>
                     <div id="vueApp" class="tw-inline pull-right tw-ml-0 sm:tw-ml-1.5 rtl:tw-mr-1.5 rtl:tw-ml-0">
                         <app-filters id="<?= $table->id(); ?>"
@@ -116,7 +119,7 @@
 <script>
     $(function() {
         initDataTable('.table-contracts', admin_url + 'contracts/table', undefined, undefined, {},
-            <?= hooks()->apply_filters('contracts_table_default_order', json_encode([6, 'asc'])); ?>
+            <?= isset($native_contract_index) ? json_encode([6, 'asc']) : hooks()->apply_filters('contracts_table_default_order', json_encode([6, 'asc'])); ?>
         );
 
         new Chart($('#contracts-by-type-chart'), {

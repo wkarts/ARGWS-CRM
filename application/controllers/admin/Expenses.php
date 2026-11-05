@@ -23,7 +23,7 @@ class Expenses extends AdminController
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
             require_once APPPATH.'services/NativeCompanyExpensesController.php';
-            NativeCompanyExpensesController::handle($this);
+            NativeCompanyExpensesController::handle($this,$id);
             return;
         }
         $this->list_expenses($id);
@@ -33,7 +33,7 @@ class Expenses extends AdminController
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
             require_once APPPATH.'services/NativeCompanyExpensesController.php';
-            NativeCompanyExpensesController::handle($this);
+            NativeCompanyExpensesController::handle($this,$id);
             return;
         }
         close_setup_menu();
@@ -70,7 +70,10 @@ class Expenses extends AdminController
 
     public function expense($id = '')
     {
-        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'expense'); return; }
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) {
+            if(strtoupper((string)$this->input->method(true))!=='POST'||$this->input->post('native_expense_form',false)!==null){require_once APPPATH.'services/NativeCompanyExpenseOriginalHttp.php';if((new NativeCompanyExpenseOriginalHttp($this))->expense($id))return;}
+            require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'expense'); return;
+        }
         if ($this->input->post()) {
             if ($id == '') {
                 if (staff_cant('create', 'expenses')) {
@@ -370,6 +373,7 @@ class Expenses extends AdminController
 
     public function get_customer_change_data($customer_id = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyExpenseOriginalHttp.php';(new NativeCompanyExpenseOriginalHttp($this))->customer($customer_id);return;}
         echo json_encode([
             'customer_has_projects' => customer_has_projects($customer_id),
             'client_currency'       => $this->clients_model->get_customer_default_currency($customer_id),
@@ -437,6 +441,7 @@ class Expenses extends AdminController
 
     public function add_expense_attachment($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)&&$this->input->post('native_expense_form',false)!==null){require_once APPPATH.'services/NativeCompanyExpenseOriginalHttp.php';(new NativeCompanyExpenseOriginalHttp($this))->attachment($id);return;}
         if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'add_expense_attachment'); return; }
         handle_expense_attachments($id);
         echo json_encode([

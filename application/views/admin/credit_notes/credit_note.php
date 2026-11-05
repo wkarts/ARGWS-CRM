@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if ($native_credit_form ?? false) { $this->load->view('admin/credit_notes/native_form', get_defined_vars()); return; } ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

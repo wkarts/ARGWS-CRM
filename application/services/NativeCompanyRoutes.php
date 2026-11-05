@@ -225,7 +225,7 @@ final class NativeCompanyRoutes
             'index'=>['GET','HEAD'], 'list_invoices'=>['GET','HEAD'], 'table'=>['POST'],
             'invoice'=>['GET','HEAD','POST'], 'client_change_data'=>['GET'],
             'drafts'=>['GET','HEAD','POST'], 'copy'=>['GET','HEAD','POST'],
-            'recurring'=>['GET','HEAD','POST'], 'standalone_billing'=>['GET','HEAD','POST'],
+            'recurring'=>['GET','HEAD','POST'], 'recurring_preview'=>['GET','HEAD'], 'standalone_billing'=>['GET','HEAD','POST'],
             'validate_invoice_number'=>['POST'], 'get_invoice_data_ajax'=>['GET','HEAD'],
             'add_note'=>['POST'], 'get_notes'=>['GET','HEAD'],
             'pause_overdue_reminders'=>['POST'], 'resume_overdue_reminders'=>['POST'],
@@ -239,16 +239,21 @@ final class NativeCompanyRoutes
             // for the list/form/detail mutations; no legacy estimates_model is
             // loaded when this route is admitted.
             'index'=>['GET','HEAD','POST'], 'list_estimates'=>['GET','HEAD','POST'], 'table'=>['POST'],
+            'get_estimate_data_ajax'=>['GET','HEAD'], 'get_estimates_total'=>['POST'], 'get_notes'=>['GET','HEAD'], 'add_note'=>['POST'],
             'estimate'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'proposals'=>[
             'index'=>['GET','HEAD','POST'], 'list_proposals'=>['GET','HEAD','POST'], 'table'=>['POST'], 'proposal_relations'=>['GET','HEAD','POST'],
+            'get_proposal_data_ajax'=>['GET','HEAD'], 'get_notes'=>['GET','HEAD'], 'add_note'=>['POST'],
             'proposal'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'credit_notes'=>[
             'index'=>['GET','HEAD','POST'], 'list_credit_notes'=>['GET','HEAD','POST'],
+            'table'=>['POST'], 'get_credit_note_data_ajax'=>['GET','HEAD'],
+            'credit_note'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'],
         ],
         'expenses'=>[
+            'get_customer_change_data'=>['GET','HEAD'],
             'bulk_action'=>['POST'], 'pdf'=>['GET','HEAD'],
             'expense'=>['GET','HEAD','POST'],'categories'=>['GET','HEAD'],'category'=>['POST'],'delete_category'=>['POST'],
             'get_expense_data_ajax'=>['GET','HEAD'],'delete'=>['POST'],'add_expense_attachment'=>['POST'],'delete_expense_attachment'=>['POST'],

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanySalesMutationsSchema.php';
+require_once __DIR__.'/NativeCompanySalesProjectionSchema.php';
 
 /** Reviewed mutations of canonical private sales documents; never writes a native invoice. */
 trait CompanySalesMutations
@@ -10,7 +11,9 @@ trait CompanySalesMutations
     private function requireMutations():void{if(!$this->mutationsReady())throw new DomainException('company_sales_mutations_unavailable');}
     protected function participantTables():array
     {
-        $tables=array_merge(parent::participantTables(),['itemable','item_tax','invoicepaymentrecords','credits','company_financial_events']);if($this->mutationsReady())$tables=array_merge($tables,array_keys(CompanySalesMutationsSchema::definitions()));return $tables;
+        $tables=array_merge(parent::participantTables(),['itemable','item_tax','invoicepaymentrecords','credits','company_financial_events']);if($this->mutationsReady())$tables=array_merge($tables,array_keys(CompanySalesMutationsSchema::definitions()));
+        if(NativeCompanySalesProjectionSchema::available($this->db,$this->prefix))$tables[]='company_sales_projection';
+        return $tables;
     }
     /** Read-only final commit frame. Audits/triggers are part of the same transaction. */
     private function boundaryReferences(int $issuer,int $actor,array $documents):array
@@ -40,6 +43,12 @@ trait CompanySalesMutations
     }
     private function confirmBoundary(int $issuer,int $actor,array $references,array $documents,array $sequences,array $records=[]):void
     {
+        // Derived read amounts are confirmed in the same transaction as every canonical writer.
+        if(NativeCompanySalesProjectionSchema::available($this->db,$this->prefix)){
+            require_once __DIR__.'/NativeCompanySalesProjection.php';
+            $projection=new NativeCompanySalesProjection($this->db,$this->prefix);
+            foreach($documents as $row)$projection->syncInOwned($row);
+        }
         foreach($references['queries']as$i=>[$table,$where,$args])if($this->rows('SELECT * FROM '.$this->prefix.$table.' WHERE '.$where.' FOR UPDATE',$args)!==$references['snapshot'][$i])throw new RuntimeException('issuer_sales_write_unconfirmed');
         foreach($documents as$r)self::boundaryRow($this->owned($issuer,$actor,(int)$r['id'],true),$r);
         $actual=$this->boundarySequences($issuer);if(count($actual)!==count($sequences))throw new RuntimeException('issuer_sales_write_unconfirmed');foreach($actual as$i=>$r)self::boundaryRow($r,$sequences[$i]);

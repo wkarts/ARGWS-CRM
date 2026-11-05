@@ -19,7 +19,7 @@ $table_data = array(
    _l('reference_no'),
    _l('estimate_dt_table_heading_status'));
 
-$custom_fields = get_custom_fields('estimate',array('show_on_table'=>1));
+$custom_fields = $native_sales_custom_fields ?? get_custom_fields('estimate',array('show_on_table'=>1));
 
 foreach($custom_fields as $field){
    array_push($table_data, [
@@ -28,6 +28,6 @@ foreach($custom_fields as $field){
   ]);
 }
 
-$table_data = hooks()->apply_filters('estimates_table_columns', $table_data);
+if(empty($native_company_sales_manage))$table_data = hooks()->apply_filters('estimates_table_columns', $table_data);
 
 render_datatable($table_data, isset($class) ? $class : 'estimates', [],['id'=>$table_id ?? 'estimates']);

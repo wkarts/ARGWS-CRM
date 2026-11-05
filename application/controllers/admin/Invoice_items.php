@@ -45,18 +45,41 @@ class Invoice_items extends AdminController
     public function table()
     {
         if($this->companyCatalog!==null){
-            $start=$this->input->post('start');$length=$this->input->post('length');$draw=$this->input->post('draw');$search=$this->input->post('search');
-            foreach([$start,$length,$draw]as$value)if(!is_scalar($value)||!preg_match('/^[0-9]{1,6}$/D',(string)$value))throw new DomainException('company_catalog_invalid');
-            $result=$this->companyCatalog->itemTable((int)$start,(int)$length,is_array($search)?(string)($search['value']??''):'');$output=['draw'=>(int)$draw,'iTotalRecords'=>$result['total'],'iTotalDisplayRecords'=>$result['filtered'],'aaData'=>[]];
-            foreach($result['rows']as$row){
+            CompanyRequestScope::assertNativeMutation($this);
+            require_once APPPATH.'services/NativeCompanyDataTableWire.php';
+            require_once APPPATH.'services/NativeCompanyCatalogTableQuery.php';
+            require_once APPPATH.'services/NativeCompanyTableOrder.php';
+            $input=$this->input->post(null,false)?:[];
+            unset($input['_company_context'],$input['_native_company_csrf']);
+            if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+            if(isset($input['last_order_identifier'])&&$input['last_order_identifier']!=='invoice-items')throw new DomainException('company_catalog_invalid');
+            unset($input['last_order_identifier']);
+            $definitions=get_custom_fields('items');$fields=NativeCompanyCatalogTableQuery::FIELDS;$types=array_fill(0,count($fields),'');
+            foreach($definitions as $field){$fields[]='custom_field_'.$field['id'];$types[]=$field['type'];}
+            $request=NativeCompanyDataTableWire::request($input,$fields,$types);
+            $offset=$request['start'];$remaining=$request['length'];$rows=[];$counts=null;$seen=[];
+            do{
+                $result=$this->companyCatalog->itemTable($offset,$remaining===-1?500:min($remaining,500),$request['search'],$request['orders'],$definitions);
+                $current=[$result['total'],$result['filtered']];
+                if($counts!==null&&$current!==$counts)throw new DomainException('company_catalog_columns_changed');$counts=$current;
+                foreach($result['rows']as$row){if(isset($seen[$row['id']]))throw new DomainException('company_catalog_columns_changed');$seen[$row['id']]=true;$rows[]=$row;}
+                $read=count($result['rows']);$offset+=$read;if($remaining!==-1)$remaining-=$read;
+                if($read===0&&$offset<$result['filtered'])throw new DomainException('company_catalog_columns_changed');
+            }while($read>0&&$offset<$result['filtered']&&$remaining!==0);
+            $output=['draw'=>$request['draw'],'iTotalRecords'=>$result['total'],'iTotalDisplayRecords'=>$result['filtered'],'aaData'=>[]];
+            foreach($rows as$row){
                 $description='<a href="#" data-toggle="modal" data-target="#sales_item_modal" data-id="'.(int)$row['id'].'" class="tw-font-medium">'.e($row['description']).'</a><div class="row-options">';
                 if($this->companyCatalog->allowed('items','delete'))$description.=$this->nativeAction('invoice_items/delete/'.$row['id'],_l('delete'),$row['revision']);
                 if($this->companyCatalog->allowed('items','create'))$description.=$this->nativeAction('invoice_items/copy/'.$row['id'],_l('copy'),$row['revision']);
                 $cells=['<div class="checkbox"><input type="checkbox" value="'.(int)$row['id'].'" data-revision="'.e((string)$row['revision']).'"><label></label></div>',$description.'</div>',e($row['long_description']),e($row['rate']),e($row['taxrate']??''),e($row['taxrate_2']??''),e($row['unit']),e($row['group_name']??'')];
-                foreach(get_custom_fields('items')as$field)$cells[]=e(get_custom_field_value($row['id'],$field['id'],'items_pr'));
+                foreach($definitions as$field)$cells[]=e(get_custom_field_value($row['id'],$field['id'],'items_pr'));
                 $cells['DT_RowClass']='has-row-options';$output['aaData'][]=$cells;
             }
-            echo json_encode($output,JSON_THROW_ON_ERROR);return;
+            if(get_custom_fields('items')!==$definitions||!$this->companyCatalog->allowed('items','view'))throw new DomainException('company_catalog_columns_changed');
+            if(isset($input['order'])&&get_option('save_last_order_for_tables')==='1'){
+                $context=CompanyRequestScope::context();(new NativeCompanyTableOrder($this->db,db_prefix(),$context->issuerId(),$context->staffId()))->save('invoice-items',$input['order'],count($fields));
+            }
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');echo json_encode($output,JSON_THROW_ON_ERROR);return;
         }
         if (staff_cant('view', 'items')) {
             ajax_access_denied();

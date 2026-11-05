@@ -368,7 +368,7 @@ final class NativeCompanyCustomFields
     /** Only the real final native writer can attest its own freshly inserted resource. */
     public function saveCreatedInOwnedTransaction(int $issuer,int $actor,string $fieldto,$id,array $submitted,object $writer):void
     {
-        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line'],'estimate'=>['CompanySales','company_estimate']][$fieldto]??null;
+        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line'],'estimate'=>['CompanySales','company_estimate'],'expenses'=>['CompanyExpenses','company_expense']][$fieldto]??null;
         if(in_array($fieldto,['invoice','items'],true)&&get_class($writer)==='CompanyInvoices')$expected=['CompanyInvoices',$fieldto==='invoice'?'invoice':'invoice_item'];
         if($fieldto==='items_pr')$expected=['NativeCompanyCatalog'=>['NativeCompanyCatalog','company_item'],'NativeCompanyCatalogLegacy'=>['NativeCompanyCatalogLegacy','item']][get_class($writer)]??null;
         if(!$expected||get_class($writer)!==$expected[0])throw new DomainException('native_custom_field_creation_denied');

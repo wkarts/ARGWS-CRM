@@ -19,10 +19,10 @@ final class ContextSession
 }
 final class ContextInput
 {
-    public string $verb = 'GET'; public array $headers = []; public bool $cli = false; public string $group = 'company';
+    public string $verb = 'GET'; public array $headers = []; public bool $cli = false; public string $group = 'company'; public array $query = [];
     public function method($upper = false) { return $upper ? $this->verb : strtolower($this->verb); }
     public function post($name = null, $clean = false) { return $name === null ? $_POST : ($_POST[$name] ?? null); }
-    public function get($name) { return $name === 'group' ? $this->group : null; }
+    public function get($name) { return $this->query[$name] ?? ($name === 'group' ? $this->group : null); }
     public function get_request_header($name, $clean = false) { return $this->headers[$name] ?? null; }
     public function is_cli_request() { return $this->cli; }
     public bool $ajax = false;
@@ -155,12 +155,20 @@ $context = new CompanyContext($db, $p, $s, 8);
 essentialCheck($context->resolve() === 41, 'valid server default selected, real primary ID 41');
 essentialCheck(array_column($context->available(), 'id') === [41,54], 'primary first and only authorized companies');
 $tokenA = $context->token(); $csrfA = $context->csrf();
+$browserA = $context->browserState();
+essentialCheck(array_keys($browserA) === ['channel','generation'] && preg_match('/^[a-f0-9]{64}$/D', $browserA['channel']) === 1 && $browserA['generation'] === 0, 'browser invalidation publishes only a non-authorizing channel and counter');
 expectContext(fn() => $context->select(55, $csrfA, $tokenA), 'company_context_access_denied');
 expectContext(fn() => $context->select(54, 'forged', $tokenA), 'company_context_invalid_csrf');
 expectContext(fn() => $context->select(54, $csrfA, 'forged'), 'company_context_mismatch');
+essentialCheck($context->browserState() === $browserA, 'denied company changes do not invalidate authorized documents');
 essentialCheck($context->select(54, $csrfA, $tokenA) === false, 'authorized switch chooses next request secondary');
 essentialCheck($context->issuerId() === 41, 'selection never mutates in-flight scope');
 $contextB = new CompanyContext($db, $p, $s, 8); essentialCheck($contextB->resolve() === 54, 'next request resolves B');
+$browserB = $contextB->browserState();
+essentialCheck($browserB['channel'] === $browserA['channel'] && $browserB['generation'] === 1, 'successful switch advances the shared browser generation without transferring a grant');
+essentialCheck($browserB === $contextB->browserState(), 'ordinary rendering never increments the company generation');
+$otherBrowser = new CompanyContext($db, $p, new ContextSession(), 8);
+essentialCheck($otherBrowser->browserState()['channel'] !== $browserA['channel'], 'different sessions never publish into another session channel');
 expectContext(fn() => $contextB->assertToken($tokenA), 'company_context_mismatch');
 $tokenB = $contextB->token(); $contextB->assertToken($tokenB);
 // The original public Download controller must resolve the selected staff

@@ -71,7 +71,7 @@ $table_data = array_merge($table_data, [
     _l('proposal_status'),
 ]);
 
-$custom_fields = get_custom_fields('proposal', ['show_on_table' => 1]);
+$custom_fields = $native_sales_custom_fields ?? get_custom_fields('proposal', ['show_on_table' => 1]);
 
 foreach ($custom_fields as $field) {
     array_push($table_data, [
@@ -80,7 +80,7 @@ foreach ($custom_fields as $field) {
     ]);
 }
 
-$table_data = hooks()->apply_filters('proposals_table_columns', $table_data);
+if(empty($native_company_sales_manage))$table_data = hooks()->apply_filters('proposals_table_columns', $table_data);
 render_datatable($table_data, $class ?? 'proposals', [], [
     'data-last-order-identifier' => 'proposals',
     'data-default-order'         => get_table_last_order('proposals'),

@@ -6,7 +6,7 @@ class Filters extends AdminController
 {
     private function nativeStore($identifier,$view):array
     {
-        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='related_tasks'&&$view==='tasks_relations')||($identifier==='tasks'&&$view==='tasks')))throw new DomainException('native_filter_invalid');
+        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='contracts'&&$view==='contracts')||($identifier==='credit_notes'&&$view==='credit_notes')||(in_array($identifier,['proposals','estimates'],true)&&$view===$identifier)||($identifier==='related_tasks'&&$view==='tasks_relations')||($identifier==='tasks'&&$view==='tasks')))throw new DomainException('native_filter_invalid');
         $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');
         require_once APPPATH.'services/NativeCompanyFilters.php';
         $ctx=CompanyRequestScope::context();
@@ -16,6 +16,15 @@ class Filters extends AdminController
         }elseif(in_array($identifier,['related_tasks','tasks'],true)){
             require_once APPPATH.'services/NativeCompanyRelatedTaskTableFactory.php';
             $table=(new NativeCompanyRelatedTaskTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
+        }elseif(in_array($identifier,['proposals','estimates'],true)){
+            require_once APPPATH.'services/NativeCompanySalesTableFactory.php';
+            $table=(new NativeCompanySalesTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
+        }elseif($identifier==='credit_notes'){
+            require_once APPPATH.'services/NativeCompanyCreditTableFactory.php';
+            $table=(new NativeCompanyCreditTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
+        }elseif($identifier==='contracts'){
+            require_once APPPATH.'services/NativeCompanyContractTableFactory.php';
+            $table=(new NativeCompanyContractTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
         }elseif($identifier==='projects'){
             require_once APPPATH.'services/NativeCompanyProjectTableFactory.php';
             $table=(new NativeCompanyProjectTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);

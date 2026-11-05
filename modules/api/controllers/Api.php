@@ -20,6 +20,11 @@ class Api extends AdminController
 
     public function api_management()
     {
+        if (!is_admin()) {
+            access_denied('API');
+            return;
+        }
+
         $data['user_api'] = $this->api_model->get_user();
         $data['title'] = _l('api_management');
         $this->load->view('api_management', $data);

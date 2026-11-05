@@ -95,7 +95,19 @@ final class NativeCompanyContractsController
     {
         $verb=strtoupper((string)$this->ci->input->method(true));
         if(!in_array($verb,['GET','HEAD'],true)){$this->methodNotAllowed('GET, HEAD');return;}
-        $this->render(null,$verb==='HEAD');
+        $this->authorize();$this->csrf();
+        if($verb==='HEAD'){$this->ci->output->set_output('');return;}
+        require_once __DIR__.'/NativeCompanyContractIndex.php';
+        require_once __DIR__.'/NativeCompanyContractTable.php';
+        require_once __DIR__.'/NativeCompanyFilters.php';
+        $data=(new NativeCompanyContractIndex($this->ci->db,db_prefix()))->presentation($this->issuer,$this->actor);
+        $table=new NativeCompanyContractTable($this->ci->db,db_prefix(),$this->issuer,$this->actor,'contracts',$data['options'],[]);
+        $saved=(new NativeCompanyFilters($this->ci->db,db_prefix(),$this->issuer,$this->actor,$table))->listing();
+        $data['table']=new NativeCompanyContractTable($this->ci->db,db_prefix(),$this->issuer,$this->actor,'contracts',$data['options'],$saved);
+        $data['native_contract_columns']=(new NativeCompanyCustomFields($this->ci->db,db_prefix()))->definitions($this->issuer,$this->actor,'contracts',['active'=>1,'show_on_table'=>1]);
+        $data['title']=_l('contracts');$data['can_create']=$this->acl->can($this->issuer,$this->actor,'contracts','create');
+        $this->authorize();$this->ci->output->set_header('Cache-Control: private, no-store');
+        $this->ci->load->view('admin/contracts/manage',$data);
     }
 
     public function contract($canonical=''):void
@@ -137,15 +149,17 @@ final class NativeCompanyContractsController
 
     public function table($client=''):void
     {
-        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$post=$this->ci->input->post(null,false)?:[];
-        $start=$post['start']??0;$length=$post['length']??25;$search=$post['search']['value']??'';
-        if(!preg_match('/^(0|[1-9][0-9]{0,5})$/D',(string)$start)||!preg_match('/^[1-9][0-9]{0,2}$/D',(string)$length)||(int)$length>100||!is_string($search)||strlen($search)>191)throw new DomainException('native_contract_invalid');
-        $p=db_prefix();$where="c.issuer_id=? AND c.status<>'deleted'";$args=[$this->issuer];if($client!==''){$where.=' AND c.client_id=?';$args[]=IssuerPolicy::id($client);}
-        $base=$where;$baseArgs=$args;if($search!==''){$where.=" AND c.name LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';}
-        $total=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $base",$baseArgs)->row()->n;$filtered=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $where",$args)->row()->n;
-        $rows=IssuerStorage::query($this->ci->db,"SELECT c.id,c.name,c.start_date,c.due_date,c.status,u.company FROM {$p}company_contracts c JOIN {$p}clients u ON u.userid=c.client_id WHERE $where ORDER BY c.id LIMIT ".(int)$length.' OFFSET '.(int)$start,$args)->result_array();
-        $e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$data=[];foreach($rows as$row){$id=$this->canonical((int)$row['id']);$data[]=[$id,'<a href="'.$e(CompanyRequestScope::adminUrl($this->ci,'contracts/contract/'.$id)).'">'.$e($row['name']).'</a>',$e($row['company']),'','',$e($row['start_date']),$e($row['due_date']),'',$e($row['status'])];}$this->authorize();
-        $this->ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'recordsTotal'=>$total,'recordsFiltered'=>$filtered,'data'=>$data,'iTotalRecords'=>$total,'iTotalDisplayRecords'=>$filtered,'aaData'=>$data],JSON_THROW_ON_ERROR));
+        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();
+        require_once __DIR__.'/NativeCompanyContractIndex.php';require_once __DIR__.'/NativeCompanyTableOrder.php';
+        $post=$this->ci->input->post(null,false)?:[];
+        unset($post['_company_context'],$post['_native_company_csrf'],$post['native_contracts_csrf']);
+        if(isset($this->ci->security))unset($post[$this->ci->security->get_csrf_token_name()]);
+        $page=(new NativeCompanyContractIndex($this->ci->db,db_prefix()))->page($this->issuer,$this->actor,$post,$client);
+        $can_edit=$this->acl->can($this->issuer,$this->actor,'contracts','edit');$can_delete=$this->acl->can($this->issuer,$this->actor,'contracts','delete');
+        $native_contracts_csrf=$this->csrf();$can_view_customers=$page['can_view_customers'];$custom_fields=$page['definitions'];$data=[];
+        foreach($page['rows'] as $contract_row){$row=[];include __DIR__.'/../views/admin/contracts/native_table_row.php';$data[]=$row;}
+        if(isset($post['last_order_identifier']))(new NativeCompanyTableOrder($this->ci->db,db_prefix(),$this->issuer,$this->actor))->save('contracts',$post['order']??[['column'=>6,'dir'=>'asc']],count(NativeCompanyContractIndex::COLUMNS)+count($page['definitions']));
+        $this->authorize();$this->ci->output->set_header('Cache-Control: private, no-store')->set_content_type('application/json')->set_output(json_encode(['draw'=>$page['draw'],'recordsTotal'=>$page['recordsTotal'],'recordsFiltered'=>$page['recordsFiltered'],'data'=>$data,'iTotalRecords'=>$page['recordsTotal'],'iTotalDisplayRecords'=>$page['recordsFiltered'],'aaData'=>$data],JSON_THROW_ON_ERROR|JSON_INVALID_UTF8_SUBSTITUTE));
     }
     public function notes($canonical):void
     {

@@ -37,12 +37,13 @@ final class NativeCompanyCatalogUi
     public function groups():array{return self::sortRows(array_merge($this->legacy?->groups()??[],array_map(static fn($r)=>self::project('item_group',$r),$this->owned->groups())),'name');}
     public function item($id):array{$ref=$this->source('item',$id);return$ref['source_kind']==='item'?$this->legacy->item($ref['source_id']):self::project('item',$this->owned->item($ref['source_id']));}
     public function search(string $q):array{$rows=$this->owned->search($q);foreach($rows as&$r){$r['id']=self::encoded('item',$r['id']);$r['source_kind']='company_item';}unset($r);return array_slice(self::sortRows(array_merge($this->legacy?->search($q)??[],$rows),'name'),0,100);}
-    public function itemTable(int $start,int $length,string $q=''):array{
-        if($this->legacy===null){$result=$this->owned->itemTable($start,$length,$q);$result['rows']=array_map(static fn($r)=>self::project('item',$r),$result['rows']);return$result;}
-        if($start<0||$start>100000||$length<1||$length>100)throw new DomainException('company_catalog_invalid');
-        $out=['total'=>0,'filtered'=>0,'rows'=>[]];
-        foreach([$this->legacy,$this->owned] as$source){$first=true;for($offset=0;$offset<$start+$length;$offset+=100){$page=$source->itemTable($offset,min(100,$start+$length-$offset),$q);if($first){$out['total']+=$page['total'];$out['filtered']+=$page['filtered'];$first=false;}foreach($page['rows']as$row)$out['rows'][]=$source===$this->owned?self::project('item',$row):$row;if(count($page['rows'])<min(100,$start+$length-$offset))break;}}
-        $out['rows']=array_slice(self::sortRows($out['rows'],'description'),$start,$length);return$out;
+    public function itemTable(int $start,int $length,string $q='',array $orders=[],array $definitions=[]):array{
+        if($this->legacy===null){$result=$this->owned->itemTable($start,$length,$q,$orders,$definitions);$result['rows']=array_map(static fn($r)=>self::project('item',$r),$result['rows']);return$result;}
+        // The constructor already forbids an owned shadow in the principal catalogue.
+        // Recheck that invariant and let its native SQL order before LIMIT/OFFSET.
+        $result=$this->legacy->itemTable($start,$length,$q,$orders,$definitions);
+        foreach(['company_items','company_taxes','company_item_groups']as$table)if(IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? LIMIT 1',[$this->issuer])->row_array())throw new DomainException('company_catalog_primary_owned_migration_required');
+        return$result;
     }
     /** Native get/get_grouped readers, no new UI or implicit issuer selection. */
     public function items():array

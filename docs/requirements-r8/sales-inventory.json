@@ -1,0 +1,1325 @@
+{
+  "purpose": "Static source inventory, not runtime or visual equivalence evidence. Working adaptations and tests are described in sales.md.",
+  "refs": {
+    "reference_4_0_2": "aa58b832b3c5ed04a599caacba125b056c081ba7",
+    "target_main_4_8_8": "3cd2ac577a969840c94b019f602cb69d710c0e78"
+  },
+  "files": [
+    {
+      "path": "application/controllers/admin/Credit_notes.php",
+      "reference_4_0_2": {
+        "sha256": "e730495f2f02148e16d59bf5ee024de262c5993702a765dc4f1863c30dc307c7",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_credit_notes",
+          "table",
+          "update_number_settings",
+          "validate_number",
+          "credit_note",
+          "apply_credits_to_invoices",
+          "credit_note_from_invoice",
+          "refund",
+          "create_refund",
+          "edit_refund",
+          "delete_refund",
+          "get_credit_note_data_ajax",
+          "mark_open",
+          "delete_attachment",
+          "mark_void",
+          "send_to_email",
+          "delete_invoice_applied_credit",
+          "delete_credit_note_applied_credit",
+          "delete",
+          "pdf"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "e5ee30bf6920a2ecdea7a13205bb7cc23bc448b4102eb17b4cf4657999006762",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_credit_notes",
+          "table",
+          "update_number_settings",
+          "validate_number",
+          "credit_note",
+          "apply_credits_to_invoices",
+          "credit_note_from_invoice",
+          "refund",
+          "create_refund",
+          "edit_refund",
+          "delete_refund",
+          "get_credit_note_data_ajax",
+          "mark_open",
+          "delete_attachment",
+          "mark_void",
+          "send_to_email",
+          "delete_invoice_applied_credit",
+          "delete_credit_note_applied_credit",
+          "delete",
+          "pdf"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/controllers/admin/Estimates.php",
+      "reference_4_0_2": {
+        "sha256": "d28416c0dbb3f83115c1c5584d769ff639db1ba35ce85a38fbaa50b1dde6b0e7",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_estimates",
+          "table",
+          "estimate",
+          "clear_signature",
+          "update_number_settings",
+          "validate_estimate_number",
+          "delete_attachment",
+          "get_estimate_data_ajax",
+          "get_estimates_total",
+          "add_note",
+          "get_notes",
+          "mark_action_status",
+          "send_expiry_reminder",
+          "send_to_email",
+          "convert_to_invoice",
+          "copy",
+          "delete",
+          "clear_acceptance_info",
+          "pdf",
+          "get_pipeline",
+          "pipeline_open",
+          "update_pipeline",
+          "pipeline",
+          "pipeline_load_more",
+          "set_estimate_pipeline_autoload",
+          "get_due_date"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "ea77c568678a31fa3d2c7639911307b377d54588718a485f1373b7d3dce60c34",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_estimates",
+          "table",
+          "estimate",
+          "clear_signature",
+          "update_number_settings",
+          "validate_estimate_number",
+          "delete_attachment",
+          "get_estimate_data_ajax",
+          "get_estimates_total",
+          "add_note",
+          "get_notes",
+          "mark_action_status",
+          "send_expiry_reminder",
+          "send_to_email",
+          "convert_to_invoice",
+          "copy",
+          "delete",
+          "clear_acceptance_info",
+          "pdf",
+          "get_pipeline",
+          "pipeline_open",
+          "update_pipeline",
+          "pipeline",
+          "pipeline_load_more",
+          "set_estimate_pipeline_autoload",
+          "get_due_date"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/controllers/admin/Invoice_items.php",
+      "reference_4_0_2": {
+        "sha256": "436402a960f2ec12c6951de51f0eec9eb0cd219b7ccb6c214b92370af3d62c0b",
+        "public_methods": [
+          "__construct",
+          "index",
+          "table",
+          "manage",
+          "import",
+          "add_group",
+          "update_group",
+          "delete_group",
+          "delete",
+          "bulk_action",
+          "search",
+          "get_item_by_id",
+          "copy"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "596d7565360c703a25895da334bb518cb68ba619f485c5c8ac9a92f42349c7ee",
+        "public_methods": [
+          "__construct",
+          "index",
+          "table",
+          "manage",
+          "import",
+          "add_group",
+          "update_group",
+          "delete_group",
+          "delete",
+          "bulk_action",
+          "search",
+          "get_item_by_id",
+          "copy"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/controllers/admin/Invoices.php",
+      "reference_4_0_2": {
+        "sha256": "7c28fcbfb9f27d5e234c846f45407c7e79b5a4a1faf1af632273078e59c5878c",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_invoices",
+          "recurring",
+          "table",
+          "client_change_data",
+          "update_number_settings",
+          "validate_invoice_number",
+          "add_note",
+          "get_notes",
+          "pause_overdue_reminders",
+          "resume_overdue_reminders",
+          "mark_as_cancelled",
+          "unmark_as_cancelled",
+          "copy",
+          "get_merge_data",
+          "get_bill_expense_data",
+          "invoice",
+          "get_invoice_data_ajax",
+          "apply_credits",
+          "get_invoices_total",
+          "record_invoice_payment_ajax",
+          "record_payment",
+          "send_to_email",
+          "delete_payment",
+          "delete",
+          "delete_attachment",
+          "send_overdue_notice",
+          "pdf",
+          "mark_as_sent",
+          "get_due_date"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "bacac91c064c6c52e8aed5522041000b46f316ab00ed44959a7d68f03ef7244d",
+        "public_methods": [
+          "standalone_billing",
+          "__construct",
+          "index",
+          "list_invoices",
+          "recurring",
+          "table",
+          "client_change_data",
+          "update_number_settings",
+          "validate_invoice_number",
+          "add_note",
+          "get_notes",
+          "pause_overdue_reminders",
+          "resume_overdue_reminders",
+          "mark_as_cancelled",
+          "unmark_as_cancelled",
+          "copy",
+          "drafts",
+          "get_merge_data",
+          "get_bill_expense_data",
+          "invoice",
+          "get_invoice_data_ajax",
+          "apply_credits",
+          "get_invoices_total",
+          "record_invoice_payment_ajax",
+          "record_payment",
+          "send_to_email",
+          "delete_payment",
+          "delete",
+          "delete_attachment",
+          "send_overdue_notice",
+          "pdf",
+          "mark_as_sent",
+          "get_due_date"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/controllers/admin/Payments.php",
+      "reference_4_0_2": {
+        "sha256": "0a00571a407ac4deb15f3b0bc7bd8b6c02fcc2ffa645e7c29e6cc14a75e465d3",
+        "public_methods": [
+          "__construct",
+          "batch_payment_modal",
+          "add_batch_payment",
+          "index",
+          "list_payments",
+          "table",
+          "payment",
+          "pdf",
+          "send_to_email",
+          "delete"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "c63434f14b21713fe6c3684ebbd00eb014e2d14fa6f1c6fd449855d69b2c4755",
+        "public_methods": [
+          "__construct",
+          "post_refund",
+          "post_refund_manual",
+          "batch_payment_modal",
+          "add_batch_payment",
+          "index",
+          "list_payments",
+          "table",
+          "payment",
+          "pdf",
+          "send_to_email",
+          "delete"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/controllers/admin/Proposals.php",
+      "reference_4_0_2": {
+        "sha256": "314b5a96ed26fba5a9fb81b9ca968aafef6501612be539d422ae6dcd59e9b0ea",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_proposals",
+          "table",
+          "proposal_relations",
+          "delete_attachment",
+          "clear_signature",
+          "sync_data",
+          "proposal",
+          "get_template",
+          "send_expiry_reminder",
+          "clear_acceptance_info",
+          "pdf",
+          "get_proposal_data_ajax",
+          "add_note",
+          "get_notes",
+          "convert_to_estimate",
+          "convert_to_invoice",
+          "get_invoice_convert_data",
+          "get_estimate_convert_data",
+          "send_to_email",
+          "copy",
+          "mark_action_status",
+          "delete",
+          "get_relation_data_values",
+          "add_proposal_comment",
+          "edit_comment",
+          "get_proposal_comments",
+          "remove_comment",
+          "save_proposal_data",
+          "pipeline",
+          "pipeline_open",
+          "update_pipeline",
+          "get_pipeline",
+          "pipeline_load_more",
+          "set_proposal_pipeline_autoload",
+          "get_due_date"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "74e57176bd037c10c6acdcbb2dadea1a9492ed3cb071c4c9b30840bca5437c65",
+        "public_methods": [
+          "__construct",
+          "index",
+          "list_proposals",
+          "table",
+          "proposal_relations",
+          "delete_attachment",
+          "clear_signature",
+          "sync_data",
+          "proposal",
+          "get_template",
+          "send_expiry_reminder",
+          "clear_acceptance_info",
+          "pdf",
+          "get_proposal_data_ajax",
+          "add_note",
+          "get_notes",
+          "convert_to_estimate",
+          "convert_to_invoice",
+          "get_invoice_convert_data",
+          "get_estimate_convert_data",
+          "send_to_email",
+          "copy",
+          "mark_action_status",
+          "delete",
+          "get_relation_data_values",
+          "add_proposal_comment",
+          "edit_comment",
+          "get_proposal_comments",
+          "remove_comment",
+          "save_proposal_data",
+          "pipeline",
+          "pipeline_open",
+          "update_pipeline",
+          "get_pipeline",
+          "pipeline_load_more",
+          "set_proposal_pipeline_autoload",
+          "get_due_date"
+        ]
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/helpers/menu_helper.php",
+      "reference_4_0_2": {
+        "sha256": "597aad0cc818c5d91c94a77e336738657bc5f50455b983868e2dca6750eed01f"
+      },
+      "target_main_4_8_8": {
+        "sha256": "f6418259a053ff6bdd42418c83f26743c592f105cd7c0060949b29af867af6e9"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/credit_notes/apply_credits_to_invoices.php",
+      "reference_4_0_2": {
+        "sha256": "4af1bd74ed04d96939b1803b9c71aed36921469919714da334e7588f15508d6f"
+      },
+      "target_main_4_8_8": {
+        "sha256": "4af1bd74ed04d96939b1803b9c71aed36921469919714da334e7588f15508d6f"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/apply_invoice_credits.php",
+      "reference_4_0_2": {
+        "sha256": "8d8d9555b0091a0b61d37340a38554829f54fe09933bc23269562764a81db11c"
+      },
+      "target_main_4_8_8": {
+        "sha256": "8d8d9555b0091a0b61d37340a38554829f54fe09933bc23269562764a81db11c"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/billing_and_shipping_template.php",
+      "reference_4_0_2": {
+        "sha256": "490c00fda5f05a77dc5465de445e7eeed0ccd45d97b93c23a840d4e1e6d54c90"
+      },
+      "target_main_4_8_8": {
+        "sha256": "490c00fda5f05a77dc5465de445e7eeed0ccd45d97b93c23a840d4e1e6d54c90"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/credit_note.php",
+      "reference_4_0_2": {
+        "sha256": "b1e4b4e0980c300e680f8717a80ed50a8dc80c0c6677232c1292350976f4584a"
+      },
+      "target_main_4_8_8": {
+        "sha256": "b1e4b4e0980c300e680f8717a80ed50a8dc80c0c6677232c1292350976f4584a"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/credit_note_preview_template.php",
+      "reference_4_0_2": {
+        "sha256": "31260b2863c79a9e5bed7800a11155deedac676e123df14c7b181cfd6e35bf94"
+      },
+      "target_main_4_8_8": {
+        "sha256": "31260b2863c79a9e5bed7800a11155deedac676e123df14c7b181cfd6e35bf94"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/invoice_create_credit_note_confirm.php",
+      "reference_4_0_2": {
+        "sha256": "f615db4c83f35e868de5616caddfdfaf932c4df1cb28e67f08ba44b87220783e"
+      },
+      "target_main_4_8_8": {
+        "sha256": "f615db4c83f35e868de5616caddfdfaf932c4df1cb28e67f08ba44b87220783e"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/manage.php",
+      "reference_4_0_2": {
+        "sha256": "33232c170f6f8c02252937f9e5a7bff2441dd8f525374326604d2fac9cf751ea"
+      },
+      "target_main_4_8_8": {
+        "sha256": "33232c170f6f8c02252937f9e5a7bff2441dd8f525374326604d2fac9cf751ea"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/movement_fields.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "8f8a1dd7f82f71ab49c8a37ed1819732fc90fe23e6cdf2d1cd3a9108fa51b800"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/credit_notes/native.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "2fe1414b39e92deb8b47bb472e30500474f592c9957df36186145d7d27cd9cc8"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/credit_notes/refund.php",
+      "reference_4_0_2": {
+        "sha256": "3b7195af9d94e5b6b0090a27e979e228761ca8283e2e2853dc4d3c1b9126ba1b"
+      },
+      "target_main_4_8_8": {
+        "sha256": "3b7195af9d94e5b6b0090a27e979e228761ca8283e2e2853dc4d3c1b9126ba1b"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/send_to_client.php",
+      "reference_4_0_2": {
+        "sha256": "dc8c70e717c1f63d0f985627974214d9bd045f69c28fb168ea5adcfa9829f6d4"
+      },
+      "target_main_4_8_8": {
+        "sha256": "dc8c70e717c1f63d0f985627974214d9bd045f69c28fb168ea5adcfa9829f6d4"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/credit_notes/table_html.php",
+      "reference_4_0_2": {
+        "sha256": "98ae802f5f698bb67cb4215268229d6f68e4cc0ad238c8000a4d5ef4bdeda3f5"
+      },
+      "target_main_4_8_8": {
+        "sha256": "98ae802f5f698bb67cb4215268229d6f68e4cc0ad238c8000a4d5ef4bdeda3f5"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/_add_edit_items.php",
+      "reference_4_0_2": {
+        "sha256": "cc1f1d39417e32780135dabed3b30a72e707305c699baa1e045b69523921d217"
+      },
+      "target_main_4_8_8": {
+        "sha256": "cc1f1d39417e32780135dabed3b30a72e707305c699baa1e045b69523921d217"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/billing_and_shipping_template.php",
+      "reference_4_0_2": {
+        "sha256": "71b6e081227f7891ac5cb0c0617fa227b2313259e886a852fb405e99adf1e82c"
+      },
+      "target_main_4_8_8": {
+        "sha256": "71b6e081227f7891ac5cb0c0617fa227b2313259e886a852fb405e99adf1e82c"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimate.php",
+      "reference_4_0_2": {
+        "sha256": "74a48725f39214420ef4ae771bea46083fbd620fc0d35ecd2e240c1bb1b270f5"
+      },
+      "target_main_4_8_8": {
+        "sha256": "74a48725f39214420ef4ae771bea46083fbd620fc0d35ecd2e240c1bb1b270f5"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimate_preview_template.php",
+      "reference_4_0_2": {
+        "sha256": "0f7a29dcba62fd02eea0c3d569a24d51b4faf1a2242afaa37d6b67ca46fb0397"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0f7a29dcba62fd02eea0c3d569a24d51b4faf1a2242afaa37d6b67ca46fb0397"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimate_send_to_client.php",
+      "reference_4_0_2": {
+        "sha256": "dc2afe50cdd9cd6c40bc86616a38cfd5242e4127cbe3fdbed021ea98429bbcd4"
+      },
+      "target_main_4_8_8": {
+        "sha256": "dc2afe50cdd9cd6c40bc86616a38cfd5242e4127cbe3fdbed021ea98429bbcd4"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimate_template.php",
+      "reference_4_0_2": {
+        "sha256": "17edf120b415b20a20f39e0377d98e245145e3bf784c63c433dace264e5a4fce"
+      },
+      "target_main_4_8_8": {
+        "sha256": "17edf120b415b20a20f39e0377d98e245145e3bf784c63c433dace264e5a4fce"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimates_top_stats.php",
+      "reference_4_0_2": {
+        "sha256": "0dec6f7bfcec0ee2abd7aa63e508e97313f77b63ff44d576c16b00151f5bf1ae"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0dec6f7bfcec0ee2abd7aa63e508e97313f77b63ff44d576c16b00151f5bf1ae"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/estimates_total_template.php",
+      "reference_4_0_2": {
+        "sha256": "c6a01d84bfe6625a35908b62e8d80c2936b57456d138a135bb1a5485dfe1f26d"
+      },
+      "target_main_4_8_8": {
+        "sha256": "c6a01d84bfe6625a35908b62e8d80c2936b57456d138a135bb1a5485dfe1f26d"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/list_template.php",
+      "reference_4_0_2": {
+        "sha256": "ef1a5bf654b67ba8a44115633d91d3474aa5c6b0980a3715778bf737586afe6e"
+      },
+      "target_main_4_8_8": {
+        "sha256": "ef1a5bf654b67ba8a44115633d91d3474aa5c6b0980a3715778bf737586afe6e"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/manage.php",
+      "reference_4_0_2": {
+        "sha256": "5dba2d0a13d023b1b9c3000a7b36c197950eabe2323033e6b68048b8892591c3"
+      },
+      "target_main_4_8_8": {
+        "sha256": "c03f4e1ffad7a347acc3c9e8f5340a25facd516c0667f93756db1aa92a0507c7"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/estimates/pipeline/_kanban_card.php",
+      "reference_4_0_2": {
+        "sha256": "532e226630adf4ac72749df88c9d7ab4ff8a73011a243343fd535d6863bde5a2"
+      },
+      "target_main_4_8_8": {
+        "sha256": "e69dcb6bdc908cc47af99824a227cc34ec2acf7ee6ee087d7678c76af41aa362"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/estimates/pipeline/estimate.php",
+      "reference_4_0_2": {
+        "sha256": "cf856b3af8f0957b178b69dd3b525f52dd19b104c548faf61f18138e146697de"
+      },
+      "target_main_4_8_8": {
+        "sha256": "cf856b3af8f0957b178b69dd3b525f52dd19b104c548faf61f18138e146697de"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/pipeline/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/pipeline/manage.php",
+      "reference_4_0_2": {
+        "sha256": "93e23d40bc7a316e032803be67d27a0793ce0967493510f9cbdae2497ff53fbe"
+      },
+      "target_main_4_8_8": {
+        "sha256": "93e23d40bc7a316e032803be67d27a0793ce0967493510f9cbdae2497ff53fbe"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/pipeline/pipeline.php",
+      "reference_4_0_2": {
+        "sha256": "93ac60bd1b06e61817c902afa69ee14276a7c6278a2351430183e3b506173dec"
+      },
+      "target_main_4_8_8": {
+        "sha256": "a9f987ac5e557ca149da2f9925a3c2d3c5f0914d386bbba643ef9295edcc9c43"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/estimates/quick_stats.php",
+      "reference_4_0_2": {
+        "sha256": "ceb319ea6b18acad2941a67335b7c06d94b51c9e991a004e844c01cca630ec6b"
+      },
+      "target_main_4_8_8": {
+        "sha256": "ceb319ea6b18acad2941a67335b7c06d94b51c9e991a004e844c01cca630ec6b"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/schedule.php",
+      "reference_4_0_2": {
+        "sha256": "9ccdf88f3cfb92c27de6e060a1f5361e97bab4b91d4de5732ef16a6b3274812d"
+      },
+      "target_main_4_8_8": {
+        "sha256": "9ccdf88f3cfb92c27de6e060a1f5361e97bab4b91d4de5732ef16a6b3274812d"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/estimates/table_html.php",
+      "reference_4_0_2": {
+        "sha256": "014a0e807ce48231e5ecb244dcc80ac0179a7a2d2c6e5c9f2e8f37ba07be3ded"
+      },
+      "target_main_4_8_8": {
+        "sha256": "014a0e807ce48231e5ecb244dcc80ac0179a7a2d2c6e5c9f2e8f37ba07be3ded"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoice_items/import.php",
+      "reference_4_0_2": {
+        "sha256": "7a18d069f01fc2579ccd69d52ac872ec7f32b0772d750d6ce789589a2c54cab4"
+      },
+      "target_main_4_8_8": {
+        "sha256": "7a18d069f01fc2579ccd69d52ac872ec7f32b0772d750d6ce789589a2c54cab4"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoice_items/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoice_items/item.php",
+      "reference_4_0_2": {
+        "sha256": "63e1afafec52125ddf15e30408d717dd68a376400bbf51bde6c857681ee6512a"
+      },
+      "target_main_4_8_8": {
+        "sha256": "4faae1c796c0585a45b9f714cbe4ba54e461b91eb1ea9c61fa35851a8ca6afe1"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoice_items/item_select.php",
+      "reference_4_0_2": {
+        "sha256": "f8c586688e0307729b47cfb62e013cfc1fa2ac3bfd054ed112200c30781efb5c"
+      },
+      "target_main_4_8_8": {
+        "sha256": "ed673b60a824e8a6bc0672eb631b9872baeef234ca48ba0f09d88c0e237d5bb4"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoice_items/manage.php",
+      "reference_4_0_2": {
+        "sha256": "bf4f2e37bc0cfaa91fa5c1156041ff518e37fc96fb33fc4f478588e651845460"
+      },
+      "target_main_4_8_8": {
+        "sha256": "5a767cae80e6bca7dc3f5388b5880dac6bc81b106d7feb5a328ec9f5352f0649"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/bill_expenses.php",
+      "reference_4_0_2": {
+        "sha256": "8142fc68f6e931d1a9c8f5a6b271b11e8cdd7bc82437c59a3928f180449e74f5"
+      },
+      "target_main_4_8_8": {
+        "sha256": "70b1cfdfa427f931851407fcf3d4479e18195b7a941cc845ea58b4503460a9c0"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/billing_and_shipping_template.php",
+      "reference_4_0_2": {
+        "sha256": "b0fb464fd3626b699b04a5339e73628f614632b4775150c3a85bd89a810b82ed"
+      },
+      "target_main_4_8_8": {
+        "sha256": "b0fb464fd3626b699b04a5339e73628f614632b4775150c3a85bd89a810b82ed"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/billing_current.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "ec3f2b9088c06e536274081472b1b11891d812b9b50efeb25f41434cbfbd6539"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/filter_params.php",
+      "reference_4_0_2": {
+        "sha256": "adbfee41ef9bbcf86781399ac1f8c2f656455ddd8e6e6fd9e1d12c5231294882"
+      },
+      "target_main_4_8_8": {
+        "sha256": "96d5ad393b1a8fa3359bae7c07c03263ece13d0729f8b4c614c7f42912ac111e"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/financial_position.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "438b7fdccd00de4a1f3b007d94f0e2ca68dcc2e0d488f84a9f6bbbbe3a3c841f"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/invoice.php",
+      "reference_4_0_2": {
+        "sha256": "4aadb9bca3dea2e77eeff4fc95d1c96637dbf11922f8b5e53461e98561519229"
+      },
+      "target_main_4_8_8": {
+        "sha256": "a1815f2419a0b6d06ad7a6dd4ef3d5c74a29ed8ef1cbf4bccecffe6a1e33a822"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoice_payments_table.php",
+      "reference_4_0_2": {
+        "sha256": "a18e30ff535a88d1294529cb2d06c7c54756994337a3c2caae14de3cb0838d18"
+      },
+      "target_main_4_8_8": {
+        "sha256": "325e219f39c588640fb9e317dde70df0143d8b0936aa36d1b4b29e0d295c36b7"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoice_preview_html.php",
+      "reference_4_0_2": {
+        "sha256": "c96ad9eecec505868c6e2a6737ab5bdfb40ab4e1177e0d80c71e85a3fe21a1bf"
+      },
+      "target_main_4_8_8": {
+        "sha256": "138a07fe9a5413fa7fab45ca894f359935b4c59c3d1435197d3d01592ab3fddb"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoice_preview_template.php",
+      "reference_4_0_2": {
+        "sha256": "92a3b45cc570b5ffa14e33157f6e22cf1811a68b544671ca5bc4f2b05ec418d3"
+      },
+      "target_main_4_8_8": {
+        "sha256": "093e6730579d6d9b67278285a085d3a6730aee8951f4cc69cf168024b939f646"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoice_send_to_client.php",
+      "reference_4_0_2": {
+        "sha256": "473610e2fd507a57a943176e6d574b5de8981598adad77573d0c1f4144c77422"
+      },
+      "target_main_4_8_8": {
+        "sha256": "9f682ff1c88e91720bd7df9d07e456b3396e611767f7b6954c2bd4be7dabf16b"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoice_template.php",
+      "reference_4_0_2": {
+        "sha256": "f0d7d1a0c806e44f7800640bc36ab8cdab370b9f51616672a161ba3babb17f89"
+      },
+      "target_main_4_8_8": {
+        "sha256": "f5d440de54f05db885a6aa9b88d840050353efb433deeb3adf2bfce8e5583015"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/invoices_top_stats.php",
+      "reference_4_0_2": {
+        "sha256": "f969a1a0420201b9a868a8445079a328cd6828f49a7a18f57d56e887e496b4c1"
+      },
+      "target_main_4_8_8": {
+        "sha256": "f969a1a0420201b9a868a8445079a328cd6828f49a7a18f57d56e887e496b4c1"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/invoices_total_template.php",
+      "reference_4_0_2": {
+        "sha256": "ec35364c363ee6f690d84e1cf08ff8305f725d36aaff273bd9d65a789a924053"
+      },
+      "target_main_4_8_8": {
+        "sha256": "ec35364c363ee6f690d84e1cf08ff8305f725d36aaff273bd9d65a789a924053"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/list_template.php",
+      "reference_4_0_2": {
+        "sha256": "9574cbb664c41d3bc24f7804d4f59a632d5deb1c290c15a7d5d9df7244ea0383"
+      },
+      "target_main_4_8_8": {
+        "sha256": "cf1ecb9f1f3d6093cd313fab9d2efc26188b7abfeaaf9465e2e2a1825ce11e66"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/manage.php",
+      "reference_4_0_2": {
+        "sha256": "f24a0ebef531c559bdff639973d321fbdb87e105879d74eb9da69a1eddc3667e"
+      },
+      "target_main_4_8_8": {
+        "sha256": "24360db09fdeb437076e7cab82e4d2d6e686c5c846cf0e5aa3776d2e180e69c6"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/merge_invoice.php",
+      "reference_4_0_2": {
+        "sha256": "347b8a81d95d0c265aace54bc1efc0e681cd75394414a2c8fa03afff54d99c8f"
+      },
+      "target_main_4_8_8": {
+        "sha256": "9a4253daac8e66c722ea53e4495e0183a9bc3a9fdb8507084a8aca166d7412a0"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/native_copy.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "937555e9ce757a6055972ee34ab68d41ffc978eb44ef658b011ad219bfe81d00"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/native_drafts.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "01a036e63d264816cae2ddd5e96f91e43132baed179c8c6f796fc2fbd3799f76"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/native_drafts_editor_script.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "28ece75343afc6587223bb01f8a430794233e97b7805e422cc01fcf84213e3f0"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/native_recurring.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "014e99f45461ad7cc6f931155d4e064f309c3b8dcd41c7a5d6718a6afec05b80"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/native_standalone_billing.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "34bbe78775479f22f0f656653b0a43418ce8bc8d5388af268b2f26e819a48b6c"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/quick_stats.php",
+      "reference_4_0_2": {
+        "sha256": "03654ae2ea538fab43dc8530a400e0fab56549b7960bf3b05510618ca13cfdeb"
+      },
+      "target_main_4_8_8": {
+        "sha256": "2c7e2f8f7ce61ad1100535ac59f7f5341e16f14e21a455348b7b7c8af3cd886f"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/record_payment_template.php",
+      "reference_4_0_2": {
+        "sha256": "0c674e79207e6410c6b5725268b1a9d5d96535f40ba91f00cf5beb4c8d858834"
+      },
+      "target_main_4_8_8": {
+        "sha256": "6b24dba43ea8cc54f1a10ffc4b2c3d819367def694ce1798e7fbdc9f3066f9e3"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/recurring/filter_params.php",
+      "reference_4_0_2": {
+        "sha256": "6930b38b8a5d3e6079b85bf790294d627c2e183626f3bb7183182f84e5983bd6"
+      },
+      "target_main_4_8_8": {
+        "sha256": "6930b38b8a5d3e6079b85bf790294d627c2e183626f3bb7183182f84e5983bd6"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/recurring/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/recurring/list.php",
+      "reference_4_0_2": {
+        "sha256": "62726bd9ad0c5aa43581357fa08f8792903df2ac82e9e092c6f342f331a882ee"
+      },
+      "target_main_4_8_8": {
+        "sha256": "62726bd9ad0c5aa43581357fa08f8792903df2ac82e9e092c6f342f331a882ee"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/recurring/list_template.php",
+      "reference_4_0_2": {
+        "sha256": "51d1b761f6119a7f3117c6bf7961e7f95572a3a80ad3ef8f104fb0a91edc3115"
+      },
+      "target_main_4_8_8": {
+        "sha256": "51d1b761f6119a7f3117c6bf7961e7f95572a3a80ad3ef8f104fb0a91edc3115"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/recurring/table_html.php",
+      "reference_4_0_2": {
+        "sha256": "535ad6220c3d586a93f7deff66a0bd93b05ed676bd0667d20f6eb4eb69ade194"
+      },
+      "target_main_4_8_8": {
+        "sha256": "535ad6220c3d586a93f7deff66a0bd93b05ed676bd0667d20f6eb4eb69ade194"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/schedule.php",
+      "reference_4_0_2": {
+        "sha256": "6e31c38d48651e8dcc0f3750605408ec7dc1916f2b048aae96e9471e36a362c4"
+      },
+      "target_main_4_8_8": {
+        "sha256": "6e31c38d48651e8dcc0f3750605408ec7dc1916f2b048aae96e9471e36a362c4"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/invoices/table_html.php",
+      "reference_4_0_2": {
+        "sha256": "b88a8852f19df031021ed4eac45f45ffc65f3382f00c756cc56304cb887aa08d"
+      },
+      "target_main_4_8_8": {
+        "sha256": "33e5a208fe21118b16dab3921baa87c7d316f519c449cc4a96c827a6c6da74f8"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/table_row.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "f23759e8571fb9b3e05f516001878c065c3d5a8c5dd8fbe3ed23e3e651d4b692"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/invoices/view_payments_template.php",
+      "reference_4_0_2": {
+        "sha256": "9b6590a27792924bf00a4d7926f1a1474571c52ccec17ae792dc74337d00f9b3"
+      },
+      "target_main_4_8_8": {
+        "sha256": "9b6590a27792924bf00a4d7926f1a1474571c52ccec17ae792dc74337d00f9b3"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/payments/batch_payment_modal.php",
+      "reference_4_0_2": {
+        "sha256": "7d0593c0ed9f303f2236037123ea8e123582f43b93cd5daca66309a32344dbae"
+      },
+      "target_main_4_8_8": {
+        "sha256": "865747ab6b26f301767857d1893408b289bc2998d560722f6c31e83572f1c532"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/payments/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/payments/manage.php",
+      "reference_4_0_2": {
+        "sha256": "fc7c468053edde799d4687d785b88f419538cf17d2691c22ef2e8e7cd19fecd8"
+      },
+      "target_main_4_8_8": {
+        "sha256": "3ce484fe494c38e0ab0846b9c2329b910ddacd154c7d47cb7edb380ad2d23dd5"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/payments/payment.php",
+      "reference_4_0_2": {
+        "sha256": "9d37f8967288eb9062b8d966191a1a3f76d82e17a02c3e16065ec83bc95d0da3"
+      },
+      "target_main_4_8_8": {
+        "sha256": "7cebc245be7ebc86fd0c641a30a7d7c747d55bd5e4d3f2ed206b008020b3a39e"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/payments/post_refund.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "478cbd6c0cd1510a45ddb177b1cc6dd0cc30a6515b9a9b116c6f2963c814209d"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/payments/post_refund_manual.php",
+      "reference_4_0_2": null,
+      "target_main_4_8_8": {
+        "sha256": "0f037943e35aebb64474df6f83e84546247efcb0f14deac64a9cd6b6ade4700c"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/payments/send_to_client.php",
+      "reference_4_0_2": {
+        "sha256": "895a11fdc7af6d54afc6e988b06b32cdcdc7e33bb18489982356fc0fef9a3092"
+      },
+      "target_main_4_8_8": {
+        "sha256": "895a11fdc7af6d54afc6e988b06b32cdcdc7e33bb18489982356fc0fef9a3092"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/payments/table_html.php",
+      "reference_4_0_2": {
+        "sha256": "953d7f7b5a84bd7e73cb3789ee832b3a1f32083238c52bf739347071f66d4692"
+      },
+      "target_main_4_8_8": {
+        "sha256": "953d7f7b5a84bd7e73cb3789ee832b3a1f32083238c52bf739347071f66d4692"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/comments_template.php",
+      "reference_4_0_2": {
+        "sha256": "b9975f206837f7b9702fd4c493f444f1b25b3e27835680d51d7f98d8b93517af"
+      },
+      "target_main_4_8_8": {
+        "sha256": "b9975f206837f7b9702fd4c493f444f1b25b3e27835680d51d7f98d8b93517af"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/estimate_convert_template.php",
+      "reference_4_0_2": {
+        "sha256": "8fa09180244d79b01ab40897f28dc558a2cc08e626a48c8a2c3da043d819ddae"
+      },
+      "target_main_4_8_8": {
+        "sha256": "8fa09180244d79b01ab40897f28dc558a2cc08e626a48c8a2c3da043d819ddae"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/invoice_convert_template.php",
+      "reference_4_0_2": {
+        "sha256": "d1c13a04769f637a33079a0989ba0bcc2ea7823286967900f265e7be2af4ba4c"
+      },
+      "target_main_4_8_8": {
+        "sha256": "d1c13a04769f637a33079a0989ba0bcc2ea7823286967900f265e7be2af4ba4c"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/list_template.php",
+      "reference_4_0_2": {
+        "sha256": "75e2ead8769b5a323dde5057252c7cfca62294eef4dd7bd4242ad72d27b5d095"
+      },
+      "target_main_4_8_8": {
+        "sha256": "75e2ead8769b5a323dde5057252c7cfca62294eef4dd7bd4242ad72d27b5d095"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/manage.php",
+      "reference_4_0_2": {
+        "sha256": "30d14e483ac833a3119ab1ffb3f489634efbbadb135065fcc008717ad1f854bf"
+      },
+      "target_main_4_8_8": {
+        "sha256": "ae88866a9cc657fec6a44539bef27f2002d673ae56d5e6903b473c6d19a7ef09"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/proposals/pipeline/_kanban_card.php",
+      "reference_4_0_2": {
+        "sha256": "f29223f902a1ac4f700e2cb1b10761408e70029a43c32cb7cfd42dd3ab7c375d"
+      },
+      "target_main_4_8_8": {
+        "sha256": "624258b7d40ead730bd2720e8b1c545f1e9946c1dc49be0b2a6d206de179866f"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/proposals/pipeline/index.html",
+      "reference_4_0_2": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/pipeline/manage.php",
+      "reference_4_0_2": {
+        "sha256": "bcfd21e706d5e19beab3a8bff8c2eb13fe7a7f0211d49946277e01340899fa4d"
+      },
+      "target_main_4_8_8": {
+        "sha256": "bcfd21e706d5e19beab3a8bff8c2eb13fe7a7f0211d49946277e01340899fa4d"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/pipeline/pipeline.php",
+      "reference_4_0_2": {
+        "sha256": "6ec85ead53988a00d30f9f90edc4fc74bc271d05c728d6ef9d7d12b5f5474294"
+      },
+      "target_main_4_8_8": {
+        "sha256": "a39432269385a20e28363d87f523f8df6088892946a49e1271b7df2a317e96af"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "application/views/admin/proposals/pipeline/proposal.php",
+      "reference_4_0_2": {
+        "sha256": "0125cc1762a9a79d33d5fe86ffe8174cac425e8a900417d67d1173b57ced5e73"
+      },
+      "target_main_4_8_8": {
+        "sha256": "0125cc1762a9a79d33d5fe86ffe8174cac425e8a900417d67d1173b57ced5e73"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/proposal.php",
+      "reference_4_0_2": {
+        "sha256": "d6df79905caf8aaf7129eab9f3357c3f239a0699fe9e8b78709a971ac13d0d3c"
+      },
+      "target_main_4_8_8": {
+        "sha256": "d6df79905caf8aaf7129eab9f3357c3f239a0699fe9e8b78709a971ac13d0d3c"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/proposals_preview_template.php",
+      "reference_4_0_2": {
+        "sha256": "952c3c801cc635af776ad17c8e26356833f458e8d83ad98ef8062d3b6beee49f"
+      },
+      "target_main_4_8_8": {
+        "sha256": "952c3c801cc635af776ad17c8e26356833f458e8d83ad98ef8062d3b6beee49f"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/send_proposal_to_email_template.php",
+      "reference_4_0_2": {
+        "sha256": "e8d643580774746172df2adc0ef25b70b847ef873a42188ff850a04073a10321"
+      },
+      "target_main_4_8_8": {
+        "sha256": "e8d643580774746172df2adc0ef25b70b847ef873a42188ff850a04073a10321"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "application/views/admin/proposals/sync_data.php",
+      "reference_4_0_2": {
+        "sha256": "644c24546edf0637367f60779debb938bbc9727229cb2ee2a016e46744b982e6"
+      },
+      "target_main_4_8_8": {
+        "sha256": "644c24546edf0637367f60779debb938bbc9727229cb2ee2a016e46744b982e6"
+      },
+      "same_baseline_bytes": true
+    },
+    {
+      "path": "modules/asaas/asaas.php",
+      "reference_4_0_2": {
+        "sha256": "a35c897b59a964f2873d86fa4abd6d544bfd07440d53bafa26564b7a627e07b8"
+      },
+      "target_main_4_8_8": {
+        "sha256": "f47a3e75d19e122af670f8afb57eb7e9961421f3e3af4fa7b17db6f6679fd9d6"
+      },
+      "same_baseline_bytes": false
+    },
+    {
+      "path": "modules/asaas/controllers/Payment_origins.php",
+      "reference_4_0_2": {
+        "sha256": "0faeb8f1e1dcc9e4015ec2aaeaf38313f615c6176a0f0d439ba821ba52ad948b",
+        "public_methods": [
+          "__construct",
+          "index",
+          "reconcile"
+        ]
+      },
+      "target_main_4_8_8": {
+        "sha256": "8ce97d8174e67e261de1d9c4609590ae689cff09222761b3ec512a37f858bf39",
+        "public_methods": [
+          "__construct",
+          "index",
+          "reconcile"
+        ]
+      },
+      "same_baseline_bytes": false
+    }
+  ]
+}

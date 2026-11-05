@@ -16,6 +16,7 @@ class Webhooks extends AdminController
 
     public function index(): void
     {
+        if (!$this->requireCapability('view')) { return; }
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data(module_views_path(WEBHOOKS_MODULE, 'tables/webhooks'));
         }
@@ -25,6 +26,7 @@ class Webhooks extends AdminController
 
     public function change_status_hook($webhook_id, $status)
     {
+        if (!$this->requireCapability('edit')) { return false; }
         $data['active'] = $status;
         $where['id']    = $webhook_id;
          if ($this->webhooks_model->change_webhook_status($data, $where)) {
@@ -40,6 +42,7 @@ class Webhooks extends AdminController
 
     public function change_debug_status_hook($webhook_id, $status)
     {
+        if (!$this->requireCapability('edit')) { return false; }
         $data['debug_mode'] = $status;
         $where['id']        = $webhook_id;
         if ($this->webhooks_model->change_webhook_status($data, $where)) {
@@ -54,6 +57,7 @@ class Webhooks extends AdminController
 
     public function delete_webhook($webhook_id): void
     {
+        if (!$this->requireCapability('delete')) { return; }
         if ($this->webhooks_model->delete_webhook(['id' => $webhook_id])) {
             set_alert('success', _l('deleted', 'webhook'));
         } else {
@@ -64,6 +68,7 @@ class Webhooks extends AdminController
 
     public function webhook($id = ''): void
     {
+        if (!$this->requireCapability(is_numeric($id) ? 'edit' : 'create')) { return; }
         if ($this->input->post()) {
             $posted_data  = $this->input->post();
             $is_valid_url = validate_request_url($posted_data['request_url']);
@@ -109,6 +114,7 @@ class Webhooks extends AdminController
 
     public function logs(): void
     {
+        if (!$this->requireCapability('view')) { return; }
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data(module_views_path(WEBHOOKS_MODULE, 'tables/webhooks_debug_log'));
         }
@@ -118,6 +124,7 @@ class Webhooks extends AdminController
 
     public function clear_webhook_log()
     {
+        if (!$this->requireCapability('delete')) { return false; }
         if ($this->webhooks_model->clear_webhook_log()) {
             set_alert('success', _l('deleted', _l('webhook_log')));
         } else {
@@ -181,6 +188,7 @@ class Webhooks extends AdminController
 
     public function get_webhook_log_info($log_id)
     {
+        if (!$this->requireCapability('view')) { return; }
         if ($log_id) {
             $data['title'] = _l('webhook_log');
             $data['log_data'] = $this->webhooks_model->get_log_info($log_id);
@@ -190,6 +198,7 @@ class Webhooks extends AdminController
     /* Copy webhook */
     public function copy_webhook($id)
     {
+        if (!$this->requireCapability('view') || !$this->requireCapability('create')) { return; }
         $data = (array) $this->webhooks_model->get($id);
 
         $id = $this->webhooks_model->copy_webhook($data);
@@ -205,6 +214,7 @@ class Webhooks extends AdminController
 
     public function webhooks_cron_job_queue_table()
     {
+        if (!$this->requireCapability('view')) { return; }
         if (!$this->input->is_ajax_request()) {
             ajax_access_denied();
         }
@@ -214,12 +224,27 @@ class Webhooks extends AdminController
 
     public function delete_scheduled_call($id): void
     {
+        if (!$this->requireCapability('delete')) { return; }
         if ($this->webhooks_model->delete_scheduled_call(['id' => $id])) {
             set_alert('success', _l('deleted', 'webhook'));
         } else {
             set_alert('danger', _l('problem_deleting', 'webhook'));
         }
         redirect(admin_url("settings?group=webhooks"));
+    }
+
+    private function requireCapability(string $capability): bool
+    {
+        // Both spellings exist in the frozen legacy resource catalog: the
+        // permission editor uses WEBHOOKS while the original menu uses webhooks.
+        // Check the exact requested capability in either historical namespace;
+        // view never grants create/edit/delete and no grant is rewritten.
+        if (staff_can($capability, 'WEBHOOKS') || staff_can($capability, 'webhooks')) {
+            return true;
+        }
+
+        access_denied('Webhooks');
+        return false;
     }
 }
 /* End of file Webhooks.php */

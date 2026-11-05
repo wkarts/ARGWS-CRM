@@ -96,6 +96,7 @@ final class NativeCompanyPaymentRecords
         }
         $filteredRow=$this->rows('SELECT COUNT(*) AS n'.$filteredScope,$filteredArgs)[0]??['n'=>0];$filtered=(int)$filteredRow['n'];$sortMap=['id'=>'p.id','formatted_number'=>'i.formatted_number','paymentmethod'=>'p.paymentmethod','transactionid'=>'p.transactionid','company'=>'c.company','amount'=>'p.amount','date'=>'p.date'];if(!$orders)$orders=[['field'=>'id','dir'=>'desc']];$sort=[];
         foreach($orders as$order){$field=(string)($order['field']??'');$dir=$order['dir']??null;if(!isset($sortMap[$field])||!in_array($dir,['asc','desc'],true))throw new DomainException('native_payment_table_invalid');$sort[]=$sortMap[$field].' '.strtoupper($dir);}
+        if (!in_array('id', array_column($orders, 'field'), true)) { $sort[] = 'p.id ASC'; }
         $query='SELECT p.id,p.invoiceid,i.issuer_id,i.clientid,c.company,curr.name currency,p.amount,p.date,i.date invoice_date,p.paymentmode,p.paymentmethod,p.transactionid,i.formatted_number,i.number,i.prefix,i.number_format'.$filteredScope.' ORDER BY '.implode(',',$sort).' LIMIT '.$length.' OFFSET '.$start;
         $rows=$this->formatLegacyRows($i,$a,$this->projectPageRows($this->rows($query,$filteredArgs),$i));
         if($acl->primaryId()!==$primary)throw new DomainException('native_payment_stale');$this->authorize($i,$a);return['rows'=>$rows,'total'=>$total,'filtered'=>$filtered];
