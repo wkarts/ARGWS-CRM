@@ -41,7 +41,8 @@ já publicado mesmo se um rebuild produziu digests diferentes.
 
 Tag Git: anotação JSON exata com publisher, repositório, canal, versão e SHA;
 objeto commit, versão e ancestralidade conferidos antes de qualquer reutilização.
-O objeto anotado novo é obtido por fetch sem tags e promovido somente por CAS.
+O objeto anotado novo é criado localmente por git mktag e promovido somente por
+CAS; não depende de fetch de objeto órfão criado pela API.
 Release: exige tag própria, prerelease publicada, nome/target corretos, nenhuma
 asset externa e marcador JSON com SHA/digest. Release estável ou sem marcador
 nunca é adotada. SHA anterior deve ser ancestral da tag observada, que deve ser ancestral do novo.

@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -235,18 +236,25 @@ def publish_release(api, sha, digest, run, expected):
             raise ValueError('Mesmo SHA com digest divergente; preservar release e investigar.')
     anchor = expected['anchor']
     if anchor != sha:
-        tag = api.call('git/tags', {'tag': RELEASE_TAG, 'message': json.dumps(provenance(sha), sort_keys=True),
-                                  'object': sha, 'type': 'commit'})
+        message = json.dumps(provenance(sha), sort_keys=True)
         if anchor is None:
+            tag = api.call('git/tags', {'tag': RELEASE_TAG, 'message': message,
+                                      'object': sha, 'type': 'commit'})
             # Atomic create-only: collision never overwrites a foreign reference.
             api.call('git/refs', {'ref': 'refs/tags/' + RELEASE_TAG, 'sha': tag['sha']})
         else:
-            # CAS against the annotated tag OBJECT, not merely its peeled commit.
-            # Fetch only the newly created object; never replace a local stable tag.
-            run(['git', 'fetch', '--no-tags', 'origin', tag['sha']])
+            # Construct the annotated object locally; do not depend on fetching
+            # an unreachable object created by REST (upload-pack may reject it).
+            tag_data = ('object ' + sha + '\ntype commit\ntag ' + RELEASE_TAG
+                        + '\ntagger github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com> '
+                        + str(int(time.time())) + ' +0000\n\n' + message + '\n')
+            tag_sha = run(['git', 'mktag'], tag_data).strip()
+            if not re.fullmatch('[0-9a-f]{40}', tag_sha):
+                raise ValueError('Objeto anotado beta inválido.')
             require_current(sha, run)
+            # CAS against the annotated tag OBJECT, not its peeled commit.
             run(['git', 'push', '--force-with-lease=refs/tags/' + RELEASE_TAG + ':'
-                 + expected['ref']['object']['sha'], 'origin', tag['sha'] + ':refs/tags/' + RELEASE_TAG])
+                 + expected['ref']['object']['sha'], 'origin', tag_sha + ':refs/tags/' + RELEASE_TAG])
         observed = release_state(api, sha, run)
         if observed['anchor'] != sha or observed['release'] != expected['release']:
             raise ValueError('Tag/release mudou durante CAS; consultar estado antes de repetir.')
@@ -270,8 +278,8 @@ def publish_release(api, sha, digest, run, expected):
     return confirmed['html_url']
 
 
-def command(args):
-    result = subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE)
+def command(args, input_text=None):
+    result = subprocess.run(args, input=input_text, check=True, text=True, stdout=subprocess.PIPE)
     return result.stdout
 
 

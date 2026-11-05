@@ -258,11 +258,17 @@ class ReleaseTest(unittest.TestCase):
         if self.fail_after == path: raise OSError('ambiguous response after write')
         return result
 
-    def command(self, args):
+    def command(self, args, input_text=None):
         if args[:2] == ['git', 'ls-remote']: return SHA + '\t' + B.BRANCH
         if args[:2] == ['git', 'show']: return VERSION
         if args[:2] == ['git', 'merge-base']: return ''
-        if args[:2] == ['git', 'fetch']: return ''
+        if args[:2] == ['git', 'mktag']:
+            self.assertIn('tag '+B.RELEASE_TAG+'\n', input_text)
+            metadata = json.loads(input_text.split('\n\n', 1)[1])
+            tag_sha = metadata['sha'][0]*39+'f'
+            self.tag_objects[tag_sha] = {'tag': B.RELEASE_TAG, 'object': {'type': 'commit', 'sha': metadata['sha']},
+                                         'message': json.dumps(metadata, sort_keys=True)}
+            return tag_sha
         if args[:2] == ['git', 'push']:
             self.assertEqual(args[2], '--force-with-lease=refs/tags/'+B.RELEASE_TAG+':'+self.ref['object']['sha'])
             self.ref = {'object': {'sha': args[-1].split(':')[0], 'type': 'tag'}}
@@ -310,14 +316,14 @@ class ReleaseTest(unittest.TestCase):
         self.publish(); self.writes.clear(); anchor = self.ref.copy()
         new_sha = 'e'*40
         calls = []
-        def run(args):
+        def run(args, input_text=None):
             calls.append(args)
             if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
-            return self.command(args)
+            return self.command(args, input_text)
         state = B.release_state(self, new_sha, run)
         B.publish_release(self, new_sha, 'sha256:'+'c'*64, run, state)
         self.assertNotEqual(self.ref, anchor)
-        self.assertEqual([w[0] for w in self.writes], ['git/tags', 'releases/42'])
+        self.assertEqual([w[0] for w in self.writes], ['releases/42'])
         push = [c for c in calls if c[:2] == ['git', 'push']][0]
         self.assertEqual(push[2], '--force-with-lease=refs/tags/'+B.RELEASE_TAG+':'+anchor['object']['sha'])
         self.assertIn(['git', 'merge-base', '--is-ancestor', SHA, new_sha], calls)
@@ -325,22 +331,22 @@ class ReleaseTest(unittest.TestCase):
     def test_cas_failure_never_updates_release(self):
         self.publish(); self.writes.clear()
         new_sha = 'e'*40
-        def run(args):
+        def run(args, input_text=None):
             if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
             if args[:2] == ['git', 'push']: raise B.subprocess.CalledProcessError(1, args)
-            return self.command(args)
+            return self.command(args, input_text)
         state = B.release_state(self, new_sha, run)
         with self.assertRaises(B.subprocess.CalledProcessError):
             B.publish_release(self, new_sha, D, run, state)
         self.assertEqual(self.release['target_commitish'], SHA)
-        self.assertEqual([w[0] for w in self.writes], ['git/tags'])
+        self.assertEqual(self.writes, [])
 
     def test_retry_after_uncertain_cas_reconciles_tag_before_notes(self):
         self.publish(); self.writes.clear(); self.fail_after = 'git-push'
         new_sha = 'e'*40
-        def run(args):
+        def run(args, input_text=None):
             if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
-            return self.command(args)
+            return self.command(args, input_text)
         with self.assertRaises(OSError):
             B.publish_release(self, new_sha, D, run, B.release_state(self, new_sha, run))
         self.fail_after = None; self.writes.clear()
@@ -354,9 +360,9 @@ class ReleaseTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'proveniência'): self.publish()
         self.assertEqual(self.writes, [])
         self.tag['message'] = json.dumps(B.provenance(SHA), sort_keys=True)
-        def run(args):
+        def run(args, input_text=None):
             if args[:2] == ['git', 'merge-base']: raise B.subprocess.CalledProcessError(1, args)
-            return self.command(args)
+            return self.command(args, input_text)
         with self.assertRaises(B.subprocess.CalledProcessError): B.release_state(self, SHA, run)
         self.assertEqual(self.writes, [])
 
@@ -370,6 +376,35 @@ class ReleaseTest(unittest.TestCase):
         for env in [{}, {'GITHUB_ACTIONS':'true', 'GH_TOKEN':'external', 'GHCR_TOKEN':'other'}]:
             with self.assertRaises(ValueError): B.require_actions_token(env)
         B.require_actions_token({'GITHUB_ACTIONS':'true', 'GH_TOKEN':'synthetic', 'GHCR_TOKEN':'synthetic'})
+
+class RealGitCASTest(unittest.TestCase):
+    def test_annotated_object_lease_rejects_competing_tag_on_same_commit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args, input_text=None, check=True):
+                return B.subprocess.run(['git', *args], cwd=root, input=input_text,
+                    text=True, stdout=B.subprocess.PIPE, stderr=B.subprocess.PIPE, check=check)
+            git('init', '--bare', str(root/'remote.git'))
+            git('init')
+            git('config', 'user.name', 'Synthetic test')
+            git('config', 'user.email', 'test@example.invalid')
+            git('commit', '--allow-empty', '-m', 'synthetic')
+            sha = git('rev-parse', 'HEAD').stdout.strip()
+            git('remote', 'add', 'origin', str(root/'remote.git'))
+            def tag(timestamp):
+                data = ('object '+sha+'\ntype commit\ntag '+B.RELEASE_TAG
+                        +'\ntagger Synthetic <test@example.invalid> '+str(timestamp)+' +0000\n\n'
+                        +json.dumps(B.provenance(sha), sort_keys=True)+'\n')
+                return git('mktag', input_text=data).stdout.strip()
+            first, competing, desired = tag(1), tag(2), tag(3)
+            ref = 'refs/tags/'+B.RELEASE_TAG
+            git('push', '--force-with-lease='+ref+':', 'origin', first+':'+ref)
+            git('push', '--force-with-lease='+ref+':'+first, 'origin', competing+':'+ref)
+            failed = git('push', '--force-with-lease='+ref+':'+first, 'origin', desired+':'+ref, check=False)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertEqual(git('ls-remote', 'origin', ref).stdout.strip(), competing+'\t'+ref)
+            git('push', '--force-with-lease='+ref+':'+competing, 'origin', desired+':'+ref)
+            self.assertEqual(git('ls-remote', 'origin', ref).stdout.strip(), desired+'\t'+ref)
 
 if __name__ == '__main__':
     unittest.main()
