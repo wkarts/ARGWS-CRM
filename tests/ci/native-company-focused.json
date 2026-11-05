@@ -2584,10 +2584,6 @@
     ],
     [
       "php",
-      "tests/companies/native_contract_index.php"
-    ],
-    [
-      "php",
       "tests/integration_admin_authorization.php"
     ],
     [
@@ -2605,10 +2601,6 @@
     [
       "php",
       "tests/native_lead_navigation.php"
-    ],
-    [
-      "php",
-      "tests/native_company/catalog_table.php"
     ],
     [
       "php",
@@ -2645,10 +2637,6 @@
     [
       "php",
       "tests/companies/native_expense_fields_transport.php"
-    ],
-    [
-      "php",
-      "tests/companies/native_project_page_custom_fields.php"
     ]
   ],
   "node": [
