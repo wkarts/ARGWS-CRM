@@ -281,6 +281,10 @@ def publish_release(api, sha, digest, run, expected):
 
 
 def command(args, input_text=None):
+    # Container jobs can run Git as a different owner than checkout. Trust only
+    # this resolved checkout, for this process; never persist global config.
+    if args and args[0] == 'git':
+        args = ['git', '-c', 'safe.directory=' + str(Path.cwd().resolve()), *args[1:]]
     result = subprocess.run(args, input=input_text, check=True, text=True, stdout=subprocess.PIPE)
     return result.stdout
 

@@ -137,3 +137,24 @@ legado. `install/html.php` limita apenas essa imagem a 320px, máximo 100% do
 contêiner e altura automática, com texto alternativo. A exceção do gate inclui
 somente a transição de hashes desta view para esse ajuste, sem liberar alterações
 arbitrárias no instalador. Os fluxos/formulários permanecem iguais.
+
+## Ownership Git no container de validação
+
+Após o merge da PR59 em 494e17f7a645fe6b061ac9a0d6e965748a0e4634, o run
+42108696409 passou as regressões, mas o preflight falhou em `git rev-parse HEAD`
+com `detected dubious ownership`. A configuração temporária de checkout não foi
+suficiente para o subprocesso do publicador no container.
+
+O publicador passa `git -c safe.directory=<Path.cwd().resolve()>` somente aos
+subprocessos Git. A confiança fica no checkout exato e dura uma chamada; não há
+wildcard, alteração global/local persistente ou relaxamento dos gates SHA/canal.
+Docker e outros comandos permanecem iguais, inclusive stdin de `git mktag`.
+
+`GitOwnershipTest`, no arquivo de testes já executado em toda PR, reproduz a
+recusa com `GIT_TEST_ASSUME_DIFFERENT_OWNER=1`, verifica comandos Git reais e
+executa `main()` em modo preflight com snapshot remoto e APIs sintéticos.
+Preflight não escreve/publica nada e não acessa rede real. O teste confirma que
+Git sem a opção continua recusando o diretório, outro checkout não ganha
+confiança e SHA divergente ainda falha.
+Não reexecutar o workflow antigo sem integrar uma correção autorizada; esta PR
+não efetua merge nem publica imagem/release.
