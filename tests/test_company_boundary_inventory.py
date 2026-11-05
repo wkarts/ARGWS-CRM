@@ -1,11 +1,30 @@
 import importlib.util
 import tempfile
 import unittest
+import subprocess
 from pathlib import Path
 spec = importlib.util.spec_from_file_location('inventory', Path(__file__).resolve().parents[1] / 'scripts/inventory-company-boundaries.py')
 module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
 
 class InventoryTests(unittest.TestCase):
+    def test_ignored_build_output_does_not_change_published_inventory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            (root / '.gitignore').write_text('modules/bank/assets/\nmodules/bank/vendor/\n')
+            for name in ['application/new.php', 'modules/bank/vendor/adapter.php']:
+                path = root / name; path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('<?php return 1;')
+            subprocess.run(['git', '-C', str(root), 'add', '-f', 'modules/bank/vendor/adapter.php'], check=True)
+            before = module.inventory(root)
+            self.assertEqual({e['path'] for e in before['entries']},
+                             {'application/new.php', 'modules/bank/vendor/adapter.php'})
+            build = root / 'modules/bank/assets/build.js'
+            build.parent.mkdir(parents=True); build.write_text('generated();')
+            self.assertEqual(module.inventory(root), before)
+            # An actually published artifact remains a boundary even when ignored.
+            subprocess.run(['git', '-C', str(root), 'add', '-f', str(build)], check=True)
+            self.assertEqual(module.inventory(root)['files'], 3)
     def test_sources_and_dependency_not_silently_omitted(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

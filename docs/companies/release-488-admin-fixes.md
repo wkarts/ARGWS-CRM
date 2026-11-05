@@ -14,6 +14,10 @@ O artefato da falha mostra requisições de imagens/fontes esperando no PHP CLI
 single-process. O CI usa agora quatro workers no servidor descartável; a produção
 continua no seu servidor normal. O helper aguarda DOMContentLoaded, HTTP 200,
 inicializador da tarefa e botão visível. Não há retry nem remoção de asserções.
+O inventário de fronteiras ignora apenas arquivos locais não versionados que o Git
+já ignora (por exemplo, saídas do build de e-invoice). Dependências versionadas e
+novos fontes não ignorados continuam incluídos. A regressão cobre os três casos,
+e o resumo foi conferido contra um arquivo limpo do commit.
 O teste Chromium mantém uma imagem pendente e comprova que a ação funciona;
 um documento 503 continua falhando. Também foi corrigida a consulta do nome do
 estado das tarefas do projeto: estado de domínio não é ID canônico de status.
