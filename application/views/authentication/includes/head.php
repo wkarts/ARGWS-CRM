@@ -68,4 +68,5 @@
     <link href="<?php echo base_url('assets/css/custom.css'); ?>" rel="stylesheet" id="custom-css">
     <?php } ?>
     <?php hooks()->do_action('app_admin_authentication_head'); ?>
+    <?php $this->load->view('includes/pwa'); ?>
 </head>
