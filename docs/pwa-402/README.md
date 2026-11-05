@@ -3,18 +3,20 @@
 ## Referências e escopo
 
 Base imutável: tag `v4.0.2`, commit `aa58b832b3c5ed04a599caacba125b056c081ba7`,
-branch `reference/4.0.2-pwa-visual`. Trabalho: `feat/4.0.2-pwa-visual`.
+branch permanente `develop-beta` (referência auxiliar `reference/4.0.2-pwa-visual`). Trabalho: `feat/4.0.2-pwa-visual`.
 Fonte dos assets/contrato PWA: 4.8.7, `1e5a4a1e64ef230f3f996ebe871dc3c20943829d`.
-A PR deve ter a branch de referência como base, nunca main. Não é um downgrade
+A PR tem `develop-beta` como base, nunca main ou develop. Não é um downgrade
 nem um pacote de atualização da 4.8.7. Não aplicar esta árvore sobre uma instalação
-4.8.7. Versão global e migrations permanecem exatamente na 4.0.2 por instrução
-expressa: esta etapa não autoriza versão, tag, release, merge ou deploy.
-O gate legado `core-release-policy` exige incremento e pode reprovar este rascunho;
-não foi desativado ou adulterado para simular uma release.
+4.8.7. Por autorização posterior, a PR prepara o próximo ID nativo 403 / 4.0.3
+usando `scripts/apply-release-version.py 4.0.3`: metadados e imagens de exemplo
+coerentes, com nova migration 403 NOOP. O histórico até 402 permanece inalterado.
+Isso não publica imagem/tag/release nem executa migration em qualquer banco.
+O gate original `core-release-policy` permanece ativo e sem exceções.
+Merge, deploy e release continuam não autorizados.
 
 Portados logos, símbolos, favicons, ícones instaláveis V2 e service worker.
 As três views de head receberam somente o include PWA. Telas, ações, handlers,
-controllers, models, módulos, integrações, rotas e migrations da 4.0.2 são preservados.
+controllers, models, módulos, integrações, rotas e migrations históricas da 4.0.2 são preservados.
 Não há portabilidade de multiempresa, SaaS, Banco do Brasil ou projeção dinâmica
 `NativePwaIdentity`. O módulo SaaS futuro permanece fora desta etapa.
 
@@ -70,8 +72,22 @@ Adicionar à Tela de Início no iOS; testar reconexão e atualização com formu
 aberto. Nginx/CloudPanel deve servir especificamente `pwa.php` como PHP público,
 sem redirecionar ao login e sem ampliar allowlist genérica de scripts.
 
-Não há DDL, dependência nova de runtime ou alteração de dados. Nenhum deploy foi
+Não há DDL, dependência nova de runtime ou alteração de dados. A migration 403
+é somente marcador NOOP e não foi aplicada em instalação real. Nenhum deploy foi
 executado. Reverter código/identidade é possível; clientes com worker instalado
 exigem retirada controlada: servir worker revisado no MESMO URL para desregistrar
 somente a própria registration, mantendo endpoint até migração dos clientes.
-Não apagar registros/caches de outros aplicativos. Nada a reverter no banco.
+Não apagar registros/caches de outros aplicativos. Sem DDL a reverter; numa
+futura implantação, reconciliar o marcador nativo antes de retornar ao código 402.
+
+## Validação do incremento autorizado
+
+```
+python3 -m unittest tests/test_release_version.py tests/test_package_release.py
+bash scripts/check-release-version.sh --base aa58b832b3c5ed04a599caacba125b056c081ba7 --head <SHA_FINAL>
+php tests/native_migration_tracking.php
+```
+
+O teste de tracking usa banco SQLite descartável; não comprova upgrade completo
+de uma instalação real. Os defaults de imagem 4.0.3 são metadados de preparação:
+nenhuma imagem 4.0.3 foi publicada nesta etapa.
