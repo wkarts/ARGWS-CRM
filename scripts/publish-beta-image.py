@@ -214,10 +214,12 @@ def release_state(api, sha, run):
             metadata = json.loads(body.split('<!-- ' + MARKER + ' ', 1)[1].split(' -->', 1)[0])
             previous_sha, digest = metadata['sha'], metadata['digest']
             if (metadata != provenance(previous_sha, digest) or not re.fullmatch('[0-9a-f]{40}', previous_sha)
-                    or not DIGEST.fullmatch(digest) or release.get('target_commitish') != previous_sha):
+                    or not DIGEST.fullmatch(digest)):
                 raise ValueError('metadata')
         except (KeyError, IndexError, TypeError, ValueError) as error:
             raise ValueError('Colisão: notas sem proveniência beta válida.') from error
+        # target_commitish is ignored by GitHub for an existing tag; verify
+        # the actual annotated ref and metadata instead of this advisory field.
         run(['git', 'merge-base', '--is-ancestor', previous_sha, anchor])
         run(['git', 'merge-base', '--is-ancestor', previous_sha, sha])
     return {'ref': ref, 'release': release, 'anchor': anchor}

@@ -43,11 +43,13 @@ Tag Git: anotação JSON exata com publisher, repositório, canal, versão e SHA
 objeto commit, versão e ancestralidade conferidos antes de qualquer reutilização.
 O objeto anotado novo é criado localmente por git mktag e promovido somente por
 CAS; não depende de fetch de objeto órfão criado pela API.
-Release: exige tag própria, prerelease publicada, nome/target corretos, nenhuma
+Release: exige tag própria, prerelease publicada, nome/tag corretos, nenhuma
 asset externa e marcador JSON com SHA/digest. Release estável ou sem marcador
 nunca é adotada. SHA anterior deve ser ancestral da tag observada, que deve ser ancestral do novo.
 Isso permite reconciliar uma interrupção após CAS da tag e antes das notas.
 Mesmo SHA com digest divergente na release bloqueia para investigação.
+A confirmação lê a referência Git real: `target_commitish` é apenas indicativo
+quando a tag já existe, conforme a [API GitHub](https://docs.github.com/en/rest/releases/releases).
 
 Antes da promoção GHCR, preflight GitHub detecta colisões. Antes da escrita da
 release, releitura detecta mudanças desde o preflight. Criação de tag interrompida

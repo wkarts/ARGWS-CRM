@@ -302,10 +302,16 @@ class ReleaseTest(unittest.TestCase):
 
     def test_stable_release_or_missing_marker_never_overwritten(self):
         self.publish()
-        for key, value in [('prerelease', False), ('body', 'foreign'), ('target_commitish', 'main'), ('assets', [{}])]:
+        for key, value in [('prerelease', False), ('body', 'foreign'), ('tag_name', 'v4.0.3'), ('assets', [{}])]:
             saved = dict(self.release); self.release[key] = value; self.writes.clear()
             with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
             self.assertEqual(self.writes, []); self.release = saved
+
+    def test_advisory_target_commitish_does_not_replace_real_ref_validation(self):
+        self.publish(); self.writes.clear()
+        self.release['target_commitish'] = 'main'
+        self.publish()
+        self.assertEqual(self.writes, [])
 
     def test_same_sha_different_digest_is_collision(self):
         self.publish()
