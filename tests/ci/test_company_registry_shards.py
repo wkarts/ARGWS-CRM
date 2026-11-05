@@ -186,7 +186,7 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertNotIn('        if:', smoke)
         self.assertNotIn('apt-get', shards)
         self.assertNotIn('docker-php-ext-install', shards)
-        self.assertEqual(source.count('      - docker/ci/**'), 2)
+        self.assertNotRegex(source, r'(?m)^    paths(?:-ignore)?:', 'runtime changes must always trigger the required workflow')
         self.assertNotIn('credentials:', shards, 'public CI image must be pulled anonymously')
         self.assertNotIn('packages:', source, 'consumer needs no registry credential permission')
 
@@ -287,7 +287,11 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertNotIn('continue-on-error', source)
         self.assertIn('  pull_request:', source)
         self.assertIn('  push:', source)
-        self.assertEqual(source.count('      - tests/ci/**'), 2)
+        for event in ('pull_request', 'push'):
+            trigger = re.search(r'^  '+event+r':\n((?:^    .*\n)+)', source, re.M)
+            self.assertIsNotNone(trigger)
+            self.assertRegex(trigger.group(1), r'branches:\s*\[[^\]]*\bmain\b')
+            self.assertNotRegex(trigger.group(1), r'\b(?:paths|paths-ignore):', 'CI changes must always trigger the required workflow')
 
 
 if __name__ == '__main__':

@@ -22,8 +22,14 @@
     };
     const stampAll = () => document.querySelectorAll('form').forEach(stamp);
     document.addEventListener('submit', event => { if (event.target instanceof HTMLFormElement) stamp(event.target); }, true);
-    document.addEventListener('DOMContentLoaded', stampAll);
-    new MutationObserver(stampAll).observe(document.documentElement, {childList:true, subtree:true});
+    const observeForms = () => {
+        // A streamed response can expose <form> before its server-rendered tokens.
+        // Observe only after parsing completes so those original values stay unique.
+        stampAll();
+        new MutationObserver(stampAll).observe(document.documentElement, {childList:true, subtree:true});
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observeForms, {once:true});
+    else observeForms();
     const nativeSubmit = HTMLFormElement.prototype.submit;
     HTMLFormElement.prototype.submit = function () { stamp(this); return nativeSubmit.call(this); };
     if (!ownsNetwork) return;

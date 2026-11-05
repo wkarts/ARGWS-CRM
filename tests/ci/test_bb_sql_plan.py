@@ -1,6 +1,5 @@
 import contextlib
 import copy
-import fnmatch
 import importlib.util
 import io
 import json
@@ -278,16 +277,15 @@ class SqlPlanTests(unittest.TestCase):
             self.assertIn('GATE_RUN: ${{ needs.validation-gate.outputs.run }}', aggregate)
             self.assertIn('bb-sql-run.py aggregate --database ' + database, aggregate)
 
-    def test_path_filters_start_bb_and_shared_native_preflight(self):
+    def test_all_main_changes_start_bb_and_shared_native_preflight(self):
         native = (ROOT / '.github/workflows/native-company-experience.yml').read_text()
-        files = ['scripts/ci/bb-sql-run.py', 'scripts/ci/bb-sql-plan.json', 'tests/ci/test_bb_sql_plan.py']
         for source in [self.workflow, native]:
-            filters = re.findall(r'paths: \[([^\n]+)\]', source)
-            self.assertEqual(len(filters), 2)
-            for path_filter in filters:
-                patterns = re.findall(r"'([^']+)'", path_filter)
-                for path in files:
-                    self.assertTrue(any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns), path)
+            for event in ('pull_request', 'push'):
+                block = re.search(r'^  '+event+r':\n((?:^    .*\n)+)', source, re.M)
+                self.assertIsNotNone(block)
+                self.assertRegex(block.group(1), r'branches:\s*\[[^\]]*\bmain\b')
+                self.assertNotRegex(block.group(1), r'\b(?:paths|paths-ignore):',
+                                    'BB SQL plan, runtime and every other change must start required validation')
         self.assertIn("python3 -m unittest discover -s tests/ci -p 'test_*.py'", native)
 
 

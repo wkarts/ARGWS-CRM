@@ -56,6 +56,15 @@ class BrowserPlanTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'partition'):m.validate(changed,self.source.replace(script+' --owner b',script+' --owner a'))
   changed=copy.deepcopy(self.plan);changed['groups']['timers-primary']['owned'].remove(102);changed['groups']['timers-b']['owned'].append(102);del changed['groups']['timers-primary']
   with self.assertRaisesRegex(ValueError,'distinct isolated'):m.validate(changed,self.source)
+ def test_recurrence_moves_to_short_timer_worker_without_losing_bootstrap(self):
+  index=next(i for i,row in enumerate(self.plan['invocations']) if row['argv']==['tests/companies/task_recurring_http_browser.cjs'])
+  owners=[name for name,group in self.plan['groups'].items() if index in group['owned']]
+  self.assertEqual(owners,['timers-b'])
+  self.assertNotIn(index,m.selected(self.plan,'sales-pdf'))
+  self.assertTrue(set(self.plan['common'])<=m.selected(self.plan,'timers-b'))
+  result,actual=self.runtime('timers-b')
+  self.assertEqual(result.returncode,0,result.stderr)
+  self.assertLess(actual.index('tests/companies/task_recurring_http_browser.cjs'),actual.index('tests/settings/task_timer_auto_stop_browser.cjs --owner b'))
  def test_self_contained_transition_timer_has_its_own_reader_in_sales_worker(self):
   self.assertIn(90,self.plan['groups']['sales-pdf']['owned'])
   self.assertFalse(set([84,85,86])&m.selected(self.plan,'sales-pdf'))
