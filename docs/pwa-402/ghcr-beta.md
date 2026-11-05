@@ -9,11 +9,13 @@ main/develop, tags estáveis, dados, PWA e identidade V2. Sem SaaS.
 
 Uma única pré-release `v4.0.3-beta` recebe SHA atual, digest multiarch e link para
 os fontes atuais. `prerelease: true` e `make_latest: "false"` são explícitos em
-POST/PATCH. A tag Git anotada é **imutável**, criada apenas uma vez como âncora do
-primeiro build. Os ZIPs/tarballs automáticos dessa tag representam a âncora, não
-o SHA corrente da imagem; para este use o link `/tree/SHA` nas notas. Não há
-movimento de tag Git nem necessidade de force-push/CAS de tag mutável. A criação
-da referência é atômica create-only; colisão nunca autoriza substituição.
+POST/PATCH. A tag Git anotada dedicada acompanha o SHA publicado; os downloads
+Source code dessa pré-release acompanham o mesmo código da imagem. Consumidores
+que exigem imutabilidade devem fixar SHA/digest, pois este é um canal beta contínuo.
+Nunca mover tags estáveis. Criação da referência é atômica create-only; atualização
+usa `git push --force-with-lease=refs/tags/v4.0.3-beta:OBJETO_ANTERIOR`, comparando o
+objeto anotado remoto observado, não apenas o commit resolvido. Não usar force
+sem lease nem PATCH force de refs pela API.
 
 ## Gatilhos e permissões
 
@@ -39,14 +41,19 @@ já publicado mesmo se um rebuild produziu digests diferentes.
 
 Tag Git: anotação JSON exata com publisher, repositório, canal, versão e SHA;
 objeto commit, versão e ancestralidade conferidos antes de qualquer reutilização.
-Release: exige tag própria, prerelease publicada, nome/âncora corretos, nenhuma
+O objeto anotado novo é obtido por fetch sem tags e promovido somente por CAS.
+Release: exige tag própria, prerelease publicada, nome/target corretos, nenhuma
 asset externa e marcador JSON com SHA/digest. Release estável ou sem marcador
-nunca é adotada. SHA anterior deve ser descendente da âncora e ancestral do novo.
+nunca é adotada. SHA anterior deve ser ancestral da tag observada, que deve ser ancestral do novo.
+Isso permite reconciliar uma interrupção após CAS da tag e antes das notas.
 Mesmo SHA com digest divergente na release bloqueia para investigação.
 
 Antes da promoção GHCR, preflight GitHub detecta colisões. Antes da escrita da
 release, releitura detecta mudanças desde o preflight. Criação de tag interrompida
-pode deixar objeto órfão ou âncora válida sem release; retry verifica e completa.
+pode deixar objeto órfão ou tag válida sem release; retry verifica e completa.
+Se CAS ocorreu antes de falhar a atualização da release, Source code pode ficar
+temporariamente à frente das notas. A execução falha, registra o digest da imagem
+e exige retry para reconciliar; não declara publicação completa nesse intervalo.
 POST/PATCH não têm retry automático: resposta incerta exige nova leitura. Após
 escrita, release é lida e verificada. Falha de release após promoção GHCR preserva
 a imagem; retry completa notas sem reconstruir/reapontar o mesmo SHA. Nunca há
@@ -68,8 +75,11 @@ Publicação atual está autorizada, merge não. Contudo beta-container.yml não
 na default branch main (Contents API 404); adicionar dispatch somente na branch
 da PR não disponibiliza o workflow na default. O ambiente não possui credencial
 GitHub/GHCR de publicação configurada; gh auth status falhou e gh api recebeu
-Forbidden. O conector GitHub permite preparar PR, mas não oferece dispatch nem
-criação de release. Não houve publicação por este trabalho. É necessário um
+Forbidden em GET /repos/wkarts/ARGWS-CRM. O conector GitHub permite preparar PR,
+mas não oferece dispatch nem criação de release; GET actions/workflows e GET
+actions/workflows/beta-container.yml também foram recusados pelo conector como
+endpoint não permitido (HTTPError 400). Não houve tentativa de POST dispatch sem
+um workflow despachável/credencial disponível. Não houve publicação por este trabalho. É necessário um
 caminho Actions autorizado e disponível na default com esse workflow, ou ambiente
 com credenciais temporárias apropriadas e revisão dos efeitos release:published;
 não alterar main nem mesclar a PR para contornar esse bloqueio.

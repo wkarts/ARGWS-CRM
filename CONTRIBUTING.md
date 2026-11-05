@@ -241,7 +241,9 @@ não autoriza publicar nem habilita o canal estável; ao encerrar o ciclo, revis
 a regra e a versão com o responsável. GHCR :develop-beta é o único canal mutável neste ciclo, com digest/SHA
 rastreados; :4.0.3 já existente, :latest e :develop ficam preservadas. A aplicação
 continua 4.0.3. A pré-release v4.0.3-beta é única, prerelease=true e
-make_latest=false; sua tag Git é âncora imutável, notas acompanham SHA/digest.
+make_latest=false; sua tag Git beta dedicada acompanha o SHA com proveniência,
+ancestralidade e compare-and-swap por force-with-lease do objeto observado.
+Tags estáveis nunca são movidas.
 
 ### Complemento V2 autorizado no beta
 

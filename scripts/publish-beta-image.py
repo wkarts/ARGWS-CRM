@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Continuous develop-beta publisher. Registry/API reads fail closed.
 
-Only the develop-beta image and the dedicated immutable beta Git tag/release are writable.
+Only the develop-beta image and the dedicated beta Git tag/release are writable.
 """
 import argparse
 import base64
@@ -205,7 +205,7 @@ def release_state(api, sha, run):
             raise ValueError('Versão da âncora beta divergente.')
     if release:
         if (not anchor or release.get('prerelease') is not True or release.get('draft') is not False
-                or release.get('tag_name') != RELEASE_TAG or release.get('target_commitish') != anchor
+                or release.get('tag_name') != RELEASE_TAG
                 or release.get('name') != 'ARGWS CRM 4.0.3 beta' or release.get('assets')):
             raise ValueError('Colisão: release não pertence ao canal beta; preservada.')
         try:
@@ -213,11 +213,11 @@ def release_state(api, sha, run):
             metadata = json.loads(body.split('<!-- ' + MARKER + ' ', 1)[1].split(' -->', 1)[0])
             previous_sha, digest = metadata['sha'], metadata['digest']
             if (metadata != provenance(previous_sha, digest) or not re.fullmatch('[0-9a-f]{40}', previous_sha)
-                    or not DIGEST.fullmatch(digest)):
+                    or not DIGEST.fullmatch(digest) or release.get('target_commitish') != previous_sha):
                 raise ValueError('metadata')
         except (KeyError, IndexError, TypeError, ValueError) as error:
             raise ValueError('Colisão: notas sem proveniência beta válida.') from error
-        run(['git', 'merge-base', '--is-ancestor', anchor, previous_sha])
+        run(['git', 'merge-base', '--is-ancestor', previous_sha, anchor])
         run(['git', 'merge-base', '--is-ancestor', previous_sha, sha])
     return {'ref': ref, 'release': release, 'anchor': anchor}
 
@@ -234,20 +234,30 @@ def publish_release(api, sha, digest, run, expected):
         if metadata['sha'] == sha and metadata['digest'] != digest:
             raise ValueError('Mesmo SHA com digest divergente; preservar release e investigar.')
     anchor = expected['anchor']
-    if anchor is None:
-        anchor = sha
+    if anchor != sha:
         tag = api.call('git/tags', {'tag': RELEASE_TAG, 'message': json.dumps(provenance(sha), sort_keys=True),
                                   'object': sha, 'type': 'commit'})
-        # Atomic create-only. Existing refs are never moved (including on retry).
-        api.call('git/refs', {'ref': 'refs/tags/' + RELEASE_TAG, 'sha': tag['sha']})
+        if anchor is None:
+            # Atomic create-only: collision never overwrites a foreign reference.
+            api.call('git/refs', {'ref': 'refs/tags/' + RELEASE_TAG, 'sha': tag['sha']})
+        else:
+            # CAS against the annotated tag OBJECT, not merely its peeled commit.
+            # Fetch only the newly created object; never replace a local stable tag.
+            run(['git', 'fetch', '--no-tags', 'origin', tag['sha']])
+            require_current(sha, run)
+            run(['git', 'push', '--force-with-lease=refs/tags/' + RELEASE_TAG + ':'
+                 + expected['ref']['object']['sha'], 'origin', tag['sha'] + ':refs/tags/' + RELEASE_TAG])
+        observed = release_state(api, sha, run)
+        if observed['anchor'] != sha or observed['release'] != expected['release']:
+            raise ValueError('Tag/release mudou durante CAS; consultar estado antes de repetir.')
     require_current(sha, run)
     body = ('Canal contínuo develop-beta. Versão da aplicação: 4.0.3.\n\n'
             'Imagem: `' + IMAGE + ':' + CHANNEL + '`\n\n'
             'SHA atual: `' + sha + '`\n\nDigest multiarch: `' + digest + '`\n\n'
-            'A tag Git é uma âncora imutável do primeiro build; os arquivos-fonte da tag não acompanham '
-            'o canal. Código atual: https://github.com/' + REPO + '/tree/' + sha + '\n\n'
+            'A tag Git beta acompanha este SHA; use o SHA/digest para referências fixas. '
+            'Código atual: https://github.com/' + REPO + '/tree/' + sha + '\n\n'
             '<!-- ' + MARKER + ' ' + json.dumps(provenance(sha, digest), sort_keys=True) + ' -->')
-    payload = {'tag_name': RELEASE_TAG, 'target_commitish': anchor, 'name': 'ARGWS CRM 4.0.3 beta',
+    payload = {'tag_name': RELEASE_TAG, 'target_commitish': sha, 'name': 'ARGWS CRM 4.0.3 beta',
                'body': body, 'draft': False, 'prerelease': True, 'make_latest': 'false'}
     old = expected['release']
     if old and old.get('body') == body:

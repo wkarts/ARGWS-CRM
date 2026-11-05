@@ -230,18 +230,21 @@ class ReleaseTest(unittest.TestCase):
         self.release = None
         self.writes = []
         self.fail_after = None
+        self.tag_objects = {}
 
     def call(self, path, payload=None, method=None):
         if payload is None:
             if path == '': return {'full_name': B.REPO}
             if path == 'git/ref/tags/' + B.RELEASE_TAG: return self.ref
-            if path.startswith('git/tags/'): return self.tag
+            if path.startswith('git/tags/'): return self.tag_objects[path.split('/')[-1]]
             if path == 'releases/tags/' + B.RELEASE_TAG: return self.release
             raise AssertionError(path)
         self.writes.append((path, payload, method))
         if path == 'git/tags':
             self.tag = {**payload, 'object': {'sha': payload['object'], 'type': 'commit'}}
-            result = {'sha': 'f'*40}
+            tag_sha = payload['object'][0]*39+'f'
+            self.tag_objects[tag_sha] = self.tag
+            result = {'sha': tag_sha}
         elif path == 'git/refs':
             self.assertIsNone(self.ref)
             self.ref = {'object': {'sha': payload['sha'], 'type': 'tag'}}
@@ -259,13 +262,19 @@ class ReleaseTest(unittest.TestCase):
         if args[:2] == ['git', 'ls-remote']: return SHA + '\t' + B.BRANCH
         if args[:2] == ['git', 'show']: return VERSION
         if args[:2] == ['git', 'merge-base']: return ''
+        if args[:2] == ['git', 'fetch']: return ''
+        if args[:2] == ['git', 'push']:
+            self.assertEqual(args[2], '--force-with-lease=refs/tags/'+B.RELEASE_TAG+':'+self.ref['object']['sha'])
+            self.ref = {'object': {'sha': args[-1].split(':')[0], 'type': 'tag'}}
+            if self.fail_after == 'git-push': raise OSError('uncertain CAS result')
+            return ''
         raise AssertionError(args)
 
     def publish(self):
         state = B.release_state(self, SHA, self.command)
         return B.publish_release(self, SHA, D, self.command, state)
 
-    def test_create_and_retry_keep_one_release_and_fixed_tag(self):
+    def test_create_and_retry_keep_one_release_and_tag(self):
         self.publish()
         self.assertEqual([w[0] for w in self.writes], ['git/tags', 'git/refs', 'releases'])
         self.writes.clear()
@@ -297,7 +306,7 @@ class ReleaseTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'digest'):
             B.publish_release(self, SHA, 'sha256:'+'c'*64, self.command, B.release_state(self, SHA, self.command))
 
-    def test_advance_updates_notes_only_and_checks_ancestry(self):
+    def test_advance_cas_updates_dedicated_beta_tag_and_notes(self):
         self.publish(); self.writes.clear(); anchor = self.ref.copy()
         new_sha = 'e'*40
         calls = []
@@ -307,9 +316,49 @@ class ReleaseTest(unittest.TestCase):
             return self.command(args)
         state = B.release_state(self, new_sha, run)
         B.publish_release(self, new_sha, 'sha256:'+'c'*64, run, state)
-        self.assertEqual(self.ref, anchor)
-        self.assertEqual([w[0] for w in self.writes], ['releases/42'])
+        self.assertNotEqual(self.ref, anchor)
+        self.assertEqual([w[0] for w in self.writes], ['git/tags', 'releases/42'])
+        push = [c for c in calls if c[:2] == ['git', 'push']][0]
+        self.assertEqual(push[2], '--force-with-lease=refs/tags/'+B.RELEASE_TAG+':'+anchor['object']['sha'])
         self.assertIn(['git', 'merge-base', '--is-ancestor', SHA, new_sha], calls)
+
+    def test_cas_failure_never_updates_release(self):
+        self.publish(); self.writes.clear()
+        new_sha = 'e'*40
+        def run(args):
+            if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
+            if args[:2] == ['git', 'push']: raise B.subprocess.CalledProcessError(1, args)
+            return self.command(args)
+        state = B.release_state(self, new_sha, run)
+        with self.assertRaises(B.subprocess.CalledProcessError):
+            B.publish_release(self, new_sha, D, run, state)
+        self.assertEqual(self.release['target_commitish'], SHA)
+        self.assertEqual([w[0] for w in self.writes], ['git/tags'])
+
+    def test_retry_after_uncertain_cas_reconciles_tag_before_notes(self):
+        self.publish(); self.writes.clear(); self.fail_after = 'git-push'
+        new_sha = 'e'*40
+        def run(args):
+            if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
+            return self.command(args)
+        with self.assertRaises(OSError):
+            B.publish_release(self, new_sha, D, run, B.release_state(self, new_sha, run))
+        self.fail_after = None; self.writes.clear()
+        B.publish_release(self, new_sha, D, run, B.release_state(self, new_sha, run))
+        self.assertEqual([w[0] for w in self.writes], ['releases/42'])
+        self.assertEqual(self.release['target_commitish'], new_sha)
+
+    def test_foreign_annotation_and_nonancestor_preserved(self):
+        self.publish(); self.writes.clear()
+        self.tag['message'] = '{}'
+        with self.assertRaisesRegex(ValueError, 'proveniência'): self.publish()
+        self.assertEqual(self.writes, [])
+        self.tag['message'] = json.dumps(B.provenance(SHA), sort_keys=True)
+        def run(args):
+            if args[:2] == ['git', 'merge-base']: raise B.subprocess.CalledProcessError(1, args)
+            return self.command(args)
+        with self.assertRaises(B.subprocess.CalledProcessError): B.release_state(self, SHA, run)
+        self.assertEqual(self.writes, [])
 
     def test_race_fails_before_writes(self):
         state = B.release_state(self, SHA, self.command)
