@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Future develop-beta publisher. Registry reads fail closed; writes use Buildx.
 
-Only the version tag and develop-beta can be written. No Git tags/releases.
+Only the mutable 4.0.3 beta tag can be written. No Git tags/releases.
 """
 import argparse
 import base64
@@ -20,6 +20,7 @@ from release_policy import file_reader, validate_tree, validate_distribution
 REPO = 'wkarts/ARGWS-CRM'
 IMAGE = 'ghcr.io/wkarts/argws-crm'
 BRANCH = 'refs/heads/develop-beta'
+BETA_VERSION = '4.0.3'
 DIGEST = re.compile(r'sha256:[0-9a-f]{64}\Z')
 ACCEPT = ', '.join(['application/vnd.oci.image.index.v1+json',
     'application/vnd.docker.distribution.manifest.list.v2+json',
@@ -43,7 +44,7 @@ class Registry:
             raise ValueError('Não foi possível autenticar leitura GHCR; publicação bloqueada.') from error
 
     def manifest(self, reference):
-        if not re.fullmatch(r'(?:[0-9]\.[0-9]\.[0-9]|develop-beta|sha256:[0-9a-f]{64})', reference):
+        if not re.fullmatch(r'(?:4\.0\.3|sha256:[0-9a-f]{64})', reference):
             raise ValueError('Referência de imagem fora da allowlist.')
         request = urllib.request.Request('https://ghcr.io/v2/wkarts/argws-crm/manifests/' + reference,
             headers={'Authorization': 'Bearer ' + self.token, 'Accept': ACCEPT})
@@ -81,20 +82,20 @@ def require_current(sha, run):
         raise ValueError('Build obsoleto: develop-beta avançou; tags preservadas.')
 
 
-def approved(manifest, version, sha):
+def existing_beta(manifest, version):
     if manifest is None:
         return None
     digest, doc = manifest
     annotations = doc.get('annotations', {})
-    expected = {'org.opencontainers.image.revision': sha,
-                'org.opencontainers.image.version': version,
-                'io.argws.channel': 'develop-beta'}
+    sha = annotations.get('org.opencontainers.image.revision', '')
     platforms = {(m.get('platform', {}).get('os'), m.get('platform', {}).get('architecture'))
                  for m in doc.get('manifests', [])}
-    if (not DIGEST.fullmatch(digest) or any(annotations.get(k) != v for k, v in expected.items())
+    if (not DIGEST.fullmatch(digest) or not re.fullmatch('[0-9a-f]{40}', sha)
+            or annotations.get('org.opencontainers.image.version') != version
+            or annotations.get('io.argws.channel') != 'develop-beta'
             or platforms != {('linux', 'amd64'), ('linux', 'arm64')}):
-        raise ValueError('Colisão: tag versionada existente não pertence ao mesmo build beta aprovado; preservada.')
-    return digest
+        raise ValueError('Colisão com imagem sem proveniência beta válida; preservada.')
+    return digest, sha
 
 
 def sources(directory, version, sha):
@@ -112,35 +113,32 @@ def sources(directory, version, sha):
 
 
 def publish(version, sha, registry, run, directory):
-    if not re.fullmatch(r'[0-9]\.[0-9]\.[0-9]', version):
-        raise ValueError('Versão nativa inválida.')
+    if version != BETA_VERSION:
+        raise ValueError('Ciclo beta limitado à versão 4.0.3; revisar política antes de mudar.')
     refs = sources(directory, version, sha)
     require_current(sha, run)
-    existing = registry.manifest(version)
-    digest = approved(existing, version, sha)
-    if digest is None:
-        # Recheck immediately before creation; never overwrite an existing version.
-        existing = registry.manifest(version)
-        digest = approved(existing, version, sha)
-        if digest is None:
-            require_current(sha, run)
-            run(['docker', 'buildx', 'imagetools', 'create',
-                 '--annotation', 'index:org.opencontainers.image.revision=' + sha,
-                 '--annotation', 'index:org.opencontainers.image.version=' + version,
-                 '--annotation', 'index:io.argws.channel=develop-beta',
-                 '-t', IMAGE + ':' + version, *refs])
-            digest = approved(registry.manifest(version), version, sha)
-            if digest is None:
-                raise ValueError('Tag versionada não confirmada; canal não atualizado.')
+    previous = existing_beta(registry.manifest(version), version)
+    if previous and previous[1] != sha:
+        # A later/foreign/non-ancestor image must never be replaced by an old run.
+        run(['git', 'merge-base', '--is-ancestor', previous[1], sha])
+    if existing_beta(registry.manifest(version), version) != previous:
+        raise ValueError('Tag mudou durante a publicação; escrita interrompida.')
     require_current(sha, run)
-    if approved(registry.manifest(version), version, sha) != digest:
-        raise ValueError('Tag versionada mudou durante publicação; canal preservado.')
-    # A single index source is copied byte-for-byte by Buildx.
-    run(['docker', 'buildx', 'imagetools', 'create', '-t', IMAGE + ':develop-beta', IMAGE + '@' + digest])
-    channel = registry.manifest('develop-beta')
-    if channel is None or channel[0] != digest:
-        raise ValueError('Canal beta não aponta para o digest versionado esperado.')
-    print('GHCR beta verificado: ' + version + ' e develop-beta = ' + digest)
+    if previous is None or previous[1] != sha:
+        run(['docker', 'buildx', 'imagetools', 'create',
+             '--annotation', 'index:org.opencontainers.image.revision=' + sha,
+             '--annotation', 'index:org.opencontainers.image.version=' + version,
+             '--annotation', 'index:io.argws.channel=develop-beta',
+             '-t', IMAGE + ':' + version, *refs])
+    confirmed = existing_beta(registry.manifest(version), version)
+    if confirmed is None or confirmed[1] != sha:
+        raise ValueError('Digest/SHA publicado não confirmado; consultar estado antes de repetir.')
+    # No alias update, rollback, deletion or write to any other tag.
+    result = {'image': IMAGE + ':' + version, 'digest': confirmed[0], 'sha': sha,
+              'previous_digest': previous[0] if previous else None,
+              'previous_sha': previous[1] if previous else None}
+    print(json.dumps(result, sort_keys=True))
+    return result
 
 
 def command(args):
@@ -161,9 +159,12 @@ def main():
         validate_distribution(file_reader(Path.cwd()), info['version'])
         registry = Registry()
         require_current(sha, command)
-        approved(registry.manifest(info['version']), info['version'], sha)
+        if info['version'] != BETA_VERSION:
+            raise ValueError('Versão fora do ciclo beta autorizado.')
+        existing_beta(registry.manifest(info['version']), info['version'])
         if args.publish:
-            publish(info['version'], sha, registry, command, args.digests)
+            result = publish(info['version'], sha, registry, command, args.digests)
+            Path('beta-publication.json').write_text(json.dumps(result, indent=2) + '\n')
         else:
             print('Preflight beta aprovado; nenhuma escrita GHCR.')
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

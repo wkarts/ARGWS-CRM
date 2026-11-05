@@ -39,7 +39,7 @@ jobs:
         id: version
         run: echo "value=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
       - name: Preflight de colisão sem escrita
-        if: vars.ARGWS_BETA_PUBLICATION_ENABLED == 'true' && github.event_name == 'push'
+        if: github.event_name == 'push'
         env:
           GHCR_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-beta-image.py
@@ -82,7 +82,7 @@ jobs:
         run: bash scripts/smoke-beta-image.sh
 
   build-push:
-    if: vars.ARGWS_BETA_PUBLICATION_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/develop-beta' && github.repository == 'wkarts/ARGWS-CRM'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop-beta' && github.repository == 'wkarts/ARGWS-CRM'
     needs: validate
     permissions:
       contents: read
@@ -147,7 +147,7 @@ jobs:
           retention-days: 7
 
   publish:
-    if: vars.ARGWS_BETA_PUBLICATION_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/develop-beta' && github.repository == 'wkarts/ARGWS-CRM'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop-beta' && github.repository == 'wkarts/ARGWS-CRM'
     needs: [validate, build-push]
     runs-on: ubuntu-latest
     permissions:
@@ -168,7 +168,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      - name: Preservar versão existente e promover somente canal beta
+      - name: Publicar somente 4.0.3 beta com digest e SHA rastreados
         env:
           GHCR_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-beta-image.py --publish
+      - name: Evidência de digest e SHA do ciclo beta
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-publication-${{ github.sha }}
+          path: beta-publication.json
+          if-no-files-found: warn
+          retention-days: 90

@@ -206,7 +206,39 @@ def target_levels(source, target):
     return range(target, target + 1)
 
 
-def check_delta(root, base, head):
+# Explicitly authorized beta cycle: infrastructure-only PRs may retain 4.0.3.
+# This is not a general docs/CI exception and is never used by release planning.
+BETA_INFRA_PATHS = frozenset({
+    '.github/workflows/beta-container.yml', '.github/workflows/core-release-policy.yml',
+    'scripts/publish-beta-image.py', 'scripts/smoke-beta-image.sh',
+    'scripts/check-release-version.py', 'scripts/release_policy.py',
+    'tests/test_beta_container.py', 'tests/test_release_version.py',
+    'docs/pwa-402/ghcr-beta.md', 'AGENTS.md', 'CONTRIBUTING.md',
+})
+
+
+def beta_infrastructure_delta(root, ancestor, base, head, base_ref, before, after):
+    if base_ref != 'develop-beta' or before['version'] != '4.0.3' or after['version'] != '4.0.3':
+        return False
+    changed = set(filter(None, git(root, 'diff', '--name-only', '-z', '--no-renames', ancestor, head).decode().split('\0')))
+    if not changed or not changed <= BETA_INFRA_PATHS:
+        return False
+    for path in changed:
+        entry = git_files(root, head, path).get(path)
+        if not entry or entry[0] not in ('100644', '100755') or entry[1] != 'blob':
+            return False
+    # Version metadata/distribution and ALL historical migrations stay byte/mode exact.
+    frozen = (*METADATA_PATHS, 'application/migrations', 'compose.yaml',
+              'deploy/production/compose.yaml', 'deploy/production/.env.example',
+              'container.env.example')
+    for original in (ancestor, base):
+        for path in frozen:
+            if git_files(root, original, path) != git_files(root, head, path):
+                return False
+    return True
+
+
+def check_delta(root, base, head, base_ref=None):
     if not all(re.fullmatch(r'[0-9a-f]{40}', ref) for ref in (base, head)):
         raise ValueError('Informe os SHAs completos de base/head do evento da PR.')
     base, head = commit_id(root, base), commit_id(root, head)
@@ -225,6 +257,8 @@ def check_delta(root, base, head):
             raise ValueError('Alias da base sem ancestralidade comprovada.')
     after = validate_tree(git_reader(root, head))
     validate_distribution(git_reader(root, head), after['version'])
+    if beta_infrastructure_delta(root, ancestor, base, head, base_ref, before, after):
+        return {**after, 'validation_mode': 'beta-infrastructure-only'}
     expected_new = {migration_path(level) for level in target_levels(before, after['migration'])}
     previous_files = git_files(root, ancestor)
     base_files = git_files(root, base)

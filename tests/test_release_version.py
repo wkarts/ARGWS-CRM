@@ -157,6 +157,80 @@ class NativeReleaseMetadataTest(unittest.TestCase):
             POLICY.validate_archive(bad)
 
 
+class BetaInfrastructureGateTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        POLICY.git(self.root, 'init', '-q')
+        POLICY.git(self.root, 'config', 'user.email', 'fixture@example.invalid')
+        POLICY.git(self.root, 'config', 'user.name', 'Fixture')
+        fixture(self.root, 403)
+        path = self.root / '.github/workflows/beta-container.yml'
+        path.parent.mkdir(parents=True, exist_ok=True); path.write_text('name: before\n')
+        self.base = self.commit()
+        path.write_text('name: after\n')
+        self.head = self.commit()
+
+    def commit(self):
+        POLICY.git(self.root, 'add', '.')
+        POLICY.git(self.root, 'commit', '-qm', 'fixture')
+        return POLICY.commit_id(self.root, 'HEAD')
+
+    def check(self, branch='develop-beta', head=None, base=None):
+        return POLICY.check_delta(self.root, base or self.base, head or self.head, branch)
+
+    def test_authorized_infrastructure_cycle_is_explicit(self):
+        self.assertEqual(self.check()['validation_mode'], 'beta-infrastructure-only')
+
+    def test_other_branch_or_release_cli_still_requires_increment(self):
+        for branch in [None, '', 'main', 'develop', 'develop-beta-other']:
+            with self.subTest(branch=branch), self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
+                self.check(branch)
+
+    def test_product_or_mixed_changes_require_increment(self):
+        for name in ['application/controllers/Invoice.php', 'assets/pwa/install.js',
+                     'modules/example/example.php', '.github/workflows/release-packages.yml']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text('changed')
+            with self.subTest(path=name), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_deleted_or_symlink_infrastructure_rejected(self):
+        path = self.root / '.github/workflows/beta-container.yml'
+        for symlink in [False, True]:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path.unlink()
+            if symlink: path.symlink_to('../../VERSION')
+            with self.subTest(symlink=symlink), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_same_version_metadata_and_distribution_edits_rejected(self):
+        for name in ['VERSION', 'application/config/constants.php', 'compose.yaml']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / name; path.write_text(path.read_text() + '\n')
+            with self.subTest(path=name), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_migration_bytes_modes_and_new_markers_rejected(self):
+        for kind in ['bytes', 'mode', 'add']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / POLICY.migration_path(402)
+            if kind == 'bytes': path.write_text(path.read_text() + '// changed')
+            elif kind == 'mode': path.chmod(0o755)
+            else: (self.root / POLICY.migration_path(404)).write_text(APPLIER.migration_marker_source(404))
+            with self.subTest(kind=kind), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_cycle_does_not_apply_to_other_versions(self):
+        fixture(self.root, 404)
+        base = self.commit()
+        (self.root / '.github/workflows/beta-container.yml').write_text('name: another\n')
+        with self.assertRaisesRegex(ValueError, 'exatamente o próximo'): self.check(base=base, head=self.commit())
+
+    def test_current_base_advance_cannot_be_hidden(self):
+        POLICY.git(self.root, 'checkout', '-qb', 'newbase', self.base)
+        fixture(self.root, 404)
+        advanced = self.commit()
+        with self.assertRaisesRegex(ValueError, 'base atual avançou'): self.check(base=advanced)
+
+
 class NativeReleaseGitTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

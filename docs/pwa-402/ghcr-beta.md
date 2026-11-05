@@ -1,88 +1,91 @@
-# GHCR da linha develop-beta
+# GHCR — ciclo beta 4.0.3
 
-O workflow `beta-container.yml` é independente dos canais existentes e não cria
-Git tags, GitHub releases, deploys ou imagens de dependências.
+## Decisão e escopo
 
-## Decisão pendente e bloqueio preventivo
+Wallace autorizou **uma única tag de uso**, `ghcr.io/wkarts/argws-crm:4.0.3`,
+mutável durante o ciclo beta. Builds aprovados substituem seu apontamento;
+cada conteúdo continua identificado pelo digest e SHA. Não há tag adicional
+`:develop-beta`, nem escrita em `:latest`, `:develop`, `:4` ou `:4.0`.
+Não confundir 4.0.3 beta mutável com uma versão estável imutável.
 
-Wallace está definindo se 4.0.3 permanece fixa durante o ciclo beta e a política
-para a tag versionada. A estratégia imutável abaixo é proposta conservadora,
-NÃO decisão final. Nenhuma publicação está autorizada nesta PR.
+A PR #57 foi mesclada externamente antes desta infraestrutura. A PR de continuação
+parte de `b693149f22b1681fdc38ebd941f0b8a8c9a4ab1e`, que já contém 4.0.3.
+Esta entrega configura publicação futura; **nenhuma imagem, tag Git, release ou
+deploy foi publicada/executada por este trabalho**. Merge continua não autorizado.
 
-Preflight e jobs de push/publicação exigem a variável de repositório
-`ARGWS_BETA_PUBLICATION_ENABLED` igual a `true`; ausente ou diferente disso, não
-executam. A variável não foi habilitada por este trabalho. Não habilitar até
-concluir a decisão e revisar a implementação. Gates e builds de PR permanecem
-ativos, sem login de escrita. Não há bypass da validação de versão.
+## Gatilhos e validação
 
-A PR #57 foi mesclada externamente antes desta infraestrutura; esta continuação
-parte do merge `b693149f22b1681fdc38ebd941f0b8a8c9a4ab1e`. A base já contém 4.0.3.
-AGENTS.md e CONTRIBUTING.md exigem próximo ID inclusive para CI: manter 4.0.3
-nesta PR deixa o gate do núcleo reprovado por contrato. O teste explícito de delta
-somente CI confirma essa exigência. Não foi implementada exceção nem incremento
-presumido. A decisão do ciclo beta precisa resolver esse conflito antes do merge.
+- PR para `develop-beta`: validações, build e smoke linux/amd64 e linux/arm64;
+  push:false, sem login GHCR ou packages:write nos jobs executados.
+- Push em `develop-beta`, após integração futura autorizada: validação e preflight,
+  build por digest das duas arquiteturas, smoke e promoção somente de `:4.0.3`.
+- Sem gatilho por Git tag ou workflow_dispatch. Sem configuração nos canais main
+  ou develop. Sem criação de Git tags/GitHub releases ou imagens de dependências.
+- A versão é validada contra VERSION, constante, migration e distribuição.
+  O publicador exige exatamente 4.0.3; encerrar o ciclo requer revisão explícita.
 
-## Eventos e nomes propostos (após autorização e habilitação)
+Gates: testes de versão/empacotamento/publicador, tracking nativo descartável,
+branding, HTTP PWA e Chromium precedem os builds. O smoke lê versão/migration,
+manifesto e ícones na imagem, com entrypoint PHP e rede desabilitada, sem iniciar
+provisionamento nem banco. Falha em qualquer arquitetura impede promoção da tag.
+Builds de push podem deixar conteúdo sem tag caso o smoke falhe; não publicam
+um novo apontamento da tag de uso antes da aprovação dos dois smokes.
 
-- PR para `develop-beta`: validações e build/smoke em linux/amd64 e linux/arm64,
-  `push: false`, sem login GHCR e sem permissão packages:write nos jobs de PR.
-- Push em `develop-beta`, somente com publicação habilitada (inclusive futuro merge autorizado): validação, preflight,
-  build por digest em ambas as arquiteturas, smoke de cada imagem e publicação.
-- Sem gatilho por tag Git ou workflow_dispatch. Criar uma tag não publica o beta.
-- A versão é lida de VERSION e validada contra migration, constante e distribuição.
-  Inicialmente `ghcr.io/wkarts/argws-crm:4.0.3`.
-- `ghcr.io/wkarts/argws-crm:develop-beta` aponta para o mesmo índice multiarch
-  da versão aprovada. Nenhuma escrita em `:latest`, `:develop`, `:4` ou `:4.0`.
+## Política de versão para esta infraestrutura
 
-## Gates e preservação
+A autorização de manter 4.0.3 no ciclo beta é explícita. O gate agora distingue
+somente o delta de infraestrutura allowlisted (`BETA_INFRA_PATHS`) com base
+`develop-beta`, versão base/head 4.0.3, arquivos regulares e metadados/distribuição/
+migrations históricos byte a byte e modo inalterados. Não é bypass por pasta ou
+extensão. Produto, assets, módulos, mudanças mistas, exclusões, symlinks, outras
+bases e versões continuam no contrato de incremento original.
 
-Testes existentes de versão/empacotamento, contratos do publicador, tracking
-nativo descartável, branding, HTTP PWA e Chromium precedem os builds. Os smokes
-leem versão/migration/manifesto/ícones dentro de cada imagem, com entrypoint PHP
-explícito e rede desabilitada, sem iniciar provisionamento ou acessar banco.
+A CLI recebe o nome real da base via evento GitHub. Sem `--base-ref develop-beta`,
+o contrato de release continua estrito, assim como o planner estável. O teste
+apresenta casos positivos e negativos; o gate continua executando coerência,
+preservação histórica e tracking. Não é uma validação de publicação estável.
+AGENTS.md e CONTRIBUTING.md registram a regra autorizada.
 
-Os builds de push usam somente digests até os dois smokes passarem. Falha pode
-levar a blobs/digests sem tags no GHCR; não promove a tag de versão ou canal.
-A publicação usa somente artefatos do mesmo run/SHA/versão/arquitetura.
+## Mutabilidade, concorrência e rastreabilidade
 
-A tag versionada é consultada antes do build e novamente antes da criação:
+O publicador só aceita ausência com HTTP 404 + MANIFEST_UNKNOWN. Auth, rate limit,
+proxy, timeout, erro de digest ou outro erro bloqueiam. Uma imagem existente sem
+proveniência beta esperada é preservada e bloqueia a escrita. Uma imagem beta
+anterior só pode ser substituída se seu SHA for ancestral do novo SHA aprovado.
+Retry do mesmo SHA preserva o digest existente, mesmo após interrupção posterior
+à escrita; não troca a tag por um rebuild diferente do mesmo commit.
 
-- ausência só é aceita com HTTP 404 e código MANIFEST_UNKNOWN;
-- autenticação, 403, rate limit, proxy, timeout, digest inválido ou outro erro
-  bloqueiam, sem interpretar falha como ausência;
-- tag existente de outro SHA, outro canal, sem proveniência esperada ou sem as
-  duas arquiteturas bloqueia; não exclui nem substitui a imagem;
-- retry do MESMO SHA com índice beta já aprovado reutiliza seu digest original,
-  sem sobrescrever a versão, inclusive após interrupção anterior à promoção;
-- develop-beta precisa continuar no SHA construído, antes de criar a versão e
-  de promover o alias. Builds obsoletos não retrocedem o canal;
-- pipelines beta são serializados por branch sem cancelamento de push. PRs usam
-  grupo separado e podem cancelar validação anterior.
+O HEAD remoto é conferido antes das escritas; build obsoleto falha. Uma releitura
+da tag detecta alterações concorrentes antes da escrita. Runs de push beta são
+serializados sem cancelamento; PRs têm grupo separado. Nunca reverte tags após
+uma corrida/falha: verifica o estado e exige retry consciente.
 
-GHCR não oferece nesta integração uma criação condicional atômica de tags.
-As releituras e serialização protegem os runs deste workflow, mas não constituem
-lock contra um publicador externo/manual. Evitar escrita concorrente externa nas
-mesmas tags. Os workflows estável/develop não foram alterados; colisões futuras
-exigem próximo ID nativo aprovado, nunca exclusão ou force da imagem existente.
+`beta-publication.json` registra imagem, digest/SHA novos e digest/SHA anteriores;
+o workflow conserva esse artifact por 90 dias e imprime o registro no log.
+Índice publicado contém annotations de versão, SHA e canal. Consumidores que
+precisem conteúdo fixo devem usar `ghcr.io/wkarts/argws-crm@sha256:...`.
+Digest não é garantia de retenção eterna pelo registry; não há rotina de limpeza
+ou exclusão de imagens nesta configuração.
 
-## Situação e execução
+GHCR não oferece nesta integração uma escrita condicional atômica de tags.
+Serialização/releituras protegem os runs deste fluxo, mas não são lock contra
+publicador externo/manual. Não permitir escrita concorrente externa em :4.0.3.
+Os workflows estável/develop permanecem inalterados.
 
-Na consulta anterior à implementação, `docker manifest inspect
- ghcr.io/wkarts/argws-crm:4.0.3` retornou `manifest unknown`, e não havia tag Git
-v4.0.3. Isso é observação pontual: o workflow sempre consulta novamente.
+## Evidências e operação
 
-A PR apenas configura a publicação futura. Não executar o publicador nesta etapa.
-Builds e testes de PR não enviam imagens ao GHCR. O fluxo existente de main gera
-imagens estáveis e releases; não é usado para este canal beta.
+Consulta inicial: `docker manifest inspect ghcr.io/wkarts/argws-crm:4.0.3`
+retornou `manifest unknown`; não havia Git tag v4.0.3. Observação pontual: o
+workflow sempre consulta novamente antes de publicar.
 
-Dependências: imagem base FrankenPHP GHCR e Composer já previstas no Dockerfile,
-Buildx, GITHUB_TOKEN do Actions com packages:write somente nos jobs de push.
-Não provisiona nem atualiza imagens base/mysql/mariadb e não usa dados reais.
+Dependências: Dockerfile e bases FrankenPHP/Composer existentes, Buildx,
+GITHUB_TOKEN packages:write somente nos jobs de push. Nenhuma credencial ou dado
+real é incorporado; sem sincronização de bases/mysql/mariadb.
 
-Testes locais: `python3 -m unittest tests/test_beta_container.py` (16 casos);
-`bash -n scripts/smoke-beta-image.sh`. CI executa também os builds e smokes reais.
-Não há homologação de publicação remota agora, por restrição expressa.
+Testes: `python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_beta_container.py`;
+actionlint dos workflows; `bash -n scripts/smoke-beta-image.sh`; CI executa builds
+e smokes reais. Publicação remota não homologada por restrição expressa.
 
-Rollback da configuração: reverter workflow/scripts antes de autorizar futuros
-pushes. Não há alterações de banco. Reverter código não deve apagar imagens já
-publicadas; qualquer promoção de digest anterior exigirá autorização específica.
+Rollback de configuração: reverter workflow/scripts antes de autorizar novos
+pushes. Não apagar imagens. Reapontar :4.0.3 para digest anterior é promoção
+manual que requer autorização específica; não há rollback de banco.

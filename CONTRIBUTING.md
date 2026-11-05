@@ -227,3 +227,16 @@ O empacotador valida os bytes de VERSION/config/classe dentro de ambos os ZIPs,
 inclusive a árvore reconstruída do incremental. Esses checks não substituem os
 testes funcionais e de banco do recurso. Branch protection requer configuração
 separada; este workflow não muda permissões do repositório.
+
+## Ciclo beta 4.0.3 — infraestrutura
+
+Por decisão explícita, PRs de infraestrutura com base `develop-beta` podem manter
+4.0.3 durante este ciclo. O gate exige versão/metadados/distribuição e migrations
+inalterados, arquivos regulares e delta limitado à allowlist `BETA_INFRA_PATHS` em
+`scripts/release_policy.py`. Não é exceção genérica por extensão ou pasta: arquivos
+de produto, módulos, schemas, assets, mudanças mistas, exclusões, symlinks, outra
+base ou outra versão continuam sujeitos ao incremento nativo normal. A CLI sem
+`--base-ref develop-beta` e o planner de release permanecem estritos. Esta regra
+não autoriza publicar nem habilita o canal estável; ao encerrar o ciclo, revisar
+a regra e a versão com o responsável. GHCR :4.0.3 é mutável neste ciclo beta, com
+digest/SHA rastreados; :latest e :develop ficam preservadas.

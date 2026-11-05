@@ -37,84 +37,90 @@ class PublicationTest(unittest.TestCase):
         self.writes = []
         self.remote = SHA
         self.version = None
-        self.channel = None
         self.reads = 0
+        self.ancestor = True
         self.interrupt = False
 
     def command(self, args):
         if args[:2] == ['git', 'ls-remote']:
             return self.remote + '\t' + B.BRANCH + '\n'
+        if args[:2] == ['git', 'merge-base']:
+            if not self.ancestor: raise B.subprocess.CalledProcessError(1, args)
+            return ''
         self.writes.append(args)
         target = args[args.index('-t') + 1]
-        if target == B.IMAGE + ':' + VERSION:
-            self.version = manifest()
-            if self.interrupt: raise OSError('simulated interruption after version creation')
-        elif target == B.IMAGE + ':develop-beta': self.channel = self.version
-        else: self.fail('forbidden destination ' + target)
+        self.assertEqual(target, B.IMAGE + ':4.0.3', 'only authorized mutable tag')
+        self.version = manifest()
+        if self.interrupt: raise OSError('simulated interruption after tag write')
         return ''
 
     def manifest(self, ref):
+        self.assertEqual(ref, VERSION)
         self.reads += 1
-        return self.channel if ref == 'develop-beta' else self.version
+        return self.version
 
     def publish(self):
-        B.publish(VERSION, SHA, self, self.command, self.directory)
+        return B.publish(VERSION, SHA, self, self.command, self.directory)
 
-    def test_create_version_then_move_beta_to_identical_digest(self):
-        self.publish()
-        self.assertEqual([cmd[cmd.index('-t')+1] for cmd in self.writes],
-                         [B.IMAGE+':4.0.3', B.IMAGE+':develop-beta'])
-        self.assertEqual(self.channel[0], self.version[0])
-        self.assertEqual(self.writes[-1][-1], B.IMAGE+'@'+D)
+    def test_first_publication_writes_only_403_with_provenance(self):
+        result = self.publish()
+        self.assertEqual(len(self.writes), 1)
+        self.assertEqual(result['sha'], SHA)
+        self.assertEqual(result['digest'], D)
+        self.assertIsNone(result['previous_digest'])
 
-    def test_existing_other_sha_is_never_overwritten(self):
-        self.version = manifest('e'*40)
-        with self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
+    def test_forward_beta_update_records_previous_digest_and_sha(self):
+        self.version = ('sha256:'+'e'*64, manifest('f'*40)[1])
+        result = self.publish()
+        self.assertEqual(result['previous_digest'], 'sha256:'+'e'*64)
+        self.assertEqual(result['previous_sha'], 'f'*40)
+        self.assertEqual(result['sha'], SHA)
+        self.assertEqual(len(self.writes), 1)
+
+    def test_nonancestor_image_is_never_overwritten(self):
+        self.version = manifest('e'*40); self.ancestor = False
+        with self.assertRaises(B.subprocess.CalledProcessError): self.publish()
         self.assertEqual(self.writes, [])
 
-    def test_unannotated_existing_stable_image_is_preserved(self):
+    def test_unannotated_stable_image_is_preserved(self):
         self.version = D, {'manifests': []}
         with self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
         self.assertEqual(self.writes, [])
 
-    def test_retry_reuses_original_version_without_overwriting(self):
+    def test_retry_same_sha_does_not_rebuild_or_retag(self):
         self.version = manifest()
         self.publish()
-        self.assertEqual(len(self.writes), 1)
-        self.assertEqual(self.writes[0][-2:], [B.IMAGE+':develop-beta', B.IMAGE+'@'+D])
+        self.assertEqual(self.writes, [])
 
-    def test_interrupted_publication_resumes_without_replacing_version(self):
+    def test_retry_after_interruption_recovers_without_overwriting(self):
         self.interrupt = True
         with self.assertRaises(OSError): self.publish()
-        self.assertIsNone(self.channel)
-        self.interrupt = False
-        self.writes.clear()
+        self.interrupt = False; self.writes.clear()
         self.publish()
-        self.assertEqual(len(self.writes), 1)
+        self.assertEqual(self.writes, [])
 
-    def test_obsolete_build_cannot_roll_channel_back(self):
+    def test_obsolete_build_cannot_roll_tag_back(self):
         self.remote = 'e'*40
         with self.assertRaisesRegex(ValueError, 'obsoleto'): self.publish()
         self.assertEqual(self.writes, [])
 
-    def test_racing_version_detected_on_second_read(self):
+    def test_registry_change_detected_before_write(self):
         def racing(ref):
             self.reads += 1
             return None if self.reads == 1 else manifest('e'*40)
         self.manifest = racing
-        with self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
+        with self.assertRaisesRegex(ValueError, 'Tag mudou'): self.publish()
         self.assertEqual(self.writes, [])
 
-    def test_advance_after_version_publish_preserves_channel(self):
-        original = self.command
-        def advancing(args):
-            value = original(args)
-            if args[0] == 'docker': self.remote = 'e'*40
+    def test_branch_advance_after_reads_blocks_write(self):
+        original = self.manifest
+        def advancing(ref):
+            value = original(ref)
+            self.remote = 'e'*40
             return value
-        self.command = advancing
+        self.manifest = advancing
         with self.assertRaisesRegex(ValueError, 'obsoleto'): self.publish()
-        self.assertEqual(len(self.writes), 1)
-        self.assertIsNone(self.channel)
+        self.assertEqual(self.writes, [])
 
     def test_corrupt_or_foreign_artifacts_fail_before_write(self):
         for key, value in [('sha', 'e'*40), ('version', '4.0.2'), ('arch', 'arm64'), ('digest', 'latest')]:
@@ -124,6 +130,11 @@ class PublicationTest(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(ValueError): self.publish()
             self.assertEqual(self.writes, [])
             p.write_text(saved)
+
+    def test_other_version_requires_new_decision(self):
+        with self.assertRaisesRegex(ValueError, 'Ciclo beta'):
+            B.publish('4.0.4', SHA, self, self.command, self.directory)
+        self.assertEqual(self.writes, [])
 
     def test_publish_context_rejects_pr_tags_forks_main_and_develop(self):
         good = dict(GITHUB_EVENT_NAME='push', GITHUB_REF=B.BRANCH, GITHUB_REPOSITORY=B.REPO, GITHUB_SHA=SHA)
@@ -165,7 +176,7 @@ class RegistryReadTest(unittest.TestCase):
             with self.assertRaises(ValueError): self.registry.manifest(VERSION)
 
     def test_other_tags_rejected_before_network(self):
-        for tag in ['latest', 'develop', '../config', '4', '4.0', '4.0.3;cmd']:
+        for tag in ['latest', 'develop', 'develop-beta', '../config', '4', '4.0', '4.0.4', '4.0.3;cmd']:
             with self.subTest(tag=tag), self.assertRaises(ValueError): self.registry.manifest(tag)
 
 
@@ -180,7 +191,6 @@ class WorkflowTest(unittest.TestCase):
         self.assertNotIn('workflow_dispatch', source)
         self.assertEqual(source.count('branches: [develop-beta]'), 2)
         self.assertIn('needs: [validate, build-push]', source)
-        self.assertEqual(source.count("vars.ARGWS_BETA_PUBLICATION_ENABLED == 'true'"), 3)
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", source)
         for gate in ['check-release-version.sh', 'test_beta_container.py', 'native_migration_tracking.php',
                      'native_pwa.browser.cjs', 'smoke-beta-image.sh']:
