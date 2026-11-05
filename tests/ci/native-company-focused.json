@@ -2912,6 +2912,10 @@
     [
       "node",
       "tests/native_mobile_layout.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/context_forms.browser.cjs"
     ]
   ]
 }
