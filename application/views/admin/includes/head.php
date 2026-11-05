@@ -31,6 +31,7 @@
             _table_api;
     </script>
     <?php app_admin_head(); ?>
+    <?php $this->load->view('includes/pwa'); ?>
 </head>
 
 <body <?= admin_body_class($bodyclass ?? ''); ?>>
