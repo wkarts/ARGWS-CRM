@@ -1,94 +1,108 @@
-# GHCR — ciclo beta 4.0.3
+# GHCR e pré-release — ciclo beta 4.0.3
 
-## Decisão e escopo
+## Contrato
 
-Wallace autorizou **uma única tag de uso**, `ghcr.io/wkarts/argws-crm:4.0.3`,
-mutável durante o ciclo beta. Builds aprovados substituem seu apontamento;
-cada conteúdo continua identificado pelo digest e SHA. Não há tag adicional
-`:develop-beta`, nem escrita em `:latest`, `:develop`, `:4` ou `:4.0`.
-Não confundir 4.0.3 beta mutável com uma versão estável imutável.
+A aplicação continua **4.0.3**. A única tag GHCR escrita é
+`ghcr.io/wkarts/argws-crm:develop-beta`, substituindo o destino antigo `:4.0.3`.
+Qualquer imagem `:4.0.3` existente é preservada, assim como `:latest`, `:develop`,
+main/develop, tags estáveis, dados, PWA e identidade V2. Sem SaaS.
 
-A PR #57 foi mesclada externamente antes desta infraestrutura. A PR de continuação
-parte de `b693149f22b1681fdc38ebd941f0b8a8c9a4ab1e`, que já contém 4.0.3.
-Esta entrega configura publicação futura; **nenhuma imagem, tag Git, release ou
-deploy foi publicada/executada por este trabalho**. Merge continua não autorizado.
+Uma única pré-release `v4.0.3-beta` recebe SHA atual, digest multiarch e link para
+os fontes atuais. `prerelease: true` e `make_latest: "false"` são explícitos em
+POST/PATCH. A tag Git anotada dedicada acompanha o SHA publicado; os downloads
+Source code dessa pré-release acompanham o mesmo código da imagem. Consumidores
+que exigem imutabilidade devem fixar SHA/digest, pois este é um canal beta contínuo.
+Nunca mover tags estáveis. Criação da referência é atômica create-only; atualização
+usa `git push --force-with-lease=refs/tags/v4.0.3-beta:OBJETO_ANTERIOR`, comparando o
+objeto anotado remoto observado, não apenas o commit resolvido. Não usar force
+sem lease nem PATCH force de refs pela API.
 
-## Gatilhos e validação
+## Gatilhos e permissões
 
-- PR para `develop-beta`: validações, build e smoke linux/amd64 e linux/arm64;
-  push:false, sem login GHCR ou packages:write nos jobs executados.
-- Push em `develop-beta`, após integração futura autorizada: validação e preflight,
-  build por digest das duas arquiteturas, smoke e promoção somente de `:4.0.3`.
-- Sem gatilho por Git tag ou workflow_dispatch. Sem configuração nos canais main
-  ou develop. Sem criação de Git tags/GitHub releases ou imagens de dependências.
-- A versão é validada contra VERSION, constante, migration e distribuição.
-  O publicador exige exatamente 4.0.3; encerrar o ciclo requer revisão explícita.
+PR para develop-beta valida versão, regressões PWA/V2, build e smoke linux/amd64
+e linux/arm64 sem login/publicação. Push em develop-beta executa os mesmos gates,
+publica builds por digest, promove o índice e depois atualiza a pré-release.
+Sem workflow_dispatch, gatilhos por tags ou alterações nos workflows estáveis.
+Somente o job publish recebe contents:write; packages:write permanece nos jobs
+de publicação. GH_TOKEN e GHCR_TOKEN recebem exclusivamente `${{ github.token }}`.
+Não substituir por PAT/token externo: o evento release:published do deployer
+não filtra beta em validate/build. O GITHUB_TOKEN de Actions impede o encadeamento
+normal desses eventos em outros workflows. O script recusa execução de release
+fora de Actions e tokens diferentes; essa checagem é um contrato operacional,
+não introspecção criptográfica da origem do token.
 
-Gates: testes de versão/empacotamento/publicador, tracking nativo descartável,
-branding, HTTP PWA e Chromium precedem os builds. O smoke lê versão/migration,
-manifesto e ícones na imagem, com entrypoint PHP e rede desabilitada, sem iniciar
-provisionamento nem banco. Falha em qualquer arquitetura impede promoção da tag.
-Builds de push podem deixar conteúdo sem tag caso o smoke falhe; não publicam
-um novo apontamento da tag de uso antes da aprovação dos dois smokes.
+## Proveniência, colisão e retry
 
-## Política de versão para esta infraestrutura
+Índice GHCR: versão 4.0.3, canal develop-beta, SHA e amd64/arm64 obrigatórios.
+Somente 404 MANIFEST_UNKNOWN é ausência; auth, rate-limit e rede falham fechados.
+Imagem sem proveniência bloqueia; SHA anterior precisa ser ancestral. O HEAD
+remoto é reconferido antes da promoção. Retry do mesmo SHA reutiliza seu digest
+já publicado mesmo se um rebuild produziu digests diferentes.
 
-A autorização de manter 4.0.3 no ciclo beta é explícita. O gate agora distingue
-somente o delta de infraestrutura allowlisted (`BETA_INFRA_PATHS`) com base
-`develop-beta`, versão base/head 4.0.3, arquivos regulares e metadados/distribuição/
-migrations históricos byte a byte e modo inalterados. Não é bypass por pasta ou
-extensão. Produto, assets, módulos, mudanças mistas, exclusões, symlinks, outras
-bases e versões continuam no contrato de incremento original.
+Tag Git: anotação JSON exata com publisher, repositório, canal, versão e SHA;
+objeto commit, versão e ancestralidade conferidos antes de qualquer reutilização.
+O objeto anotado novo é criado localmente por git mktag e promovido somente por
+CAS; não depende de fetch de objeto órfão criado pela API.
+Release: exige tag própria, prerelease publicada, nome/tag corretos, nenhuma
+asset externa e marcador JSON com SHA/digest. Release estável ou sem marcador
+nunca é adotada. SHA anterior deve ser ancestral da tag observada, que deve ser ancestral do novo.
+Isso permite reconciliar uma interrupção após CAS da tag e antes das notas.
+Mesmo SHA com digest divergente na release bloqueia para investigação.
+A confirmação lê a referência Git real: `target_commitish` é apenas indicativo
+quando a tag já existe, conforme a [API GitHub](https://docs.github.com/en/rest/releases/releases).
 
-A CLI recebe o nome real da base via evento GitHub. Sem `--base-ref develop-beta`,
-o contrato de release continua estrito, assim como o planner estável. O teste
-apresenta casos positivos e negativos; o gate continua executando coerência,
-preservação histórica e tracking. Não é uma validação de publicação estável.
-AGENTS.md e CONTRIBUTING.md registram a regra autorizada.
+Antes da promoção GHCR, preflight GitHub detecta colisões. Antes da escrita da
+release, releitura detecta mudanças desde o preflight. Criação de tag interrompida
+pode deixar objeto órfão ou tag válida sem release; retry verifica e completa.
+Se CAS ocorreu antes de falhar a atualização da release, Source code pode ficar
+temporariamente à frente das notas. A execução falha, registra o digest da imagem
+e exige retry para reconciliar; não declara publicação completa nesse intervalo.
+POST/PATCH não têm retry automático: resposta incerta exige nova leitura. Após
+escrita, release é lida e verificada. Falha de release após promoção GHCR preserva
+a imagem; retry completa notas sem reconstruir/reapontar o mesmo SHA. Nunca há
+rollback automático, exclusão ou alteração estável em resposta a falha.
 
-## Mutabilidade, concorrência e rastreabilidade
+Runs beta são serializados, sem cancelamento. GHCR e PATCH de release não oferecem
+CAS nesta integração; releituras não são lock contra escritor externo. Não usar
+publicadores concorrentes manuais nesse canal. O artifact beta-publication.json
+(registro GHCR salvo antes da release e enriquecido com URL após confirmação)
+é retido por 90 dias. Consumidores fixos usam `IMAGE@sha256:...`.
 
-O publicador só aceita ausência com HTTP 404 + MANIFEST_UNKNOWN. Auth, rate limit,
-proxy, timeout, erro de digest ou outro erro bloqueiam. Uma imagem existente sem
-proveniência beta esperada é preservada e bloqueia a escrita. Uma imagem beta
-anterior só pode ser substituída se seu SHA for ancestral do novo SHA aprovado.
-Retry do mesmo SHA preserva o digest existente, mesmo após interrupção posterior
-à escrita; não troca a tag por um rebuild diferente do mesmo commit.
+## Publicação sem merge: investigação em 2026-11-05
 
-O HEAD remoto é conferido antes das escritas; build obsoleto falha. Uma releitura
-da tag detecta alterações concorrentes antes da escrita. Runs de push beta são
-serializados sem cancelamento; PRs têm grupo separado. Nunca reverte tags após
-uma corrida/falha: verifica o estado e exige retry consciente.
+Base: 75b29a0bea50faebee251822f989ed7a40cb1bd9, PR58 já mesclada externamente.
+Consulta GHCR anônima: :4.0.3 e :develop-beta ausentes (MANIFEST_UNKNOWN); nenhuma tag/release beta
+na consulta GitHub. Estas observações não substituem preflight em execução.
 
-`beta-publication.json` registra imagem, digest/SHA novos e digest/SHA anteriores;
-o workflow conserva esse artifact por 90 dias e imprime o registro no log.
-Índice publicado contém annotations de versão, SHA e canal. Consumidores que
-precisem conteúdo fixo devem usar `ghcr.io/wkarts/argws-crm@sha256:...`.
-Digest não é garantia de retenção eterna pelo registry; não há rotina de limpeza
-ou exclusão de imagens nesta configuração.
+Publicação atual está autorizada, merge não. Contudo beta-container.yml não existe
+na default branch main (Contents API 404); adicionar dispatch somente na branch
+da PR não disponibiliza o workflow na default. O ambiente não possui credencial
+GitHub/GHCR de publicação configurada; gh auth status falhou e gh api recebeu
+Forbidden em GET /repos/wkarts/ARGWS-CRM. O conector GitHub permite preparar PR,
+mas não oferece dispatch nem criação de release; GET actions/workflows e GET
+actions/workflows/beta-container.yml também foram recusados pelo conector como
+endpoint não permitido (HTTPError 400). Não houve tentativa de POST dispatch sem
+um workflow despachável/credencial disponível. Não houve publicação por este trabalho. É necessário um
+caminho Actions autorizado e disponível na default com esse workflow, ou ambiente
+com credenciais temporárias apropriadas e revisão dos efeitos release:published;
+não alterar main nem mesclar a PR para contornar esse bloqueio.
 
-GHCR não oferece nesta integração uma escrita condicional atômica de tags.
-Serialização/releituras protegem os runs deste fluxo, mas não são lock contra
-publicador externo/manual. Não permitir escrita concorrente externa em :4.0.3.
-Os workflows estável/develop permanecem inalterados.
+## Versão, validação e rollback
 
-## Evidências e operação
+Delta limitado à allowlist BETA_INFRA_PATHS com base develop-beta; VERSION,
+constantes, distribuição, migrations, produto e assets permanecem inalterados.
+O planner estável continua estrito. Validar:
 
-Consulta inicial: `docker manifest inspect ghcr.io/wkarts/argws-crm:4.0.3`
-retornou `manifest unknown`; não havia Git tag v4.0.3. Observação pontual: o
-workflow sempre consulta novamente antes de publicar.
+```
+python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_beta_container.py
+bash scripts/check-release-version.sh --base BASE_SHA --head HEAD_SHA --base-ref develop-beta
+```
 
-Dependências: Dockerfile e bases FrankenPHP/Composer existentes, Buildx,
-GITHUB_TOKEN packages:write somente nos jobs de push. Nenhuma credencial ou dado
-real é incorporado; sem sincronização de bases/mysql/mariadb.
-
-Testes: `python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_beta_container.py`;
-actionlint dos workflows; `bash -n scripts/smoke-beta-image.sh`; CI executa builds
-e smokes reais. Publicação remota não homologada por restrição expressa.
-
-Rollback de configuração: reverter workflow/scripts antes de autorizar novos
-pushes. Não apagar imagens. Reapontar :4.0.3 para digest anterior é promoção
-manual que requer autorização específica; não há rollback de banco.
+CI mantém tracking PHP, branding, PWA HTTP/Chromium, build/smoke das duas
+arquiteturas. Smoke usa PHP com rede desligada e sem inicializar banco. Mocks de
+publicação não comprovam publicação real. Reverter configuração requer PR;
+consumidores podem fixar digest anterior aprovado. Reapontar canal para versão
+anterior exige autorização própria; não apagar imagens/tags nem reverter banco.
 
 ## Reconciliação visual com a 4.8.7
 
