@@ -20,8 +20,8 @@ function sql(query) {
   return execFileSync('docker', ['exec', '-e', 'MYSQL_PWD', db, 'mysql', '--protocol=tcp', '--host=127.0.0.1', '--user=' + process.env.ISSUERS_BROWSER_DB_USER, 'argws_upgrade_ci', '--batch', '--skip-column-names', '-e', query],
     { env: { ...process.env, MYSQL_PWD: process.env.ISSUERS_BROWSER_DB_PASSWORD }, encoding: 'utf8' }).trim();
 }
-function fixture(tax) {
-  return JSON.parse(execFileSync('docker', ['exec', '-e', 'ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci', app, 'php', 'tests/certificates/browser_fixture.php', /^[A-Z0-9]{12}[0-9]{2}$/.test(tax) ? tax : ''], { encoding: 'utf8' }));
+function fixture(tax, mode = 'modern') {
+  return JSON.parse(execFileSync('docker', ['exec', '-e', 'ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci', app, 'php', 'tests/certificates/browser_fixture.php', /^[A-Z0-9]{12}[0-9]{2}$/.test(tax) ? tax : '', mode], { encoding: 'utf8' }));
 }
 async function navigate(page, button) { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]); }
 async function upload(page, file, password = file.password) {
@@ -48,7 +48,7 @@ async function select(page, issuer) {
     const companies = sql('SELECT id,COALESCE(tax_id,\'\') FROM tblissuers_registry WHERE active=1 ORDER BY id LIMIT 2').split('\n').map(line => line.split('\t'));
     assert.equal(companies.length, 2, 'fixture needs two active synthetic companies');
     const [a, b] = companies; assert.match(a[0], /^\d+$/); assert.match(b[0], /^\d+$/);
-    const fa = fixture(a[1]); const fb = fixture('');
+    const fa = fixture(a[1], 'legacy'); const fb = fixture('');
     await select(page, a[0]);
     assert.equal((await context.request.get(page.url())).headers()['cache-control'], 'no-store');
     const tokens = await page.locator('#settings-form input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.map(i => [i.name, i.value])));

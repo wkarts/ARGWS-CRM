@@ -47,6 +47,12 @@
  · Última rotação: <?= html_escape($integration['rotated_at'] ?: 'Não realizada'); ?></p>
 <a href="<?= html_escape(admin_url('asaas?integration=' . $id)); ?>">Ver eventos e falhas deste recebedor</a>
 <?php if ($enabled) { ?>
+<?php if ($enabled && $callback && !empty($integration['token_recoverable'])) {
+    $remote_form_action=admin_url('asaas/remote_webhook');$remote_prefix='legacy-webhook-'.$id;
+    $remote_defaults=(($remote_result['webhook']['url']??null)===$callback)?$remote_result['webhook']:[];
+    $remote_hidden=function()use($csrf_token,$id){echo form_hidden('webhook_admin_csrf',$csrf_token).form_hidden('integration_id',$id);if(config_item('csrf_protection')){$CI=&get_instance();echo form_hidden($CI->security->get_csrf_token_name(),$CI->security->get_csrf_hash());}};
+    require __DIR__.'/remote_webhook_form.php';
+} ?>
 <?php if (!empty($integration['token_recoverable'])) { ?>
 <?= form_open(admin_url('asaas/reveal_integration_token'), ['autocomplete' => 'off']); ?>
 <input type="hidden" name="webhook_admin_csrf" value="<?= html_escape($csrf_token); ?>"><input type="hidden" name="integration_id" value="<?= $id; ?>">
@@ -63,6 +69,7 @@
 <button type="submit" class="btn btn-danger">Desativar recebedor local</button><?= form_close(); ?></details>
 <?php } ?></section>
 <?php } ?>
+<?php require __DIR__.'/remote_webhook_result.php'; ?>
 <?php if ($selected_id !== null) { ?>
 <h4>Últimos eventos e processamento do recebedor #<?= (int) $selected_id; ?></h4>
 <p class="text-muted">Evento autenticado não significa pagamento conciliado. Falhas, revisão e rejeições precisam de conferência. Somente metadados são exibidos, sem payloads ou segredos.</p>

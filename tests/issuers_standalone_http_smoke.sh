@@ -101,7 +101,7 @@ mysql_root() { docker exec -i -e MYSQL_PWD="$ISSUER_SMOKE_ROOT_PASSWORD" "$ISSUE
 mysql_root -e "CREATE DATABASE argws_legacy_ci; CREATE DATABASE argws_upgrade_ci; GRANT ALL ON argws_legacy_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%'; GRANT ALL ON argws_upgrade_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%';"
 cp -a install "$work/install"
 printf '\nALTER TABLE tblstaff AUTO_INCREMENT=17;\n' >> "$work/install/database.sql"
-docker create --name "$legacy" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
+docker create --name "$legacy" --network "$ISSUER_SMOKE_NETWORK" -e PHP_CLI_SERVER_WORKERS=4 -p 127.0.0.1::8080 \
     "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=0 -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/install" "$legacy:/app/install"
 cat > "$work/router.php" <<'PHP'
@@ -272,7 +272,7 @@ for _ in $(seq 1 200); do
 done
 [ -s "$work/provider-ready.json" ]
 provider_proxy_url="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["proxy"])' "$work/provider-ready.json")"
-docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
+docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -e PHP_CLI_SERVER_WORKERS=4 -p 127.0.0.1::8080 \
     -e HTTPS_PROXY="$provider_proxy_url" -e https_proxy="$provider_proxy_url" \
     -e NO_PROXY=127.0.0.1,localhost -e no_proxy=127.0.0.1,localhost \
     "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=0 -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \

@@ -18,11 +18,11 @@ final class CompanyOnboarding
         $this->db=$db;$this->prefix=$prefix;$this->catalog=$resourceCatalog;
     }
     private function rows(string $sql,array $params=[]): array { return IssuerStorage::query($this->db,$sql,$params)->result_array(); }
-    private function master($actor,bool $lock=false): int
+    private function administrator($actor,bool $lock=false): int
     {
         $actor=IssuerPolicy::id($actor);
         if($lock){$this->rows("SELECT staffid FROM {$this->prefix}staff WHERE staffid=? FOR UPDATE",[$actor]);}
-        if(!(new IssuerResourceAccess($this->db,$this->prefix))->isMaster($actor)){throw new DomainException('issuer_access_denied');}
+        if(!(new IssuerRegistry($this->db,$this->prefix))->canCreate($actor)){throw new DomainException('issuer_access_denied');}
         return $actor;
     }
     private function key($key): string
@@ -51,10 +51,10 @@ final class CompanyOnboarding
         if(!is_array($row['payload'])||(int)$row['step']<1||(int)$row['step']>6){throw new RuntimeException('issuer_wizard_corrupt_draft');}
         unset($row['payload_json']);return $row;
     }
-    public function read($actor,$key): array { return $this->row($this->master($actor),$this->key($key)); }
+    public function read($actor,$key): array { return $this->row($this->administrator($actor),$this->key($key)); }
     public function pending($actor): ?array
     {
-        $actor=$this->master($actor);
+        $actor=$this->administrator($actor);
         $row=$this->rows("SELECT draft_key FROM {$this->prefix}company_wizard_drafts WHERE actor_id=? AND issuer_id IS NULL ORDER BY created_at,draft_key LIMIT 1",[$actor])[0]??null;
         return $row?$this->row($actor,$row['draft_key']):null;
     }
@@ -62,7 +62,7 @@ final class CompanyOnboarding
     {
         $actor=IssuerPolicy::id($actor);$key=$this->key($requestKey);
         return $this->transaction(function()use($actor,$key):array{
-            $this->master($actor,true);
+            $this->administrator($actor,true);
             if($this->rows("SELECT draft_key FROM {$this->prefix}company_wizard_drafts WHERE draft_key=?",[$key])){return $this->row($actor,$key);}
             $pending=$this->pending($actor);if($pending){return $pending;}
             $now=gmdate('Y-m-d H:i:s');
@@ -112,7 +112,7 @@ final class CompanyOnboarding
     {
         $actor=IssuerPolicy::id($actor);$key=$this->key($key);$revision=$this->revision($revision);$step=IssuerPolicy::id($step);
         return $this->transaction(function()use($actor,$key,$revision,$step,$input):array{
-            $this->master($actor,true);$draft=$this->row($actor,$key);
+            $this->administrator($actor,true);$draft=$this->row($actor,$key);
             if($draft['issuer_id']!==null||(int)$draft['revision']!==$revision){throw new DomainException('issuer_wizard_stale');}
             if($step>4||$step>(int)$draft['step']){throw new DomainException('issuer_wizard_invalid_step');}
             $payload=$draft['payload'];$payload[$step]=$this->normalize($step,$input);
@@ -128,24 +128,51 @@ final class CompanyOnboarding
     {
         $actor=IssuerPolicy::id($actor);$key=$this->key($key);$revision=$this->revision($revision);
         return $this->transaction(function()use($actor,$key,$revision):int{
-            $this->master($actor,true);$draft=$this->row($actor,$key);
+            $this->administrator($actor,true);$draft=$this->row($actor,$key);
             if($draft['issuer_id']!==null){return IssuerPolicy::id($draft['issuer_id']);}
             if((int)$draft['revision']!==$revision){throw new DomainException('issuer_wizard_stale');}
             if((int)$draft['step']!==5){throw new DomainException('issuer_wizard_invalid_step');}
             $payload=[];for($step=1;$step<=4;$step++){$payload[$step]=$this->normalize($step,$draft['payload'][$step]??[]);}
             $issuer=(new IssuerRegistry($this->db,$this->prefix))->createInOwnedTransaction($actor,$payload[1]);
             (new CompanySettingsStorage($this->db,$this->prefix))->updateBatchInOwnedTransaction($issuer,$actor,$payload[2]);
-            $staffAccess=new IssuerStaffAccess($this->db,$this->prefix,$actor,$this->catalog);
-            foreach($payload[3]['staff'] as $staff=>$assignment){$staffAccess->addCompanyInOwnedTransaction($staff,$issuer,$assignment['resources'],$assignment['default']==='1');}
+            // This private writer is reached only with the ID just inserted above in this transaction.
+            // It cannot edit assignments on a pre-existing company or replace installation identity.
+            $assignments=$payload[3]['staff'];
+            if (!(new IssuerResourceAccess($this->db,$this->prefix))->isMaster($actor)) {
+                $assignments[$actor]=['default'=>$assignments[$actor]['default']??'0','resources'=>$this->catalog];
+            }
+            foreach($assignments as $staff=>$assignment){$this->grantNewCompany($actor,$issuer,(int)$staff,$assignment);}
             IssuerStorage::query($this->db,"UPDATE {$this->prefix}company_wizard_drafts SET issuer_id=?,step=6,revision=revision+1,updated_at=? WHERE draft_key=? AND issuer_id IS NULL",[$issuer,gmdate('Y-m-d H:i:s'),$key]);
             if((int)$this->row($actor,$key)['issuer_id']!==$issuer){throw new RuntimeException('issuer_wizard_write_unconfirmed');}
             IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,'company_onboarding_completed',?,NULL,?)",[$actor,$issuer,gmdate('Y-m-d H:i:s')]);
             return $issuer;
         },true);
     }
+    private function grantNewCompany(int $actor,int $issuer,int $staff,array $assignment): void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,IssuerStaffAccess::TABLES);
+        $this->administrator($actor,true);
+        if (!$this->rows("SELECT staffid FROM {$this->prefix}staff WHERE staffid=? AND active=1 FOR UPDATE",[$staff])) {
+            throw new DomainException('issuer_wizard_invalid_staff');
+        }
+        $access=new IssuerResourceAccess($this->db,$this->prefix);
+        if ($access->isInstallationMaster($staff)) { throw new DomainException('issuer_master_access_automatic'); }
+        if (!$this->rows("SELECT issuer_id FROM {$this->prefix}issuers_staff WHERE issuer_id=? AND staff_id=?",[$issuer,$staff])) {
+            IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_staff(issuer_id,staff_id,can_view,can_manage_clients,can_share_clients,can_manage_integrations) VALUES(?,?,1,0,0,0)",[$issuer,$staff]);
+        }
+        foreach($assignment['resources'] as $feature=>$capabilities){foreach($capabilities as $capability){
+            IssuerStorage::query($this->db,"INSERT IGNORE INTO {$this->prefix}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,?,?,?)",[$issuer,$staff,$feature,$capability]);
+        }}
+        if($assignment['default']==='1'){
+            IssuerStorage::query($this->db,"DELETE FROM {$this->prefix}issuers_staff_defaults WHERE staff_id=?",[$staff]);
+            IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_staff_defaults(staff_id,issuer_id) VALUES(?,?)",[$staff,$issuer]);
+        }
+        $metadata=json_encode(['resources'=>$assignment['resources'],'default'=>$assignment['default']==='1'],JSON_THROW_ON_ERROR);
+        IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(?,'staff_company_onboarded',?,?,?,?)",[$actor,$issuer,$staff,$metadata,gmdate('Y-m-d H:i:s')]);
+    }
     public function staffCatalog($actor): array
     {
-        $this->master($actor);$access=new IssuerResourceAccess($this->db,$this->prefix);
+        $this->administrator($actor);$access=new IssuerResourceAccess($this->db,$this->prefix);
         return array_values(array_filter($this->rows("SELECT staffid,firstname,lastname FROM {$this->prefix}staff WHERE active=1 ORDER BY firstname,lastname,staffid"),static fn($row)=>!$access->isInstallationMaster($row['staffid'])));
     }
 }

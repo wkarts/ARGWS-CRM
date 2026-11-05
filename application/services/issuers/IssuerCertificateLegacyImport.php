@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Explicit opt-in compatibility for inspection only; never changes PHP providers. */
+/** Isolated compatibility for inspection only; never changes PHP providers. */
 final class IssuerCertificateLegacyImport
 {
     private const MAX_OUTPUT = 4194304;
@@ -10,7 +10,10 @@ final class IssuerCertificateLegacyImport
 
     public static function enabled(): bool
     {
-        return getenv('ARGWS_CERTIFICATE_LEGACY_IMPORT') === '1';
+        // Default compatibility never loads the legacy provider into PHP/TLS.
+        // Explicit 0 (or an invalid configured value) keeps the operational opt-out.
+        $configured = getenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
+        return $configured === false || $configured === '' || $configured === '1';
     }
 
     public static function read(string $pfx, string $password): array

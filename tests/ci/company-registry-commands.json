@@ -1895,5 +1895,9 @@
   [
     "php",
     "tests/banco_brasil_local_noncash_clock_v3.php"
+  ],
+  [
+    "php",
+    "tests/companies/asaas_remote_webhooks.php"
   ]
 ]

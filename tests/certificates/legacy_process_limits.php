@@ -5,9 +5,11 @@ $previous=getenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
 $method=new ReflectionMethod(IssuerCertificateLegacyImport::class,'exchange');
 try {
     putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
-    a1check(!IssuerCertificateLegacyImport::enabled(),'compatibility default is off');
+    a1check(IssuerCertificateLegacyImport::enabled(),'isolated compatibility is enabled by default');
+    putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT=0');
+    a1check(!IssuerCertificateLegacyImport::enabled(),'explicit opt-out disables compatibility');
     putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT=true');
-    a1check(!IssuerCertificateLegacyImport::enabled(),'only explicit 1 enables compatibility');
+    a1check(!IssuerCertificateLegacyImport::enabled(),'invalid configured values fail closed');
     foreach ([
         'stdout cap'=>'fwrite(STDOUT,str_repeat("x",4194305));',
         'stderr cap'=>'fwrite(STDERR,str_repeat("x",16385));',

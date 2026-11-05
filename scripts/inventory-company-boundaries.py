@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic, conservative inventory. Matches locate review work, never prove isolation."""
 from __future__ import annotations
-import argparse, hashlib, json, re
+import argparse, hashlib, json, re, subprocess
 from pathlib import Path
 
 ROOTS = ('application', 'modules', 'assets/js', 'docker', 'install')
@@ -34,11 +34,22 @@ def classify(path: str) -> str:
 
 def inventory(root: Path, reviews: dict | None = None) -> dict:
     reviews = reviews or {}
+    # Build output ignored by Git is not part of the published source tree.
+    # Keep tracked dependencies even when an ignore rule matches them, and keep
+    # new unignored source files so missing additions still require review.
+    source_paths = None
+    if (root / '.git').exists():
+        source_paths = set(subprocess.check_output([
+            'git', '-c', 'safe.directory=' + str(root.resolve()), '-C', str(root),
+            'ls-files', '--cached', '--others', '--exclude-standard', '-z',
+        ]).decode().split('\0'))
     files: dict[str, Path] = {}
     for folder in ROOTS:
         for path in (root / folder).rglob('*'):
             if path.is_file() and not path.is_symlink() and path.suffix.lower() in EXTENSIONS:
-                files[path.relative_to(root).as_posix()] = path
+                name = path.relative_to(root).as_posix()
+                if source_paths is None or name in source_paths:
+                    files[name] = path
     entries = []
     for name, path in sorted(files.items()):
         data = path.read_bytes()

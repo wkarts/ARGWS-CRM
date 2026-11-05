@@ -110,6 +110,7 @@ class FocusedContract(unittest.TestCase):
   # and once against MySQL in the full registry. No command may overlap from
   # the focused MySQL/Node/browser phases.
   sqlite_overlap={
+   ('php','tests/companies/asaas_remote_webhooks.php'),
    ('php','tests/companies/asaas_checkout_portal.php'),
    ('php','tests/companies/client_imports_controller.php'),
    ('php','tests/companies/contract_discussions_controller.php'),

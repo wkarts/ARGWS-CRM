@@ -33,17 +33,17 @@ class RegistryShardsTest(unittest.TestCase):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
         commands = runner.load_commands()
-        self.assertEqual(len(commands), 472)
+        self.assertEqual(len(commands), 473)
         self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
         self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
-                         'ce9d16a30581ef32234d4696afc1f3d98d6d17d86a0290d80d9e98e9a7b3e7cd')
+                         '714f4d521984a3ce24e8be4bf49e459bc7e625f449d5592a9a5c160d36d7303c')
         self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
-                         'a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99')
+                         '371a4b0d636192b8d5f2604e22ab0368c285ad4ba33ad3e8ae59fe160b0ba197')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
         shards = [runner.select_commands(commands, i) for i in range(1, runner.SHARDS + 1)]
-        self.assertEqual([len(shard) for shard in shards], [95,95,94,94,94])
+        self.assertEqual([len(shard) for shard in shards], [95,95,95,94,94])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -128,10 +128,10 @@ class RegistryShardsTest(unittest.TestCase):
                         if line.strip().startswith('php tests/')]
         self.assertEqual(all_external, external, 'no duplicated or moved external invocations')
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
-        self.assertEqual(len(manifest_php), 470)
+        self.assertEqual(len(manifest_php), 471)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 499)
-        self.assertEqual(len(set(map(tuple, combined))), 499)
+        self.assertEqual(len(combined), 500)
+        self.assertEqual(len(set(map(tuple, combined))), 500)
 
     def test_operational_inventory_runs_once_for_the_matrix(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -203,7 +203,9 @@ class RegistryShardsTest(unittest.TestCase):
         retired = baseline['retired'][0]
         replay = planner.build_measured_plan(historical, baseline, shards=5)
         retained_assignments = [assignment for index, assignment in enumerate(replay['assignments']) if index != retired['index']]
-        self.assertEqual(expected['assignments'][1:], retained_assignments, 'each retained placement follows the same paired evidence replayed for five shards')
+        unmeasured = [entry['argv'] for entry in expected['unmeasured']]
+        actual_measured = [assignment for argv, assignment in zip(commands, expected['assignments']) if argv not in unmeasured]
+        self.assertEqual(actual_measured, retained_assignments, 'each retained placement follows the same paired evidence replayed for five shards')
         self.assertEqual(old['assignments'][retired['index']], 2, 'retired command occupied shard2')
         self.assertEqual(expected['assignments'][0], replay['assignments'][retired['index']], 'unmeasured command fills retired shard capacity without inventing a duration')
         self.assertEqual(expected['retired'], baseline['retired'])

@@ -65,6 +65,15 @@ async function createNativeProject(page, baseUrl, options) {
     return { canonical, sourceId: String(sourceId) };
 }
 
+// Do not wait for decorative images or service-worker activity before using the form.
+// A failed document or missing task initializer still fails the test.
+async function openNativeProjectTasks(page, projectUrl) {
+    const response = await page.goto(projectUrl, { waitUntil: 'domcontentloaded' });
+    assert.equal(response?.status(), 200, 'project task document must return HTTP 200');
+    await page.waitForFunction(() => typeof window.new_task_from_relation === 'function');
+    await page.locator('a[onclick*="new_task_from_relation"]').first().waitFor({ state: 'visible' });
+}
+
 async function createNativeProjectTask(page, baseUrl, options) {
     const {
         projectCanonical,
@@ -77,7 +86,7 @@ async function createNativeProjectTask(page, baseUrl, options) {
     } = options;
 
     const projectUrl = baseUrl + '/admin/projects/view/' + projectCanonical + '?group=project_tasks';
-    if (!options.reuseProjectPage || page.url() !== projectUrl) await page.goto(projectUrl);
+    if (!options.reuseProjectPage || page.url() !== projectUrl) await openNativeProjectTasks(page, projectUrl);
     else {
         const detail = page.locator('#task-modal:visible');
         if (await detail.count()) {
@@ -195,6 +204,7 @@ module.exports = {
     TASK_RADIX,
     createNativeProject,
     createNativeProjectTask,
+    openNativeProjectTasks,
     addNativeTaskChecklistItem,
     nativeTaskCommand,
     openNativeTask,

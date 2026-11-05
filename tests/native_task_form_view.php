@@ -49,4 +49,13 @@ $check(!str_contains($followerSelect[1],'<script>'),'Follower labels never creat
 $check(str_contains($followerSelect[1],'&lt;script&gt;literal&lt;/script&gt;'),'Follower name HTML remains literal text');
 $check(str_contains($followerSelect[1],'value="7"')&&html_entity_decode(trim(strip_tags($followerSelect[1])),ENT_QUOTES,'UTF-8')==='Literal <script>literal</script> A & B','Follower keeps the same identity and exact visible name');
 $check($new['members']===$rawMembers,'Escaping display labels never rewrites member projection or assignee input');
+// Project task list uses lifecycle state, not a legacy workflow number as canonical status ID.
+require_once APPPATH.'services/NativeCompanyWorkStatusCatalog.php';
+$native_project_view=true;$native_project_tasks=[];
+foreach(['todo'=>1,'in_progress'=>4,'done'=>5,'awaiting_feedback'=>2,'testing'=>3] as $state=>$legacyStatus){
+    $native_project_tasks[]=['id'=>8589934592+$legacyStatus,'row'=>['name'=>'Synthetic '.$state,'status'=>$state,'due_date'=>''],'fields'=>['workflow_status'=>$legacyStatus,'start_date'=>'']];
+}
+set_error_handler(static function($severity,$message){throw new RuntimeException($message);});
+try{ob_start();require APPPATH.'views/admin/projects/project_tasks.php';$projectTasks=ob_get_clean();}finally{restore_error_handler();}
+foreach(NativeCompanyWorkStatusCatalog::owned('task','_l') as $status)$check(str_contains($projectTasks,e($status['name'])),'Project tasks render state '.$status['state'].' without undefined canonical index');
 echo "Native task original modal: $checks checks passed. Renderer only; no browser or authenticated HTTP claim.\n";

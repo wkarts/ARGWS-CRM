@@ -4,10 +4,13 @@ Novas instalações continuam vinculando o ID real retornado pelo instalador. O
 upgrade **não** infere o primeiro usuário pelo menor ID, data, único admin ou
 primeiro login; tampouco concede poder geral a todos os administradores.
 
-O assistente HTTP de código temporário/senha foi retirado. Sua URL antiga exibe
-somente informação, sem formulário; POST não altera responsabilidade. A grade
-informa uma permissão ainda ausente, sem ocultar a pendência. Depois do vínculo
-confirmado, a ACL normal libera Nova empresa e administração geral ao original.
+Desde o núcleo 4.8.8, criar empresa exige **administrador global ativo**, sem
+vínculo adicional com o administrador original. O criador recebe permissões apenas
+na empresa nova; empresas existentes mantêm suas ACLs. A proveniência da instalação
+não é alterada, e o papel de master não é atribuído por ID ou pelo primeiro login.
+O assistente de designação por código permanece retirado. O procedimento abaixo
+serve exclusivamente para manutenção da identidade original, não para desbloquear
+cadastro de empresas.
 
 ## Manutenção excepcional por operador autorizado
 

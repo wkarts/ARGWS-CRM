@@ -1,6 +1,16 @@
 [
   {
-    "argv": ["php", "tests/issuers_original_administrator.php"],
+    "argv": [
+      "php",
+      "tests/issuers_original_administrator.php"
+    ],
     "reason": "Added by aa01d59e; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
+  },
+  {
+    "argv": [
+      "php",
+      "tests/companies/asaas_remote_webhooks.php"
+    ],
+    "reason": "Added with Asaas 1.6.1; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
   }
 ]

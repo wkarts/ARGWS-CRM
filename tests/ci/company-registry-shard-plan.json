@@ -1,6 +1,6 @@
 {
   "model": "frozen-paired-lpt-retired-plus-unmeasured-count-v3",
-  "manifest_sha256": "a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99",
+  "manifest_sha256": "371a4b0d636192b8d5f2604e22ab0368c285ad4ba33ad3e8ae59fe160b0ba197",
   "baseline_sha256": "0471decd3b02721ae8a35dce36fe2b23241ac7d314f66dcae2ac3e36d6b26851",
   "assignments": [
     3,
@@ -474,7 +474,8 @@
     5,
     4,
     3,
-    4
+    4,
+    3
   ],
   "shards": 5,
   "measured_manifest_sha256": "fdd301fc98866bbecfe0cdf76e64324ff657d3171cd3863598f0b27110725b50",
@@ -495,6 +496,13 @@
         "tests/issuers_original_administrator.php"
       ],
       "reason": "Added by aa01d59e; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
+    },
+    {
+      "argv": [
+        "php",
+        "tests/companies/asaas_remote_webhooks.php"
+      ],
+      "reason": "Added with Asaas 1.6.1; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
     }
   ]
 }

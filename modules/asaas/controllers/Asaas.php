@@ -44,6 +44,9 @@ class Asaas extends AdminController
             'integrations' => [],
             'selected_id' => null,
             'events' => [],
+            'remote_audit' => [],
+            'remote_result' => $generated['remote_result'] ?? null,
+            'remote_error' => $generated['remote_error'] ?? null,
             'review_queue' => [],
             'pending_automations' => [],
             'token_revealed' => !empty($generated['revealed']),
@@ -73,6 +76,7 @@ class Asaas extends AdminController
             }
             if ($data['selected_id'] !== null) {
                 $data['events'] = \Asaas\WebhookAdminPresentation::eventRows($store->recentEvents($data['selected_id'], 25));
+                $data['remote_audit'] = $store->remoteAudit($data['selected_id']);
             }
         }
         $this->output->set_header('Cache-Control: no-store, private, max-age=0');
@@ -106,6 +110,25 @@ class Asaas extends AdminController
             set_alert('danger', 'Cadastro local não confirmado. Confira a conta, o ambiente, a configuração HTTPS. Nenhum webhook remoto foi alterado.');
         }
         redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
+    }
+
+    public function remote_webhook()
+    {
+        if(!$this->require_webhook_management())return;
+        require_once __DIR__.'/../libraries/Asaas/RemoteWebhook.php';
+        $generated=[];
+        try {
+            $action=$this->webhook_posted_string('remote_action',16);
+            if($action!=='inspect'&&$this->input->post('confirm')!=='1')throw new DomainException('asaas_webhook_confirmation_required');
+            $input=$this->input->post('remote_config');if($input===null)$input=[];
+            if(!is_array($input))throw new DomainException('asaas_webhook_invalid_configuration');
+            \Asaas\RemoteWebhook::validate($action,$input);
+            // Consume before contacting the provider: a repeated form cannot send twice.
+            $this->session->set_userdata('asaas_webhook_admin_csrf',bin2hex(random_bytes(32)));
+            $generated['remote_result']=$this->asaas_gateway->getAdapter()->remoteWebhook($this->webhook_posted_id(),$action,$input,
+                defined('APP_BASE_URL')?(string)APP_BASE_URL:'',(string)$this->config->item('index_page'));
+        }catch(Throwable $error){$generated['remote_error']=\Asaas\RemoteWebhook::message($error);}
+        $this->render_webhooks($generated);
     }
 
     public function rotate_integration_token()
