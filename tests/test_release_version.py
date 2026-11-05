@@ -263,6 +263,10 @@ class BetaInfrastructureGateTest(unittest.TestCase):
         for name in ['install/logo.png', 'assets/images/argws/logo-dark.png']:
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), expected)
         self.assertIn('src="logo.png"', (ROOT / 'install/html.php').read_text())
+        html = (ROOT / 'install/html.php').read_bytes()
+        self.assertEqual(hashlib.sha256(html).hexdigest(), POLICY.BETA_V2_RESTORATIONS['install/html.php'][1])
+        self.assertIn('style="width: 320px; max-width: 100%; height: auto;"', html.decode())
+        self.assertIn('alt="ARGWS CRM"', html.decode())
 
     def test_current_base_advance_cannot_be_hidden(self):
         POLICY.git(self.root, 'checkout', '-qb', 'newbase', self.base)

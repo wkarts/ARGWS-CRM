@@ -117,3 +117,9 @@ Os fluxos de login/aplicação usam os helpers originais e os logos públicos V2
 sem substituir personalizações explícitas da instalação. Não foram portadas
 as funcionalidades e estruturas de contexto empresarial da 4.8.7. Instalar
 um aplicativo PWA pelo navegador e provisionar o CRM são operações distintas.
+
+O QA PHP/Chromium reproduziu transbordamento do PNG V2 de 2400px no instalador
+legado. `install/html.php` limita apenas essa imagem a 320px, máximo 100% do
+contêiner e altura automática, com texto alternativo. A exceção do gate inclui
+somente a transição de hashes desta view para esse ajuste, sem liberar alterações
+arbitrárias no instalador. Os fluxos/formulários permanecem iguais.

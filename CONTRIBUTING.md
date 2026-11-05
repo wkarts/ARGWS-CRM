@@ -244,7 +244,8 @@ digest/SHA rastreados; :latest e :develop ficam preservadas.
 ### Complemento V2 autorizado no beta
 
 A conclusão da identidade V2 mantém 4.0.3 somente para a restauração exata de
-`install/logo.png` da 4.8.7. `BETA_V2_RESTORATIONS` fixa SHA-256 dos bytes antigos
+`install/logo.png` da 4.8.7 e ajuste responsivo exato de `install/html.php`.
+`BETA_V2_RESTORATIONS` fixa SHA-256 dos bytes antigos
 e aprovados, exige arquivo regular modo 100644 na base, ancestral e head, e não
 permite outros assets, código de produto, exclusões ou mudanças de modo. A regra
 vale somente para develop-beta/4.0.3; metadados e migrations ficam congelados.

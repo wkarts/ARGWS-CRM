@@ -32,7 +32,7 @@
 <body>
     <div class="tw-max-w-4xl tw-w-full tw-mx-auto tw-my-6">
         <div class="logo tw-mt-5 tw-mb-5 tw-p-3 tw-inline-block tw-w-full">
-            <img src="logo.png" class="tw-block tw-mx-auto">
+            <img src="logo.png" class="tw-block tw-mx-auto" alt="ARGWS CRM" style="width: 320px; max-width: 100%; height: auto;">
         </div>
 
         <?php include('steps.php'); ?>

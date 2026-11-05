@@ -220,6 +220,10 @@ BETA_INFRA_PATHS = frozenset({
 # Completion of the V2 port authorized for the 4.0.3 beta cycle only.
 # Exact old/new bytes, not a blanket exception for assets or product changes.
 BETA_V2_RESTORATIONS = {
+    'install/html.php': (
+        '6494608f61f315416610c6e1a7d41b919c626e313f873e92b12ae6ef275c909e',
+        'cbbb8d16f3b994c982d0af2f96f6085d3e52a81b87203b7ac3e6f3b0e028ea40',
+    ),
     'install/logo.png': (
         'b91375b87263a9644246c144544ac24c52c69fb5b6e9cdbf7b487d8047045c24',
         '6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9',
