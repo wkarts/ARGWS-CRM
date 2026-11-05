@@ -275,9 +275,16 @@ class Invoice_items extends AdminController
         }
     }
 
-    private function nativeInvoiceCatalogLookup(bool $post): ?NativeCompanyInvoiceCatalogLookup
+    private function nativeInvoiceCatalogLookup(bool $post): NativeCompanyInvoiceCatalogLookup|NativeCompanySalesCatalogLookup|null
     {
         $read=$post?'post':'get';$mode=$this->input->$read('native_editor');if($mode===null)return null;
+        if(in_array($mode,['estimate','proposal'],true)){
+            if($post)CompanyRequestScope::assertNativeMutation($this);
+            $id=$this->input->$read('native_sales_id');$revision=$this->input->$read('native_sales_revision');
+            if(!is_string($id)||!is_string($revision))throw new DomainException('company_sales_stale');
+            require_once APPPATH.'services/NativeCompanySalesCatalogLookup.php';$ctx=CompanyRequestScope::context();
+            return new NativeCompanySalesCatalogLookup($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$mode==='estimate'?'estimates':'proposals',$id,$revision);
+        }
         if($mode!=='invoice')throw new DomainException('company_catalog_invalid');
         if($post)CompanyRequestScope::assertNativeMutation($this);
         $id=$this->input->$read('native_invoice_id');$revision=$this->input->$read('native_invoice_revision');
@@ -302,7 +309,7 @@ class Invoice_items extends AdminController
     {
         if($this->companyCatalog!==null){
             $lookup=$this->nativeInvoiceCatalogLookup(false);$item=(object)($lookup?$lookup->item($id):$this->companyCatalog->item($id));$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');$item->long_description_text=$item->long_description;$item->long_description=nl2br(htmlspecialchars($item->long_description,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'));
-            $item->custom_fields_html=render_custom_fields('items',$id,[],['items_pr'=>true]+($lookup?['native_invoice_catalog'=>$lookup]:[]));$item->custom_fields=[];
+            $item->custom_fields_html=render_custom_fields('items',$id,[],['items_pr'=>true]+($lookup?[$lookup instanceof NativeCompanySalesCatalogLookup?'native_sales_catalog':'native_invoice_catalog'=>$lookup]:[]));$item->custom_fields=[];
             if($lookup){$projection=$lookup->fields($id);foreach($projection['definitions']as$field){$field['value']=$projection['values'][$field['id']]??'';$item->custom_fields[]=$field;}$lookup->assertCurrent();echo json_encode($item,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);return;}
             foreach(get_custom_fields('items')as$field){$field['value']=get_custom_field_value($id,$field['id'],'items_pr');$item->custom_fields[]=$field;}
             echo json_encode($item,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);return;

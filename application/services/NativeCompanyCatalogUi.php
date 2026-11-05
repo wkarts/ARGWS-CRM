@@ -86,6 +86,31 @@ final class NativeCompanyCatalogUi
     {
         $ref=$this->source('item',$id);return$ref['source_kind']==='item'?$this->legacy->itemForInvoiceEditor($ref['source_id']):self::project('item',$this->owned->itemForInvoiceEditor($ref['source_id']));
     }
+    /** Sales editors may read their company's catalogue without receiving item CRUD grants. */
+    public function salesEditorChoices(string $kind):array
+    {
+        $source=$this->legacy??$this->owned;$groups=$source->groupsForSalesEditor($kind);
+        if($this->legacy===null)$groups=array_map(static fn($r)=>self::project('item_group',$r),$groups);
+        $first=$source->itemsForSalesEditor($kind,0,100);$ajax=$first['total']>200;$items=[];
+        if(!$ajax){
+            $rows=$first['rows'];
+            for($offset=100;count($rows)<$first['filtered'];$offset+=100){$page=$source->itemsForSalesEditor($kind,$offset,100);if(!$page['rows']||$page['filtered']!==$first['filtered'])throw new RuntimeException('issuer_catalog_read_inconsistent');$rows=array_merge($rows,$page['rows']);}
+            foreach($rows as$row){$row=$this->legacy===null?self::project('item',$row):$row;$items[empty($row['group_id'])?0:$row['group_id']][]=$row;}
+        }
+        $taxes=$this->taxes();$confirmed=$source->groupsForSalesEditor($kind);
+        if($this->legacy===null)$confirmed=array_map(static fn($r)=>self::project('item_group',$r),$confirmed);
+        if($confirmed!==$groups)throw new RuntimeException('issuer_catalog_read_inconsistent');
+        return['items'=>$items,'items_groups'=>$groups,'ajaxItems'=>$ajax,'taxes'=>$taxes];
+    }
+    public function searchForSalesEditor(string $kind,string $q):array
+    {
+        if($this->legacy!==null)return$this->legacy->searchForSalesEditor($kind,$q);
+        $rows=$this->owned->searchForSalesEditor($kind,$q);foreach($rows as&$r){$r['id']=self::encoded('item',$r['id']);$r['source_kind']='company_item';}unset($r);return$rows;
+    }
+    public function itemForSalesEditor(string $kind,$id):array
+    {
+        $ref=$this->source('item',$id);return$ref['source_kind']==='item'?$this->legacy->itemForSalesEditor($kind,$ref['source_id']):self::project('item',$this->owned->itemForSalesEditor($kind,$ref['source_id']));
+    }
     public function validateItemInput(array $input):array
     {
         if($this->legacy!==null)return$this->legacy->validateItemInput($input);

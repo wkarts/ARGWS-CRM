@@ -42,8 +42,12 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
     if($nativePublic&&(!$nativeRegistration&&!$nativeProfile&&!$nativeManaged||!in_array($belongs_to,['customers','contacts'],true)||$where!==['show_on_client_portal'=>1]||$items_cf_params!==[]))throw new DomainException('native_custom_field_denied');
     if($nativeRegistration&&!in_array($rel_id,[false,'',null],true))throw new DomainException('native_custom_field_denied');
     $nativeFields=$nativePublic?null:native_company_custom_fields_scope();
+    // Preview controls are cloned into a named document row by the shared editor.
+    // They must not submit standalone custom_fields or [] values before that.
+    $nativePreviewWithoutName=$items_add_edit_preview&&$nativeFields!==null;
     if(isset($items_cf_params['native_invoice_editor'])&&!$nativeFields)throw new DomainException('native_custom_field_denied');
     if(isset($items_cf_params['native_invoice_catalog'])&&!$nativeFields)throw new DomainException('native_custom_field_denied');
+    if((isset($items_cf_params['native_sales_editor'])||isset($items_cf_params['native_sales_catalog']))&&!$nativeFields)throw new DomainException('native_custom_field_denied');
     $is_admin=$nativePublic?false:($nativeFields?(new IssuerResourceAccess($CI->db,db_prefix()))->administrative($nativeFields[1],$nativeFields[2]):is_admin());
     $nativeProfileValues=[];$nativeCatalogValues=[];
     if($nativeManaged){require_once APPPATH.'services/NativeCompanyCustomFields.php';$writer=$CI->native_portal_contacts??null;if(!is_object($writer)||get_class($writer)!=='NativePortalContacts'||$belongs_to!=='contacts')throw new DomainException('native_custom_field_denied');$store=new NativeCompanyCustomFields($CI->db,db_prefix());if(in_array($rel_id,[false,'',null],true)){$fields=$store->definitionsForManagedContactCreation(PortalRequestScope::issuerId(),$writer);}else{if((string)$writer->reference($CI->db,db_prefix(),PortalRequestScope::issuerId(),'contacts')['source_id']!==(string)$rel_id)throw new DomainException('native_custom_field_denied');$fields=$store->definitionsForPortal(PortalRequestScope::issuerId(),'contacts',$writer);$nativeProfileValues=$store->valuesForPortal(PortalRequestScope::issuerId(),'contacts',$writer);}}
@@ -55,7 +59,14 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
         $purpose=$items_cf_params['native_purpose']??'view';
         if(!in_array($purpose,['view','create','edit'],true)||($purpose==='create'&&$rel_id!==false&&$rel_id!==''&&$rel_id!==null))throw new DomainException('native_custom_field_denied');
         $nativeFilters=array_merge($where,['active'=>1]);
-        if(isset($items_cf_params['native_invoice_catalog'])){
+        if(isset($items_cf_params['native_sales_catalog'])){
+            $lookup=$items_cf_params['native_sales_catalog'];if($belongs_to!=='items'||!$items_pr||!($lookup instanceof NativeCompanySalesCatalogLookup))throw new DomainException('native_custom_field_denied');
+            $lookup->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);$projection=$lookup->fields($rel_id);$fields=$projection['definitions'];$nativeCatalogValues=$projection['values'];
+        }elseif(isset($items_cf_params['native_sales_editor'])){
+            $editor=$items_cf_params['native_sales_editor'];if($belongs_to!=='items'||!($editor instanceof NativeCompanySalesEditorItems))throw new DomainException('native_custom_field_denied');
+            $editor->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);$fields=$editor->definitions();
+            if(isset($items_cf_params['native_sales_item']))$nativeCatalogValues=$editor->values($items_cf_params['native_sales_item']);
+        }elseif(isset($items_cf_params['native_invoice_catalog'])){
             $lookup=$items_cf_params['native_invoice_catalog'];if($belongs_to!=='items'||!$items_pr||!($lookup instanceof NativeCompanyInvoiceCatalogLookup))throw new DomainException('native_custom_field_denied');
             $lookup->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);$projection=$lookup->fields($rel_id);$fields=$projection['definitions'];$nativeCatalogValues=$projection['values'];
         }elseif($belongs_to==='items'&&isset($items_cf_params['native_invoice_editor'])){
@@ -120,7 +131,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
 
             if ($rel_id !== false) {
                 if (!is_array($rel_id)) {
-                    $value = isset($items_cf_params['native_invoice_catalog'])?($nativeCatalogValues[$field['id']]??''):(($nativeProfile||$nativeManaged)?($nativeProfileValues[$field['id']]??''):get_custom_field_value($rel_id, $field['id'], ($items_pr ? 'items_pr' : $belongs_to), false));
+                    $value = isset($items_cf_params['native_invoice_catalog'])||isset($items_cf_params['native_sales_catalog'])||isset($items_cf_params['native_sales_item'])?($nativeCatalogValues[$field['id']]??''):(($nativeProfile||$nativeManaged)?($nativeProfileValues[$field['id']]??''):get_custom_field_value($rel_id, $field['id'], ($items_pr ? 'items_pr' : $belongs_to), false));
                 } else {
                     if($nativeFields)throw new DomainException('native_custom_field_transfer_requires_canonical_writer');
                     if (is_custom_fields_smart_transfer_enabled()) {
@@ -219,16 +230,17 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 }
 
                 foreach ($_select_attrs as $key => $val) {
-                    $select_attrs .= $key . '=' . '"' . $val . '" ';
+                    $select_attrs .= $key . '=' . '"' . e($val) . '" ';
                 }
 
+                $field_name = e($field_name);
                 if ($field['required'] == 1) {
                     $field_name = '<small class="req text-danger">* </small>' . $field_name;
                 }
 
                 $fields_html .= '<div class="form-group">';
-                $fields_html .= '<label for="' . $cf_name . '" class="control-label">' . $field_name . '</label>';
-                $fields_html .= '<select ' . $select_attrs . ' name="' . $select_name . '" class="' . ($items_add_edit_preview == false ? 'select-placeholder ': '') . 'selectpicker form-control' . ($field['type'] == 'multiselect' ? ' custom-field-multi-select' : '') . '" data-width="100%" data-none-selected-text="' . _l('dropdown_non_selected_tex') . '"  data-live-search="true">';
+                $fields_html .= '<label for="' . e($cf_name) . '" class="control-label">' . $field_name . '</label>';
+                $fields_html .= '<select ' . $select_attrs . ($nativePreviewWithoutName ? '' : ' name="' . e($select_name) . '"') . ' class="' . ($items_add_edit_preview == false ? 'select-placeholder ': '') . 'selectpicker form-control' . ($field['type'] == 'multiselect' ? ' custom-field-multi-select' : '') . '" data-width="100%" data-none-selected-text="' . e(_l('dropdown_non_selected_tex')) . '"  data-live-search="true">';
 
                 $fields_html .= '<option value=""' . ($field['type'] == 'multiselect' ? ' class="hidden"' : '') . '></option>';
 
@@ -255,7 +267,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                             }
                         }
 
-                        $fields_html .= '<option value="' . $option . '"' . $selected . '' . set_select($cf_name, $option) . '>' . $option . '</option>';
+                        $fields_html .= '<option value="' . e($option) . '"' . $selected . '' . set_select($cf_name, $option) . '>' . e($option) . '</option>';
                     }
                 }
                 $fields_html .= '</select>';
@@ -263,7 +275,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
             } elseif ($field['type'] == 'checkbox') {
                 $fields_html .= '<div class="form-group chk">';
 
-                $fields_html .= '<br /><label class="control-label' . ($field['display_inline'] == 0 ? ' no-mbot': '') . '" for="' . $cf_name . '[]">' . $field_name . '</label>' . ($field['display_inline'] == 1 ? ' <br />': '');
+                $fields_html .= '<br /><label class="control-label' . ($field['display_inline'] == 0 ? ' no-mbot': '') . '" for="' . e($cf_name) . '[]">' . e($field_name) . '</label>' . ($field['display_inline'] == 1 ? ' <br />': '');
 
                 $options = explode(',', $field['options']);
 
@@ -272,8 +284,11 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 foreach ($options as $option) {
                     $checked = '';
 
-                    // Replace double quotes with single.
-                    $option = str_replace('"', '\'', $option);
+                    // Preserve the historical legacy serialization. Native
+                    // definitions validate exact choices and must retain quotes.
+                    if (!$nativeFields && !$nativePublic) {
+                        $option = str_replace('"', '\'', $option);
+                    }
 
                     $option = trim($option);
                     foreach ($value as $v) {
@@ -296,30 +311,32 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                         $_chk_attrs['disabled'] = true;
                     }
                     foreach ($_chk_attrs as $key => $val) {
-                        $chk_attrs .= $key . '=' . '"' . $val . '" ';
+                        $chk_attrs .= $key . '=' . '"' . e($val) . '" ';
                     }
 
                     $input_id = 'cfc_' . $field['id'] . '_' . slug_it($option) . '_' . app_generate_hash();
 
                     $fields_html .= '<div class="checkbox' . ($field['display_inline'] == 1 ? ' checkbox-inline': '') . '">';
-                    $fields_html .= '<input class="custom_field_checkbox" ' . $chk_attrs . ' ' . set_checkbox($cf_name . '[]', $option) . ' ' . $checked . ' value="' . $option . '" id="' . $input_id . '" type="checkbox" name="' . $cf_name . '[]">';
+                    $fields_html .= '<input class="custom_field_checkbox" ' . $chk_attrs . ' ' . set_checkbox($cf_name . '[]', $option) . ' ' . $checked . ' value="' . e($option) . '" id="' . e($input_id) . '" type="checkbox"' . ($nativePreviewWithoutName ? '' : ' name="' . e($cf_name) . '[]"') . '>';
 
-                    $fields_html .= '<label for="' . $input_id . '" class="cf-chk-label">' . $option . '</label>';
-                    $fields_html .= '<input type="hidden" name="' . $cf_name . '[]" value="cfk_hidden">';
+                    $fields_html .= '<label for="' . e($input_id) . '" class="cf-chk-label">' . e($option) . '</label>';
+                    $fields_html .= '<input type="hidden"' . ($nativePreviewWithoutName ? '' : ' name="' . e($cf_name) . '[]"') . ' value="cfk_hidden">';
                     $fields_html .= '</div>';
                 }
                 $fields_html .= '</div>';
             } elseif ($field['type'] == 'link') {
                 if (startsWith($value, 'http')) {
-                    $value = '<a href="' . $value . '" target="_blank">' . $value . '</a>';
+                    $value = '<a href="' . e($value) . '" target="_blank">' . e($value) . '</a>';
                 }
 
                 $fields_html .= '<div class="form-group cf-hyperlink" data-fieldto="' . $field['fieldto'] . '" data-field-id="' . $field['id'] . '" data-value="' . e($value) . '" data-field-name="' . e($field_name) . '">';
-                $fields_html .= '<label class="control-label" for="custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']">' . $field_name . '</label></br>';
+                $fields_html .= '<label class="control-label" for="custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']">' . e($field_name) . '</label></br>';
 
                 $fields_html .= '<a id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_popover" type="button" href="javascript:">' . _l('cf_translate_input_link_tip') . '</a>';
 
-                $fields_html .= '<input type="hidden" ' . ($field['required'] == 1 ? 'data-custom-field-required="1"' : '') . ' value="" id="custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']" name="custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']">';
+                $nativeLinkItemAttributes = $nativeFields !== null && $field['fieldto'] === 'items'
+                    ? ' data-fieldid="' . e($field['id']) . '" data-fieldto="items"' : '';
+                $fields_html .= '<input type="hidden" ' . ($field['required'] == 1 ? 'data-custom-field-required="1"' : '') . $nativeLinkItemAttributes . ' value="" id="custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']"' . ($nativePreviewWithoutName ? '' : ' name="' . e($cf_name) . '"') . '>';
 
                 $field_template = '';
                 $field_template .= '<div id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_popover-content" class="hide cfh-field-popover-template"><div class="form-group">';
@@ -586,6 +603,7 @@ function get_items_custom_fields_for_table_html($rel_id, $rel_type)
  */
 function render_custom_fields_items_table_add_edit_preview($nativeInvoiceEditor = null)
 {
+    if($nativeInvoiceEditor instanceof NativeCompanySalesEditorItems)return render_custom_fields('items',false,[],['add_edit_preview'=>true,'native_sales_editor'=>$nativeInvoiceEditor]);
     if($nativeInvoiceEditor!==null){
         if(!($nativeInvoiceEditor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
         return render_custom_fields('items',false,[],['add_edit_preview'=>true,'native_invoice_editor'=>$nativeInvoiceEditor]);
@@ -604,6 +622,7 @@ function render_custom_fields_items_table_add_edit_preview($nativeInvoiceEditor 
  */
 function render_custom_fields_items_table_in($item, $part_item_name, $nativeInvoiceEditor = null)
 {
+    if($nativeInvoiceEditor instanceof NativeCompanySalesEditorItems){$nativeInvoiceEditor->assertItem($item);return render_custom_fields('items','native-sales-line',[],['items_applied'=>true,'part_item_name'=>$part_item_name,'native_sales_editor'=>$nativeInvoiceEditor,'native_sales_item'=>$item]);}
     if($nativeInvoiceEditor!==null){
         if(!($nativeInvoiceEditor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
         $nativeInvoiceEditor->assertItem($item);
@@ -680,6 +699,26 @@ function get_custom_fields_hyperlink_js_function(?callable $label = null)
     ob_start(); ?>
 <script>
 function custom_fields_hyperlink() {
+    function localId(scope, id) {
+        // The original item editor repeats field IDs in separate rows. Resolve
+        // controls inside the owning wrapper/popover, never across the page.
+        return scope.find('[id]').filter(function() { return this.id === id; }).first();
+    }
+    function linkParts(value) {
+        // A template is inert. Never insert persisted link markup into the page.
+        var template = document.createElement('template');
+        template.innerHTML = String(value || '');
+        var anchor = template.content.querySelector('a');
+        return anchor ? {title: anchor.textContent, url: anchor.getAttribute('href') || ''} : {title: '', url: ''};
+    }
+    function safeLink(value) {
+        var raw = String(value || '').trim();
+        if (!raw || /[\u0000-\u001f\u007f]/.test(raw)) return null;
+        try {
+            var candidate = new URL(/^\/\//.test(raw) ? 'https:' + raw : (/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'http://' + raw));
+            return candidate.protocol === 'https:' || candidate.protocol === 'http:' ? candidate.href : null;
+        } catch (error) { return null; }
+    }
     var cf_hyperlink = $('body').find('.cf-hyperlink');
     if (cf_hyperlink.length) {
         $.each(cf_hyperlink, function() {
@@ -687,13 +726,15 @@ function custom_fields_hyperlink() {
             if (!cfh_wrapper.hasClass('cfh-initialized')) {
                 var cfh_field_to = cfh_wrapper.attr('data-fieldto');
                 var cfh_field_id = cfh_wrapper.attr('data-field-id');
-                var textEl = $('body').find('#custom_fields_' + cfh_field_to + '_' + cfh_field_id + '_popover');
-                var hiddenField = $("#custom_fields\\\[" + cfh_field_to + "\\\]\\\[" + cfh_field_id + "\\\]");
+                var textEl = cfh_wrapper.children('a').first();
+                var hiddenField = cfh_wrapper.children('input[type="hidden"]').first();
+                if (!textEl.length || !hiddenField.length) return;
                 var cfh_value = cfh_wrapper.attr('data-value');
                 hiddenField.val(cfh_value);
 
-                if ($(hiddenField.val()).html() != '') {
-                    textEl.html($(hiddenField.val()).html());
+                var stored = linkParts(cfh_value);
+                if (stored.title !== '') {
+                    textEl.text(stored.title);
                 }
                 var cfh_field_name = cfh_wrapper.attr('data-field-name');
 
@@ -701,36 +742,52 @@ function custom_fields_hyperlink() {
                     html: true,
                     trigger: "manual",
                     placement: "top",
-                    title: cfh_field_name,
+                    title: $('<span>').text(cfh_field_name).html(),
                     content: function() {
                         return $(cfh_popover_templates[cfh_field_id]).html();
                     }
                 }).on("click", function(e) {
+                    e.preventDefault();
                     var $popup = $(this);
                     $popup.popover("toggle");
-                    var titleField = $("#custom_fields_" + cfh_field_to + "_" + cfh_field_id +
-                        "_title");
-                    var urlField = $("#custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_link");
-                    var ttl = $(hiddenField.val()).html();
-                    var cfUrl = $(hiddenField.val()).attr("href");
-                    if (cfUrl) {
-                        $('#cf_hyperlink_open_' + cfh_field_id).attr('href', (cfUrl.indexOf('://') === -
-                            1 ? 'http://' + cfUrl : cfUrl));
-                    }
+                    var popupInstance = $popup.data('bs.popover');
+                    var popupBody = popupInstance.tip();
+                    var titleField = localId(popupBody, "custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_title");
+                    var urlField = localId(popupBody, "custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_link");
+                    if (!titleField.length || !urlField.length) return;
+                    var current = linkParts(hiddenField.val());
+                    var ttl = current.title;
+                    var cfUrl = current.url;
+                    var safeUrl = safeLink(cfUrl);
+                    var openLink = localId(popupBody, 'cf_hyperlink_open_' + cfh_field_id);
+                    if (safeUrl) openLink.attr('href', safeUrl);
+                    else openLink.removeAttr('href');
                     titleField.val(ttl);
                     urlField.val(cfUrl);
-                    $("#custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_btn-save").click(
+                    urlField[0].setCustomValidity('');
+                    localId(popupBody, "custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_btn-save").off('click.cfh').on('click.cfh',
                         function() {
-                            hiddenField.val((urlField.val() != '' ? '<a href="' + urlField.val() +
-                                '" target="_blank">' + (titleField.val() != "" ? titleField
-                                    .val() : urlField.val()) + '</a>' : ''));
-                            textEl.html(titleField.val() !== "" ? titleField.val() : (urlField
+                            var url = String(urlField.val() || '');
+                            var title = String(titleField.val() || '');
+                            if (url !== '' && !safeLink(url)) {
+                                urlField[0].setCustomValidity('Informe um endereço HTTP ou HTTPS válido.');
+                                urlField[0].reportValidity();
+                                return;
+                            }
+                            urlField[0].setCustomValidity('');
+                            var link = document.createElement('a');
+                            link.setAttribute('href', url);
+                            link.setAttribute('target', '_blank');
+                            link.textContent = title !== '' ? title : url;
+                            hiddenField.val(url !== '' ? link.outerHTML : '');
+                            textEl.text(titleField.val() !== "" ? titleField.val() : (urlField
                                 .val() != '' ? urlField.val() :
                                 <?= json_encode((string) $linkTip, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>));
                             $popup.popover("toggle");
                         });
-                    $("#custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_btn-cancel").click(
+                    localId(popupBody, "custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_btn-cancel").off('click.cfh').on('click.cfh',
                         function() {
+                            urlField[0].setCustomValidity('');
                             if (urlField.val() == '') {
                                 hiddenField.val('');
                             }

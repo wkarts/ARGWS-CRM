@@ -62,6 +62,27 @@ class Credit_notes extends AdminController
         ]);
     }
 
+    public function client_change_data($clientid)
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::client($this,$clientid);
+    }
+
+    public function items()
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::catalog($this);
+    }
+
+    public function item($id)
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::catalog($this,$id);
+    }
+
     public function update_number_settings($id)
     {
         $response = [

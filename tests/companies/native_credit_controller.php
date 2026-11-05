@@ -1,12 +1,13 @@
 <?php
 /** Real controllers/services/views; framework boundary is an explicit test double. */
 require __DIR__.'/native_credit_directory.php';
+require __DIR__.'/native_credit_form_schema_fixture.php';
 class CompanyRequestScope
 {
-    public static int $issuer; public static bool $sealed=true,$csrf=true;
+    public static int $issuer,$actor=7; public static bool $sealed=true,$csrf=true;
     public static function nativeFor($ci): bool{return true;}
     public static function sealedFor($ci): bool{return self::$sealed;}
-    public static function context(){return new class{public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return 7;}};}
+    public static function context(){return new class{public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return CompanyRequestScope::$actor;}};}
     public static function assertNativeMutation($ci): void{if($ci->input->method(true)!=='POST'||!self::$csrf)throw new DomainException('native_company_csrf_invalid');}
     public static function adminUrl($ci,$path): string{return '/admin/'.$path;}
     public static function invalidateCaches($ci): void{}
@@ -18,11 +19,11 @@ function get_option($key){return '0';}
 function app_format_money($value,$currency){return $currency.' '.$value;}
 function _d($value){return(string)$value;}
 function _dt($value){return(string)$value;}
-function form_open($url,$attributes=[]){return '<form method="post" action="'.htmlspecialchars($url,ENT_QUOTES,'UTF-8').'">';}
+function form_open($url,$attributes=[]){$extra='';foreach($attributes as$key=>$value)$extra.=' '.htmlspecialchars($key,ENT_QUOTES,'UTF-8').'="'.htmlspecialchars($value,ENT_QUOTES,'UTF-8').'"';return '<form method="post" action="'.htmlspecialchars($url,ENT_QUOTES,'UTF-8').'"'.$extra.'>';}
 function form_close(){return'</form>';}
 $ci=$GLOBALS['CI'];
 $ci->input=new class{public string $verb='POST';public array $posts=[],$gets=[];public function method($upper=false){return$upper?$this->verb:strtolower($this->verb);}public function post($key=null,$filter=false){return$key===null?$this->posts:($this->posts[$key]??null);}public function get($key=null,$filter=false){return$key===null?$this->gets:($this->gets[$key]??null);}};
-$ci->output=new class{public int $status=200;public string $body='',$redirect='';public array $headers=[];public function set_header($value){$this->headers[]=$value;return$this;}public function set_content_type($value){return$this;}public function set_output($value){$this->body=$value;return$this;}};
+$ci->output=new class{public int $status=200;public string $body='',$redirect='';public array $headers=[];public function set_status_header($status){$this->status=$status;return$this;}public function set_header($value){$this->headers[]=$value;return$this;}public function set_content_type($value){return$this;}public function set_output($value){$this->body=$value;return$this;}};
 $ci->security=new class{public function get_csrf_token_name(){return'framework_csrf';}};
 $ci->session=new class{private array $data=[];public function userdata($key){return$this->data[$key]??null;}public function set_userdata($key,$value){$this->data[$key]=$value;}};
 $ci->load=new class{public array $views=[];public function model($name){throw new RuntimeException('Global model must not be loaded');}public function view($view,$data=[],$return=false){$this->views[]=[$view,$data];if(in_array($view,['admin/credit_notes/credit_note_preview_template','admin/credit_notes/native_preview'],true)){ob_start();$render=function()use($view,$data){extract($data,EXTR_SKIP);require APPPATH.'views/'.$view.'.php';};$render->bindTo($GLOBALS['CI'],null)();$html=ob_get_clean();if($return)return$html;echo$html;}return'';}};

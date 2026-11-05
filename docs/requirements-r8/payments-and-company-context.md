@@ -107,6 +107,40 @@ formulário da empresa A pelo token da empresa B.
 | `php tests/native_r8_routes.php` | Prova adicional de admissão anterior à hidratação para rotas restauradas, principal/secundária, verbos/CSRF e proveniência de recibos. O total final é registrado no relatório de execução. |
 | `node tests/native_company/context_tabs.browser.cjs` | Teste Chromium adicionado ao CI: cabeçalho PHP real e guard publicado, duas abas, resposta antiga, formulário e restauração; usa sessão sintética. Não executado localmente. |
 
+## Campos personalizados compartilhados
+
+Na adaptação dos formulários foi reproduzido um defeito no helper real:
+rótulos/opções de select, multiselect e checkbox eram concatenados ao HTML sem
+escape. Além disso, checkbox substituía aspas duplas por simples, embora o writer
+nativo aceite somente os valores exatos das opções configuradas. A regressão
+falhava antes da correção porque o DOM continha elementos/atributos executáveis.
+
+O helper agora escapa rótulos, opções e atributos; o navegador recebe o texto
+literal e transmite o valor original. No caminho nativo, aspas permanecem
+inalteradas. A normalização histórica do checkbox legado é mantida no seu
+caminho, sem migração de valores existentes. Rótulo e URL da apresentação de
+hiperlinks também são escapados, inclusive após decodificar o atributo de dados.
+
+`php tests/companies/native_custom_field_options_transport.php` passou **20
+verificações adicionais** com definições reais, renderer PHP, DOMDocument,
+codificação de formulário e gravação transacional pelo writer de Contatos.
+Confere aspas, HTML literal, seleção restaurada, campo obrigatório, identificador
+canônico, marcador de checkbox, URL sem injeção de markup e negação por outra
+empresa. O teste reutiliza os fixtures existentes de autorização; não representa
+uma auditoria completa de XSS ou uma execução de navegador. As regressões de
+portal, itens do editor de Faturas, formulário HTTP de Despesas e catálogo também
+continuaram aprovadas depois do ajuste.
+
+O editor JavaScript de hiperlinks foi examinado em seguida: ele reutilizava o
+HTML persistido como conteúdo visível e concatenava título/URL no link salvo.
+Agora extrai o texto em um template inerte, usa texto nos rótulos e serializa o
+link com atributos DOM. A ação de abrir/editar aceita endereço HTTP/HTTPS; um
+esquema executável não substitui o valor existente. A extensão do teste real
+`presentation.browser.cjs` cobre conteúdo já armazenado, título do popover,
+gravação com caracteres especiais e esquema recusado. Essa extensão depende
+da execução Chromium do novo commit; lint do script emitido e a composição PHP
+passaram localmente.
+
 ## Marca e PWA
 
 [baselines.json](baselines.json) registra os hashes SHA-256 de 60 arquivos de
@@ -146,3 +180,43 @@ com acesso restrito e documentos de ambas:
 R11 integral também depende do inventário e das decisões de propriedade das
 integrações em [integrations.md](integrations.md). A atualização das abas não
 prova, por si só, isolamento de todos os relatórios, filas, módulos ou APIs.
+
+### Campos personalizados de itens na composição dos formulários
+
+A serialização do HTML real revelou nomes de controles da linha de prévia que
+não pertenciam a nenhuma linha do documento. A prévia nativa agora omite esses
+nomes; o clonador atribui o namespace da linha confirmada, preserva os arrays de
+checkbox/multiselect e trata seleção vazia. Links de itens recebem os mesmos
+identificadores de campo usados pelo clonador. O widget de hyperlink resolve os
+controles dentro do seu próprio wrapper/popover, evitando alterar outra linha
+que usa a mesma definição de campo.
+
+`native_sales_original_view.php` passou 52 verificações adicionais, incluindo o
+roundtrip dos controles reais; as regressões de campos literais passaram 20 e o
+editor original de itens de Faturas passou 189 cumulativas. Esses números têm
+fixtures compartilhados e não representam testes únicos somáveis. O cenário de
+dois popovers com o mesmo ID de definição está em `presentation.browser.cjs` e
+aguarda a execução remota desta composição. Não houve alteração de permissões
+para possibilitar a leitura dos campos.
+
+### Requisição pendente durante o POST do seletor
+
+O CI HTTP do checkpoint `bf0e2ce01b20ff4b635e96036af8bb9c762a69b0`
+registrou uma resposta 409 em `tasks/table` no cenário comum de navegação/troca
+de empresa, seguida do erro Ajax do DataTables. O servidor continuou recusando
+o contexto antigo. Isso é uma falha observada no teste; não amplia o relato do
+usuário sobre Pagamentos nem comprova defeito em todas as operações de Tarefas.
+
+O seletor agora retira o documento antigo de uso e cancela seus XHRs escopados
+antes de iniciar o POST nativo. O envio conserva submitter, empresa e tokens
+originais; a intenção de selecionar não publica nova geração entre abas. A
+resposta autenticada seguinte continua sendo a origem da geração confirmada.
+Requisições concluídas e externas não são canceladas. Não há tratamento genérico
+que converta 409 em sucesso nem relaxamento da validação do servidor.
+
+Passaram os 13 testes Node de guarda/transporte, os seis do driver do seletor e
+o fixture de rede com o head PHP real dentro dos 156 checks de contexto. O teste
+Chromium de abas recebeu um cenário com jQuery/DataTables reais, leitura pendente
+e 409 deliberadamente entregue antes da navegação do seletor. Esse cenário e a
+repetição do HTTP autenticado aguardam o próximo CI; não são declarados aprovados
+pela execução local.

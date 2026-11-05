@@ -2,9 +2,17 @@
 (function (global) {
     'use strict';
     if (global.NativeCompanyContextGuard) return;
-    var mounted = false, stale = false;
+    var mounted = false, stale = false, retire = null, observers = [];
     global.NativeCompanyContextGuard = Object.freeze({
         isCurrent: function () { return !stale; },
+        onObsolete: function (callback) {
+            if (typeof callback !== 'function') throw new Error('native_company_context_observer_invalid');
+            if (stale) callback();
+            else observers.push(callback);
+        },
+        // The existing selector still performs its authenticated native POST.
+        // Stop old reads before that POST can rotate the server-side context.
+        beginSelection: function () { if (retire) retire(); },
         mount: function (config) {
             if (mounted) return;
             var root = new URL(config.root, global.location.href);
@@ -15,13 +23,20 @@
             mounted = true;
             var key = 'crm:company-change:' + root.pathname + ':' + config.channel;
             var channel = null;
-            function invalidate(destination) {
-                if (stale) return;
+            retire = function () {
+                if (stale) return false;
                 stale = true;
                 // Do not paint data from the old issuer while the next request resolves its own scope.
                 var hide = document.createElement('style');
                 hide.textContent = 'body{visibility:hidden!important}';
                 document.documentElement.appendChild(hide);
+                observers.splice(0).forEach(function (callback) {
+                    try { callback(); } catch (_) { /* A teardown failure must not retain an obsolete document. */ }
+                });
+                return true;
+            };
+            function invalidate(destination) {
+                if (!retire()) return;
                 global.location.replace(destination || root.href);
             }
             function changed(value) {

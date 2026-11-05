@@ -22,20 +22,22 @@ final class NativeCompanyCreditDirectory
     private function transaction(int $issuer, int $actor, callable $work)
     {
         $this->authorize($issuer,$actor); CompanyCreditSchema::assertValid($this->db,$this->p);
-        $tables=array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit','issuers_clients','issuers_client_links','clients','options','customfields','customfieldsvalues'],(new CompanyInvoiceBalance($this->db,$this->p))->tables(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames())));
+        require_once __DIR__.'/CompanyCreditMetadata.php';
+        $tables=array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit','issuers_clients','issuers_client_links','clients','options','customfields','customfieldsvalues'],(new CompanyInvoiceBalance($this->db,$this->p))->tables(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames(),CompanyCreditMetadata::readTables($this->db,$this->p))));
         return IssuerTransaction::run($this->db,$this->p,$tables,function() use($issuer,$actor,$work) {
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);
             $this->authorize($issuer,$actor); $result=$work(); $this->authorize($issuer,$actor); return $result;
         });
     }
-    private function expressions(NativeCompanyCreditColumns $columns): array
+    private function expressions(NativeCompanyCreditColumns $columns,bool $projectVisible): array
     {
         $conn=$this->db->pdo??$this->db->conn_id??null;
         $sqlite=$conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';
         $name=$sqlite?"json_extract(d.recipient_json,'$.name')":"JSON_UNQUOTE(JSON_EXTRACT(d.recipient_json,'$.name'))";
+        $project=$projectVisible?($sqlite?"COALESCE(json_extract(d.items_json,'$.native_snapshot.project.name'),'')":"COALESCE(JSON_UNQUOTE(JSON_EXTRACT(d.items_json,'$.native_snapshot.project.name')),'')"):"''";
         $remaining='(CASE WHEN c.status=3 THEN 0 ELSE c.total-(SELECT COALESCE(SUM(x.amount),0) FROM '.$this->p.'credits x WHERE x.credit_id=c.id)-(SELECT COALESCE(SUM(r.amount),0) FROM '.$this->p.'creditnote_refunds r WHERE r.credit_note_id=c.id) END)';
         $out=[];
-        foreach (['number'=>'c.number','date'=>'c.date','company'=>$name,'status'=>'c.status','project_name'=>"''",'reference_no'=>"COALESCE(c.reference_no,'')",'total'=>'c.total','remaining_amount'=>$remaining,'year'=>'SUBSTR(c.date,1,4)'] as $key=>$sql) $out[$key]=['sql'=>$sql,'params'=>[]];
+        foreach (['number'=>'c.number','date'=>'c.date','company'=>$name,'status'=>'c.status','project_name'=>$project,'reference_no'=>"COALESCE(c.reference_no,'')",'total'=>'c.total','remaining_amount'=>$remaining,'year'=>'SUBSTR(c.date,1,4)'] as $key=>$sql) $out[$key]=['sql'=>$sql,'params'=>[]];
         foreach ($columns->definitions() as $definition) {
             $projection=$columns->expression($definition['id']);
             $out['custom_field_'.$definition['id']]=$projection;
@@ -55,7 +57,7 @@ final class NativeCompanyCreditDirectory
     {
         if (!is_int($request['start']??null)||$request['start']<0||!is_int($request['length']??null)||($request['length']<1&&$request['length']!==-1)||!is_string($request['search']??null)||mb_strlen($request['search'])>191||!is_array($request['orders']??null)) throw new DomainException('native_credit_table_invalid');
         return $this->transaction($issuer,$actor,function() use($issuer,$actor,$request,$builder,$client) {
-            $columns=new NativeCompanyCreditColumns($this->db,$this->p,$issuer,$actor); $definitions=$columns->definitions(); $expressions=$this->expressions($columns);
+            $columns=new NativeCompanyCreditColumns($this->db,$this->p,$issuer,$actor); $definitions=$columns->definitions(); $expressions=$this->expressions($columns,(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'projects','view'));
             $settings=new CompanySettingsStorage($this->db,$this->p);
             $format=$settings->exists($issuer,'dateformat')?$settings->get($issuer,'dateformat'):CompanySettingsCatalog::defaultValue('localization','dateformat');
             $filter=NativeCompanyCreditRules::compile($builder,$expressions,gmdate('Y-m-d'),$format,$definitions);
@@ -81,8 +83,8 @@ final class NativeCompanyCreditDirectory
             $rows=$this->rows('SELECT c.id,c.reference_no'.$scope.' ORDER BY '.implode(',',$sort).$limit,array_merge($args,$sortArgs));
             $reader=new CompanyCredits($this->db,$this->p); $out=[];
             foreach ($rows as $row) {
-                $document=$reader->inOwnedTransaction($issuer,$actor,(int)$row['id']);
-                $out[]=['document'=>$document,'reference_no'=>(string)($row['reference_no']??''),'project_name'=>'','custom_values'=>$columns->values($document['id'])];
+                $document=$reader->inOwnedForAdmin($issuer,$actor,(int)$row['id']);
+                $out[]=['document'=>$document,'reference_no'=>(string)($row['reference_no']??''),'project_name'=>$document['metadata']['project']['name']??'','custom_values'=>$columns->values($document['id'],$document)];
             }
             $columns->recheck();
             return ['rows'=>$out,'total'=>$total,'filtered'=>$filtered,'definitions'=>$columns->definitions(true)];

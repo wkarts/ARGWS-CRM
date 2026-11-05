@@ -43,10 +43,25 @@ if ($companyBrowserState !== null) { ?>
     else observeForms();
     const nativeSubmit = HTMLFormElement.prototype.submit;
     HTMLFormElement.prototype.submit = function () { if (!current()) throw new Error('native_company_context_obsolete'); stamp(this); return nativeSubmit.call(this); };
-    if (!ownsNetwork) return;
+    // Track scoped XHR in both shells. Header ownership remains singular, while
+    // old reads are cancelled before the selector rotates the server context.
+    const pending = new Set();
+    if (window.NativeCompanyContextGuard) NativeCompanyContextGuard.onObsolete(() => {
+        for (const xhr of Array.from(pending)) xhr.abort();
+        pending.clear();
+    });
     const open = XMLHttpRequest.prototype.open, send = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function (method, url) { this.__companyScoped = scoped(url); return open.apply(this, arguments); };
-    XMLHttpRequest.prototype.send = function () { if (this.__companyScoped) { if (!current()) throw new Error('native_company_context_obsolete'); this.setRequestHeader('X-Company-Context', token); if (nativeCsrf) this.setRequestHeader('X-Native-Company-CSRF', nativeCsrf); } return send.apply(this, arguments); };
+    XMLHttpRequest.prototype.send = function () {
+        if (this.__companyScoped) {
+            if (!current()) throw new Error('native_company_context_obsolete');
+            if (ownsNetwork) { this.setRequestHeader('X-Company-Context', token); if (nativeCsrf) this.setRequestHeader('X-Native-Company-CSRF', nativeCsrf); }
+            pending.add(this);
+            this.addEventListener('loadend', () => pending.delete(this), {once:true});
+        }
+        return send.apply(this, arguments);
+    };
+    if (!ownsNetwork) return;
     if (window.fetch) {
         const fetch = window.fetch;
         window.fetch = function (input, init) {

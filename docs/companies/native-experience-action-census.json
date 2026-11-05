@@ -550,93 +550,108 @@
                     "classification": "review_required"
                 },
                 {
-                    "method": "update_number_settings",
+                    "method": "client_change_data",
                     "line": 65,
                     "classification": "review_required"
                 },
                 {
+                    "method": "items",
+                    "line": 72,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "item",
+                    "line": 79,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "update_number_settings",
+                    "line": 86,
+                    "classification": "review_required"
+                },
+                {
                     "method": "validate_number",
-                    "line": 90,
+                    "line": 111,
                     "classification": "review_required"
                 },
                 {
                     "method": "credit_note",
-                    "line": 115,
+                    "line": 136,
                     "classification": "review_required"
                 },
                 {
                     "method": "apply_credits_to_invoices",
-                    "line": 189,
+                    "line": 210,
                     "classification": "review_required"
                 },
                 {
                     "method": "credit_note_from_invoice",
-                    "line": 206,
+                    "line": 227,
                     "classification": "review_required"
                 },
                 {
                     "method": "refund",
-                    "line": 218,
+                    "line": 239,
                     "classification": "review_required"
                 },
                 {
                     "method": "create_refund",
-                    "line": 243,
+                    "line": 264,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_refund",
-                    "line": 259,
+                    "line": 280,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_refund",
-                    "line": 274,
+                    "line": 295,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_credit_note_data_ajax",
-                    "line": 286,
+                    "line": 307,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_open",
-                    "line": 318,
+                    "line": 339,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 327,
+                    "line": 348,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_void",
-                    "line": 337,
+                    "line": 358,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 347,
+                    "line": 368,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_invoice_applied_credit",
-                    "line": 363,
+                    "line": 384,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_credit_note_applied_credit",
-                    "line": 371,
+                    "line": 392,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 380,
+                    "line": 401,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 408,
+                    "line": 429,
                     "classification": "review_required"
                 }
             ]
@@ -967,123 +982,128 @@
                     "classification": "review_required"
                 },
                 {
+                    "method": "client_change_data",
+                    "line": 77,
+                    "classification": "review_required"
+                },
+                {
                     "method": "estimate",
-                    "line": 78,
+                    "line": 85,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_signature",
-                    "line": 171,
+                    "line": 178,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_number_settings",
-                    "line": 180,
+                    "line": 187,
                     "classification": "review_required"
                 },
                 {
                     "method": "validate_estimate_number",
-                    "line": 205,
+                    "line": 212,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 231,
+                    "line": 238,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_estimate_data_ajax",
-                    "line": 244,
+                    "line": 251,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_estimates_total",
-                    "line": 297,
+                    "line": 304,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 330,
+                    "line": 337,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_notes",
-                    "line": 339,
+                    "line": 346,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_action_status",
-                    "line": 348,
+                    "line": 355,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_expiry_reminder",
-                    "line": 366,
+                    "line": 373,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 391,
+                    "line": 398,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 428,
+                    "line": 435,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 456,
+                    "line": 463,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 482,
+                    "line": 489,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_acceptance_info",
-                    "line": 501,
+                    "line": 508,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 512,
+                    "line": 519,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_pipeline",
-                    "line": 559,
+                    "line": 566,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_open",
-                    "line": 569,
+                    "line": 576,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_pipeline",
-                    "line": 587,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "pipeline",
                     "line": 594,
                     "classification": "review_required"
                 },
                 {
+                    "method": "pipeline",
+                    "line": 601,
+                    "classification": "review_required"
+                },
+                {
                     "method": "pipeline_load_more",
-                    "line": 610,
+                    "line": 617,
                     "classification": "review_required"
                 },
                 {
                     "method": "set_estimate_pipeline_autoload",
-                    "line": 633,
+                    "line": 640,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 649,
+                    "line": 656,
                     "classification": "review_required"
                 }
             ]
@@ -1199,32 +1219,32 @@
             "methods": [
                 {
                     "method": "create",
-                    "line": 62,
+                    "line": 65,
                     "classification": "review_required"
                 },
                 {
                     "method": "update",
-                    "line": 82,
+                    "line": 85,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 108,
+                    "line": 111,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_default",
-                    "line": 123,
+                    "line": 126,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_as_default",
-                    "line": 130,
+                    "line": 133,
                     "classification": "review_required"
                 },
                 {
                     "method": "validate_dynamic_date",
-                    "line": 137,
+                    "line": 140,
                     "classification": "review_required"
                 }
             ]
@@ -1330,17 +1350,17 @@
                 },
                 {
                     "method": "search",
-                    "line": 289,
+                    "line": 296,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_item_by_id",
-                    "line": 301,
+                    "line": 308,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 332,
+                    "line": 339,
                     "classification": "review_required"
                 }
             ]
@@ -1642,207 +1662,207 @@
                 },
                 {
                     "method": "table",
-                    "line": 218,
+                    "line": 222,
                     "classification": "review_required"
                 },
                 {
                     "method": "kanban",
-                    "line": 227,
+                    "line": 232,
                     "classification": "review_required"
                 },
                 {
                     "method": "lead",
-                    "line": 241,
+                    "line": 247,
                     "classification": "review_required"
                 },
                 {
                     "method": "leads_kanban_load_more",
-                    "line": 351,
+                    "line": 358,
                     "classification": "review_required"
                 },
                 {
                     "method": "switch_kanban",
-                    "line": 379,
+                    "line": 386,
                     "classification": "review_required"
                 },
                 {
                     "method": "export",
-                    "line": 392,
+                    "line": 399,
                     "classification": "review_required"
                 },
                 {
                     "method": "file",
-                    "line": 414,
+                    "line": 421,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 428,
+                    "line": 435,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_lost",
-                    "line": 457,
+                    "line": 464,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_as_lost",
-                    "line": 475,
+                    "line": 482,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_junk",
-                    "line": 493,
+                    "line": 500,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_as_junk",
-                    "line": 511,
+                    "line": 518,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_activity",
-                    "line": 529,
+                    "line": 536,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_convert_data",
-                    "line": 546,
+                    "line": 553,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_customer",
-                    "line": 564,
+                    "line": 571,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_lead_status",
-                    "line": 803,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "update_status_order",
                     "line": 810,
                     "classification": "review_required"
                 },
                 {
+                    "method": "update_status_order",
+                    "line": 818,
+                    "classification": "review_required"
+                },
+                {
                     "method": "add_lead_attachment",
-                    "line": 817,
+                    "line": 825,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 830,
+                    "line": 838,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 841,
+                    "line": 849,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_note",
-                    "line": 853,
+                    "line": 861,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_all_proposal_emails_linked_to_lead",
-                    "line": 865,
+                    "line": 873,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_form_data",
-                    "line": 906,
+                    "line": 914,
                     "classification": "review_required"
                 },
                 {
                     "method": "form",
-                    "line": 938,
+                    "line": 946,
                     "classification": "review_required"
                 },
                 {
                     "method": "forms",
-                    "line": 1079,
+                    "line": 1087,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_form",
-                    "line": 1093,
+                    "line": 1101,
                     "classification": "review_required"
                 },
                 {
                     "method": "sources",
-                    "line": 1109,
+                    "line": 1117,
                     "classification": "review_required"
                 },
                 {
                     "method": "source",
-                    "line": 1120,
+                    "line": 1128,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_source",
-                    "line": 1154,
+                    "line": 1162,
                     "classification": "review_required"
                 },
                 {
                     "method": "statuses",
-                    "line": 1175,
+                    "line": 1183,
                     "classification": "review_required"
                 },
                 {
                     "method": "status",
-                    "line": 1186,
+                    "line": 1194,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_status",
-                    "line": 1218,
+                    "line": 1226,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 1238,
+                    "line": 1246,
                     "classification": "review_required"
                 },
                 {
                     "method": "email_integration_folders",
-                    "line": 1282,
+                    "line": 1290,
                     "classification": "review_required"
                 },
                 {
                     "method": "test_email_integration",
-                    "line": 1307,
+                    "line": 1315,
                     "classification": "review_required"
                 },
                 {
                     "method": "email_integration",
-                    "line": 1347,
+                    "line": 1355,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_status_color",
-                    "line": 1385,
+                    "line": 1393,
                     "classification": "review_required"
                 },
                 {
                     "method": "import",
-                    "line": 1392,
+                    "line": 1400,
                     "classification": "review_required"
                 },
                 {
                     "method": "validate_unique_field",
-                    "line": 1431,
+                    "line": 1439,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 1454,
+                    "line": 1462,
                     "classification": "review_required"
                 },
                 {
                     "method": "download_files",
-                    "line": 1530,
+                    "line": 1538,
                     "classification": "review_required"
                 }
             ]
@@ -2753,62 +2773,62 @@
                 },
                 {
                     "method": "add_proposal_comment",
-                    "line": 607,
+                    "line": 608,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_comment",
-                    "line": 616,
+                    "line": 617,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_proposal_comments",
-                    "line": 626,
+                    "line": 627,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_comment",
-                    "line": 632,
+                    "line": 633,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_proposal_data",
-                    "line": 653,
+                    "line": 654,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline",
-                    "line": 681,
+                    "line": 682,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_open",
-                    "line": 697,
+                    "line": 698,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_pipeline",
-                    "line": 708,
+                    "line": 709,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_pipeline",
-                    "line": 715,
+                    "line": 716,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_load_more",
-                    "line": 725,
+                    "line": 726,
                     "classification": "review_required"
                 },
                 {
                     "method": "set_proposal_pipeline_autoload",
-                    "line": 748,
+                    "line": 749,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 763,
+                    "line": 764,
                     "classification": "review_required"
                 }
             ]

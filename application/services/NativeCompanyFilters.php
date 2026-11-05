@@ -15,7 +15,7 @@ final class NativeCompanyFilters
         if((string)($row['affected']??'')!=='1')throw new RuntimeException('native_source_insert_unconfirmed');
     }
 
-    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private NativeCompanyInvoiceTable|NativeCompanyProjectTable|NativeCompanyTicketTable|NativeCompanyRelatedTaskTable|NativeCompanyContractTable|NativeCompanySalesTable|NativeCompanyCreditTable $table)
+    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private NativeCompanyInvoiceTable|NativeCompanyProjectTable|NativeCompanyTicketTable|NativeCompanyRelatedTaskTable|NativeCompanyContractTable|NativeCompanySalesTable|NativeCompanyCreditTable|NativeCompanyLeadTable $table)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
         $this->authorize();
@@ -30,6 +30,7 @@ final class NativeCompanyFilters
             NativeCompanyProjectTable::class=>['feature'=>'projects','view'=>'projects','ids'=>['projects']],
             NativeCompanyTicketTable::class=>['feature'=>'tickets','view'=>'tickets','ids'=>['tickets']],
             NativeCompanyContractTable::class=>['feature'=>'contracts','view'=>'contracts','ids'=>['contracts']],
+            NativeCompanyLeadTable::class=>['feature'=>'leads','view'=>'leads','ids'=>['company_leads']],
             NativeCompanyCreditTable::class=>['feature'=>'credit_notes','view'=>'credit_notes','ids'=>['credit_notes']],
             NativeCompanySalesTable::class=>['feature'=>$this->table->id(),'view'=>$this->table->id(),'ids'=>['proposals','estimates']],
             NativeCompanyRelatedTaskTable::class=>['feature'=>'tasks','view'=>$this->table->id()==='tasks'?'tasks':'tasks_relations','ids'=>['related_tasks','tasks']],

@@ -8,7 +8,7 @@
     "version": "4.8.8",
     "commit": "3cd2ac577a969840c94b019f602cb69d710c0e78"
   },
-  "generated_from": "working tree before PR publication; source inventory, not runtime evidence",
+  "generated_from": "working tree including the Leads original UI checkpoint; source inventory, not runtime evidence",
   "areas": {
     "assinaturas": {
       "controller": "application/controllers/admin/Subscriptions.php",
@@ -1955,7 +1955,7 @@
           "path": "application/controllers/admin/Leads.php",
           "ref_402_blob": "6e68a5cff9c5ab457acd93570f2c9425636eeb27",
           "main_488_blob": "dcde165e28ca2c4ff5ca3dbcc1849704015c192d",
-          "working_blob": "07a2a36d314c7f75af2e1f55663fc7a50845d664",
+          "working_blob": "2a7341e26080af5a9f5aed97ac1d477d3e263f0f",
           "comparison_402": "changed",
           "changed_this_pr": true
         },
@@ -2019,17 +2019,17 @@
           "path": "application/views/admin/leads/kan-ban.php",
           "ref_402_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
           "main_488_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
-          "working_blob": "a54686cc5c9d425b9ef4e8b60aff0a44fe517208",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "4a2d36a2ce832d17ff22a78ec144000399f6ed83",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/leads/lead.php",
           "ref_402_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
           "main_488_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
-          "working_blob": "c0c7227a0b4092a69446969f2ecbf3a92a51f402",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "eaba5e47ab2e60d34134e36a3a03e6c017d18151",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/leads/leads_attachments_template.php",
@@ -2043,9 +2043,9 @@
           "path": "application/views/admin/leads/manage_leads.php",
           "ref_402_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
           "main_488_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
-          "working_blob": "f5e258f21ddadc78803eb067ae97417072d39040",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "fd441bbe3c3fceaed4fbe6af7df2c24e54f8b062",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/leads/manage_sources.php",
@@ -2067,7 +2067,31 @@
           "path": "application/views/admin/leads/native.php",
           "ref_402_blob": null,
           "main_488_blob": "f84fb94d36245d57d22f0031071efb5e0802ded3",
-          "working_blob": "a3306bbe113cbcc3621ecb399c03a46bc761f0a3",
+          "working_blob": "fb43bcc7e28db45113dead9b0fa04dba7b2a5f35",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_board.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "4ba72d75acb5c883270e2decdf0b5aec6abc6773",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_board_card.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "041d624ec1888d2f1d71dbf42674f21f2414bdd5",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_board_cards.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "a55a42774117b0bcada4a291a19a8fc2b264e0fe",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -2078,6 +2102,30 @@
           "working_blob": "49a293d2806d2591e7420c173fe7e9ec38f7d9d7",
           "comparison_402": "new_since_402",
           "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/leads/native_manage.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "9fee8867d4fb90c451b138ca3d3cda8114b911fb",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_modal.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "5661a7db85a2a3dd20bb938a3160e7a6e8e97584",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "132481e03544c1b3d8229933c54682dca3992247",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/leads/profile.php",
@@ -3113,7 +3161,14 @@
     "application/services/CompanyExpenses.php",
     "application/services/CompanyExpenseRecurring.php",
     "application/services/NativeCompanyAuxiliaryUi.php",
-    "application/services/NativeCompanyCalendarEndpoints.php"
+    "application/services/NativeCompanyCalendarEndpoints.php",
+    "application/services/CompanyLeads.php",
+    "application/services/CompanyLeadsDirectory.php",
+    "application/services/NativeCompanyLeadHttp.php",
+    "application/services/NativeCompanyLeadInput.php",
+    "application/services/NativeCompanyLeadRules.php",
+    "application/services/NativeCompanyLeadTable.php",
+    "application/services/NativeCompanyLeadTableFactory.php"
   ],
   "utility_resource_layers": {
     "goals": [

@@ -96,9 +96,10 @@ Também passaram os oito scripts de regressão `primary_catalog.php`,
 `catalog_custom_creation.php`, `catalog_import_reference.php` e
 `catalog_currency_identity.php`, todos em `tests/native_company/`.
 
-A suíte nova está no manifesto SQLite e MySQL do CI para verificar a consulta
-também no dialeto de produção. A inclusão no manifesto não equivale à execução:
-o resultado remoto deve ser confirmado para o SHA final da PR.
+A suíte foi executada localmente em SQLite e está na fase MySQL do manifesto
+(não há comando duplicado entre fases). O primeiro checkpoint passou nos dois
+runtimes PHP do CI com MySQL real; o resultado está vinculado ao SHA registrado
+em `validation-checkpoints.md`. Novos deltas precisam de sua própria execução.
 
 ## Aceite pendente
 

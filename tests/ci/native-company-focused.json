@@ -2637,6 +2637,30 @@
     [
       "php",
       "tests/companies/native_expense_fields_transport.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_custom_field_options_transport.php"
+    ],
+    [
+      "php",
+      "tests/native_lead_original_transport.php"
+    ],
+    [
+      "php",
+      "tests/companies/credit_metadata.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_original_boundaries.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_metadata_transport.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_item_transfer.php"
     ]
   ],
   "node": [
@@ -2884,6 +2908,16 @@
       "node",
       "--test",
       "tests/native_company/expense_form.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/lead_transport.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/sales_original_transport.test.cjs"
     ]
   ],
   "mysql": [
@@ -2958,6 +2992,18 @@
     [
       "php",
       "tests/companies/native_contract_index.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_lead_original_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_credit_metadata_form.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_credit_relation.php"
     ]
   ],
   "browser": [

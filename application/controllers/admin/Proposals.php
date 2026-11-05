@@ -139,7 +139,7 @@ class Proposals extends AdminController
 
     public function proposal($id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id,false,'workspace'); return; }
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php'; (new NativeCompanySalesOriginalHttp($this))->form('proposals',$id); return; }
         if ($this->input->post()) {
             $proposal_data = $this->input->post();
             if ($id == '') {
@@ -601,6 +601,7 @@ class Proposals extends AdminController
 
     public function get_relation_data_values($rel_id, $rel_type)
     {
+        if(CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php';(new NativeCompanySalesOriginalHttp($this))->clientData('proposals',$rel_id,$rel_type);return;}
         echo json_encode($this->proposals_model->get_relation_data_values($rel_id, $rel_type));
     }
 

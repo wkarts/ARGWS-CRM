@@ -74,10 +74,17 @@ class Estimates extends AdminController
         ]);
     }
 
+    public function client_change_data($customer_id)
+    {
+        if(!CompanyRequestScope::nativeFor($this)){show_404();return;}
+        require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php';
+        (new NativeCompanySalesOriginalHttp($this))->clientData('estimates',$customer_id);
+    }
+
     /* Add new estimate or update existing */
     public function estimate($id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id,false,'workspace'); return; }
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php'; (new NativeCompanySalesOriginalHttp($this))->form('estimates',$id); return; }
         if ($this->input->post()) {
             $estimate_data = $this->input->post();
 

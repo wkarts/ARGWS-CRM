@@ -28,7 +28,7 @@ final class NativeCompanyCreditsController
         $caps['invoice_view']=$acl->can($issuer,$actor,'invoices','view'); $caps['customer_view']=$acl->can($issuer,$actor,'customers','view');
         return $caps;
     }
-    private static function failure(Throwable $error): void
+    private static function failure(Throwable $error,$jsonCi=null): void
     {
         $reason=$error->getMessage();
         $status=$error instanceof DomainException?(str_contains($reason,'denied')||str_contains($reason,'access')||str_contains($reason,'csrf')?403:(preg_match('/conflict|stale|changed|immutable|balance|history/',$reason)?409:422)):503;
@@ -39,8 +39,11 @@ final class NativeCompanyCreditsController
             'company_credit_has_history'=>'Uma nota com movimentos conserva seu histórico. Revise os estornos disponíveis.',
             'company_credit_reference_conflict'=>'Esta referência já está registrada para a operação. Confira o histórico antes de repetir.',
             'company_credit_provider_review_required'=>'A operação desta fatura exige a integração bancária de origem.',
+            'native_credit_catalog_precision_conflict'=>'O item possui preço ou tributo com precisão superior à aceita pela nota de crédito. Confira o cadastro antes de selecionar o item.',
+            'company_credit_fields_stale'=>'Os campos personalizados foram alterados. Reabra o formulário para conferir os campos atuais.',
             default=>'Não foi possível confirmar a nota de crédito, seu saldo ou suas permissões. Reabra a página antes de repetir a operação.',
         };
+        if($jsonCi!==null){$jsonCi->output->set_status_header($status)->set_content_type('application/json')->set_output(json_encode(['message'=>$message],JSON_THROW_ON_ERROR));return;}
         show_error($message,$status);
     }
     /** The successful URL keeps the published credit query parameter and selects the original split preview. */
@@ -56,6 +59,14 @@ final class NativeCompanyCreditsController
         if ($action==='create') {
             $input=$ci->input->post('credit',false);
             if (!is_array($input)) throw new DomainException('company_credit_invalid_input');
+            $form=$ci->input->post('_native_credit_form',false);
+            if ($form!==null) {
+                if ($form!=='1') throw new DomainException('company_credit_invalid_input');
+                require_once APPPATH.'services/NativeCompanyCreditForm.php';
+                $format=$ci->input->post('_native_credit_display_format',false);
+                if(!is_array($format))throw new DomainException('company_credit_invalid_input');
+                $input=(new NativeCompanyCreditForm($ci->db,db_prefix()))->input($issuer,$actor,$input,$format);
+            }
             $id=$writer->issueCompanyCredit($issuer,$actor,$input,$key);
         } else {
             $id=IssuerPolicy::id($ci->input->post('credit_id',false));
@@ -109,7 +120,9 @@ final class NativeCompanyCreditsController
             $clients=[]; $after=0;
             do { $page=(new CompanyClients($ci->db,db_prefix()))->page($issuer,$actor,$after,100); $clients=array_merge($clients,$page['items']); $after=$page['next']; } while ($after!==null);
             if ($method==='HEAD') { $ci->output->set_output(''); return; }
-            $ci->load->view('admin/credit_notes/credit_note',['title'=>_l('new_credit_note'),'native_credit_form'=>true,'issuer'=>$issuer,'clients'=>$clients,'currencies'=>$reader->currencies($issuer,$actor),'native_credit_notes_csrf'=>self::csrf($ci),'capabilities'=>self::capabilities($acl,$issuer,$actor),'error'=>null]);
+            require_once APPPATH.'services/NativeCompanyCreditForm.php';
+            $data=(new NativeCompanyCreditForm($ci->db,db_prefix()))->data($issuer,$actor);
+            $ci->load->view('admin/credit_notes/credit_note',$data+['title'=>_l('new_credit_note'),'native_credit_form'=>true,'issuer'=>$issuer,'clients'=>$clients,'currencies'=>$reader->currencies($issuer,$actor),'native_credit_notes_csrf'=>self::csrf($ci),'capabilities'=>self::capabilities($acl,$issuer,$actor),'error'=>null]);
         } catch (Throwable $error) { self::failure($error); }
     }
     public static function preview($ci,$id): void
@@ -118,7 +131,7 @@ final class NativeCompanyCreditsController
             [$issuer,$actor,$acl,$reader]=self::context($ci);
             $method=strtoupper($ci->input->method(true));
             if (!in_array($method,['GET','HEAD'],true)) { show_error('Método não permitido.',405); return; }
-            $document=$reader->get($issuer,$actor,$id);
+            $document=$reader->getForAdmin($issuer,$actor,$id);
             $caps=self::capabilities($acl,$issuer,$actor);
             $invoices=$caps['invoice_view']?$reader->invoiceOptions($issuer,$actor,$id):[];
             $invoiceNumbers=[];
@@ -140,6 +153,28 @@ final class NativeCompanyCreditsController
             $pdf=$reader->pdf($issuer,$actor,$id); $inline=$ci->input->get('output_type',false)==='I'||$ci->input->get('print',false);
             $ci->output->set_header('X-Content-Type-Options: nosniff')->set_header('Content-Disposition: '.($inline?'inline':'attachment').'; filename="nota-de-credito-'.IssuerPolicy::id($id).'.pdf"')->set_content_type('application/pdf')->set_output($pdf);
         } catch (Throwable $error) { self::failure($error); }
+    }
+    public static function client($ci,$id):void
+    {
+        try {
+            [$issuer,$actor]=self::context($ci);$method=strtoupper($ci->input->method(true));
+            if (!in_array($method,['GET','HEAD'],true)) { show_error('Método não permitido.',405); return; }
+            require_once APPPATH.'services/NativeCompanyCreditForm.php';
+            $data=(new NativeCompanyCreditForm($ci->db,db_prefix()))->client($issuer,$actor,$id);
+            $ci->output->set_content_type('application/json')->set_output($method==='HEAD'?'':json_encode($data,JSON_THROW_ON_ERROR));
+        } catch (Throwable $error) { self::failure($error,$ci); }
+    }
+    public static function catalog($ci,$id=null):void
+    {
+        try {
+            [$issuer,$actor]=self::context($ci);$method=strtoupper($ci->input->method(true));
+            if (!in_array($method,['GET','HEAD'],true)) { show_error('Método não permitido.',405); return; }
+            require_once APPPATH.'services/NativeCompanyCreditCatalogLookup.php';
+            $lookup=new NativeCompanyCreditCatalogLookup($ci->db,db_prefix(),$issuer,$actor);
+            if($id===null){$q=$ci->input->get('q',false)??'';if(!is_string($q))throw new DomainException('company_credit_invalid_input');$data=$lookup->search($q);}
+            else $data=$lookup->selected($id,$ci->input->get('currency',false));
+            $ci->output->set_content_type('application/json')->set_output($method==='HEAD'?'':json_encode($data,JSON_THROW_ON_ERROR));
+        } catch (Throwable $error) { self::failure($error,$ci); }
     }
     public static function status(int $status): string
     {

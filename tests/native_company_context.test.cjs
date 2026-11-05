@@ -79,3 +79,15 @@ test('configuration cannot redirect to another origin or include secrets/query p
         assert.throws(() => browser(0, {root}), /native_company_context_config_invalid/);
     }
 });
+
+test('native selector retires reads before its POST without redirecting or publishing an unconfirmed generation', () => {
+    const page=browser(4), guard=page.window.NativeCompanyContextGuard, calls=[];
+    guard.onObsolete(()=>calls.push('abort'));
+    guard.beginSelection();guard.beginSelection();
+    assert.equal(guard.isCurrent(),false);
+    assert.deepEqual(calls,['abort']);
+    assert.deepEqual(page.replaced,[],'the native form owns navigation and its existing submitter');
+    assert.deepEqual(page.writes.map(entry=>entry[1]),['4'],'selection intent never advances a shared generation');
+    guard.onObsolete(()=>calls.push('late-abort'));
+    assert.deepEqual(calls,['abort','late-abort']);
+});

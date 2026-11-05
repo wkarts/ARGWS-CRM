@@ -29,10 +29,10 @@ nesta branch. As migrations publicadas permanecem intactas.
 | R04 — Faturas | Preservação dos adaptadores das views originais, com regressões de formulário, POST, tabela, previews, créditos e pagamentos. [Faturas e Itens](invoices-and-items.md). |
 | R05 — Faturas recorrentes | Diretório original com oito colunas, filtros e preview de séries, preservando modos, condições, filas e controles recentes. [Recorrências e créditos](credit-recurring.md). |
 | R06 — Pagamentos | Corrigida falha HTTP 422 reproduzida na montagem da view; resposta HTML em buffer, protocolo original da tabela, Todos/exportação, formato e ordenação estável. [Diagnóstico e testes](payments-and-company-context.md). |
-| R07 — Notas de crédito | Lista/filtros, preview e grade de emissão sobre o ledger existente; cálculo decimal exato e ações de aplicação/estorno/reembolso conservadas. Campos e ações sem contrato compatível estão identificados. [Detalhes](credit-recurring.md). |
+| R07 — Notas de crédito | Lista/filtros, preview e emissão com endereços, projeto tipado, referência, termos, unidade/descrição e campos personalizados reais; cálculo decimal exato, ledger, aplicação/estorno/reembolso conservados. Ações laterais ainda pendentes estão identificadas. [Detalhes](credit-recurring.md). |
 | R08 — Itens | Corrigidas ordenação, busca e opção Todos, mantendo catálogo histórico/próprio, campos personalizados e formulário existente. [Consulta e testes](invoices-and-items.md). |
 | R09 — todo Vendas | Inventário de todas as entradas encontradas, inclusive Asaas: origem e pendências, e de recorrências como subfluxo de Faturas. [Inventário](sales-inventory.json). |
-| R10 — demais áreas | Adaptações de Contratos/Despesas, navegação de Leads e projetos, kanban de Ajuda online, autorizações de API/Webhooks; inventários completos das áreas, integrações e utilidades reais. [Áreas nativas](native-areas.md) e [integrações](integrations.md). |
+| R10 — demais áreas | Adaptações de Contratos/Despesas, lista/modal/Kanban de Leads, vínculo exato de créditos ao projeto, kanban de Ajuda online, autorizações de API/Webhooks; inventários completos das áreas, integrações e utilidades reais. [Áreas nativas](native-areas.md) e [integrações](integrations.md). |
 | R11 — empresa ativa | Invalidação de documentos antigos entre abas, proteção de respostas atrasadas e histórico do navegador; rotas restauradas passam pela fronteira antes de carregar dados. Testes de empresa/ACL por recurso, com lacunas identificadas. [Contexto](payments-and-company-context.md). |
 
 O travamento relatado pelo usuário continua associado especificamente ao clique
@@ -52,8 +52,10 @@ Os testes locais usam dados sintéticos. Serviços, SQL, cálculos e views reais
 são exercitados onde o relatório indica; dependências do framework são
 controladas em diversos fixtures. Isso não substitui uma instalação completa
 autenticada nem uma comparação visual lado a lado com dados equivalentes.
-Testes Chromium preparados e suites MySQL precisam ter resultado confirmado
-no CI do commit publicado. PWA instalado/offline e integrações externas reais
+O primeiro checkpoint passou no gate focado de PHP 8.1/8.5, MySQL e
+Chromium. A suíte HTTP completa encontrou uma corrida de XHR durante a troca
+de empresa; o tratamento e os formulários novos aguardam o CI da composição
+seguinte. Resultados por SHA constam em [checkpoints](validation-checkpoints.md). PWA instalado/offline e integrações externas reais
 exigem homologação própria.
 
 ## Diferenças que precisam de decisão funcional
@@ -65,7 +67,6 @@ AC63; não são requisitos adicionais inferidos.
 | --- | --- | --- |
 | Propostas a Leads e envio de documentos ainda abertos | O documento privado atual exige cliente autorizado; a entrega usa portal autenticado, estados e transporte explícitos. | Definir o contrato desejado para Lead e entrega antes do aceite, preservando histórico e identidade financeira. |
 | Alterar/excluir/reabrir documentos financeiros emitidos | Writers recentes continuam exigindo revisão, autoria, snapshots e movimentos de correção. | Definir quais operações antigas devem existir e como se conciliam com a imutabilidade e a trilha atuais. |
-| Campos de créditos sem roundtrip no writer atual | Não são apresentados como campos graváveis nem enviados para serem descartados. | Confirmar extensão compatível do documento e das ações indicadas em `credit-recurring.md`. |
 | Manager, Conector, Chat, API/Webhooks legados globais | Recursos, credenciais, históricos e contratos permanecem; rotas globais não são liberadas para empresas secundárias por suposição. | Mapear titularidade de instâncias/tokens/filas/históricos e distinguir administração compartilhada de operação da empresa. |
 | Assinaturas Stripe, Pedido de orçamento, regras recorrentes e utilidades globais sem adapter | Recursos originais e dados são conservados; o inventário distingue seu escopo dos serviços canônicos novos. | Definir propriedade e contratos de entrada/saída antes de adaptar esses fluxos ao seletor de empresa. |
 | Semelhança de nomes sem equivalência de dados | API, Connect API, Manager, Conector e Chat continuam separados; assinatura Stripe não é série de fatura recorrente. | Resolver cada correspondência pelo recurso real, sem fusão automática de módulos. |
@@ -73,6 +74,13 @@ AC63; não são requisitos adicionais inferidos.
 Enquanto essas diferenças e a homologação integral estiverem abertas, a PR deve
 permanecer **em rascunho**. O pedido autoriza sua abertura para revisão e CI;
 esta entrega não executa merge, publicação de release ou implantação.
+
+A ausência de um adaptador ou campo no writer atual, por si só, não constitui
+decisão pendente do usuário. Os formulários compatíveis de Propostas/Orçamentos e os campos opcionais
+de emissão de crédito foram implementados e exercitados em testes de
+roundtrip. Campos complementares de Leads, listagem de Despesas e criação/edição
+de rascunhos de Contratos seguem em implementação autorizada; o resultado de
+cada frente é registrado nos relatórios específicos.
 
 ## Banco, compatibilidade e atualização
 
@@ -107,6 +115,7 @@ Não reduzir marcadores ou apagar dados para simular retorno de versão.
 ## Índice de evidências
 
 - [Critérios AC01–AC64](acceptance.md).
+- [Resultados de CI por checkpoint](validation-checkpoints.md).
 - [Vendas, Propostas e Orçamentos](sales.md) e [inventário de arquivos](sales-inventory.json).
 - [Faturas e Itens](invoices-and-items.md).
 - [Notas de crédito e Faturas recorrentes](credit-recurring.md).

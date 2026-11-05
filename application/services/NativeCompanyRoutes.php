@@ -199,6 +199,8 @@ final class NativeCompanyRoutes
         ],
         'leads'=>[
             'index'=>['GET','HEAD','POST'],
+            'table'=>['POST'], 'lead'=>['GET','HEAD','POST'],
+            'kanban'=>['GET','HEAD'], 'update_lead_status'=>['POST'],
             'file'=>['GET','HEAD'],
             'export'=>['GET','HEAD'],
         ],
@@ -239,16 +241,19 @@ final class NativeCompanyRoutes
             // for the list/form/detail mutations; no legacy estimates_model is
             // loaded when this route is admitted.
             'index'=>['GET','HEAD','POST'], 'list_estimates'=>['GET','HEAD','POST'], 'table'=>['POST'],
+            'client_change_data'=>['GET','HEAD'],
             'get_estimate_data_ajax'=>['GET','HEAD'], 'get_estimates_total'=>['POST'], 'get_notes'=>['GET','HEAD'], 'add_note'=>['POST'],
             'estimate'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'proposals'=>[
             'index'=>['GET','HEAD','POST'], 'list_proposals'=>['GET','HEAD','POST'], 'table'=>['POST'], 'proposal_relations'=>['GET','HEAD','POST'],
+            'get_relation_data_values'=>['GET','HEAD'],
             'get_proposal_data_ajax'=>['GET','HEAD'], 'get_notes'=>['GET','HEAD'], 'add_note'=>['POST'],
             'proposal'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'credit_notes'=>[
             'index'=>['GET','HEAD','POST'], 'list_credit_notes'=>['GET','HEAD','POST'],
+            'client_change_data'=>['GET','HEAD'], 'items'=>['GET','HEAD'], 'item'=>['GET','HEAD'],
             'table'=>['POST'], 'get_credit_note_data_ajax'=>['GET','HEAD'],
             'credit_note'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'],
         ],

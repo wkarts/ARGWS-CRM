@@ -32,12 +32,28 @@ const guard = fs.readFileSync(path.join(root, 'assets/js/native-company-context.
 let activeGeneration = 1;
 let pageReads = 0;
 let serverMode = 'native';
+let pendingReads=[], readStarted=null, selectorPosts=0;
+const browserAssets=['assets/plugins/jquery/jquery.min.js','assets/plugins/datatables/datatables.min.js','assets/js/native-company-transport.js','assets/js/company-selector.js'];
 const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
     res.setHeader('Cache-Control', 'no-store');
     if (url.pathname === '/assets/js/native-company-context.js') {
         res.writeHead(200, {'Content-Type': 'application/javascript'});
         return res.end(guard);
+    }
+    if(browserAssets.includes(url.pathname.slice(1))){
+        res.writeHead(200,{'Content-Type':'application/javascript'});
+        return res.end(fs.readFileSync(path.join(root,url.pathname.slice(1))));
+    }
+    if(url.pathname==='/admin/tasks/table'){
+        req.resume();pendingReads.push(res);if(readStarted)readStarted();return;
+    }
+    if(url.pathname==='/admin/issuers/select'&&req.method==='POST'){
+        selectorPosts++;activeGeneration=2;
+        // Deliberately return the old read's rejection before navigation completes.
+        // The production selector must already have cancelled its old XHR.
+        for(const old of pendingReads.splice(0)){if(!old.destroyed){old.writeHead(409,{'Content-Type':'text/html'});old.end('Obsolete company context');}}
+        return setTimeout(()=>{res.writeHead(303,{'Location':'/admin/'});res.end();},100);
     }
     if (!['/admin/', '/admin/page'].includes(url.pathname)) {
         res.writeHead(404);
@@ -51,9 +67,13 @@ const server = http.createServer((req, res) => {
     }
     pageReads++;
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-    res.end('<!doctype html><html><head>' + scripts[mode][generation] + '</head><body>' +
+    res.end('<!doctype html><html><head>' + scripts[mode][generation] + '</head><body class="'+(mode==='native'?'native-company-admin':'')+'">' +
         '<main id="company-data">Empresa ' + (generation === 1 ? 'A' : 'B') + '</main>' +
         '<form id="edit" method="post" action="/admin/save"><button>Salvar</button></form>' +
+        '<div class="company-selector"><form class="company-selector-form" method="post" action="/admin/issuers/select"><button type="button" data-company-selector-toggle>Empresa</button><button type="submit" name="company_id" value="2" data-company-choice="2">Selecionar B</button></form></div>'+
+        '<table id="pending-table"><thead><tr><th>Nome</th></tr></thead></table>'+
+        '<script>window.NativeCompanyHeaderConfig={root:location.origin+"/admin/",context:"synthetic-document-context-'+generation+'",csrf:"synthetic-document-csrf"};</script>'+
+        browserAssets.map(asset=>'<script src="/'+asset+'"></script>').join('')+
         '</body></html>');
 });
 (async () => {
@@ -99,6 +119,20 @@ const server = http.createServer((req, res) => {
             assert.equal(selectedPage.url(), restoreTarget, 'same-company Back keeps the original navigation target');
             assert.equal(await selectedPage.locator('#company-data').textContent(), 'Empresa B');
             assert.deepEqual(errors, [], 'no browser script exceptions in ' + mode + ' context');
+            await context.close();
+        }
+        for(const mode of ['native','legacy']){
+            activeGeneration=1;serverMode=mode;selectorPosts=0;
+            const context=await browser.newContext(),errors=[];
+            const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
+            await page.goto(origin+'/admin/page?mode='+mode+'&generation=1');
+            const started=new Promise(resolve=>{readStarted=resolve;});
+            await page.evaluate(()=>{$.fn.dataTable.ext.errMode='throw';$('#pending-table').DataTable({serverSide:true,searching:false,paging:false,ajax:{url:'/admin/tasks/table',type:'POST'},columns:[{data:'name'}]});});
+            await started;readStarted=null;
+            await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('[data-company-choice="2"]').click()]);
+            assert.equal(selectorPosts,1,'the native selector sends exactly one authenticated form request');
+            assert.equal(await page.locator('#company-data').textContent(),'Empresa B');
+            assert.deepEqual(errors,[],'retiring '+mode+' DataTables XHR cannot paint its 409 as an application error');
             await context.close();
         }
         console.log('Company tabs PASS: actual PHP head, cross-tab generation, stale response, form tokens and persisted-page revalidation in Chromium (native/legacy; synthetic session).');

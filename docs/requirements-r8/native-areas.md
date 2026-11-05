@@ -43,7 +43,7 @@ abaixo identificam rotas reais, sem criar equivalentes por semelhança.
 | Projetos | `projects` | Lista/tabela, cadastro/edição, visão geral, tarefas, membros, marcos/Kanban, discussões/comentários, arquivos externos/privados, visibilidade, notas, horas/timers, Gantt, despesas e relações comerciais. Faturamento por tempo/fixo, tarifas, cópia revisada e regras do portal são recursos recentes preservados. |
 | Tarefas | `tasks` | Lista/Kanban, formulário/modal, status/prioridade, relações, responsáveis/seguidores, checklist e templates, comentários/anexos, lembretes, tags, timers, horas e estatísticas, cópia, ações em lote, faturamento e exclusão. Recorrência, cópias revisadas e tarefas independentes recentes permanecem. |
 | Suporte | `tickets` | Lista por status, abertura/detalhe, mensagem/resposta/anexo, prioridade/departamento/serviço, atribuição e cliente/contato, respostas predefinidas, status, edição de mensagens/configurações, bloqueio de remetente e operações em lote. AI/Connect/Connect API são entradas recentes separadas. |
-| Leads | `leads` | Lista/Kanban e detalhe, status/fontes, atividades/notas, proposta relacionada, importação/exportação, anexos, perdido/lixo, conversão em cliente, formulário público e integração de e-mail. A empresa recente possui inbox/board próprios e fila de automação, sem equivalência integral da view antiga. |
+| Leads | `leads` | Lista/Kanban e detalhe, status/fontes, atividades/notas, proposta relacionada, importação/exportação, anexos, perdido/lixo, conversão em cliente, formulário público e integração de e-mail. A lista de 13 colunas, modal e Kanban foram adaptados aos registros próprios; inbox, importação, configuração e automação recentes continuam no workspace. Campos/ações ainda sem correspondência e propriedade dos históricos estão separados em NA06. |
 | Pedido de orçamento | `estimate_request` | Lista e detalhe da solicitação, status, responsável, tags, campos do formulário, conversão em proposta/orçamento/cliente, formulários de captação e seus status. Configurar formulários não equivale a ter solicitações operáveis por empresa. |
 | Mídia | `utilities/media` | Gerenciador elFinder e `media_connector`; volumes/pasta e URL pública do modelo legado. |
 | Exportação PDF em lote | `utilities/bulk_pdf_exporter` | Formulário com recursos existentes, período/status e geração/exportação de PDFs pelo exportador legado. |
@@ -172,6 +172,52 @@ discussões, arquivos, horas, Gantt, cópia e faturamento foram inventariados e
 preservados. Não são implementações novas desta PR. Ver a pendência relativa às
 abas comerciais, cuja associação atual difere da referência.
 
+### Leads: lista, modal e Kanban sobre o contrato próprio
+
+`CompanyLeadsDirectory`, `NativeCompanyLeadHttp`, `NativeCompanyLeadInput` e a
+factory de filtros conectam as rotas originais de índice, tabela, modal e Kanban
+aos escritores e registros próprios de `CompanyLeads`. A view conserva a estrutura
+do índice e as 13 posições de colunas da referência, os resumos por status, o modal
+com perfil/anexos/notas/atividade e as classes do Kanban. Não executa o modelo
+global antigo para preencher essas superfícies.
+
+Nome, empresa, e-mail, telefone, responsável, status, origem e criação vêm de dados
+reais. Valor, tags e último contato permanecem vazios enquanto a extensão opcional
+de persistência desses campos não estiver concluída; não foram preenchidos com
+zero ou datas presumidas. O inventário de todos os campos ausentes e o plano de
+extensão estão em [leads-extension-plan.md](leads-extension-plan.md).
+
+A tabela faz busca literal, paginação, ordenação, filtros e contagens na fonte da
+empresa selecionada. O namespace de filtros salvos `company_leads` evita reaplicar
+IDs de status/origem dos filtros legados. IDs de status e origem continuam sendo
+os IDs próprios de catálogo; apenas a identidade do Lead usa o namespace canônico
+`company_lead`. Preferências de ordenação respeitam a opção existente
+`save_last_order_for_tables`.
+
+O modal cria/edita pelos escritores existentes, mostra anexos privados e notas,
+registra a atividade real e mantém arquivamento/restauração e conversão em cliente
+privado. O contrato de conversão continua criando o contato inativo previsto na
+base recente. Não substitui esse comportamento pela conversão legada com efeitos
+externos diferentes. Revisão, idempotência, CSRF, vínculo de empresa e permissões
+são verificados antes de operar. A renderização é armazenada em buffer e revalida
+contexto/permissão antes de liberar HTML; revogação ou troca durante a renderização
+descarta a resposta parcial.
+
+O Kanban pagina 25 registros por coluna e grava a mudança de status usando a
+revisão atual. Reordenar dentro da mesma coluna é cancelado porque a persistência
+de posição ainda não foi implementada nesse contrato; não informa uma ordenação
+salva que desapareceria ao recarregar. Respostas atrasadas de leitura são
+descartadas, formulários pendentes não duplicam envios e a troca de empresa
+invalida requisições antigas. Nenhuma destas proteções substitui os controles do
+servidor.
+
+O workspace recente permanece em `leads?workspace=1`, com inbox, importação,
+configuração, automação, paginação antiga e seus formulários. Queries antigas
+continuam selecionando esse fluxo. A principal mostra seus registros próprios;
+não adota os Leads históricos globais por coincidência de ID. Foram preparados
+testes positivos MySQL e um fluxo Chromium em A, B e principal, mas a execução
+remota deste delta ainda não foi confirmada nesta frente.
+
 ### Leads e Despesas: links de detalhe verificáveis
 
 Leads agora interpreta `/leads/index/<id canônico de company_lead>` e valida a
@@ -183,8 +229,9 @@ HEAD não devolve o corpo do detalhe.
 `expenses/index/<id>` e `expenses/list_expenses/<id>` passam o parâmetro ao
 controlador escopado, que cruza rota, query e corpo. O detalhe estrangeiro não é
 hidratado. HEAD também não entrega conteúdo de página ou arquivo. Esses ajustes
-restauram navegação direta; não convertem o board atual de Leads nem a listagem
-atual de Despesas em toda a experiência 4.0.2.
+restauram navegação direta. A restauração adicional de Leads está descrita acima;
+a lista/preview/resumos de Despesas continua sendo a próxima implementação
+compatível, sem declarar essa lacuna resolvida pelo formulário.
 
 ## O que já estava na base e foi preservado
 
@@ -204,8 +251,9 @@ por uma página genérica.
 
 ## Testes e natureza da prova
 
-Os testes abaixo executaram localmente em **PHP 8.3 + SQLite**, com banco sintético
-descartável. Os testes de UI PHP carregam o controller, serviços e view reais;
+Os testes abaixo executaram localmente em **PHP 8.3**, usando SQLite sintético
+descartável quando exigem banco. O teste portátil de Leads renderiza HTML real sem
+usar banco. Os testes de UI PHP carregam o controller, serviços e view reais;
 framework de sessão/transportes/shell pode ser substituído por spies conforme o
 cabeçalho de cada teste. Não equivalem a um servidor HTTP completo. Testes Node
 executam o script emitido pela view em VM com transportes/DOM simulados; não são
@@ -219,6 +267,8 @@ capturas de Chromium.
 | `tests/companies/native_contract_actions.php` | 32 verificações adicionais de ações reais e armazenamento; agora usa a apresentação original do índice. |
 | `tests/companies/native_project_page_custom_fields.php` | 50 verificações cumulativas; inclui o fixture original `native_project_page.php` (49) e acrescenta definição/valor de campo personalizado real, coluna adicional, busca e ordenação. A regressão fica em script separado para preservar as oito colunas esperadas pelos testes filhos. |
 | `tests/native_lead_navigation.php` | 12 verificações do parser real de identidade/rota. Não testa toda a base Leads nem a tela em browser. |
+| `tests/native_lead_original_transport.php` | 31 verificações: views e tabela reais, serialização dos controles originais para o decoder, IDs/catálogos, escape, revisão, leitura/arquivo, 13 colunas, filtros vinculados e ausência de valores inventados. Shell, sessão e transporte são spies declarados. |
+| `tests/native_company/lead_transport.test.cjs` | 6 testes do coordenador real: identidade, resposta obsoleta, troca de empresa, envio pendente único, falhas e geração criptográfica de chave. Não é execução de navegador. |
 | `tests/companies/native_expense_navigation.php` | 5 verificações adicionais sobre 125 anteriores: detalhe por rota, colisão query/rota, ID bruto, outra empresa e HEAD. |
 | `tests/companies/native_expense_custom_fields.php` | 13 verificações adicionais: pai e campos reais, recibo idempotente, campo obrigatório/estrangeiro, rollback tardio, prova de criação expirada, acesso B a recurso A negado. |
 | `tests/companies/native_expense_original_form.php` | 21 verificações adicionais: mapeamento/catálogos, dois impostos, DTO, campos personalizados, edição/revisão, recorrência atômica, replay e rollback por erro real na gravação da agenda. |
@@ -234,6 +284,21 @@ capturas de Chromium.
 `tests/companies/contracts_browser.cjs` teve seus seletores ajustados para a
 listagem original. **Não foi executado localmente**. O ambiente local rejeita
 sockets necessários a MySQL/Chromium; a CI remota é necessária para esses gates.
+
+Preparados e incluídos no manifesto, com execução remota pendente neste delta:
+
+- `tests/companies/native_lead_original_http.php`, exclusivo MySQL, inclui
+  `native_lead_directory.php`: readers/filtros e controller/views/writers reais,
+  empresas A/B/principal, histórico global preservado, criação/replay/edição,
+  conversão, notas, paginação do Kanban, revisão, CSRF, HEAD e revogação de
+  autorização/contexto durante a renderização. O fixture recusa SQLite; não há
+  adaptação de dialeto que simule o contrato MySQL.
+- `tests/companies/leads_browser.cjs`: conserva os cenários anteriores no
+  workspace e acrescenta criação/edição/notas/anexo na lista/modal originais,
+  arraste real entre colunas, leitura posterior do status, negações A/B e
+  capturas desktop/mobile. Executar um teste de DOM Node não comprova esses
+  cenários Chromium.
+
 Após recuperar o runtime, foram repetidos os testes novos e regressões afetadas
 com PHP 8.3.6, `display_errors=1` e `error_reporting=E_ALL`: Contratos (índice,
 controller, união principal e ações), Projetos, identidade de Leads, navegação
@@ -259,8 +324,8 @@ financeira ou homologação fiscal.
 | NA03 | Despesas escalares antigas e despesas com agenda/faturamento já vinculados não aceitam substituição por um perfil editável com dois impostos. A categoria própria tem nome/estado, sem descrição antiga. | Mantido fluxo recente desses contratos e gestão de categorias; o original atende os contratos compatíveis. Definir eventual migração explícita e conteúdo de categoria se desejado. |
 | NA04 | `Subscriptions` conserva Stripe e tabelas legadas globais; não foi encontrado serviço/tabela própria de assinatura Stripe admitido para empresa nomeada. | Nenhuma equivalência presumida com faturas recorrentes. É necessário determinar propriedade dos planos/assinaturas/clientes e credenciais atuais antes de liberar operações nesse contexto. |
 | NA05 | `Estimate_request` conserva solicitações legadas. Os serviços de formulários próprios cobrem configuração de captação, não o ciclo dos registros recebidos/conversão. | Recursos legados preservados. Falta contrato de propriedade e vínculo das solicitações, campos, atribuição e conversão. |
-| NA06 | Leads próprio usa inbox/board diferente do modal/lista antiga e não contém todos os campos/ações antigos. O caminho próprio não reúne automaticamente os Leads históricos da principal. | Links canônicos/collision checks corrigidos; não importar ou atribuir históricos por adivinhação. Inventariar/decidir migração e completar campos/ações com a mesma identidade de origem. |
-| NA07 | Na projeção recente de Projetos, relações com contratos/notas de crédito são obtidas pelo cliente; `project_subscriptions` consulta `company_recurring` (faturas recorrentes), embora a referência seja Assinaturas. | Nenhum recurso removido e nenhuma equivalência declarada. É preciso distinguir as relações e a navegação das duas modalidades, com vínculo real de projeto antes de alterar essa experiência. |
+| NA06 | Lista/modal/Kanban próprios foram adaptados, mas campos opcionais e algumas ações antigas ainda não possuem persistência compatível; históricos globais, visibilidade pública e efeitos da conversão legada têm contratos distintos. | A extensão de campos é trabalho de implementação autorizado, detalhado em `leads-extension-plan.md`; não exige nova decisão só por faltar um campo. Propriedade/migração dos históricos e alteração de efeitos/permissões reais continuam exigindo definição antes de mudança. Workspace/inbox/importação/automação preservados; testes MySQL/browser deste delta pendentes. |
+| NA07 | Notas de crédito agora usam o vínculo tipado capturado do projeto, sem inferência pelo cliente. A relação de Contratos ainda usa o cliente; `project_subscriptions` consulta `company_recurring` (faturas recorrentes), embora a referência seja Assinaturas. | `native_project_credit_relation.php` passou 11 checks adicionais: dois projetos do mesmo cliente, ausência de vínculo, A/B, permissões e preservação dos dados. MySQL deste delta pendente. Contratos segue em adaptação; distinguir Assinaturas de séries recorrentes sem remover recursos ou atribuir equivalência presumida. |
 | NA08 | Mídia, exportação PDF em lote, activity_log e pipe_log conservam volumes/exportadores/logs globais; os clear endpoints legados esvaziam tabelas globais. | Não abrir consulta ou limpeza global como se fosse filtrada por empresa. Definir propriedade/migração dos arquivos e estratégia de logs/exportações; a trilha de auditoria própria recente não é prova de equivalência desses logs. |
 | NA09 | Goals/Backup/Surveys/Exports/Einvoice mantêm operações globais ou filtros somente parciais. | Inventário completo das entradas e ações mantido, sem remoção. Decisão necessária para operações de instância, arquivos, filas, templates e dados históricos antes de expandir a admissão por empresa. |
 | NA10 | Não houve comparação visual lado a lado com dados/telas iguais, nem browser real com troca A→B→A, nem concorrência MySQL local nesta frente. | Gates remotos e homologação visual continuam pendentes. Teste sintético de autorização não autoriza declarar AC54/57–64 integralmente cumpridos. |
@@ -290,7 +355,7 @@ individual, permitindo verificar cada contagem após recuperar os objetos Git.
 | projetos | 59 | 27 | 15 | 17 | 0 |
 | tarefas | 23 | 4 | 12 | 7 | 0 |
 | suporte | 32 | 13 | 12 | 7 | 0 |
-| leads | 18 | 15 | 1 | 2 | 2 |
+| leads | 24 | 12 | 4 | 8 | 11 |
 | pedido_orcamento | 9 | 9 | 0 | 0 | 0 |
 | utilitarios | 12 | 6 | 5 | 1 | 0 |
 | anuncios | 5 | 1 | 4 | 0 | 0 |

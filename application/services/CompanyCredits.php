@@ -11,17 +11,25 @@ final class CompanyCredits
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function authorize(int $issuer,int $actor):void{if(!$this->acl->can($issuer,$actor,'credit_notes','view'))throw new DomainException('company_credit_access_denied');}
-    private function transaction(int $issuer,int $actor,callable $work)
+    private function transaction(int $issuer,int $actor,callable $work,array $extraTables=[])
     {
         $this->authorize($issuer,$actor);CompanyCreditSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit'],(new CompanyInvoiceBalance($this->db,$this->p))->tables()))),function()use($issuer,$actor,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);$result=$work();$this->authorize($issuer,$actor);return $result;});
+        return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit'],(new CompanyInvoiceBalance($this->db,$this->p))->tables(),$extraTables))),function()use($issuer,$actor,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);$result=$work();$this->authorize($issuer,$actor);return $result;});
     }
     private static function minor($value):int{try{$n=CompanyInvoiceAmounts::minor($value);if($n>CompanyInvoiceAmounts::MAX)throw new DomainException();return $n;}catch(Throwable $e){throw new DomainException('company_credit_balance_review');}}
-    private function document(int $issuer,int $credit):array
+    private function document(int $issuer,int $credit,?int $actor=null,?string $audience=null):array
     {
-        $row=$this->rows('SELECT c.*,d.number snapshot_number,d.identity_json,d.recipient_json,d.items_json FROM '.$this->p.'creditnotes c JOIN '.$this->p.'company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.id=? AND c.issuer_id=? FOR UPDATE',[$credit,$issuer])[0]??null;if(!$row)throw new DomainException('company_credit_access_denied');
+        $row=$this->rows('SELECT c.*,d.number snapshot_number,d.actor_id snapshot_actor,d.input_hash,d.identity_json,d.recipient_json,d.items_json FROM '.$this->p.'creditnotes c JOIN '.$this->p.'company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.id=? AND c.issuer_id=? FOR UPDATE',[$credit,$issuer])[0]??null;if(!$row)throw new DomainException('company_credit_access_denied');
         try{$identity=json_decode($row['identity_json'],true,32,JSON_THROW_ON_ERROR);$recipient=json_decode($row['recipient_json'],true,32,JSON_THROW_ON_ERROR);$data=json_decode($row['items_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($identity)||!is_array($recipient)||!is_array($data))throw new RuntimeException();$calculated=CompanyInvoiceAmounts::calculate($data['items'],array_intersect_key($data,array_flip(['discount_mode','discount_value','discount_type','adjustment'])));}
         catch(Throwable $e){throw new DomainException('company_credit_balance_review');}
+        // Validate the historical input bytes without changing their shape or hash.
+        $payload=array_diff_key($data,['native_snapshot'=>true]);
+        if(!is_string($row['input_hash'])||!hash_equals($row['input_hash'],hash('sha256',json_encode($payload,JSON_THROW_ON_ERROR))))throw new DomainException('company_credit_balance_review');
+        $metadata=null;
+        if(array_key_exists('native_metadata',$data)||array_key_exists('native_snapshot',$data)){
+            require_once __DIR__.'/CompanyCreditMetadata.php';
+            $metadata=CompanyCreditMetadata::validate($this->db,$this->p,$issuer,$row,$data);
+        }
         foreach(['subtotal'=>'subtotal','tax'=>'total_tax','discount_total'=>'discount_total','adjustment'=>'adjustment','total'=>'total'] as $field=>$native)if(($data[$field]??null)!==$calculated[$field]||CompanyInvoiceAmounts::minor($row[$native],$field==='adjustment')!==CompanyInvoiceAmounts::minor($calculated[$field],$field==='adjustment'))throw new DomainException('company_credit_balance_review');
         if((int)($recipient['client_id']??0)!==(int)$row['clientid']||(int)($data['client_id']??0)!==(int)$row['clientid']||(int)($data['currency']??0)!==(int)$row['currency']||($data['date']??null)!==$row['date']||($data['note']??null)!==$row['clientnote']||!in_array((int)$row['status'],[1,2,3],true))throw new DomainException('company_credit_balance_review');
         if((int)$row['number']!==(int)$row['snapshot_number']||$row['prefix']!==($identity['prefix']??null)||$row['terms']!==($identity['terms']??null)||$row['formatted_number']!==($identity['prefix']??'').str_pad((string)$row['number'],6,'0',STR_PAD_LEFT))throw new DomainException('company_credit_balance_review');
@@ -37,7 +45,13 @@ final class CompanyCredits
         $available=self::minor($row['total'])-$used;if(((int)$row['status']===3&&$entries)||((int)$row['status']!==3&&(int)$row['status']!==($available===0?2:1)))throw new DomainException('company_credit_balance_review');
         // Status3 preserves the nominal document; none of its face value remains usable.
         if((int)$row['status']===3)$available=0;
-        return ['id'=>(int)$row['id'],'issuer_id'=>$issuer,'client_id'=>(int)$row['clientid'],'currency_id'=>(int)$row['currency'],'number'=>$row['formatted_number'],'date'=>$row['date'],'status'=>(int)$row['status'],'identity'=>$identity,'recipient'=>$recipient,'items'=>$calculated['items'],'amounts'=>$calculated,'note'=>$row['clientnote'],'currency'=>$currency['name'],'currency_basis'=>$unit['basis'],'available'=>CompanyInvoiceAmounts::decimal($available),'applied'=>$totals['apply'],'refunded'=>$totals['refund'],'entries'=>$entries];
+        $document=['id'=>(int)$row['id'],'issuer_id'=>$issuer,'client_id'=>(int)$row['clientid'],'currency_id'=>(int)$row['currency'],'number'=>$row['formatted_number'],'date'=>$row['date'],'status'=>(int)$row['status'],'identity'=>$identity,'recipient'=>$recipient,'items'=>$calculated['items'],'amounts'=>$calculated,'note'=>$row['clientnote'],'currency'=>$currency['name'],'currency_basis'=>$unit['basis'],'available'=>CompanyInvoiceAmounts::decimal($available),'applied'=>$totals['apply'],'refunded'=>$totals['refund'],'entries'=>$entries];
+        if($metadata!==null&&$audience!==null){
+            if($actor===null)throw new DomainException('company_credit_access_denied');
+            CompanyCreditMetadata::assertProjections($this->db,$this->p,$issuer,$credit,$calculated['items'],$metadata);
+            $document['metadata']=CompanyCreditMetadata::present($this->db,$this->p,$issuer,$actor,$metadata,$audience);
+        }
+        return $document;
     }
     /** Financial reports may compose this reader only inside an already owned, equivalent boundary. */
     public function inOwnedTransaction($issuer,$actor,$credit):array
@@ -45,6 +59,46 @@ final class CompanyCredits
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);IssuerTransaction::assertOwned($this->db,$this->p,['issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units']);$this->authorize($issuer,$actor);$result=$this->document($issuer,$credit);$this->authorize($issuer,$actor);return $result;
     }
     public function get($issuer,$actor,$credit):array{$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,fn():array=>$this->document($issuer,$credit));}
+    /** Separate administrative composition: public financial DTOs never receive private fields. */
+    public function getForAdmin($issuer,$actor,$credit):array
+    {
+        require_once __DIR__.'/CompanyCreditMetadata.php';
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);
+        return $this->transaction($issuer,$actor,fn():array=>$this->document($issuer,$credit,$actor,'admin'),CompanyCreditMetadata::readTables($this->db,$this->p));
+    }
+    /** Project relations use the captured typed link, never every credit of its customer. */
+    public function forProject($issuer,$actor,$project):array
+    {
+        require_once __DIR__.'/CompanyCreditMetadata.php';
+        require_once __DIR__.'/CompanyProjects.php';
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$project=IssuerPolicy::id($project);
+        $tables=array_merge(CompanyCreditMetadata::readTables($this->db,$this->p),CompanyProjects::ownedReferenceTables());
+        return $this->transaction($issuer,$actor,function()use($issuer,$actor,$project):array{
+            $projects=new CompanyProjects($this->db,$this->p);
+            $before=$projects->getInOwnedTransaction($issuer,$actor,$project);
+            $connection=$this->db->pdo??$this->db->conn_id??null;
+            $sqlite=$connection instanceof PDO&&$connection->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';
+            $kind=$sqlite?"json_extract(d.items_json,'$.native_snapshot.project.source_kind')":"JSON_UNQUOTE(JSON_EXTRACT(d.items_json,'$.native_snapshot.project.source_kind'))";
+            $source=$sqlite?"json_extract(d.items_json,'$.native_snapshot.project.source_id')":"JSON_EXTRACT(d.items_json,'$.native_snapshot.project.source_id')";
+            $ids=$this->rows('SELECT c.id FROM '.$this->p.'creditnotes c JOIN '.$this->p.'company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.issuer_id=? AND '.$kind.'=? AND '.$source.'=CAST(? AS '.($sqlite?'INTEGER':'UNSIGNED').') ORDER BY c.id DESC LIMIT 200',[$issuer,'company_project',$project]);
+            $rows=[];
+            foreach($ids as$id){
+                $document=$this->document($issuer,(int)$id['id'],$actor,'admin');
+                $reference=$document['metadata']['project']??null;
+                if(!is_array($reference)||$reference['source_kind']!=='company_project'||$reference['source_id']!==$project)throw new DomainException('company_credit_balance_review');
+                $rows[]=['id'=>$document['id'],'number'=>$document['number'],'date'=>$document['date'],
+                    'total'=>$document['currency'].' '.$document['amounts']['total'],'status'=>$document['status']];
+            }
+            if($projects->getInOwnedTransaction($issuer,$actor,$project)!==$before)throw new DomainException('native_project_stale');
+            return $rows;
+        },$tables);
+    }
+    public function inOwnedForAdmin(int $issuer,int $actor,int $credit):array
+    {
+        require_once __DIR__.'/CompanyCreditMetadata.php';
+        IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['creditnotes','company_credit_documents','company_credit_entries','credits','creditnote_refunds','invoices','issuers_invoice_documents','currencies','company_currency_units'],CompanyCreditMetadata::readTables($this->db,$this->p)));
+        $this->authorize($issuer,$actor);$result=$this->document($issuer,$credit,$actor,'admin');$this->authorize($issuer,$actor);return $result;
+    }
     /** Scoped, reconciled credit applications for the original invoice preview. */
     public function appliedToInvoice($issuer,$actor,$invoice):array
     {
@@ -77,15 +131,51 @@ final class CompanyCredits
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,function()use($issuer,$actor,$credit):array{if(!$this->acl->can($issuer,$actor,'invoices','view'))return [];$doc=$this->document($issuer,$credit);$rows=$this->rows('SELECT i.id,i.formatted_number,i.total,i.status FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.issuer_id=? AND i.clientid=? AND i.currency=? AND i.status IN (1,3,4) ORDER BY i.id LIMIT 100',[$issuer,$doc['client_id'],$doc['currency_id']]);$result=[];foreach($rows as $row){$position=(new CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['id']);if(CompanyInvoiceAmounts::minor($position['receivable'])>0){$row['receivable']=$position['receivable'];$result[]=$row;}}return $result;});
     }
     public function currencies($issuer,$actor):array{$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor);$rows=$this->rows('SELECT id,name FROM '.$this->p.'currencies ORDER BY id LIMIT 100');$this->authorize($issuer,$actor);return $rows;}
+    private static function pdfAddress(array $metadata,string $part,callable $escape):string
+    {
+        $lines=[];
+        foreach(['street','city','state','zip']as$field)if(($metadata[$part.'_'.$field]??'')!=='')$lines[]=nl2br($escape($metadata[$part.'_'.$field]));
+        if(($metadata['countries'][$part.'_country']??'')!=='')$lines[]=$escape($metadata['countries'][$part.'_country']);
+        return implode('<br>',$lines);
+    }
+    private static function pdfRecipient(array $data,callable $escape):string
+    {
+        $html='Destinatário: '.$escape($data['recipient']['name']).'<br>'.$escape($data['recipient']['tax_id']);
+        if(isset($data['metadata'])&&($address=self::pdfAddress($data['metadata'],'billing',$escape))!=='')$html.='<br>'.$address;
+        return$html;
+    }
+    private static function pdfCustomFields(array $fields,callable $escape):string
+    {
+        $html='';foreach($fields as$field)if($field['value']!=='')$html.='<br><b>'.$escape($field['name']).':</b> '.CompanyCreditMetadata::fieldHtml($field);return$html;
+    }
+    private static function pdfMetadata(array $data,callable $escape):string
+    {
+        if(!isset($data['metadata']))return'';$metadata=$data['metadata'];$html='';
+        if($metadata['reference_no']!=='')$html.='<p>Referência: '.$escape($metadata['reference_no']).'</p>';
+        if($metadata['include_shipping']===1&&$metadata['show_shipping_on_credit_note']===1&&($address=self::pdfAddress($metadata,'shipping',$escape))!=='')$html.='<p>Entrega:<br>'.$address.'</p>';
+        $fields=self::pdfCustomFields($metadata['custom_fields'],$escape);if($fields!=='')$html.='<p>'.substr($fields,4).'</p>';return$html;
+    }
+    private static function pdfLine(array $data,int $index,array $item,callable $escape):string
+    {
+        $description=$escape($item['description']);$quantity=$escape($item['qty']);
+        if(isset($data['metadata'])){
+            $line=$data['metadata']['items'][$index];if($line['long_description']!=='')$description.='<br>'.nl2br($escape($line['long_description']));
+            $description.=self::pdfCustomFields($data['metadata']['item_fields'][$index],$escape);
+            if($line['unit']!=='')$quantity.=' '.$escape($line['unit']);
+        }
+        return'<tr><td>'.$description.'</td><td>'.$quantity.'</td><td>'.$escape($data['currency'].' '.$item['rate']).'</td></tr>';
+    }
     public function pdf($issuer,$actor,$credit):string
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);$data=$this->get($issuer,$actor,$credit);$layout=CompanyInvoicePresentation::layout($data['identity'],'creditnotes');
-        if(!class_exists('TCPDF'))require_once __DIR__.'/../vendor/tecnickcom/tcpdf/tcpdf.php';$format=CompanyInvoicePresentation::specification($data['identity'],'creditnotes');$pdf=new class($format) extends TCPDF {public function __construct(array $format){parent::__construct($format['orientation'],'mm',$format['format'],true,'UTF-8',false,false);$this->tcpdflink=false;}};$pdf->setPrintHeader(false);$pdf->setPrintFooter(false);$pdf->setMargins(15,15,15);$pdf->setAutoPageBreak(true,15);$typography=CompanyInvoicePresentation::typography($data['identity'],'creditnotes');$pdf->setFont($typography['font'],'',$typography['size']);$pdf->setCreator('CRM');$pdf->setAuthor($data['identity']['legal_name']);$pdf->setTitle($data['number']);$pdf->AddPage();$e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$html=($data['identity']['logo_inline']!==''?'<img width="'.$layout['logo_width'].'" src="'.$e($data['identity']['logo_inline']).'"><br>':'').'<h1>Nota de crédito '.$e($data['number']).'</h1>'.($layout['show_status']?'<p>Estado: '.([1=>'Disponível',2=>'Consumida',3=>'Cancelada'][$data['status']]).'</p>':'').CompanyPdfLayout::parties($e($data['identity']['legal_name']).'<br>'.$e($data['identity']['tax_id']).'<br>'.$e($data['identity']['address']).'<br>'.$e($data['identity']['city'].' / '.$data['identity']['state']),'Destinatário: '.$e($data['recipient']['name']).'<br>'.$e($data['recipient']['tax_id']),$layout).'<p>Emissão: '.$e($data['date']).'</p><table cellpadding="4"><tr style="background-color:'.$e($layout['heading_color']).';color:'.$e($layout['heading_text_color']).';"><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th></tr>';
-        foreach($data['items'] as $item)$html.='<tr><td>'.$e($item['description']).'</td><td>'.$e($item['qty']).'</td><td>'.$e($data['currency'].' '.$item['rate']).'</td></tr>';$html.='</table><p>';foreach(['subtotal'=>'Subtotal','tax'=>'Tributos','discount_total'=>'Desconto','adjustment'=>'Ajuste','total'=>'Total'] as $field=>$label)$html.=$label.': '.$e($data['currency'].' '.$data['amounts'][$field]).'<br>';$html.='Saldo disponível: '.$e($data['currency'].' '.$data['available']).'</p><p>Observações: '.nl2br($e($data['note'])).'</p><p>Condições: '.nl2br($e($data['identity']['terms'])).'</p>';$html.=($layout['show_signature']&&$data['identity']['signature_inline']!==''?'<br><img width="140" src="'.$e($data['identity']['signature_inline']).'"><br>Assinatura do emitente':'');$pdf->writeHTML($html,true,false,true,false,'');CompanyPdfLayout::pageNumbers($pdf,$layout,$typography['font']);$bytes=$pdf->Output('','S');
+        require_once __DIR__.'/CompanyCreditMetadata.php';
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);$extra=CompanyCreditMetadata::readTables($this->db,$this->p);
+        $data=$this->transaction($issuer,$actor,fn():array=>$this->document($issuer,$credit,$actor,'pdf'),$extra);$layout=CompanyInvoicePresentation::layout($data['identity'],'creditnotes');
+        if(!class_exists('TCPDF'))require_once __DIR__.'/../vendor/tecnickcom/tcpdf/tcpdf.php';$format=CompanyInvoicePresentation::specification($data['identity'],'creditnotes');$pdf=new class($format) extends TCPDF {public function __construct(array $format){parent::__construct($format['orientation'],'mm',$format['format'],true,'UTF-8',false,false);$this->tcpdflink=false;}};$pdf->setPrintHeader(false);$pdf->setPrintFooter(false);$pdf->setMargins(15,15,15);$pdf->setAutoPageBreak(true,15);$typography=CompanyInvoicePresentation::typography($data['identity'],'creditnotes');$pdf->setFont($typography['font'],'',$typography['size']);$pdf->setCreator('CRM');$pdf->setAuthor($data['identity']['legal_name']);$pdf->setTitle($data['number']);$pdf->AddPage();$e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$html=($data['identity']['logo_inline']!==''?'<img width="'.$layout['logo_width'].'" src="'.$e($data['identity']['logo_inline']).'"><br>':'').'<h1>Nota de crédito '.$e($data['number']).'</h1>'.($layout['show_status']?'<p>Estado: '.([1=>'Disponível',2=>'Consumida',3=>'Cancelada'][$data['status']]).'</p>':'').CompanyPdfLayout::parties($e($data['identity']['legal_name']).'<br>'.$e($data['identity']['tax_id']).'<br>'.$e($data['identity']['address']).'<br>'.$e($data['identity']['city'].' / '.$data['identity']['state']),self::pdfRecipient($data,$e),$layout).'<p>Emissão: '.$e($data['date']).'</p>'.self::pdfMetadata($data,$e).'<table cellpadding="4"><tr style="background-color:'.$e($layout['heading_color']).';color:'.$e($layout['heading_text_color']).';"><th>Descrição</th><th>'.([1=>'Quantidade',2=>'Horas',3=>'Qtd./Horas'][$data['metadata']['show_quantity_as']??1]).'</th><th>Preço unitário</th></tr>';
+        foreach($data['items'] as $index=>$item)$html.=self::pdfLine($data,$index,$item,$e);$html.='</table><p>';foreach(['subtotal'=>'Subtotal','tax'=>'Tributos','discount_total'=>'Desconto','adjustment'=>'Ajuste','total'=>'Total'] as $field=>$label)$html.=$label.': '.$e($data['currency'].' '.$data['amounts'][$field]).'<br>';$html.='Saldo disponível: '.$e($data['currency'].' '.$data['available']).'</p><p>Observações: '.nl2br($e($data['note'])).'</p><p>Condições: '.nl2br($e($data['identity']['terms'])).'</p>';$html.=($layout['show_signature']&&$data['identity']['signature_inline']!==''?'<br><img width="140" src="'.$e($data['identity']['signature_inline']).'"><br>Assinatura do emitente':'');$pdf->writeHTML($html,true,false,true,false,'');CompanyPdfLayout::pageNumbers($pdf,$layout,$typography['font']);$bytes=$pdf->Output('','S');
         $this->transaction($issuer,$actor,function()use($issuer,$actor,$credit,$data):void{
-            $doc=$this->document($issuer,$credit);if($doc!==$data)throw new DomainException('company_credit_pdf_stale');
+            $doc=$this->document($issuer,$credit,$actor,'pdf');if($doc!==$data)throw new DomainException('company_credit_pdf_stale');
             $meta=json_encode(['credit_id'=>$credit,'number'=>$doc['number']],JSON_THROW_ON_ERROR);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$actor,'company_credit_pdf_downloaded',$issuer,$credit,date('Y-m-d H:i:s'),$meta]);$id=(int)$this->db->insert_id();if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND subject_id=? AND metadata_json=?',[$id,$issuer,$credit,$meta]))throw new RuntimeException('issuer_credit_write_unconfirmed');
-        });
+        },$extra);
         return $bytes;
     }
 }

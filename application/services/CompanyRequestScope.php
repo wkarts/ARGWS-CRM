@@ -285,18 +285,18 @@ final class CompanyRequestScope
             // Use its issuer-aware adapter for the primary company as well.
             $sharedPaymentModes = $native && $class === 'paymentmodes';
             $sharedOwnedLead = $native && $class === 'leads'
-                && in_array($method, ['index', 'file', 'export'], true);
+                && in_array($method, ['index', 'file', 'export', 'table', 'lead', 'kanban', 'update_lead_status'], true);
             // Credit notes already dispatch through the bounded native adapter
             // for named companies.  The principal must use that same official
             // route so its data, ACL and CSRF contract cannot diverge.
             $sharedOwnedCredits = $native && $class === 'credit_notes'
-                && in_array($method, ['index', 'list_credit_notes', 'table', 'get_credit_note_data_ajax', 'credit_note', 'pdf'], true);
+                && in_array($method, ['index', 'list_credit_notes', 'table', 'get_credit_note_data_ajax', 'credit_note', 'pdf', 'client_change_data', 'items', 'item'], true);
             // Estimates and proposals already dispatch to the bounded
             // NativeCompanySalesAdminHttp adapter. Mark their official list,
             // form, PDF and due-date actions as shared so the principal company
             // follows the same issuer-scoped path as secondary companies.
             $sharedOwnedSales = $native && in_array($class, ['estimates', 'proposals'], true)
-                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal', 'table', 'proposal_relations', 'pipeline', 'get_pipeline', 'pipeline_load_more', 'get_estimate_data_ajax', 'get_proposal_data_ajax', 'get_estimates_total', 'get_notes', 'add_note'], true);
+                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal', 'table', 'proposal_relations', 'pipeline', 'get_pipeline', 'pipeline_load_more', 'get_estimate_data_ajax', 'get_proposal_data_ajax', 'get_estimates_total', 'get_notes', 'add_note', 'client_change_data', 'get_relation_data_values'], true);
             // The company selector is an isolated technical POST, not a native
             // application page. It has its own switch CSRF and must not be
             // forced through the native presentation CSRF contract.

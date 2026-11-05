@@ -4,13 +4,19 @@ require __DIR__.'/native_context.php';
 
 $before = $GLOBALS['essentialChecks'];
 $routes = [
+    ['leads', 'table', 'POST'], ['leads', 'lead', 'GET'], ['leads', 'lead', 'HEAD'], ['leads', 'lead', 'POST'],
+    ['leads', 'kanban', 'GET'], ['leads', 'kanban', 'HEAD'], ['leads', 'update_lead_status', 'POST'],
     ['contracts', 'index', 'GET'], ['contracts', 'index', 'HEAD'], ['contracts', 'table', 'POST'],
     ['estimates', 'get_estimate_data_ajax', 'GET'], ['estimates', 'get_estimate_data_ajax', 'HEAD'],
+    ['estimates', 'client_change_data', 'GET'], ['estimates', 'client_change_data', 'HEAD'],
     ['estimates', 'get_notes', 'GET'], ['estimates', 'add_note', 'POST'], ['estimates', 'get_estimates_total', 'POST'],
     ['proposals', 'get_proposal_data_ajax', 'GET'], ['proposals', 'get_proposal_data_ajax', 'HEAD'],
+    ['proposals', 'get_relation_data_values', 'GET'], ['proposals', 'get_relation_data_values', 'HEAD'],
     ['proposals', 'get_notes', 'GET'], ['proposals', 'add_note', 'POST'],
     ['credit_notes', 'table', 'POST'], ['credit_notes', 'get_credit_note_data_ajax', 'GET'],
     ['credit_notes', 'credit_note', 'GET'], ['credit_notes', 'credit_note', 'POST'], ['credit_notes', 'pdf', 'HEAD'],
+    ['credit_notes', 'client_change_data', 'GET'], ['credit_notes', 'client_change_data', 'HEAD'],
+    ['credit_notes', 'items', 'GET'], ['credit_notes', 'items', 'HEAD'], ['credit_notes', 'item', 'GET'], ['credit_notes', 'item', 'HEAD'],
     ['payments', 'index', 'GET'], ['payments', 'table', 'POST'],
     ['invoices', 'recurring_preview', 'GET'], ['invoices', 'recurring_preview', 'HEAD'],
 ];
@@ -36,9 +42,11 @@ foreach ([41, 54] as $issuer) {
             'Route dispatch neither hydrates a global model nor passes boundary tokens to a model');
         CompanyRequestScope::finish();
     }
-    foreach ([['contracts','index','POST'], ['contracts','table','GET'], ['estimates','get_estimate_data_ajax','POST'],
+    foreach ([['leads','table','GET'], ['leads','lead','PUT'], ['leads','kanban','POST'], ['leads','update_lead_status','GET'], ['contracts','index','POST'], ['contracts','table','GET'], ['estimates','get_estimate_data_ajax','POST'],
         ['estimates','add_note','GET'], ['proposals','get_proposal_data_ajax','POST'], ['proposals','add_note','GET'],
-        ['credit_notes','table','GET'], ['credit_notes','get_credit_note_data_ajax','POST'], ['credit_notes','pdf','POST']] as [$controller,$method,$verb]) {
+        ['estimates','client_change_data','POST'], ['proposals','get_relation_data_values','POST'],
+        ['credit_notes','table','GET'], ['credit_notes','get_credit_note_data_ajax','POST'], ['credit_notes','pdf','POST'],
+        ['credit_notes','client_change_data','POST'], ['credit_notes','items','POST'], ['credit_notes','item','POST']] as [$controller,$method,$verb]) {
         $ci = contextEnvironment($f, $session, $controller, $method, $verb);
         if ($verb === 'POST') { $_POST = ['_company_context'=>$token, '_native_company_csrf'=>$csrf]; }
         expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci), 405);

@@ -8,11 +8,13 @@ require_once __DIR__.'/CompanyApiTokens.php';
 require_once __DIR__.'/CompanyLeadsFiles.php';
 require_once __DIR__.'/CompanyLeadsImports.php';
 require_once __DIR__.'/CompanyLeadsNotifications.php';
+require_once __DIR__.'/CompanyLeadsDirectory.php';
 
 /** Private company leads; legacy lead IDs, hooks, email and ambient sessions are never inputs. */
 final class CompanyLeads
 {
-    use CompanyLeadsFiles, CompanyLeadsImports, CompanyLeadsNotifications;
+    use CompanyLeadsFiles, CompanyLeadsImports, CompanyLeadsNotifications, CompanyLeadsDirectory;
+    public const NATIVE_COLUMNS=['selection','id','name','company','email','phone','lead_value','tags','assigned_name','status_name','source_name','lastcontact','created_at'];
     private const CSV_FIELDS=['name','company','email','phone','vat','description'];
     private IssuerResourceAccess $acl;
     private array $frames=[];

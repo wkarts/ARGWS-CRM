@@ -22,6 +22,7 @@ final class NativeCompanyCatalog
     private IssuerResourceAccess $access;
     private ?int $createdItem=null;
     private bool $invoiceEditorRead=false;
+    private ?string $salesEditorFeature=null;
     public function __construct(private $db,private string $p,private int $issuer,private int $actor)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
@@ -29,6 +30,11 @@ final class NativeCompanyCatalog
     }
     private function readItems():void
     {
+        if($this->salesEditorFeature!==null){
+            $this->member();$feature=$this->salesEditorFeature;
+            if(!$this->access->can($this->issuer,$this->actor,$feature,'view')||(!$this->access->can($this->issuer,$this->actor,$feature,'create')&&($feature==='credit_notes'||!$this->access->can($this->issuer,$this->actor,$feature,'edit'))))throw new DomainException('company_catalog_denied');
+            return;
+        }
         if(!$this->invoiceEditorRead){$this->can('items','view');return;}
         $this->member();
         if(!$this->access->can($this->issuer,$this->actor,'invoices','view')||(!$this->access->can($this->issuer,$this->actor,'invoices','create')&&!$this->access->can($this->issuer,$this->actor,'invoices','edit')))throw new DomainException('company_catalog_denied');
@@ -42,6 +48,16 @@ final class NativeCompanyCatalog
     public function itemsForInvoiceEditor(int $start,int $length,string $q=''):array{return$this->invoiceRead(fn()=>$this->itemTable($start,$length,$q));}
     public function searchForInvoiceEditor(string $q):array{return$this->invoiceRead(fn()=>$this->search($q));}
     public function itemForInvoiceEditor($id):array{return$this->invoiceRead(fn()=>$this->item($id));}
+    private function salesRead(string $feature,callable $read):array
+    {
+        if(!in_array($feature,['estimates','proposals','credit_notes'],true))throw new DomainException('company_catalog_denied');
+        $previous=$this->salesEditorFeature;$this->salesEditorFeature=$feature;
+        try{$this->readItems();$result=$read();$this->readItems();return$result;}finally{$this->salesEditorFeature=$previous;}
+    }
+    public function groupsForSalesEditor(string $kind):array{return$this->salesRead($kind,fn()=>$this->groups());}
+    public function itemsForSalesEditor(string $kind,int $start,int $length,string $q=''):array{return$this->salesRead($kind,fn()=>$this->itemTable($start,$length,$q));}
+    public function searchForSalesEditor(string $kind,string $q):array{return$this->salesRead($kind,fn()=>$this->search($q));}
+    public function itemForSalesEditor(string $kind,$id):array{return$this->salesRead($kind,fn()=>$this->item($id));}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function member():void{if(!$this->access->member($this->issuer,$this->actor))throw new DomainException('company_catalog_denied');}
     private function can(string $feature,string $cap):void{if(!$this->access->can($this->issuer,$this->actor,$feature,$cap))throw new DomainException('company_catalog_denied');}

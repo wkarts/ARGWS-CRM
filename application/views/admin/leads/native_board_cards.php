@@ -1,0 +1,1 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed');foreach($columns as$column){$status=$column['stage'];foreach($column['rows']as$lead_row){require __DIR__.'/native_board_card.php';}}

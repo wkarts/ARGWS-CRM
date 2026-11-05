@@ -88,3 +88,81 @@
     });
   });
 }(window, window.jQuery));
+
+/* Original create/edit forms use the existing calculators and transaction controls. */
+(function (root, $) {
+  'use strict';
+  var relationRequest = null, relationSerial = 0, submission = null;
+  function current() { return !root.NativeCompanyContextGuard || root.NativeCompanyContextGuard.isCurrent(); }
+  function notice(form, text) {
+    var alert = form.find('[data-native-sales-error]');
+    if (!alert.length) alert = $('<div class="alert alert-warning" role="alert" data-native-sales-error></div>').prependTo(form.find('.col-md-12').first());
+    alert.text(text).removeClass('hide');
+  }
+  root.native_sales_original_submit = function (element) {
+    var form = $(element);
+    if (!current() || submission) { form.find('.transaction-submit').prop('disabled', false); return false; }
+    if (typeof form.valid === 'function' && !form.valid()) { form.find('.transaction-submit').prop('disabled', false); return false; }
+    var values = form.serializeArray();
+    form.find(':input:disabled[name]').not('.transaction-submit').each(function () {
+      if (this.type === 'checkbox' && !this.checked) return;
+      var val = $(this).val(), name = this.name;
+      if (Array.isArray(val)) val.forEach(function (part) { values.push({name: name, value: part}); });
+      else if (val != null) values.push({name: this.name, value: val});
+    });
+    form.find('[data-native-sales-error]').addClass('hide');
+    submission = $.ajax({url: form.attr('action'), method: 'POST', dataType: 'json', data: $.param(values)});
+    submission.done(function (result) {
+      if (!current()) return;
+      if (!result || result.success !== true || typeof result.url !== 'string') { notice(form, 'Não foi possível confirmar a gravação.'); return; }
+      var target = new URL(result.url, root.location.href), base = new URL(root.admin_url || admin_url, root.location.href);
+      if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname)) { notice(form, 'Destino de navegação inválido.'); return; }
+      root.location.assign(target.href);
+    }).fail(function (xhr) {
+      if (current()) notice(form, xhr.responseJSON && typeof xhr.responseJSON.message === 'string' ? xhr.responseJSON.message : 'Não foi possível confirmar a gravação. Os campos continuam disponíveis para revisão.');
+    }).always(function () {
+      submission = null;form.find('.transaction-submit').prop('disabled', false);
+      form.find('input[name="save_and_send"], input[name="save_and_send_later"]').remove();
+    });
+    return false;
+  };
+  root.native_sales_original_init = function (kind) {
+    var type = kind === 'estimates' ? 'estimate' : kind === 'proposals' ? 'proposal' : null;
+    if (!type) throw new Error('native_sales_kind_required');
+    var form = $('#' + type + '-form'), context = root.native_sales_editor_context();
+    if (!context || context.native_editor !== type) throw new Error('native_sales_editor_required');
+    var rules = kind === 'estimates' ? {clientid:'required',date:'required',number:'required',currency:'required'}
+      : {subject:'required',proposal_to:'required',rel_type:'required',rel_id:'required',date:'required',email:{required:true,email:true},currency:'required'};
+    if (context.native_sales_id) { rules._native_sales_reason = 'required';rules._native_sales_confirmed = 'required'; }
+    root.appValidateForm(form, rules);root.init_currency();
+    if (typeof root.custom_fields_hyperlink === 'function') root.custom_fields_hyperlink();
+    root.init_ajax_search('items', '#item_select.ajax-search', context, admin_url + 'items/search');
+    var allowed = kind === 'estimates' ? ['1','2','5'] : ['1','4','5','6'];
+    form.find('select[name="status"] option').each(function () { if (allowed.indexOf(this.value) < 0) $(this).prop('disabled', true).attr('title','Use a ação de aceite ou recusa no documento.'); });
+    form.find('select[name="status"]').selectpicker('refresh');
+    if (kind === 'estimates') { root.init_ajax_project_search_by_customer_id(); return; }
+    var relation = form.find('#rel_id'), typeSelect = form.find('#rel_type');
+    typeSelect.selectpicker('val','customer');form.find('#rel_id_wrapper').removeClass('hide');form.find('.rel_id_label').text(typeSelect.find('option:selected').text());
+    root.init_ajax_search('customer', relation, {rel_id:function(){return relation.val();}});
+    function projectSearch() { root.init_ajax_search('project', form.find('#project_id'), {customer_id:function(){return relation.val();}}); }
+    projectSearch();
+    relation.on('change.nativeSalesOriginal', function () {
+      var value = relation.val(), sequence = ++relationSerial;
+      if (relationRequest) relationRequest.abort();
+      ['proposal_to','address','email','phone','city','state','zip'].forEach(function (name) { form.find('[name="'+name+'"]').val(''); });
+      form.find('[name="country"]').selectpicker('val','');
+      form.find('#project_id').empty().selectpicker('refresh');form.find('.projects-wrapper').addClass('hide');
+      if (!value || !current()) return;
+      relationRequest = $.getJSON(admin_url + 'proposals/get_relation_data_values/' + encodeURIComponent(value) + '/customer', root.native_sales_editor_context());
+      relationRequest.done(function (data) {
+        if (!current() || sequence !== relationSerial || String(relation.val()) !== String(value)) return;
+        var fields = {proposal_to:'to',address:'address',email:'email',phone:'phone',city:'city',state:'state',zip:'zip'};
+        Object.keys(fields).forEach(function (name) { form.find('[name="'+name+'"]').val(data[fields[name]] || ''); });
+        form.find('[name="country"]').selectpicker('val', data.country || '');
+        var currency = form.find('[name="currency"]');currency.selectpicker('val',data.currency || currency.data('base'));root.init_currency();
+        if (data.customer_has_projects) { form.find('.projects-wrapper').removeClass('hide');projectSearch(); }
+      }).fail(function (xhr, status) { if (status !== 'abort' && current() && sequence === relationSerial) notice(form,'Não foi possível carregar este cliente na empresa ativa.'); });
+    });
+    if (!context.native_sales_id && relation.val()) relation.trigger('change');
+  };
+}(window, window.jQuery));

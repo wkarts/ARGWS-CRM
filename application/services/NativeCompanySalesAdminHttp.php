@@ -9,7 +9,17 @@ require_once __DIR__.'/NativeCompanySalesDirectory.php';
 /** Complete issuer adapter for the original Estimates and Proposals admin routes. */
 final class NativeCompanySalesAdminHttp
 {
+    public const FORM_METADATA=['calculation_contract','native_fields','native_reference','native_tags','native_custom_fields','native_project','native_proposal','native_status','native_item_fields'];
     public function __construct(private $ci) {}
+
+    private static function formPayload(array $input,$encoded):array
+    {
+        if($encoded===null)return$input;
+        if(!is_string($encoded)||strlen($encoded)>524288)throw new DomainException('company_sales_invalid');
+        try{$metadata=json_decode($encoded,true,32,JSON_THROW_ON_ERROR);}catch(JsonException $error){throw new DomainException('company_sales_invalid',0,$error);}
+        if(!is_array($metadata)||array_diff(array_keys($metadata),self::FORM_METADATA)||array_intersect(array_keys($input),array_keys($metadata)))throw new DomainException('company_sales_invalid');
+        return array_merge($input,$metadata);
+    }
 
     private static function controller(string $kind):string
     {
@@ -173,8 +183,9 @@ final class NativeCompanySalesAdminHttp
                     $source=$sales->document($issuer,$actor,$id);if($source['kind']!==$kind)throw new DomainException('company_sales_denied');
                     $input=$this->ci->input->post('invoice',false);$review=$this->ci->input->post('review',false);$key=$this->ci->input->post('request_key',false);
                     if(!is_array($input)||!is_array($review)||!is_string($key))throw new DomainException('company_sales_invalid');
+                    $input=self::formPayload($input,$this->ci->input->post('invoice_native_metadata',false));
                     if($action==='review_copy'){$mutationReview=$sales->review($issuer,$actor,$id,'copy',$input);if(($review['source_revision']??null)!==$mutationReview['source_revision'])throw new DomainException('company_sales_stale');$mutationMode='copy_confirm';}
-                    else $id=$action==='edit'?$sales->edit($issuer,$actor,$id,$input,$review,$key):$sales->copy($issuer,$actor,$id,$input,$review,$key);
+                    else $id=$action==='edit'?$sales->edit($issuer,$actor,$id,$input,$review,$key,$this->ci->input->post('native_sales_metadata_revision',false)):$sales->copy($issuer,$actor,$id,$input,$review,$key);
                 }elseif($action==='create'){
                     $input=$this->ci->input->post('invoice',false);$key=$this->ci->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new DomainException('company_sales_invalid');
                     $id=$sales->create($issuer,$actor,$kind,$input,$key);

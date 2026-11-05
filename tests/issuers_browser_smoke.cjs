@@ -126,13 +126,18 @@ async function captureRealScreens(page, routes) {
   // Safe HTTP metadata for the canonical task DataTable: no query strings,
   // form values, credentials, request headers or response bodies are recorded.
   const taskAjaxResponses = [];
-  const rememberTaskAjax = response => {
+  const rememberTaskAjax = async response => {
     const request=response.request();
     let path;
     try { path=new URL(response.url()).pathname; } catch { return; }
     if (path !== '/admin/tasks/table') return;
-    taskAjaxResponses.push({method:request.method(),path,status:response.status(),
-      content_type:(response.headers()['content-type']||'').split(';')[0]});
+    const evidence={method:request.method(),path,status:response.status(),
+      content_type:(response.headers()['content-type']||'').split(';')[0]};
+    taskAjaxResponses.push(evidence);
+    if(response.status()===409){
+      try{const body=await response.text();evidence.rejection=body.includes('A empresa desta aba mudou.')?'company_context_changed':'other_conflict';}
+      catch{evidence.rejection='unreadable';}
+    }
   };
   page.on('response', rememberTaskAjax);
   let nativeCalendarStage = 'not_started';
