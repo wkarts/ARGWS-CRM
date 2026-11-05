@@ -38,4 +38,11 @@ final class ModuleReadiness
     {
         if (!self::ready155($db, $prefix)) throw new \DomainException('asaas_module_155_required');
     }
+    public static function require161($db,string $prefix):void
+    {
+        if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix))throw new \DomainException('asaas_module_161_required');
+        $row=\IssuerStorage::query($db,'SELECT installed_version FROM '.$prefix.'modules WHERE module_name=?',['asaas'])->row_array();
+        $version=$row['installed_version']??'';
+        if(!is_string($version)||!preg_match('/^[0-9]\.[0-9]\.[0-9]$/D',$version)||version_compare($version,'1.6.1','<'))throw new \DomainException('asaas_module_161_required');
+    }
 }

@@ -11,7 +11,7 @@ $before=$db->query("SELECT * FROM {$p}issuers_installation_identity WHERE id=1")
 $inspection=$s->inspect(17);$primary=$inspection['primary_issuer_id'];
 essentialCheck($inspection['status']==='unresolved','explicit dry run detects unresolved identity');
 essentialCheck($before===$db->query("SELECT * FROM {$p}issuers_installation_identity WHERE id=1")->row_array(),'dry run does not mutate identity');
-essentialCheck(!$r->canCreate(17)&&!$acl->isMaster(7),'neither requested candidate nor surviving admin auto-promoted');
+essentialCheck($r->canCreate(17)&&!$acl->isMaster(7),'creation permission does not promote installation master');
 foreach([43,44,999] as $id){essentialThrows(fn()=>$s->inspect($id),'issuer_original_active_admin_required','non-admin/inactive/deleted candidate denied');}
 essentialThrows(fn()=>$s->bind(17,$primary,''),'issuer_original_confirmation_reference_required','external confirmation must be referenced');
 essentialThrows(fn()=>$s->bind(17,$primary+1,'test:owner-confirmation-17'),'issuer_original_installation_changed','stale inspected installation rejected');
@@ -20,7 +20,7 @@ essentialThrows(fn()=>$s->bind(17,$primary,'test:owner-confirmation-17'),'issuer
 essentialCheck($s->inspect(17)['status']==='unresolved','failed audit never leaves an unlogged master');
 $s->bind(17,$primary,'test:owner-confirmation-17');
 essentialCheck($r->canCreate(17)&&$acl->isMaster(17),'confirmed arbitrary ID17 can create and administer');
-essentialCheck(!$r->canCreate(42)&&!$acl->isMaster(7),'all other admins retain original boundaries');
+essentialCheck($r->canCreate(42)&&!$acl->isMaster(7),'other active admins may create without becoming master');
 $bound=$db->query("SELECT * FROM {$p}issuers_installation_identity WHERE id=1")->row_array();
 essentialCheck((int)$bound['primary_issuer_id']===$primary && $bound['legacy_identity_json']===$before['legacy_identity_json'],'primary and legacy identity preserved');
 $s->bind(17,$primary,'test:owner-confirmation-replay');
@@ -31,13 +31,13 @@ essentialCheck((int)$audit['actor_id']===0&&(int)$audit['subject_id']===17,'main
 essentialCheck(json_decode($audit['metadata_json'],true)['confirmation_reference']==='test:owner-confirmation-17','audit carries external owner confirmation reference');
 essentialThrows(fn()=>$s->bind(42,$primary,'test:another-confirmation'),'issuer_identity_already_resolved','competing candidate cannot replace master');
 $db->query("UPDATE {$p}staff SET active=0 WHERE staffid=17");
-essentialCheck(!$r->canCreate(17)&&!$r->canCreate(42),'inactive original never implies automatic successor');
+essentialCheck(!$r->canCreate(17)&&$r->canCreate(42)&&!$acl->isMaster(42),'inactive administrator denied without appointing successor');
 essentialThrows(fn()=>$s->bind(42,$primary,'test:another-confirmation'),'issuer_identity_already_resolved','inactive master cannot be replaced');
 $db->query("UPDATE {$p}staff SET active=1 WHERE staffid=17");
 $db->query("UPDATE {$p}issuers_installation_identity SET source='installer' WHERE id=1");
 $s->bind(17,$primary,'test:existing-installer');
 essentialCheck($s->inspect(17)['source']==='installer','known installer provenance is not replaced');
 $db->query("DELETE FROM {$p}staff WHERE staffid=17");
-essentialCheck(!$r->canCreate(42),'deleted original is not replaced by a surviving admin');
+essentialCheck($r->canCreate(42)&&!$acl->isMaster(42),'surviving admin may create without replacing original');
 essentialThrows(fn()=>$s->bind(42,$primary,'test:deleted-original'),'issuer_identity_already_resolved','deleted original marker prevents successor takeover');
 echo 'Original administrator explicit maintenance: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

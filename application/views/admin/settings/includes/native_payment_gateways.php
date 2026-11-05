@@ -2,7 +2,6 @@
 $paymentContext=CompanyRequestScope::context();
 $paymentAcl=new IssuerResourceAccess($this->db,db_prefix());
 $paymentEntries=[
-    ['name'=>'Asaas','module'=>'asaas','route'=>'settings/asaas','feature'=>'settings','description'=>'Contas, ambientes, credenciais, webhooks e conciliação.'],
     ['name'=>'Efí','module'=>'gerencianet_gateway','route'=>'settings/efi','feature'=>'settings','description'=>'Contas e credenciais de cobrança da empresa.'],
     ['name'=>'Banco do Brasil — API e CNAB','module'=>'banco_brasil','route'=>'banco_brasil','feature'=>'banco_brasil','description'=>'API de cobrança, remessa, retorno e conciliação CNAB 240/400.'],
 ];

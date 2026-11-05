@@ -11,7 +11,7 @@ $draftPath = is_string($requestedDraft) && preg_match('/^[a-f0-9]{64}$/D', $requ
 <?php if($can_create){ ?><button class="btn btn-primary" type="button" data-new-company><i class="fa fa-plus" aria-hidden="true"></i> Nova empresa</button><?php } ?></div>
 <?php if(is_array($company_notice??null)){ ?><div class="alert <?= ($company_notice['type']??'')==='success'?'alert-success':'alert-danger'; ?>" role="status"><?= $esc($company_notice['text']??''); ?></div><?php } ?>
 <p class="text-muted">Para configurar uma empresa, selecione-a acima do seu usuário na barra lateral e use as Definições do CRM.</p>
-<?php if(!$can_create){ ?><p class="text-muted">Somente o responsável ativo da instalação pode cadastrar uma nova empresa.</p><?php } ?>
+<?php if(!$can_create){ ?><p class="text-muted">O cadastro de novas empresas exige um usuário administrador ativo.</p><?php } ?>
 <div class="panel_s"><div class="panel-body panel-table-full">
 <div class="company-grid-toolbar">
 <label>Exibir <select class="form-control input-sm" data-page-size><option>10</option><option>25</option><option>50</option></select> registros</label>

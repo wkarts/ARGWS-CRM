@@ -190,7 +190,7 @@ class Issuers extends AdminController
                 redirect(CompanyRequestScope::adminUrl($this, 'issuers/onboarding/'.$draft['draft_key'].'?modal=1'), 'location', 303); return;
             } elseif (!in_array($this->input->method(true), ['GET','HEAD'], true) && !($this->input->method(true) === 'POST' && $this->input->post('action', false) === 'show')) { show_error('Método não permitido.', 405); return; }
         } catch (DomainException $exception) {
-            if ($exception->getMessage() === 'issuer_access_denied') { show_error('Somente o responsável ativo da instalação pode criar empresas.', 403); return; }
+            if ($exception->getMessage() === 'issuer_access_denied') { show_error('O cadastro de novas empresas exige um usuário administrador ativo.', 403); return; }
             $this->output->set_status_header($exception->getMessage() === 'issuer_wizard_stale' ? 409 : 422);
             $error = $exception->getMessage() === 'issuer_wizard_stale' ? 'Este rascunho mudou em outra aba. Recarregue antes de salvar. Nenhum dado desta tentativa foi aplicado.' : 'Não foi possível salvar. Confira os dados, o documento fiscal e as permissões. O rascunho salvo foi preservado.';
         } catch (Throwable $exception) {

@@ -1,5 +1,11 @@
 # Responsabilidade da instalação e cadastro de empresas
 
+> Atualização 4.8.8: a criação de empresas está disponível a administradores globais
+> ativos, inclusive ID 1 sem vínculo de master. O assistente de designação abaixo
+> descreve o marco histórico 405 e foi retirado posteriormente. Não é requisito
+> operacional atual. Consulte `original-administrator-maintenance.md` e
+> `release-488-admin-fixes.md` para a política vigente.
+
 Incremento sobre o HEAD `44cd7c3815123883d5c3168ae045a75a3347b236` da PR45.
 Núcleo 4.0.5 / migration 405. As migrations 403/404, BB 101–104 e Asaas até 148
 permanecem preservadas. Nenhum merge, tag de release ou deploy é parte deste fluxo.

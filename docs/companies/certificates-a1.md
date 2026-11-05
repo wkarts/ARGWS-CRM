@@ -28,7 +28,7 @@ Não habilitar providers legados globalmente para aceitar arquivos antigos. O li
 é 2 MiB; os limites PHP/proxy de multipart devem permitir essa carga com overhead,
 sem elevar o limite efetivo do aplicativo. Erros do OpenSSL nunca são apresentados.
 
-## Compatibilidade de importação PKCS#12 (opt-in, desativada por padrão)
+## Compatibilidade de importação PKCS#12 (automática e isolada)
 
 O parser distingue somente categorias conhecidas da fila OpenSSL: algoritmo
 indisponível, falha de autenticação/integridade e arquivo não interpretável.
@@ -37,17 +37,14 @@ Erros desconhecidos continuam genéricos; a fila é drenada antes/depois de cada
 operação e seus textos não são devolvidos ao navegador nem gravados em logs.
 Chave ausente/divergente é recusada; não há bypass de senha, MAC, validade ou CNPJ.
 
-A solução preferida continua sendo uma nova exportação pelo titular, com
-AES-256-CBC/PBKDF2, certificado e chave privada. Não enviar PFX ou senha pelo chat.
-Quando isso não for possível, a instalação pode optar pelo importador compatível
-com `ARGWS_CERTIFICATE_LEGACY_IMPORT=1`. Ausente ou qualquer outro valor significa
-**OFF**. Este código não habilita a opção automaticamente: habilitação permanente
-na instalação requer decisão/autorização operacional específica, fora desta PR.
-A variável deve existir no ambiente do processo PHP; adicioná-la apenas a um
-`.env` que não é encaminhado pelo Compose não a habilita. Não há alteração de
-Compose ou de ambiente de produção nesta entrega.
+A importação compatível é automática quando a variável
+`ARGWS_CERTIFICATE_LEGACY_IMPORT` está ausente, vazia ou vale `1`. O valor `0`
+desativa explicitamente o recurso; valores desconhecidos também o desativam.
+Não é preciso reexportar um PFX válido apenas porque ele usa RC2/3DES.
+Uma nova exportação AES-256-CBC/PBKDF2 continua sendo uma alternativa para
+servidores sem as dependências abaixo. Nunca envie PFX ou senha pelo chat.
 
-Com opt-in, somente uma falha classificada como algoritmo indisponível permite
+Somente uma falha classificada como algoritmo indisponível permite
 uma segunda leitura. `/usr/bin/prlimit` executa `/usr/bin/openssl pkcs12 -legacy`
 em processo independente, sem shell. A configuração OpenSSL do subprocesso é
 `/dev/null` e nenhum provider é carregado no worker PHP/TLS. Dependências da imagem:
@@ -65,8 +62,8 @@ Modelo de ameaça e limites:
   A senha via FD é delimitada por linha: CR/LF/NUL são recusados, nunca truncados.
 - O processo executa com o mesmo usuário do worker. Limites não são sandbox de
   kernel, não removem acesso de um processo comprometido ao filesystem/rede, nem
-  protegem contra administrador/módulo PHP malicioso. Aprovar o opt-in exige aceitar
-  essa superfície adicional de parsing e manter OpenSSL atualizado.
+  protegem contra administrador/módulo PHP malicioso. A compatibilidade mantém
+  essa superfície adicional de parsing; mantenha OpenSSL atualizado.
 - O parse PHP normal acontece primeiro e mantém o limite de tamanho já existente;
   os limites acima se aplicam ao subprocesso, **não** ao KDF inicial do PHP. Rate
   limiting e orçamento do worker continuam sendo responsabilidade operacional.

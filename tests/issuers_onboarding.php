@@ -70,6 +70,31 @@ essentialCheck($acl->member($new,19),'reactivation preserves authorized membersh
 essentialCheck($settings->get($new,'invoice_company_city')==='Private B','status actions preserve canonical identity');
 $db->query("UPDATE {$p}staff SET admin=0 WHERE staffid=7");
 essentialThrows(fn()=>$s->read(7,$d['draft_key']),'issuer_access_denied','master demotion immediately revokes draft access');
+// Legacy installation with no attested master: ID1 can complete the entire wizard.
+$db->query("INSERT INTO {$p}staff(staffid,active,admin,firstname,lastname) VALUES(1,1,1,'Initial','Administrator'),(44,0,1,'Disabled','Administrator')");
+$db->query("UPDATE {$p}issuers_installation_identity SET master_staff_id=NULL WHERE id=1");
+$identityBefore=$db->query("SELECT * FROM {$p}issuers_installation_identity")->result_array();
+$otherGrants=$db->query("SELECT * FROM {$p}issuers_resource_permissions ORDER BY issuer_id,staff_id,feature,capability")->result_array();
+essentialCheck($registry->canCreate(1)&&!$registry->canCreate(19)&&!$registry->canCreate(44),'active admin capability is independent from original identity');
+essentialThrows(fn()=>$s->begin(44,str_repeat('e',64)),'issuer_access_denied','inactive admin cannot begin wizard');
+$d=$s->begin(1,str_repeat('d',64));
+$d=$s->advance(1,$d['draft_key'],$d['revision'],1,['legal_name'=>'Initial Admin Company','tax_id'=>'12345678000195','profile'=>[]]);
+$d=$s->advance(1,$d['draft_key'],$d['revision'],2,['dateformat'=>'d/m/Y|%d/%m/%Y','time_format'=>'24']);
+$d=$s->advance(1,$d['draft_key'],$d['revision'],3,['staff'=>[19=>['default'=>'0','resources'=>['settings'=>['view']]]]]);
+$d=$s->advance(1,$d['draft_key'],$d['revision'],4,['client_visibility'=>'private']);
+$db->failOn="INSERT INTO {$p}issuers_resource_permissions";
+essentialThrows(fn()=>$s->complete(1,$d['draft_key'],$d['revision']),'issuer_storage_failed','creator grant failure rolls back company and draft');$db->failOn=null;
+essentialCheck($s->read(1,$d['draft_key'])['issuer_id']===null,'creator grant failure leaves resumable draft');
+$created=$s->complete(1,$d['draft_key'],$d['revision']);
+essentialCheck($s->complete(1,$d['draft_key'],$d['revision'])===$created,'admin completion remains idempotent');
+essentialCheck($acl->can($created,1,'settings','edit')&&$acl->can($created,1,'banco_brasil','manage'),'creator receives catalog grants on new company');
+essentialCheck($acl->can($created,19,'settings','view')&&!$acl->can($created,19,'settings','edit'),'employee receives only chosen permissions');
+essentialCheck(!$acl->member($new,1)&&!$acl->isMaster(1),'creation does not grant access to existing companies or master status');
+essentialCheck($db->query("SELECT * FROM {$p}issuers_installation_identity")->result_array()===$identityBefore,'creation never rewrites installation provenance');
+essentialCheck($db->query("SELECT * FROM {$p}issuers_resource_permissions WHERE issuer_id<>? ORDER BY issuer_id,staff_id,feature,capability",[$created])->result_array()===$otherGrants,'existing company ACL remains identical');
+$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=1");
+essentialThrows(fn()=>$s->read(1,$d['draft_key']),'issuer_access_denied','deactivated creator loses wizard access');
+essentialCheck(!$acl->can($created,1,'settings','edit'),'deactivation also revokes creator resource access');
 if($db->driver()==='mysql'){
     $db->query("ALTER TABLE {$p}company_wizard_drafts DROP PRIMARY KEY, ADD PRIMARY KEY(draft_key(32))");
     essentialThrows(fn()=>CompanyOnboardingSchema::ensure($db,$p),'issuer_wizard_schema_invalid','partial draft-key index rejected without data repair');

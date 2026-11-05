@@ -473,6 +473,31 @@ public function refundPayment(string $paymentId, array $payload = []): array
         return new WebhookIntegrationStore($this->ci->db);
     }
 
+    public function remoteWebhook(int $integrationId,string $action,array $input,string $base,string $index=''):array
+    {
+        require_once __DIR__.'/RemoteWebhook.php';require_once __DIR__.'/WebhookAdminPresentation.php';
+        RemoteWebhook::validate($action,$input);ModuleReadiness::require161($this->ci->db,db_prefix());
+        $store=$this->webhookIntegrations();
+        // Recovery enforces administrator, primary context, enabled receiver and migration readiness.
+        $secret=$store->revealToken($integrationId);
+        $row=$store->byId($integrationId);
+        $url=WebhookAdminPresentation::callbackUrl($base,(string)$row['public_id'],$index);
+        if($url===null)throw new \DomainException('asaas_webhook_invalid_configuration');
+        $client=$this->provider->clientForEnvironment($row['environment']);
+        $scope=$this->provider->contextForClient($client,$row['environment']);
+        if(!hash_equals($row['account_id'],$scope['account_id']))throw new \DomainException('webhook_account_mismatch');
+        $store->audit($integrationId,'remote_'.$action.'_started');
+        try {
+            $request=function($method,$path,$payload)use($client){
+                $query=[];$parts=explode('?',$path,2);if(isset($parts[1]))parse_str($parts[1],$query);
+                return $client->request($method,'v3/'.$parts[0],$query,$this->provider->headers(),$payload,false,false);
+            };
+            $result=(new RemoteWebhook($request,$url,$secret['one_time_token']))->execute($action,$input);
+            $current=$store->byId($integrationId);
+            if(!$current||(int)$current['enabled']!==1||!hash_equals($row['token_hash'],$current['token_hash']))throw new \DomainException('asaas_webhook_local_changed');
+            $store->audit($integrationId,'remote_'.$action.'_confirmed');return $result;
+        }catch(\Throwable $error){$store->audit($integrationId,'remote_'.$action.'_unconfirmed');throw $error;}
+    }
     public function registerWebhookIntegration(string $label, string $environment, string $expectedAccount): array
     {
         require_once __DIR__ . '/WebhookSecurity.php';

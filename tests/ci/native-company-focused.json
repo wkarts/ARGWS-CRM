@@ -2569,6 +2569,10 @@
     [
       "php",
       "tests/companies/native_task_board_move.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_remote_webhooks.php"
     ]
   ],
   "node": [
@@ -2916,6 +2920,14 @@
     [
       "node",
       "tests/native_company/context_forms.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/project_navigation.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/asaas_remote_webhook_form.browser.cjs"
     ]
   ]
 }

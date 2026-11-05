@@ -186,6 +186,41 @@ final class CompanyService
             return ['account_id'=>$account,'public_id'=>$row['webhook_public_id'],'one_time_token'=>$token,'revealed'=>true];
         });
     }
+    /** Explicit remote webhook administration; the local token/account never comes from the form. */
+    public function remoteWebhook($issuer,$actor,$account,string $revision,string $action,array $input,string $base,string $index,callable $decrypt,?callable $transport=null):array
+    {
+        require_once __DIR__.'/RemoteWebhook.php';
+        require_once __DIR__.'/WebhookAdminPresentation.php';
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);
+        self::revision($revision);RemoteWebhook::validate($action,$input);ModuleReadiness::require161($this->db,$this->p);
+        $snapshot=$this->transaction(function()use($issuer,$actor,$account,$revision,$action):array{
+            $this->authorizeWebhook($issuer,$actor);$row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            $this->audit($issuer,$actor,'asaas_webhook_'.$action.'_started',$account);return $row;
+        });
+        try {
+            $token=($this->webhookCipher??new WebhookTokenCipher())->open($snapshot['token_cipher']??null,(string)$snapshot['token_hash'],$snapshot,'company');
+            $url=WebhookAdminPresentation::companyCallbackUrl($base,$snapshot['webhook_public_id'],$index);
+            if($url===null)throw new \DomainException('asaas_webhook_invalid_configuration');
+            $client=$this->client($snapshot,$decrypt,$transport);self::wallet($client,$snapshot);
+            $result=(new RemoteWebhook(fn($method,$path,$payload)=>$client->request($method,$path,$payload),$url,$token))->execute($action,$input);
+            $this->transaction(function()use($issuer,$actor,$account,$revision,$action):void{
+                $this->authorizeWebhook($issuer,$actor);$current=$this->account($issuer,$account);
+                if(!hash_equals($current['revision'],$revision)||(int)$current['enabled']!==1)throw new \DomainException('asaas_company_stale');
+                $this->audit($issuer,$actor,'asaas_webhook_'.$action.'_confirmed',$account);
+            });
+            return $result;
+        } catch(\Throwable $error) {
+            // The remote side cannot be rolled back with SQL. Keep an uncertainty marker and never retry.
+            $this->transaction(fn()=>$this->audit($issuer,$actor,'asaas_webhook_'.$action.'_unconfirmed',$account));
+            throw $error;
+        }
+    }
+    public function remoteWebhookAudit(int $issuer,int $actor):array
+    {
+        $this->authorizeWebhook($issuer,$actor);
+        return $this->rows("SELECT event,subject_id,actor_id,created_at FROM {$this->p}issuers_audit WHERE issuer_id=? AND event LIKE 'asaas_webhook_%' ORDER BY id DESC LIMIT 30",[$issuer]);
+    }
     public function revealApiKey($issuer,$actor,$account,string $revision,callable $decrypt):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorizeWebhook($issuer,$actor);

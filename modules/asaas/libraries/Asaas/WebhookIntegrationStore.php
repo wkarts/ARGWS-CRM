@@ -108,11 +108,18 @@ final class WebhookIntegrationStore
     }
     public function audit(int $integrationId,string $action,?int $eventRowId=null): void
     {
-        if (!in_array($action,['created','token_rotated','token_revealed','disabled','event_reviewed'],true)
+        if ((!in_array($action,['created','token_rotated','token_revealed','disabled','event_reviewed'],true)
+            && !preg_match('/^remote_(inspect|create|update|delete|resume)_(started|confirmed|unconfirmed)$/D',$action))
             || !get_staff_user_id() || !$this->db->insert(db_prefix().'asaas_webhook_admin_audit',[
                 'integration_id'=>$integrationId,'event_row_id'=>$eventRowId,'actor_id'=>(int)get_staff_user_id(),
                 'action'=>$action,'created_at'=>date('Y-m-d H:i:s'),
             ])) throw new \RuntimeException('webhook_admin_audit_failed');
+    }
+    public function remoteAudit(int $id):array
+    {
+        $this->requireAdmin();$row=$this->byId($id);
+        if(!$row||$row['issuer_id']!==null)throw new \DomainException('webhook_admin_access_denied');
+        return $this->db->query('SELECT action,actor_id,created_at FROM '.db_prefix()."asaas_webhook_admin_audit WHERE integration_id=? AND action LIKE 'remote_%' ORDER BY id DESC LIMIT 30",[$id])->result_array();
     }
     private function adminTransaction(callable $fn)
     {

@@ -19,7 +19,7 @@ try {
     stream_get_contents($pipes[2]); fclose($pipes[2]);
     a1check(proc_close($process)===0,'synthetic legacy export available');
     $legacy=file_get_contents($directory.'/legacy.p12');
-    a1reject(fn()=>IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181'),'issuer_certificate_algorithm_unsupported','legacy unavailable has distinct safe category');
+    a1check(IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181')===IssuerCertificateParser::inspect($fixture['pfx'],$fixture['password'],'11222333000181'),'legacy import works by default with identical validated metadata');
     a1reject(fn()=>IssuerCertificateParser::inspect($legacy,'wrong','11222333000181'),'issuer_certificate_authentication_failed','legacy wrong password does not imply unsupported algorithm');
     a1reject(fn()=>IssuerCertificateParser::inspect('invalid','wrong','11222333000181'),'issuer_certificate_parse_failed','malformed file remains generic');
     a1check(openssl_error_string()===false,'error queue drained after failures');
@@ -48,8 +48,8 @@ try {
     a1check($manager->page(10,2)['revision']===1&&$saved['pfx_cipher']!==$legacy,'revision-zero legacy import stores encrypted credential');
     a1reject(fn()=>$manager->replace(10,2,1,$legacy,'wrong'),'issuer_certificate_authentication_failed','failed replacement stays atomic');
     a1check(a1row($db,10)===$saved,'failed replacement preserves cipher and revision');
-    putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT');
-    a1reject(fn()=>IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181'),'issuer_certificate_algorithm_unsupported','turning opt-in off restores rejection without provider leak');
+    putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT=0');
+    a1reject(fn()=>IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181'),'issuer_certificate_algorithm_unsupported','explicit opt-out restores rejection without provider leak');
     a1check($manager->page(10,2)['revision']===1,'stored metadata remains readable without legacy subprocess');
 } finally {
     if ($previous===false) { putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT'); } else { putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT='.$previous); }

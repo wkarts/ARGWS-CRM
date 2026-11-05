@@ -91,10 +91,8 @@ final class IssuerRegistry
     public function canCreate($actor): bool
     {
         try {
-            $actor=IssuerPolicy::id($actor);$this->staff($actor);
-            return $this->nativeCompanies()
-                ? (new IssuerResourceAccess($this->db,$this->prefix))->isMaster($actor)
-                : (int)$this->staff($actor)['admin']===1;
+            $this->requireAdmin($actor);
+            return true;
         } catch (DomainException $error) { return false; }
     }
     public function canManage($issuer, $actor): bool
@@ -259,6 +257,15 @@ final class IssuerRegistry
                 $this->write("INSERT INTO {$this->tables}registry (legal_name,tax_id,active,settings_json,created_by,created_at) VALUES (?,?,?,?,?,?)",
                     [$name, $tax, $native ? 1 : (int) $active, '{}', $actor, date('Y-m-d H:i:s')]);
                 $id = (int) $this->db->insert_id();
+                // Creation is an administrator capability, independent of installation provenance.
+                // Grant access only to this newly inserted company; existing companies keep their ACL.
+                if ($native && !(new IssuerResourceAccess($this->db,$this->prefix))->isMaster($actor)) {
+                    $this->write("INSERT INTO {$this->tables}staff (issuer_id,staff_id,can_view,can_manage_clients,can_share_clients,can_manage_integrations) VALUES (?,?,1,0,0,0)", [$id,$actor]);
+                    foreach (['view','edit'] as $capability) {
+                        $this->write("INSERT INTO {$this->tables}resource_permissions (issuer_id,staff_id,feature,capability) VALUES (?,?,'settings',?)", [$id,$actor,$capability]);
+                    }
+                    $this->audit($actor, 'company_creator_access_granted', $id, $actor);
+                }
             }
             if(IssuerStorage::fieldExists($this->db,'identity_status',$this->tables.'registry')){$this->write("UPDATE {$this->tables}registry SET identity_status='complete' WHERE id=?",[$id]);}
             if ($native) {

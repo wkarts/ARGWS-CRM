@@ -65,7 +65,7 @@ same(true,$acl->isMaster(4),'explicit installation identity, not id1');
 same(true,$acl->can($b,4,'future_module','future_capability'),'master covers future registered resources');
 same(true,$r->canAccess($b,4),'registry identity available to explicit master');
 same(3,count($r->available(4)),'master can see all active companies');
-rejects(fn()=>$r->saveIssuer(1,['legal_name'=>'Denied future','tax_id'=>syntheticCnpj('123450000009')]),'issuer_access_denied');
+same(true,$r->canCreate(1),'active administrator can create without acquiring master access');
 $db->query("INSERT INTO {$p}registry(legal_name,tax_id,active,settings_json,created_by,created_at) VALUES('Future synthetic',?,1,'{}',4,'2026-10-18 00:00:00')",[syntheticCnpj('123450000009')]);$new=(int)$db->insert_id();
 same(true,$acl->can($new,4,'banco_brasil','manage'),'master covers future company without grant copying');
 same(false,$acl->can($new,1,'banco_brasil','manage'),'ordinary admin does not acquire future company');

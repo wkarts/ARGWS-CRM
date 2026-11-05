@@ -55,6 +55,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_installation_identity WHERE master_staff_id IS NULL'), '1');
     assert.equal((await context.request.get(url + '/admin/company_master')).status(),404,'retired responsibility page has no remaining route or template');
     await page.goto(url + '/admin/issuers');
+    assert.equal(await page.locator('[data-new-company]').count(), 1, 'active administrator can create before original identity is resolved');
     assert.equal((await context.request.get(url + '/argws_provisioning/authorize_company_master/17')).status(), 404, 'console authorization has no HTTP entry point');
     assert.equal(await page.locator('#authorization_code, #current_password').count(), 0, 'retired wizard has no hosting code/password fields');
     assert.equal((await context.request.get(url + '/argws_provisioning/original_administrator/17/apply')).status(), 404, 'maintenance has no HTTP entry point');

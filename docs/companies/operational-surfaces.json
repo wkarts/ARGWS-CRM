@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "f4730f5db18dfece9767127fef691b3f0ace4ffa123642ce09e041201e76c61d",
+    "source_manifest_sha256": "a05f02b59162b283c82937d3039e03be2cc112f543ff60de0b43bd9b5aa47ec1",
     "counts": {
         "modules": 38,
-        "source_files": 4699,
+        "source_files": 4704,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
         "hook_candidates": 555,
-        "job_file_candidates": 70,
+        "job_file_candidates": 73,
         "report_file_candidates": 304,
         "table_name_candidates": 921,
-        "database_call_candidates": 12539
+        "database_call_candidates": 12540
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.6.0",
+            "version": "1.6.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -476,6 +476,7 @@
             "job_candidates": [
                 "modules/asaas/controllers/gateways/Callback.php",
                 "modules/asaas/libraries/Asaas/CompanyCron.php",
+                "modules/asaas/libraries/Asaas/RemoteWebhook.php",
                 "modules/asaas/libraries/Asaas/WebhookAdminPresentation.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationStore.php",
@@ -484,6 +485,8 @@
                 "modules/asaas/libraries/Asaas/WebhookTokenSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookTransactionGuard.php",
                 "modules/asaas/scripts/assert-webhook-security.php",
+                "modules/asaas/views/remote_webhook_form.php",
+                "modules/asaas/views/remote_webhook_result.php",
                 "modules/asaas/views/webhooks.php"
             ],
             "report_candidates": [],
@@ -10608,7 +10611,7 @@
         },
         {
             "path": "application/controllers/admin/Issuers.php",
-            "source_sha256": "3e985b6f0497475c8475435f9659005b4bc1a9b4b097a0a71607115656578818",
+            "source_sha256": "edc72390ce33a0321f365afbe5c8c9c34a05b69ef668a7c9811e53804202297b",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -15937,7 +15940,7 @@
         },
         {
             "path": "modules/asaas/controllers/Asaas.php",
-            "source_sha256": "5b5f164cd51a52dd3a16be0220e283b74245f68bf2cc4950e1be8c47aeba3832",
+            "source_sha256": "b10cdbea23fcf15800486bd70662bcbe76bfd979702470d7f3ff81a2ec476131",
             "module": "asaas",
             "base_class": "AdminController",
             "surface": "admin",
@@ -15954,87 +15957,92 @@
                 },
                 {
                     "method": "register_integration",
-                    "line": 85,
+                    "line": 89,
+                    "visibility": "public"
+                },
+                {
+                    "method": "remote_webhook",
+                    "line": 115,
                     "visibility": "public"
                 },
                 {
                     "method": "rotate_integration_token",
-                    "line": 111,
+                    "line": 134,
                     "visibility": "public"
                 },
                 {
                     "method": "reveal_integration_token",
-                    "line": 127,
+                    "line": 150,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_integration",
-                    "line": 141,
+                    "line": 164,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_reviewed_event",
-                    "line": 155,
+                    "line": 178,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data",
-                    "line": 217,
+                    "line": 240,
                     "visibility": "public"
                 },
                 {
                     "method": "charges",
-                    "line": 229,
+                    "line": 252,
                     "visibility": "public"
                 },
                 {
                     "method": "customers",
-                    "line": 244,
+                    "line": 267,
                     "visibility": "public"
                 },
                 {
                     "method": "health",
-                    "line": 257,
-                    "visibility": "public"
-                },
-                {
-                    "method": "merge",
-                    "line": 265,
-                    "visibility": "public"
-                },
-                {
-                    "method": "services",
-                    "line": 272,
-                    "visibility": "public"
-                },
-                {
-                    "method": "setup_webhook",
-                    "line": 278,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook",
-                    "line": 279,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook_invoice",
                     "line": 280,
                     "visibility": "public"
                 },
                 {
+                    "method": "merge",
+                    "line": 288,
+                    "visibility": "public"
+                },
+                {
+                    "method": "services",
+                    "line": 295,
+                    "visibility": "public"
+                },
+                {
+                    "method": "setup_webhook",
+                    "line": 301,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook",
+                    "line": 302,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook_invoice",
+                    "line": 303,
+                    "visibility": "public"
+                },
+                {
                     "method": "set_webhook_transfer",
-                    "line": 281,
+                    "line": 304,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobranca",
-                    "line": 283,
+                    "line": 306,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobrancas",
-                    "line": 290,
+                    "line": 313,
                     "visibility": "public"
                 }
             ],
@@ -26260,7 +26268,7 @@
         {
             "name": "asaas_webhook_admin_audit",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 5
         },
         {
             "name": "asaas_webhook_events",
@@ -28865,7 +28873,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 262
+            "reference_count": 264
         },
         {
             "name": "issuers_client_links",
@@ -28905,7 +28913,7 @@
         {
             "name": "issuers_resource_permissions",
             "state": "not_verified",
-            "reference_count": 16
+            "reference_count": 17
         },
         {
             "name": "issuers_resource_permissions_legacy",
@@ -28920,12 +28928,12 @@
         {
             "name": "issuers_staff",
             "state": "not_verified",
-            "reference_count": 40
+            "reference_count": 42
         },
         {
             "name": "issuers_staff_defaults",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 13
         },
         {
             "name": "item_tax",
@@ -29315,7 +29323,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 106
+            "reference_count": 107
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -30015,7 +30023,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 503
+            "reference_count": 504
         },
         {
             "name": "staff_contract",

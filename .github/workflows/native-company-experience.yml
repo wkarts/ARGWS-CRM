@@ -182,6 +182,7 @@ jobs:
       - name: Compile application PHP syntax before databases
         run: |
           python3 scripts/ci/check-php-syntax.py
+          python3 tests/test_http_smoke_workers.py
       - name: Verify sales transport IDs against the PHP implementation
         run: node --test tests/native_company/sales_transport_ids.test.cjs tests/native_company/invoice_schedule_transport.test.cjs tests/native_company/portal_login_contract.test.cjs
       - name: Link native JavaScript dependencies before databases
