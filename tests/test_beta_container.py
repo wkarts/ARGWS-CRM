@@ -23,7 +23,8 @@ D = 'sha256:' + 'b' * 64
 def manifest(sha=SHA):
     return D, {'annotations': {'org.opencontainers.image.revision': sha,
         'org.opencontainers.image.version': VERSION, 'io.argws.channel': 'develop-beta'},
-        'manifests': [{'platform': {'os': 'linux', 'architecture': arch}} for arch in ['amd64', 'arm64']]}
+        'manifests': [{'digest': 'sha256:' + digit*64, 'platform': {'os': 'linux', 'architecture': arch}}
+                      for arch, digit in [('amd64', 'c'), ('arm64', 'd')]]}
 
 
 class PublicationTest(unittest.TestCase):
@@ -49,20 +50,20 @@ class PublicationTest(unittest.TestCase):
             return ''
         self.writes.append(args)
         target = args[args.index('-t') + 1]
-        self.assertEqual(target, B.IMAGE + ':4.0.3', 'only authorized mutable tag')
+        self.assertEqual(target, B.IMAGE + ':develop-beta', 'only authorized mutable tag')
         self.version = manifest()
         if self.interrupt: raise OSError('simulated interruption after tag write')
         return ''
 
     def manifest(self, ref):
-        self.assertEqual(ref, VERSION)
+        self.assertEqual(ref, B.CHANNEL)
         self.reads += 1
         return self.version
 
     def publish(self):
         return B.publish(VERSION, SHA, self, self.command, self.directory)
 
-    def test_first_publication_writes_only_403_with_provenance(self):
+    def test_first_publication_writes_only_channel_with_provenance(self):
         result = self.publish()
         self.assertEqual(len(self.writes), 1)
         self.assertEqual(result['sha'], SHA)
@@ -131,6 +132,19 @@ class PublicationTest(unittest.TestCase):
             self.assertEqual(self.writes, [])
             p.write_text(saved)
 
+    def test_multiarch_index_rejects_duplicates_and_wrong_build_digests(self):
+        self.version = manifest()
+        self.version[1]['manifests'].append(self.version[1]['manifests'][0])
+        with self.assertRaises(ValueError): self.publish()
+        self.version = None
+        original = self.command
+        def changed(args):
+            result = original(args)
+            if args[0] == 'docker': self.version[1]['manifests'][0]['digest'] = 'sha256:'+'e'*64
+            return result
+        self.command = changed
+        with self.assertRaisesRegex(ValueError, 'digests aprovados'): self.publish()
+
     def test_other_version_requires_new_decision(self):
         with self.assertRaisesRegex(ValueError, 'Ciclo beta'):
             B.publish('4.0.4', SHA, self, self.command, self.directory)
@@ -176,7 +190,7 @@ class RegistryReadTest(unittest.TestCase):
             with self.assertRaises(ValueError): self.registry.manifest(VERSION)
 
     def test_other_tags_rejected_before_network(self):
-        for tag in ['latest', 'develop', 'develop-beta', '../config', '4', '4.0', '4.0.4', '4.0.3;cmd']:
+        for tag in ['latest', 'develop', '../config', '4', '4.0', '4.0.4', '4.0.3;cmd']:
             with self.subTest(tag=tag), self.assertRaises(ValueError): self.registry.manifest(tag)
 
 
@@ -189,6 +203,10 @@ class WorkflowTest(unittest.TestCase):
         self.assertNotIn('login-action', pr)
         self.assertNotIn('packages: write', pr)
         self.assertNotIn('workflow_dispatch', source)
+        publish = source.split('  publish:')[1]
+        self.assertIn('contents: write', publish)
+        self.assertIn('GH_TOKEN: ${{ github.token }}', publish)
+        self.assertNotIn('secrets.', publish)
         self.assertEqual(source.count('branches: [develop-beta]'), 2)
         self.assertIn('needs: [validate, build-push]', source)
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", source)
@@ -204,6 +222,105 @@ class WorkflowTest(unittest.TestCase):
                        'define("BASEPATH"', 'define("APPPATH"', 'pwa.php']:
             self.assertIn(marker, source)
 
+
+class ReleaseTest(unittest.TestCase):
+    def setUp(self):
+        self.ref = None
+        self.tag = None
+        self.release = None
+        self.writes = []
+        self.fail_after = None
+
+    def call(self, path, payload=None, method=None):
+        if payload is None:
+            if path == '': return {'full_name': B.REPO}
+            if path == 'git/ref/tags/' + B.RELEASE_TAG: return self.ref
+            if path.startswith('git/tags/'): return self.tag
+            if path == 'releases/tags/' + B.RELEASE_TAG: return self.release
+            raise AssertionError(path)
+        self.writes.append((path, payload, method))
+        if path == 'git/tags':
+            self.tag = {**payload, 'object': {'sha': payload['object'], 'type': 'commit'}}
+            result = {'sha': 'f'*40}
+        elif path == 'git/refs':
+            self.assertIsNone(self.ref)
+            self.ref = {'object': {'sha': payload['sha'], 'type': 'tag'}}
+            result = self.ref
+        elif path in ['releases', 'releases/42']:
+            self.assertTrue(payload['prerelease'])
+            self.assertEqual(payload['make_latest'], 'false')
+            self.release = {**payload, 'id': 42, 'assets': [], 'html_url': 'https://example.invalid/beta'}
+            result = self.release
+        else: raise AssertionError(path)
+        if self.fail_after == path: raise OSError('ambiguous response after write')
+        return result
+
+    def command(self, args):
+        if args[:2] == ['git', 'ls-remote']: return SHA + '\t' + B.BRANCH
+        if args[:2] == ['git', 'show']: return VERSION
+        if args[:2] == ['git', 'merge-base']: return ''
+        raise AssertionError(args)
+
+    def publish(self):
+        state = B.release_state(self, SHA, self.command)
+        return B.publish_release(self, SHA, D, self.command, state)
+
+    def test_create_and_retry_keep_one_release_and_fixed_tag(self):
+        self.publish()
+        self.assertEqual([w[0] for w in self.writes], ['git/tags', 'git/refs', 'releases'])
+        self.writes.clear()
+        self.publish()
+        self.assertEqual(self.writes, [])
+
+    def test_interrupted_ref_or_release_is_reconciled_without_replacement(self):
+        for path in ['git/refs', 'releases']:
+            self.setUp(); self.fail_after = path
+            with self.assertRaises(OSError): self.publish()
+            self.fail_after = None; self.writes.clear()
+            self.publish()
+            self.assertEqual([w[0] for w in self.writes], ['releases'] if path == 'git/refs' else [])
+
+    def test_foreign_lightweight_tag_is_preserved(self):
+        self.ref = {'object': {'type': 'commit', 'sha': SHA}}
+        with self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
+        self.assertEqual(self.writes, [])
+
+    def test_stable_release_or_missing_marker_never_overwritten(self):
+        self.publish()
+        for key, value in [('prerelease', False), ('body', 'foreign'), ('target_commitish', 'main'), ('assets', [{}])]:
+            saved = dict(self.release); self.release[key] = value; self.writes.clear()
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'Colisão'): self.publish()
+            self.assertEqual(self.writes, []); self.release = saved
+
+    def test_same_sha_different_digest_is_collision(self):
+        self.publish()
+        with self.assertRaisesRegex(ValueError, 'digest'):
+            B.publish_release(self, SHA, 'sha256:'+'c'*64, self.command, B.release_state(self, SHA, self.command))
+
+    def test_advance_updates_notes_only_and_checks_ancestry(self):
+        self.publish(); self.writes.clear(); anchor = self.ref.copy()
+        new_sha = 'e'*40
+        calls = []
+        def run(args):
+            calls.append(args)
+            if args[:2] == ['git', 'ls-remote']: return new_sha+'\t'+B.BRANCH
+            return self.command(args)
+        state = B.release_state(self, new_sha, run)
+        B.publish_release(self, new_sha, 'sha256:'+'c'*64, run, state)
+        self.assertEqual(self.ref, anchor)
+        self.assertEqual([w[0] for w in self.writes], ['releases/42'])
+        self.assertIn(['git', 'merge-base', '--is-ancestor', SHA, new_sha], calls)
+
+    def test_race_fails_before_writes(self):
+        state = B.release_state(self, SHA, self.command)
+        self.ref = {'object': {'type': 'commit', 'sha': SHA}}
+        with self.assertRaises(ValueError): B.publish_release(self, SHA, D, self.command, state)
+        self.assertEqual(self.writes, [])
+
+    def test_external_token_execution_blocked(self):
+        for env in [{}, {'GITHUB_ACTIONS':'true', 'GH_TOKEN':'external', 'GHCR_TOKEN':'other'}]:
+            with self.assertRaises(ValueError): B.require_actions_token(env)
+        B.require_actions_token({'GITHUB_ACTIONS':'true', 'GH_TOKEN':'synthetic', 'GHCR_TOKEN':'synthetic'})
 
 if __name__ == '__main__':
     unittest.main()
