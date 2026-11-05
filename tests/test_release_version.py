@@ -157,6 +157,124 @@ class NativeReleaseMetadataTest(unittest.TestCase):
             POLICY.validate_archive(bad)
 
 
+class BetaInfrastructureGateTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        POLICY.git(self.root, 'init', '-q')
+        POLICY.git(self.root, 'config', 'user.email', 'fixture@example.invalid')
+        POLICY.git(self.root, 'config', 'user.name', 'Fixture')
+        fixture(self.root, 403)
+        path = self.root / '.github/workflows/beta-container.yml'
+        path.parent.mkdir(parents=True, exist_ok=True); path.write_text('name: before\n')
+        self.base = self.commit()
+        path.write_text('name: after\n')
+        self.head = self.commit()
+
+    def commit(self):
+        POLICY.git(self.root, 'add', '.')
+        POLICY.git(self.root, 'commit', '-qm', 'fixture')
+        return POLICY.commit_id(self.root, 'HEAD')
+
+    def check(self, branch='develop-beta', head=None, base=None):
+        return POLICY.check_delta(self.root, base or self.base, head or self.head, branch)
+
+    def test_authorized_infrastructure_cycle_is_explicit(self):
+        self.assertEqual(self.check()['validation_mode'], 'beta-infrastructure-only')
+
+    def test_other_branch_or_release_cli_still_requires_increment(self):
+        for branch in [None, '', 'main', 'develop', 'develop-beta-other']:
+            with self.subTest(branch=branch), self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
+                self.check(branch)
+
+    def test_product_or_mixed_changes_require_increment(self):
+        for name in ['application/controllers/Invoice.php', 'assets/pwa/install.js',
+                     'modules/example/example.php', '.github/workflows/release-packages.yml']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text('changed')
+            with self.subTest(path=name), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_deleted_or_symlink_infrastructure_rejected(self):
+        path = self.root / '.github/workflows/beta-container.yml'
+        for symlink in [False, True]:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path.unlink()
+            if symlink: path.symlink_to('../../VERSION')
+            with self.subTest(symlink=symlink), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_same_version_metadata_and_distribution_edits_rejected(self):
+        for name in ['VERSION', 'application/config/constants.php', 'compose.yaml']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / name; path.write_text(path.read_text() + '\n')
+            with self.subTest(path=name), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_migration_bytes_modes_and_new_markers_rejected(self):
+        for kind in ['bytes', 'mode', 'add']:
+            POLICY.git(self.root, 'reset', '--hard', self.head)
+            path = self.root / POLICY.migration_path(402)
+            if kind == 'bytes': path.write_text(path.read_text() + '// changed')
+            elif kind == 'mode': path.chmod(0o755)
+            else: (self.root / POLICY.migration_path(404)).write_text(APPLIER.migration_marker_source(404))
+            with self.subTest(kind=kind), self.assertRaises(ValueError): self.check(head=self.commit())
+
+    def test_cycle_does_not_apply_to_other_versions(self):
+        fixture(self.root, 404)
+        base = self.commit()
+        (self.root / '.github/workflows/beta-container.yml').write_text('name: another\n')
+        with self.assertRaisesRegex(ValueError, 'exatamente o próximo'): self.check(base=base, head=self.commit())
+
+    def test_exact_v2_restoration_only(self):
+        path = self.root / 'install/logo.png'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        old, approved = b'original V1 fixture', b'approved V2 fixture'
+        path.write_bytes(old)
+        self.base = self.commit()
+        allowed = {str(path.relative_to(self.root)): tuple(hashlib.sha256(v).hexdigest() for v in (old, approved))}
+        with patch.object(POLICY, 'BETA_V2_RESTORATIONS', allowed):
+            path.write_bytes(approved)
+            approved_head = self.commit()
+            self.assertEqual(self.check(head=approved_head)['validation_mode'], 'beta-v2-restoration')
+            for branch in [None, 'main', 'develop']:
+                with self.subTest(branch=branch), self.assertRaises(ValueError):
+                    self.check(branch=branch, head=approved_head)
+            for kind in ['wrong-bytes', 'mode', 'symlink', 'delete']:
+                POLICY.git(self.root, 'reset', '--hard', approved_head)
+                if kind == 'wrong-bytes': path.write_bytes(b'other identity')
+                elif kind == 'mode': path.chmod(0o755)
+                else:
+                    path.unlink()
+                    if kind == 'symlink': path.symlink_to('../VERSION')
+                with self.subTest(kind=kind), self.assertRaises(ValueError):
+                    self.check(head=self.commit())
+            POLICY.git(self.root, 'reset', '--hard', approved_head)
+            path.write_bytes(b'unapproved preimage')
+            wrong_base = self.commit()
+            path.write_bytes(approved)
+            with self.assertRaises(ValueError): self.check(base=wrong_base, head=self.commit())
+            POLICY.git(self.root, 'checkout', '-qb', 'base-logo-diverged', self.base)
+            path.write_bytes(b'concurrent base logo')
+            diverged_base = self.commit()
+            with self.assertRaises(ValueError):
+                self.check(base=diverged_base, head=approved_head)
+
+    def test_committed_installer_uses_exact_approved_v2_bytes(self):
+        expected = POLICY.BETA_V2_RESTORATIONS['install/logo.png'][1]
+        for name in ['install/logo.png', 'assets/images/argws/logo-dark.png']:
+            self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), expected)
+        self.assertIn('src="logo.png"', (ROOT / 'install/html.php').read_text())
+        html = (ROOT / 'install/html.php').read_bytes()
+        self.assertEqual(hashlib.sha256(html).hexdigest(), POLICY.BETA_V2_RESTORATIONS['install/html.php'][1])
+        self.assertIn('style="width: 320px; max-width: 100%; height: auto;"', html.decode())
+        self.assertIn('alt="ARGWS CRM"', html.decode())
+
+    def test_current_base_advance_cannot_be_hidden(self):
+        POLICY.git(self.root, 'checkout', '-qb', 'newbase', self.base)
+        fixture(self.root, 404)
+        advanced = self.commit()
+        with self.assertRaisesRegex(ValueError, 'base atual avançou'): self.check(base=advanced)
+
+
 class NativeReleaseGitTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -232,6 +350,14 @@ class NativeReleaseGitTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text('changed')
         head = self.commit('module version alone')
+        with self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
+            POLICY.check_delta(self.root, self.base, head)
+
+    def test_ci_only_without_core_increment_fails(self):
+        target = self.root / '.github/workflows/ci-only.yml'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('name: infrastructure-only\n')
+        head = self.commit('ci: infrastructure change without product code')
         with self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
             POLICY.check_delta(self.root, self.base, head)
 

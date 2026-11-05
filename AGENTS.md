@@ -34,3 +34,26 @@ Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de alterar módulos ou preparar um
   objeto da tag e hashes de metadados; não autorizam downgrade genérico.
 - Integre main normalmente antes de preparar a próxima release; não copie apenas
   versão/migration para develop. Isso não autoriza merge ou implantação.
+
+## Ciclo beta 4.0.3 — infraestrutura
+
+Por decisão explícita, PRs de infraestrutura com base `develop-beta` podem manter
+4.0.3 durante este ciclo. O gate exige versão/metadados/distribuição e migrations
+inalterados, arquivos regulares e delta limitado à allowlist `BETA_INFRA_PATHS` em
+`scripts/release_policy.py`. Não é exceção genérica por extensão ou pasta: arquivos
+de produto, módulos, schemas, assets, mudanças mistas, exclusões, symlinks, outra
+base ou outra versão continuam sujeitos ao incremento nativo normal. A CLI sem
+`--base-ref develop-beta` e o planner de release permanecem estritos. Esta regra
+não autoriza publicar nem habilita o canal estável; ao encerrar o ciclo, revisar
+a regra e a versão com o responsável. GHCR :4.0.3 é mutável neste ciclo beta, com
+digest/SHA rastreados; :latest e :develop ficam preservadas.
+
+### Complemento V2 autorizado no beta
+
+A conclusão da identidade V2 mantém 4.0.3 somente para a restauração exata de
+`install/logo.png` da 4.8.7 e ajuste responsivo exato de `install/html.php`.
+`BETA_V2_RESTORATIONS` fixa SHA-256 dos bytes antigos
+e aprovados, exige arquivo regular modo 100644 na base, ancestral e head, e não
+permite outros assets, código de produto, exclusões ou mudanças de modo. A regra
+vale somente para develop-beta/4.0.3; metadados e migrations ficam congelados.
+Não autoriza merge, release, publicação ou alteração de tags estáveis.

@@ -206,7 +206,61 @@ def target_levels(source, target):
     return range(target, target + 1)
 
 
-def check_delta(root, base, head):
+# Explicitly authorized beta cycle: infrastructure-only PRs may retain 4.0.3.
+# This is not a general docs/CI exception and is never used by release planning.
+BETA_INFRA_PATHS = frozenset({
+    '.github/workflows/beta-container.yml', '.github/workflows/core-release-policy.yml',
+    'scripts/publish-beta-image.py', 'scripts/smoke-beta-image.sh',
+    'scripts/check-release-version.py', 'scripts/release_policy.py',
+    'tests/test_beta_container.py', 'tests/test_release_version.py',
+    'docs/pwa-402/ghcr-beta.md', 'AGENTS.md', 'CONTRIBUTING.md',
+})
+
+
+# Completion of the V2 port authorized for the 4.0.3 beta cycle only.
+# Exact old/new bytes, not a blanket exception for assets or product changes.
+BETA_V2_RESTORATIONS = {
+    'install/html.php': (
+        '6494608f61f315416610c6e1a7d41b919c626e313f873e92b12ae6ef275c909e',
+        'cbbb8d16f3b994c982d0af2f96f6085d3e52a81b87203b7ac3e6f3b0e028ea40',
+    ),
+    'install/logo.png': (
+        'b91375b87263a9644246c144544ac24c52c69fb5b6e9cdbf7b487d8047045c24',
+        '6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9',
+    ),
+}
+
+
+def beta_infrastructure_delta(root, ancestor, base, head, base_ref, before, after):
+    if base_ref != 'develop-beta' or before['version'] != '4.0.3' or after['version'] != '4.0.3':
+        return False
+    changed = set(filter(None, git(root, 'diff', '--name-only', '-z', '--no-renames', ancestor, head).decode().split('\0')))
+    if not changed or not changed <= BETA_INFRA_PATHS | BETA_V2_RESTORATIONS.keys():
+        return False
+    for path in changed:
+        entry = git_files(root, head, path).get(path)
+        if not entry or entry[0] not in ('100644', '100755') or entry[1] != 'blob':
+            return False
+    for path in changed & BETA_V2_RESTORATIONS.keys():
+        old_hash, new_hash = BETA_V2_RESTORATIONS[path]
+        for ref, expected in ((ancestor, old_hash), (base, old_hash), (head, new_hash)):
+            entry = git_files(root, ref, path).get(path)
+            if not entry or entry[0] != '100644' or entry[1] != 'blob':
+                return False
+            if hashlib.sha256(git_reader(root, ref)(path)).hexdigest() != expected:
+                return False
+    # Version metadata/distribution and ALL historical migrations stay byte/mode exact.
+    frozen = (*METADATA_PATHS, 'application/migrations', 'compose.yaml',
+              'deploy/production/compose.yaml', 'deploy/production/.env.example',
+              'container.env.example')
+    for original in (ancestor, base):
+        for path in frozen:
+            if git_files(root, original, path) != git_files(root, head, path):
+                return False
+    return True
+
+
+def check_delta(root, base, head, base_ref=None):
     if not all(re.fullmatch(r'[0-9a-f]{40}', ref) for ref in (base, head)):
         raise ValueError('Informe os SHAs completos de base/head do evento da PR.')
     base, head = commit_id(root, base), commit_id(root, head)
@@ -225,6 +279,10 @@ def check_delta(root, base, head):
             raise ValueError('Alias da base sem ancestralidade comprovada.')
     after = validate_tree(git_reader(root, head))
     validate_distribution(git_reader(root, head), after['version'])
+    if beta_infrastructure_delta(root, ancestor, base, head, base_ref, before, after):
+        changed = set(git(root, 'diff', '--name-only', ancestor, head).decode().splitlines())
+        mode = 'beta-v2-restoration' if changed & BETA_V2_RESTORATIONS.keys() else 'beta-infrastructure-only'
+        return {**after, 'validation_mode': mode}
     expected_new = {migration_path(level) for level in target_levels(before, after['migration'])}
     previous_files = git_files(root, ancestor)
     base_files = git_files(root, base)
