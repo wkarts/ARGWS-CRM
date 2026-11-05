@@ -240,3 +240,12 @@ base ou outra versão continuam sujeitos ao incremento nativo normal. A CLI sem
 não autoriza publicar nem habilita o canal estável; ao encerrar o ciclo, revisar
 a regra e a versão com o responsável. GHCR :4.0.3 é mutável neste ciclo beta, com
 digest/SHA rastreados; :latest e :develop ficam preservadas.
+
+### Complemento V2 autorizado no beta
+
+A conclusão da identidade V2 mantém 4.0.3 somente para a restauração exata de
+`install/logo.png` da 4.8.7. `BETA_V2_RESTORATIONS` fixa SHA-256 dos bytes antigos
+e aprovados, exige arquivo regular modo 100644 na base, ancestral e head, e não
+permite outros assets, código de produto, exclusões ou mudanças de modo. A regra
+vale somente para develop-beta/4.0.3; metadados e migrations ficam congelados.
+Não autoriza merge, release, publicação ou alteração de tags estáveis.

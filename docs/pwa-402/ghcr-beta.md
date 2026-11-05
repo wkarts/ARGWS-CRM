@@ -89,3 +89,31 @@ e smokes reais. Publicação remota não homologada por restrição expressa.
 Rollback de configuração: reverter workflow/scripts antes de autorizar novos
 pushes. Não apagar imagens. Reapontar :4.0.3 para digest anterior é promoção
 manual que requer autorização específica; não há rollback de banco.
+
+## Reconciliação visual com a 4.8.7
+
+A PR 58 herda o PWA e a identidade V2 da PR 57, já mesclada em develop-beta.
+Esses arquivos não reaparecem no diff da PR de infraestrutura. A comparação
+com `1e5a4a1e64ef230f3f996ebe871dc3c20943829d` confirmou os mesmos bytes nos
+logos/favicons de `assets/images/argws/` e em `assets/pwa/` (a licença tem apenas
+normalização de espaço final). O commit V2 original foi `6a4e94b8`.
+
+A auditoria encontrou uma omissão real: `install/html.php` usa `install/logo.png`,
+que ainda era a imagem antiga. O arquivo agora usa os mesmos bytes V2 de
+`assets/images/argws/logo-dark.png`, SHA-256
+`6662059de4b99547756c8c7c8654ecf1f505220f9297efdc5723ce5b32d46cd9`.
+Esse é o instalador legado distribuído no código/ZIP. O instalador Docker `/setup`
+é outro caminho: já referencia `logo-light.png` V2; `install/` não entra na imagem.
+Não se alterou o provisionamento, formulários, credenciais ou banco.
+
+A conclusão deste porte mantém 4.0.3 por decisão explícita para o beta. O gate
+aceita somente a transição exata de bytes antigos para os aprovados em
+`BETA_V2_RESTORATIONS`, modo 100644, base e ancestral conferidos; não libera
+arbitrariamente assets nem código funcional. Testes cobrem bytes incorretos,
+preimagem divergente, symlink, exclusão, modo e outras branches. O planner de
+release estável continua estrito. Este complemento não publica imagens/tags.
+
+Os fluxos de login/aplicação usam os helpers originais e os logos públicos V2,
+sem substituir personalizações explícitas da instalação. Não foram portadas
+as funcionalidades e estruturas de contexto empresarial da 4.8.7. Instalar
+um aplicativo PWA pelo navegador e provisionar o CRM são operações distintas.

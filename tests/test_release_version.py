@@ -224,6 +224,46 @@ class BetaInfrastructureGateTest(unittest.TestCase):
         (self.root / '.github/workflows/beta-container.yml').write_text('name: another\n')
         with self.assertRaisesRegex(ValueError, 'exatamente o próximo'): self.check(base=base, head=self.commit())
 
+    def test_exact_v2_restoration_only(self):
+        path = self.root / 'install/logo.png'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        old, approved = b'original V1 fixture', b'approved V2 fixture'
+        path.write_bytes(old)
+        self.base = self.commit()
+        allowed = {str(path.relative_to(self.root)): tuple(hashlib.sha256(v).hexdigest() for v in (old, approved))}
+        with patch.object(POLICY, 'BETA_V2_RESTORATIONS', allowed):
+            path.write_bytes(approved)
+            approved_head = self.commit()
+            self.assertEqual(self.check(head=approved_head)['validation_mode'], 'beta-v2-restoration')
+            for branch in [None, 'main', 'develop']:
+                with self.subTest(branch=branch), self.assertRaises(ValueError):
+                    self.check(branch=branch, head=approved_head)
+            for kind in ['wrong-bytes', 'mode', 'symlink', 'delete']:
+                POLICY.git(self.root, 'reset', '--hard', approved_head)
+                if kind == 'wrong-bytes': path.write_bytes(b'other identity')
+                elif kind == 'mode': path.chmod(0o755)
+                else:
+                    path.unlink()
+                    if kind == 'symlink': path.symlink_to('../VERSION')
+                with self.subTest(kind=kind), self.assertRaises(ValueError):
+                    self.check(head=self.commit())
+            POLICY.git(self.root, 'reset', '--hard', approved_head)
+            path.write_bytes(b'unapproved preimage')
+            wrong_base = self.commit()
+            path.write_bytes(approved)
+            with self.assertRaises(ValueError): self.check(base=wrong_base, head=self.commit())
+            POLICY.git(self.root, 'checkout', '-qb', 'base-logo-diverged', self.base)
+            path.write_bytes(b'concurrent base logo')
+            diverged_base = self.commit()
+            with self.assertRaises(ValueError):
+                self.check(base=diverged_base, head=approved_head)
+
+    def test_committed_installer_uses_exact_approved_v2_bytes(self):
+        expected = POLICY.BETA_V2_RESTORATIONS['install/logo.png'][1]
+        for name in ['install/logo.png', 'assets/images/argws/logo-dark.png']:
+            self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), expected)
+        self.assertIn('src="logo.png"', (ROOT / 'install/html.php').read_text())
+
     def test_current_base_advance_cannot_be_hidden(self):
         POLICY.git(self.root, 'checkout', '-qb', 'newbase', self.base)
         fixture(self.root, 404)
