@@ -383,6 +383,126 @@ class ReleaseTest(unittest.TestCase):
             with self.assertRaises(ValueError): B.require_actions_token(env)
         B.require_actions_token({'GITHUB_ACTIONS':'true', 'GH_TOKEN':'synthetic', 'GHCR_TOKEN':'synthetic'})
 
+class GitOwnershipTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / 'checkout'
+        self.root.mkdir()
+        self.global_config = Path(self.temp.name) / 'global.gitconfig'
+        self.global_config.write_text('# synthetic isolated config\n')
+        # Do not inherit checkout's/global safe.directory exceptions: reproduce
+        # the container boundary even on machines where the test user owns it.
+        self.env = {**os.environ, 'GIT_CONFIG_NOSYSTEM': '1',
+                    'GIT_CONFIG_GLOBAL': str(self.global_config), 'GIT_CONFIG_COUNT': '0'}
+        self.env.pop('GIT_TEST_ASSUME_DIFFERENT_OWNER', None)
+        self.env.pop('GIT_CONFIG_PARAMETERS', None)
+        def setup_git(*args):
+            return B.subprocess.run(['git', '-C', str(self.root), *args], env=self.env,
+                text=True, capture_output=True, check=True).stdout.strip()
+        setup_git('init')
+        setup_git('config', 'user.name', 'Synthetic ownership fixture')
+        setup_git('config', 'user.email', 'test@example.invalid')
+        (self.root / 'VERSION').write_text(VERSION+'\n')
+        setup_git('add', 'VERSION')
+        setup_git('commit', '-m', 'synthetic fixture')
+        self.sha = setup_git('rev-parse', 'HEAD')
+        self.local_before = (self.root/'.git/config').read_bytes()
+        self.global_before = self.global_config.read_bytes()
+        self.env['GIT_TEST_ASSUME_DIFFERENT_OWNER'] = '1'
+        self.addCleanup(os.chdir, Path.cwd())
+        os.chdir(self.root)
+        self.env_patch = patch.dict(os.environ, self.env, clear=True)
+        self.env_patch.start()
+        self.addCleanup(self.env_patch.stop)
+
+    def assert_config_unchanged(self):
+        self.assertEqual((self.root/'.git/config').read_bytes(), self.local_before)
+        self.assertEqual(self.global_config.read_bytes(), self.global_before)
+        denied = B.subprocess.run(['git', 'rev-parse', 'HEAD'], text=True, capture_output=True)
+        self.assertEqual(denied.returncode, 128)
+        self.assertIn('dubious ownership', denied.stderr)
+
+    def test_real_command_handles_different_owner_without_persistent_trust(self):
+        self.assert_config_unchanged()  # Reproduce the original exit 128 first.
+        self.assertEqual(B.command(['git', 'rev-parse', 'HEAD']).strip(), self.sha)
+        self.assertEqual(B.command(['git', 'show', self.sha+':VERSION']).strip(), VERSION)
+        self.assert_config_unchanged()  # Raw Git still refuses this checkout.
+
+    def test_another_repository_is_not_trusted(self):
+        other = Path(self.temp.name) / 'other-checkout'
+        B.subprocess.run(['git', 'init', str(other)], check=True, capture_output=True)
+        with self.assertRaises(B.subprocess.CalledProcessError) as error:
+            B.command(['git', '-C', str(other), 'rev-parse', '--git-dir'])
+        self.assertEqual(error.exception.returncode, 128)
+        self.assert_config_unchanged()
+
+    def test_exact_resolved_checkout_only_and_input_preserved(self):
+        args = ['git', 'mktag']
+        with patch.object(B.subprocess, 'run') as run:
+            run.return_value.stdout = 'synthetic'
+            self.assertEqual(B.command(args, 'tag object'), 'synthetic')
+            run.assert_called_once_with(['git', '-c', 'safe.directory='+str(self.root.resolve()), 'mktag'],
+                input='tag object', check=True, text=True, stdout=B.subprocess.PIPE)
+        self.assertEqual(args, ['git', 'mktag'])
+        with patch.object(B.subprocess, 'run') as run:
+            B.command(['docker', 'buildx', 'version'])
+            self.assertEqual(run.call_args.args[0], ['docker', 'buildx', 'version'])
+        self.assert_config_unchanged()
+
+    def preflight(self, expected_sha=None):
+        env = dict(GITHUB_EVENT_NAME='push', GITHUB_REF=B.BRANCH,
+                   GITHUB_REPOSITORY=B.REPO, GITHUB_SHA=expected_sha or self.sha)
+        real_run = B.subprocess.run
+        calls = []
+        def subprocess_fixture(args, **kwargs):
+            calls.append(args)
+            self.assertEqual(args[:3], ['git', '-c', 'safe.directory='+str(self.root.resolve())])
+            if args[3:5] == ['ls-remote', 'origin']:
+                # A fixed remote snapshot: no network/remote ref mutation.
+                return B.subprocess.CompletedProcess(args, 0, self.sha+'\t'+B.BRANCH+'\n')
+            self.assertIn(args[3], ['rev-parse', 'merge-base', 'show'])
+            return real_run(args, **kwargs)
+        def api_fixture(path, payload=None, method=None):
+            self.assertIsNone(payload)
+            self.assertIsNone(method)
+            return {
+                '': {'full_name': B.REPO},
+                'git/ref/tags/'+B.RELEASE_TAG: {'object': {'type': 'tag', 'sha': 'f'*40}},
+                'git/tags/'+'f'*40: {'tag': B.RELEASE_TAG, 'object': {'type': 'commit', 'sha': self.sha},
+                                   'message': json.dumps(B.provenance(self.sha), sort_keys=True)},
+                'releases/tags/'+B.RELEASE_TAG: None,
+            }[path]
+        with patch.dict(os.environ, env), patch.object(sys, 'argv', ['publish-beta-image.py']), \
+                patch.object(B, 'validate_tree', return_value={'version': VERSION}), \
+                patch.object(B, 'validate_distribution') as distribution, \
+                patch.object(B, 'Registry') as registry, patch.object(B, 'GitHub') as api, \
+                patch.object(B.subprocess, 'run', side_effect=subprocess_fixture), \
+                patch.object(B.urllib.request, 'urlopen', side_effect=AssertionError('Network forbidden')), \
+                patch.object(B, 'publish', side_effect=AssertionError('Image write forbidden')), \
+                patch.object(B, 'publish_release', side_effect=AssertionError('Release write forbidden')), \
+                patch('sys.stdout', new_callable=io.StringIO) as output:
+            registry.return_value.manifest.return_value = None
+            api.return_value.call.side_effect = api_fixture
+            B.main()
+            self.assertIn('nenhuma escrita GHCR/GitHub', output.getvalue())
+            distribution.assert_called_once()
+            registry.return_value.manifest.assert_called_once_with(B.CHANNEL)
+        return calls
+
+    def test_push_preflight_with_different_owner_runs_in_pr_tests_without_network_or_writes(self):
+        calls = self.preflight()
+        self.assertIn('merge-base', [args[3] for args in calls])
+        self.assertIn('show', [args[3] for args in calls])
+        self.assertFalse((self.root/'beta-publication.json').exists())
+        self.assert_config_unchanged()
+
+    def test_preflight_still_rejects_checkout_sha_mismatch(self):
+        with self.assertRaisesRegex(SystemExit, 'Checkout não corresponde'):
+            self.preflight('0'*40)
+        self.assert_config_unchanged()
+
+
 class RealGitCASTest(unittest.TestCase):
     def test_annotated_object_lease_rejects_competing_tag_on_same_commit(self):
         with tempfile.TemporaryDirectory() as directory:
