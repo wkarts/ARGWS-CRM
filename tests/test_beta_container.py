@@ -180,6 +180,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertNotIn('workflow_dispatch', source)
         self.assertEqual(source.count('branches: [develop-beta]'), 2)
         self.assertIn('needs: [validate, build-push]', source)
+        self.assertEqual(source.count("vars.ARGWS_BETA_PUBLICATION_ENABLED == 'true'"), 3)
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", source)
         for gate in ['check-release-version.sh', 'test_beta_container.py', 'native_migration_tracking.php',
                      'native_pwa.browser.cjs', 'smoke-beta-image.sh']:

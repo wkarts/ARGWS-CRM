@@ -3,11 +3,30 @@
 O workflow `beta-container.yml` é independente dos canais existentes e não cria
 Git tags, GitHub releases, deploys ou imagens de dependências.
 
-## Eventos e nomes
+## Decisão pendente e bloqueio preventivo
+
+Wallace está definindo se 4.0.3 permanece fixa durante o ciclo beta e a política
+para a tag versionada. A estratégia imutável abaixo é proposta conservadora,
+NÃO decisão final. Nenhuma publicação está autorizada nesta PR.
+
+Preflight e jobs de push/publicação exigem a variável de repositório
+`ARGWS_BETA_PUBLICATION_ENABLED` igual a `true`; ausente ou diferente disso, não
+executam. A variável não foi habilitada por este trabalho. Não habilitar até
+concluir a decisão e revisar a implementação. Gates e builds de PR permanecem
+ativos, sem login de escrita. Não há bypass da validação de versão.
+
+A PR #57 foi mesclada externamente antes desta infraestrutura; esta continuação
+parte do merge `b693149f22b1681fdc38ebd941f0b8a8c9a4ab1e`. A base já contém 4.0.3.
+AGENTS.md e CONTRIBUTING.md exigem próximo ID inclusive para CI: manter 4.0.3
+nesta PR deixa o gate do núcleo reprovado por contrato. O teste explícito de delta
+somente CI confirma essa exigência. Não foi implementada exceção nem incremento
+presumido. A decisão do ciclo beta precisa resolver esse conflito antes do merge.
+
+## Eventos e nomes propostos (após autorização e habilitação)
 
 - PR para `develop-beta`: validações e build/smoke em linux/amd64 e linux/arm64,
   `push: false`, sem login GHCR e sem permissão packages:write nos jobs de PR.
-- Push em `develop-beta` (inclusive futuro merge autorizado): validação, preflight,
+- Push em `develop-beta`, somente com publicação habilitada (inclusive futuro merge autorizado): validação, preflight,
   build por digest em ambas as arquiteturas, smoke de cada imagem e publicação.
 - Sem gatilho por tag Git ou workflow_dispatch. Criar uma tag não publica o beta.
 - A versão é lida de VERSION e validada contra migration, constante e distribuição.
@@ -17,7 +36,7 @@ Git tags, GitHub releases, deploys ou imagens de dependências.
 
 ## Gates e preservação
 
-32 testes existentes de versão/empacotamento, contratos do publicador, tracking
+Testes existentes de versão/empacotamento, contratos do publicador, tracking
 nativo descartável, branding, HTTP PWA e Chromium precedem os builds. Os smokes
 leem versão/migration/manifesto/ícones dentro de cada imagem, com entrypoint PHP
 explícito e rede desabilitada, sem iniciar provisionamento ou acessar banco.

@@ -235,6 +235,14 @@ class NativeReleaseGitTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
             POLICY.check_delta(self.root, self.base, head)
 
+    def test_ci_only_without_core_increment_fails(self):
+        target = self.root / '.github/workflows/ci-only.yml'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('name: infrastructure-only\n')
+        head = self.commit('ci: infrastructure change without product code')
+        with self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
+            POLICY.check_delta(self.root, self.base, head)
+
     def test_history_edit_and_mode_change_fail(self):
         self.advance()
         old = self.root / POLICY.migration_path(393)
