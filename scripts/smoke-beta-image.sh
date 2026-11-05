@@ -4,7 +4,7 @@ set -euo pipefail
 # Explicit entrypoint: never start the provisioner or connect to a CRM database.
 docker run --rm --network none --entrypoint php -e EXPECTED_VERSION="$BETA_VERSION" "$BETA_IMAGE" -r '
 $root="/app/";
-define("BASEPATH", $root."system/"); define("APPPATH", $root."application/");
+define("FCPATH", $root); define("BASEPATH", $root."system/"); define("APPPATH", $root."application/");
 if (trim(file_get_contents($root."VERSION")) !== getenv("EXPECTED_VERSION")) exit(1);
 require $root."application/config/constants.php";
 if (ARGWS_VERSION !== getenv("EXPECTED_VERSION")) exit(2);
