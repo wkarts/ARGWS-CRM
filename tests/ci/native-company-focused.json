@@ -2908,6 +2908,10 @@
     [
       "node",
       "tests/native_company/task_checklist_command.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_mobile_layout.browser.cjs"
     ]
   ]
 }
