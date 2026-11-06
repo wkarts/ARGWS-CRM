@@ -107,7 +107,7 @@ final class InvoicePaymentWriter
     }
 
     /** Native invoice form: persist the selected, company-owned offline mode with the receipt. */
-    public function recordCompanyManualWithMode($issuer,$actor,$invoice,array $input,string $requestKey,$mode,string $modeRevision,bool $noticeRequested,?string $invoiceRevision=null): int
+    public function recordCompanyManualWithMode($issuer,$actor,$invoice,array $input,string $requestKey,$mode,string $modeRevision,bool $noticeRequested,?string $invoiceRevision=null,?\CompanyAsaasPartialManualSource $asaasPartial=null): int
     {
         require_once __DIR__.'/NativeCompanyPaymentModes.php';
         require_once __DIR__.'/NativeCompanyPaymentNoticeSchema.php';
@@ -119,7 +119,8 @@ final class InvoicePaymentWriter
         $modes=new \NativeCompanyPaymentModes($this->db,$prefix);
         if($invoiceRevision!==null&&$this->db->table_exists($prefix.'company_invoice_native_relations'))$originsRevision=['company_invoice_native_relations'];else $originsRevision=[];
         $tables=$this->nativeManualModeTables($invoiceRevision!==null);
-        $work=function()use($issuer,$actor,$invoice,$input,$requestKey,$mode,$modeRevision,$noticeRequested,$invoiceRevision,$prefix,$origins,$modes):int{
+        if($asaasPartial!==null){if($this->nativeBatchContext!==null)throw new \DomainException('company_payment_batch_invalid');$tables=array_values(array_unique(array_merge($tables,$asaasPartial->tables())));}
+        $work=function()use($issuer,$actor,$invoice,$input,$requestKey,$mode,$modeRevision,$noticeRequested,$invoiceRevision,$prefix,$origins,$modes,$asaasPartial):int{
             $check=function()use($issuer,$actor,$invoice,$mode,$modeRevision,$prefix,$modes):array{
                 $selected=$modes->get($issuer,$actor,$mode,'invoices',false);
                 if(!hash_equals($selected['revision'],$modeRevision))throw new \DomainException('native_payment_mode_stale');
@@ -134,7 +135,9 @@ final class InvoicePaymentWriter
             if($invoiceRevision!==null&&!\IssuerStorage::query($this->db,'SELECT request_key FROM '.$prefix.'company_payment_receipts WHERE request_key=? FOR UPDATE',[$requestKey])->row_array()){
                 require_once __DIR__.'/CompanyInvoices.php';if(!hash_equals((new \CompanyInvoices($this->db,$prefix))->revision($issuer,$actor,$invoice),$invoiceRevision))throw new \DomainException('company_invoice_stale');
             }
-            $id=$this->companyReceiptLocked($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins,false);
+            if($asaasPartial!==null)$asaasPartial->claim($this->db,$prefix,$issuer,$actor,$invoice,$requestKey,$amount,$hash);
+            $id=$this->companyReceiptLocked($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$asaasPartial===null?$origins:[],false);
+            if($asaasPartial!==null)$asaasPartial->applied($this->db,$prefix,$issuer,$actor,$invoice,$requestKey,$id,$hash);
             $intent=\IssuerStorage::query($this->db,'SELECT * FROM '.$prefix.'company_payment_notice_intents WHERE request_key=? FOR UPDATE',[$requestKey])->row_array();
             $expected=['request_key'=>$requestKey,'issuer_id'=>$issuer,'actor_id'=>$actor,'invoice_id'=>$invoice,'payment_id'=>$id,'email_requested'=>$noticeRequested?1:0,'sms_requested'=>$noticeRequested?1:0,'email_status'=>$noticeRequested?'needs_review':'suppressed','sms_status'=>$noticeRequested?'unavailable':'suppressed'];
             if(!$intent){$fields=$expected+['created_at'=>gmdate('Y-m-d H:i:s')];\IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'company_payment_notice_intents (`'.implode('`,`',array_keys($fields)).'`) VALUES('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));$intent=\IssuerStorage::query($this->db,'SELECT * FROM '.$prefix.'company_payment_notice_intents WHERE request_key=?',[$requestKey])->row_array();

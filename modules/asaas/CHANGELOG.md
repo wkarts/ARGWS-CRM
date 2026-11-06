@@ -1,5 +1,11 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.8 — 2026-11-06
+
+- Recebimento manual parcial pelo formulário nativo: consulta canônica, meio selecionado, saldo, ACL e prova histórica; recibo, diário e intenção de notificação atômicos. A cobrança externa permanece aberta pelo valor original.
+- Retry sem nova chamada externa, concorrência e rollback testados em MySQL. Recebimento integral por provider após parcela exige conciliação, sem baixa duplicada.
+- Migration168 NOOP. Quitação integral/dinheiro-remover, reversão de parcelas e edição/exclusão remota ainda pendentes; não confundir este fluxo com pós-reembolso167.
+
 ## 1.6.7 — 2026-11-06
 
 - Cancelamento local e novo recebimento manual pós-reembolso aceitam sucessores somente após validar toda a cadeia de recriações concluídas, provas e ausência de fundos/eventos adversos nos predecessores.

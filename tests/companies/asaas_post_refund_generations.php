@@ -28,6 +28,9 @@ function postRefundGenerationRace(string $operation,array $arguments,bool $revok
  }finally{if($db->pdo->inTransaction())$db->trans_rollback();if($revoke)$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");}
 }
 require __DIR__.'/asaas_origin_generations.php';
+// Parent assertions have consumed their SQL diagnostics. Keep database state and
+// all checks, but release the accumulated trace before the next full cycles.
+$db->queries=[];
 if($db->driver()!=='mysql')return;
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyRefunds.php';
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/ConfirmedFullRefund.php';

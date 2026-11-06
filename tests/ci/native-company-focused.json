@@ -3091,6 +3091,10 @@
     [
       "php",
       "tests/companies/asaas_post_refund_generations.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_partial_manual.php"
     ]
   ],
   "browser": [

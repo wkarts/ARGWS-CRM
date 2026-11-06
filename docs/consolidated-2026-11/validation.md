@@ -597,3 +597,23 @@ A reprodução corrigida de `sales_mutations_controller.php` passou em MySQL:
 CSRF e ACL; o assert de tradução utiliza o catálogo PT-BR real. Nenhum gate ou
 assert anterior foi removido. Inventários de isolamento e superfícies conferidos;
 operational_rollout continua blocked pelas lacunas gerais já registradas.
+
+
+## Continuação168: parcial manual e memória do focused
+
+- `php -d memory_limit=128M tests/companies/asaas_partial_manual.php`:30
+  verificações adicionais MySQL aprovadas sobre118 da cadeia de origem; chamadas
+  Asaas simuladas. Formulário/ação de serviços reais, não sessão HTTP autenticada.
+- `php -d memory_limit=128M tests/companies/asaas_post_refund_generations.php`:
+  cadeia69 +30 verificações de sucessores/pós-reembolso passaram sob o limite do CI.
+  A falha do job127894118241 em177b5887 era memória128MiB: o fixture retinha os
+  traces SQL da cadeia já concluída. A correção libera apenas esse diagnóstico
+  antes dos novos ciclos; mantém banco, asserts, concorrência e limite de memória.
+- `php tests/companies/native_invoice_selected_payment.php`: regressão MySQL
+  do formulário/meio manual/revisão/rollback/replay aprovada.
+- `php tests/asaas_module_migrations.php`:286 verificações MySQL do runner,
+  inclusive falha de tracking168, retry e replay. Migration168 NOOP.
+- Inventário UI estático:16 views/6 controllers; não comprova navegador.
+
+Sem merge, deploy, dados financeiros reais, SDK ou coleta de cartão.
+Integral manual, exclusão/edição remota e paridade R01–R11 seguem incompletos.

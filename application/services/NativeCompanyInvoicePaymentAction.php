@@ -8,7 +8,7 @@ require_once __DIR__.'/InvoicePaymentWriter.php';
 /** Original payment-form composition; requires a native POST/CSRF boundary at its caller. */
 final class NativeCompanyInvoicePaymentAction
 {
-    public function __construct(private $db,private string $prefix){}
+    public function __construct(private $db,private string $prefix,private $transport=null){}
     public function submit(int $issuer,int $actor,array $input,string $baseUrl,callable $decrypt):array
     {
         $keys=['invoiceid','amount','date','paymentmode','transactionid','note','do_not_send_email_template','do_not_redirect','_native_payment_key','_native_payment_mode_revision','_native_invoice_revision'];
@@ -26,7 +26,18 @@ final class NativeCompanyInvoicePaymentAction
             if($prior)$requested=(int)$prior['email_requested']===1;
             else{$template=CompanyEmailTemplates::findForIssuer($this->db,$this->prefix,$issuer,'invoice-payment-recorded','portuguese_br');$requested=$template&&(int)$template->active===1;}
         }
-        $payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyManualWithMode($issuer,$actor,$id,$payload,$input['_native_payment_key'],$input['paymentmode']??null,$input['_native_payment_mode_revision'],$requested,$input['_native_invoice_revision']);
+        $partial=null;
+        if($this->db->table_exists($this->prefix.'asaas_payment_origins')){
+            require_once __DIR__.'/CompanyAsaasPartialManualSource.php';
+            $origins=IssuerStorage::query($this->db,'SELECT id FROM '.$this->prefix.'asaas_payment_origins WHERE invoice_id=? AND issuer_id=?'.\Asaas\CompanyOriginGenerations::predicate($this->db,$this->prefix),[$id,$issuer])->result_array();
+            if($origins){
+                if(count($origins)!==1)throw new DomainException('company_payment_provider_review_required');
+                $origin=(int)$origins[0]['id'];
+                if(!$receipt)(new \Asaas\CompanyService($this->db,$this->prefix))->observe($issuer,$actor,$origin,$decrypt,$this->transport);
+                $partial=new CompanyAsaasPartialManualSource($this->db,$this->prefix,$origin);
+            }
+        }
+        $payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyManualWithMode($issuer,$actor,$id,$payload,$input['_native_payment_key'],$input['paymentmode']??null,$input['_native_payment_mode_revision'],$requested,$input['_native_invoice_revision'],$partial);
         $email=$requested?'pending':'suppressed';$queued=0;
         if($requested){
             // A committed payment must never be reported as rolled back when delivery

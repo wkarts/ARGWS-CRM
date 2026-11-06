@@ -414,6 +414,12 @@ final class CompanyService
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');$source=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
     }
+    /** Read-only authority for the closed native partial-manual writer. */
+    public function manualSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());
+        $this->authorize($issuer,$actor,'settle');return $this->source($issuer,$origin);
+    }
     /** Refund-only private composition. This grants no remote operation by itself. */
     public function refundSourceInOwnedTransaction(int $issuer,int $actor,int $origin,bool $write=true):array
     {

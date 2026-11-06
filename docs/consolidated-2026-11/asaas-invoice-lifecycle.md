@@ -138,7 +138,7 @@ preservar dados/marcadores e usar correção progressiva ou restauração consis
 anterior a qualquer novo efeito remoto, com conciliação. Nunca apagar gerações nem
 recriar a constraint antiga sobre dados novos para simular reversão.
 
-## Recebimento manual — contrato verificado, implementação ainda pendente
+## Recebimento manual — contrato verificado e limites do integral
 
 Reconsulta oficial em6/11/2026: POST payments/{id}/receiveInCash recebe paymentDate,
 value e notifyCustomer. É baixa de pagamento externo, sem crédito de saldo Asaas;
@@ -148,8 +148,8 @@ gera PAYMENT_RECEIVED_IN_CASH_UNDONE; não é devolução de Pix/boleto/cartão.
 
 A referência somente leitura1.4.8 acumula o valor manual anterior ao quitar,
 mantém cobrança aberta no parcial e distingue remover de confirmar dinheiro.
-Essas regras não foram conectadas ao writer multiempresa atual: ele bloqueia
-origens de provider em recebimento manual, e o normalizador Asaas atual exige
+O parcial foi conectado ao writer na168, descrita abaixo. O integral continua
+bloqueado; o normalizador Asaas atual exige
 billing_type compatível com o snapshot. Não basta permitir receiveInCash no
 transporte: isso poderia fazer o webhook virar uma segunda baixa ou aceitar uma
 fonte que mudou de natureza. É necessária autoridade específica, política explícita
@@ -179,3 +179,35 @@ Migration167 NOOP: nenhuma DDL, adoção, apagamento, alteração de histórico 
 remota. Downgrade para166 volta a recusar essa composição; não reverter pagamentos
 ou marcadores automaticamente. Permanece necessária a validação HTTP autenticada
 e a homologação da instalação. Os testes usam somente transporte simulado.
+
+
+## Parcial manual nativo — módulo168
+
+O formulário original de recebimentos usa o meio manual selecionado e permitido
+na fatura. Para origem nominal Asaas PIX/BOLETO, consulta carteira, cliente e
+cobrança por GET antes de registrar. A autoridade fechada
+`CompanyAsaasPartialManualSource` valida empresa, ACL, origem ativa, cadeia de
+predecessores, snapshot, revisão de conta, prova canônica íntegra e recente
+(PENDING/OVERDUE), ausência de operações concorrentes e saldo. Origens da ponte
+com política manual_only continuam excluídas deste fluxo independente.
+
+O valor deve ser estritamente menor que o saldo atual. Recibo nativo, diário,
+auditoria vinculada à prova e intenção de notificação são atômicos. Retry usa o
+mesmo recibo e revalida permissão; não faz outra consulta externa. Novas parcelas
+exigem nova prova recente e histórico de parcelas reconhecido. Nenhum POST,
+DELETE, receiveInCash, redução remota de valor ou baixa remota é executado.
+A cobrança externa permanece aberta pelo valor original, explicitado no formulário.
+Se houver pagamento posterior do provedor, o writer continua exigindo conciliação
+em vez de somar o valor integral aos parciais já recebidos.
+
+Integral, política configurável dinheiro/remover, conciliação do saldo após
+pagamento remoto, reversão de parcelas, exclusão de fatura e edição remota
+permanecem pendentes. Não apresentar o parcial como ciclo completo. Migration168
+é NOOP; preserva histórico e usa os ledgers existentes. Após uso, suspender
+writers em incidente e corrigir adiante; não apagar recibos/auditoria nem reduzir
+marcadores. Reverter apresentação não desfaz recebimentos.
+
+Validação:30 verificações adicionais MySQL, incluindo formulário/ação nativos,
+replay sem HTTP novo, rollback tardio, saldo, prova vencida, duas corridas reais
+(repetição e revogação de ACL) e bloqueio de baixa integral posterior. Provedor
+simulado; não é homologação HTTP autenticada ou financeira.

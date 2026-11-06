@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "d0d1415df65433aa49e20bc75d957399b2f51fa329bece40025c4564a22645cb",
+    "source_manifest_sha256": "9989c1b844977e5b9aa2f0718d4293f59fbd6cb33ee460704362a769bb27debb",
     "counts": {
         "modules": 38,
-        "source_files": 4838,
+        "source_files": 4840,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.6.7",
+            "version": "1.6.8",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26247,7 +26247,7 @@
         {
             "name": "asaas_company_events",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "asaas_company_fee_expenses",
@@ -26262,7 +26262,7 @@
         {
             "name": "asaas_company_jobs",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 19
         },
         {
             "name": "asaas_company_origin_meta",
@@ -26297,7 +26297,7 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 16
+            "reference_count": 18
         },
         {
             "name": "asaas_company_receipts",
@@ -26322,7 +26322,7 @@
         {
             "name": "asaas_company_refund_requests",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 13
         },
         {
             "name": "asaas_company_remote_operations",
@@ -26347,7 +26347,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 65
+            "reference_count": 69
         },
         {
             "name": "asaas_payments_map",
@@ -27287,7 +27287,7 @@
         {
             "name": "company_payment_receipts",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 21
         },
         {
             "name": "company_portal_",
@@ -28992,7 +28992,7 @@
         {
             "name": "invoicepaymentrecords",
             "state": "not_verified",
-            "reference_count": 142
+            "reference_count": 143
         },
         {
             "name": "invoicepaymentsmodes",
@@ -29022,7 +29022,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 285
+            "reference_count": 286
         },
         {
             "name": "issuers_client_links",
@@ -29472,7 +29472,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 119
+            "reference_count": 120
         },
         {
             "name": "mrp_manufacturing_orders",

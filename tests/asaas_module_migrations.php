@@ -260,6 +260,8 @@ verify((string)(new App_module_migration('asaas'))->version('165')==='165','165 
 foreach($before156 as $table=>$rows){$actual=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);if($table==='asaas_payment_origins')foreach($actual as &$row){verify((int)$row['active_slot']===1,'165 preserves active legacy origin');unset($row['active_slot']);}unset($row);verify($actual===$rows,'165 preserves data: '.$table);}
 $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('166')===false,'166 tracking failure rejected');$db->failQuery=null;
 verify((string)(new App_module_migration('asaas'))->version('166')==='166','166 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('166')===true,'166 replay no-op');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'167 tracking failure rejected');$db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='167','167 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'167 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('167')===false,'167 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('167')==='167','167 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('167')===true,'167 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'168 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->to_latest()==='168','168 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'168 replay no-op');
 echo "OK: {$n} native module migration MySQL assertions.\n";
