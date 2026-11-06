@@ -10,4 +10,8 @@ $c=new Settings();$admin=false;$c->save();adminOk(end($errors)===403);$admin=tru
 $c->input->verb='POST';$c->input->values=['pige_csrf'=>'wrong'];$c->save();adminOk(end($errors)===403);
 $c->input->values=['pige_csrf'=>str_repeat('a',64),'revision'=>'1','secret'=>str_repeat('synthetic-',5)];$c->save();adminOk(end($alerts)==='danger'); // Rotation confirmation required before any DB.
 $c->input->values=['pige_csrf'=>str_repeat('a',64),'actor_id'=>['invalid']];$c->mapping();adminOk(end($alerts)==='danger');
+$admin=false;$c->disable();adminOk(end($errors)===403);$admin=true;
+$c->input->verb='GET';$c->disable();adminOk(end($errors)===405);
+$c->input->verb='POST';$c->input->values=['pige_csrf'=>'wrong'];$c->disable();adminOk(end($errors)===403);
+$c->input->values=['pige_csrf'=>str_repeat('a',64),'connection_key'=>'synthetic','revision'=>'invalid'];$c->disable();adminOk(end($alerts)==='danger');
 echo "PIGE admin guards: synthetic controller checks only\n";
