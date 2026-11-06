@@ -1209,7 +1209,7 @@
       "evidence": ""
     },
     "application/helpers/menu_helper.php": {
-      "sha256": "f6418259a053ff6bdd42418c83f26743c592f105cd7c0060949b29af867af6e9",
+      "sha256": "825abaab426846f91e86d2aeff030ccae0a23ee2763bdd372f160d9281addf7a",
       "categories": [
         "invoice_table"
       ],
@@ -4670,7 +4670,7 @@
       "evidence": ""
     },
     "application/services/NativeAdminMenuCatalog.php": {
-      "sha256": "a14413493b7d19f6ebcb096fbf1a9bf667615014fbc0c1f46ce3de0a16cc58ca",
+      "sha256": "cddcb5b6a1fcbe775a34d9275064a7477ab09b59502316136c7a04ddb9746a8e",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -4695,12 +4695,12 @@
       "evidence": ""
     },
     "application/services/NativeCompanyAdminPresentation.php": {
-      "sha256": "149bbc78889a3ef8d9c1457fe7eb941ad9d446276b5590b2da7113e3738ea541",
+      "sha256": "600da1abf78646d8971f2507d78f1b832160afd9afe0f8962ba604341a95701b",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        350
+        351
       ],
       "state": "unreviewed",
       "evidence": ""

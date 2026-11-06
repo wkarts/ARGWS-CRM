@@ -43,6 +43,7 @@ final class NativeCompanyAdminPresentation
         $installationMenu=$issuer!==null && $context->isPrimary() && $acl->administrative($issuer,$actor);
         foreach(NativeAdminMenuCatalog::entries() as $entry) {
             if($issuer === null) { continue; }
+            if (!empty($entry['installation_only']) && !$installationMenu) { continue; }
             if ($entry['route'] !== null && !$installationMenu && !CompanyRequestScope::nativeRouteAllowed($ci,$entry['route'])) { continue; }
             // The original Departments controller is administrator-only. Do not
             // advertise its native route to ticket viewers who cannot enter it.

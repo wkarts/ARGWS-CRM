@@ -93,6 +93,21 @@ check(!isset($data['sidebar_menu']['subscriptions']),'unauthorized/unimplemented
 CompanyRequestScope::$primary=true;NativeCompanyAdminPresentation::prepare($ci);$primaryMenu=NativeCompanyAdminPresentation::current($ci);
 check(isset($primaryMenu['setup_menu']['custom-fields'],$primaryMenu['setup_menu']['email-templates'],$primaryMenu['setup_menu']['roles']),'primary administrator retains original installation definitions');
 check(count(array_filter($primaryMenu['setup_menu']['finance']['children'],static fn($item)=>$item['slug']==='currencies'))===1,'primary currency settings preserved');
+// A setup drawer is rendered with the current page; its entries must not depend
+// on whether the administrator last visited the bank or the dashboard.
+$originalRouter=$ci->router;
+foreach(['banco_brasil','dashboard','settings','banco_brasil'] as $controller){
+ $ci->router=new class($controller){private string $controller;function __construct($controller){$this->controller=$controller;}function fetch_class(){return $this->controller;}function fetch_method(){return 'index';}};
+ NativeCompanyAdminPresentation::prepare($ci);$menu=NativeCompanyAdminPresentation::current($ci)['setup_menu'];
+ check(isset($menu['modules'])&&$menu['modules']['name']==='Recursos'&&$menu['modules']['href']===admin_url('modules')&&$menu['modules']['position']===35,'resource management retains native label, destination and order after '.$controller);
+ IssuerResourceAccess::$administrative=false;NativeCompanyAdminPresentation::prepare($ci);
+ check(!isset(NativeCompanyAdminPresentation::current($ci)['setup_menu']['modules']),'nonadministrator cannot inherit resource management after '.$controller);
+ IssuerResourceAccess::$administrative=true;
+ CompanyRequestScope::$primary=false;NativeCompanyAdminPresentation::prepare($ci);
+ check(!isset(NativeCompanyAdminPresentation::current($ci)['setup_menu']['modules']),'secondary administrator cannot inherit installation resource management after '.$controller);
+ CompanyRequestScope::$primary=true;
+}
+$ci->router=$originalRouter;
 CompanyRequestScope::$primary=false;NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);
 check(!isset($data['setup_menu']['custom-fields']),'secondary cannot inherit installation-only pages');
 $app=NativeCompanyAdminPresentation::appConfig($ci);
