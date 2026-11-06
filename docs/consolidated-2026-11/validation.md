@@ -117,3 +117,10 @@ CI do incremento de reajustes `05e8030038212dc959abaae5a928c0cd990d4ff7`:
 A primeira rodada executou os testes com sucesso, mas recusou a limpeza porque o
 nome do schema não estava na lista segura do harness. O workflow passou a usar
 `issuer_tests`, já permitido; a proteção de limpeza não foi alterada.
+
+## Lotes abertos CNAB240 / módulo138
+
+- MySQL8.4: `banco_brasil_open_batches_mysql.php` —251 verificações cumulativas, incluindo instalação/upgrade/replay/tracking, agrupamento, retry, encoder falho e arquivo legado.
+- MySQL8.4: `banco_brasil_origination_concurrency.php` —260 verificações cumulativas; dois processos com espera observada no lock, emissão/download e revogação.
+- PHP: module_version54; admin98, com codec118/store56 como pré-requisitos.
+- Não é homologação bancária; CNAB400 e boleto não são validados por esses resultados.

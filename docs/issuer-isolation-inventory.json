@@ -8948,17 +8948,17 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "028b0760a77feec84a386cb5768f2db56e3a2e55f9bb56ca81735884d048b174",
+      "sha256": "46da710373d69b2a3d9519c197046e52a7cec100ea977dc6e0f6a180b5ee6083",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        40,
-        45,
-        127,
-        129,
-        133
+        41,
+        47,
+        142,
+        144,
+        148
       ],
       "state": "unreviewed",
       "evidence": ""

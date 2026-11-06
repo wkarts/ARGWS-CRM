@@ -9,6 +9,7 @@ require_once __DIR__.'/LayoutCatalog.php';
 require_once __DIR__.'/Cnab240Generator.php';
 require_once __DIR__.'/Fields400.php';
 require_once __DIR__.'/OriginationSchema.php';
+require_once __DIR__.'/OpenBatchSchema.php';
 require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
 require_once APPPATH.'services/issuers/InvoiceIssuerDocuments.php';
@@ -42,7 +43,8 @@ final class Origination
     private function transaction(callable $work)
     {
         OriginationSchema::assertValid($this->db,$this->prefix);
-        $tables=['issuers_audit','issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
+        OpenBatchSchema::assertValid($this->db,$this->prefix);
+        $tables=['bb_batch_requests','issuers_audit','issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
@@ -113,6 +115,8 @@ final class Origination
         $hash=hash('sha256',json_encode([$connection,$binding,$date,$normalized],JSON_THROW_ON_ERROR));
         $id=$this->transaction(function()use($issuer,$actor,$connection,$binding,$date,$normalized,$hash,$requestKey):int{
             $this->authorize($issuer,$actor,'generate',true);[$c,$a,$layout]=$this->connection($issuer,$connection,$binding);
+            $command=$this->rows('SELECT batch_id,payload_hash FROM '.$this->prefix.'bb_batch_requests WHERE scope_key=? AND request_key=? FOR UPDATE',[$a->scope->key(),$requestKey])[0]??null;
+            if($command){if(!hash_equals($command['payload_hash'],$hash))throw new \DomainException('bb_batch_request_conflict');$this->load($issuer,(int)$command['batch_id']);return (int)$command['batch_id'];}
             $old=$this->rows('SELECT id,payload_hash FROM '.$this->prefix.'bb_batches WHERE scope_key=? AND idempotency_key=? FOR UPDATE',[$a->scope->key(),$requestKey])[0]??null;
             if($old){if(!hash_equals($old['payload_hash'],$hash))throw new \DomainException('bb_batch_request_conflict');return (int)$old['id'];}
             (new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'cnab');
@@ -121,9 +125,20 @@ final class Origination
             $declared=json_decode($contract['declaration_json'],true,16,JSON_THROW_ON_ERROR);
             $wireName=$declared['beneficiary_name']??$c['issuer_name'];Fields::alpha($wireName,30);
             $a=new Agreement($a->scope,$a->taxId,$wireName,$a->variation,$a->wallet);
+            // Contract/profile/account/environment are part of compatibility, never invoice proximity.
+            $compatible=hash('sha256',json_encode([$issuer,$c['configuration_hash'],$a->scope->key(),$binding,$layout['profile_hash'],$contract['id'],$contract['declaration_hash']],JSON_THROW_ON_ERROR));
+            $open=$this->rows('SELECT DISTINCT b.* FROM '.$this->prefix.'bb_batches b JOIN '.$this->prefix.'bb_batch_requests r ON r.batch_id=b.id WHERE b.issuer_id=? AND r.compatibility_hash=? AND b.generation_state=? AND b.delivery_state=? ORDER BY b.id DESC LIMIT 1',[$issuer,$compatible,'open','not_submitted'])[0]??null;
+            if($open){
+                [$open,$existing]=$this->load($issuer,(int)$open['id']);
+                if($open['content']!==''||$open['content_hash']!==hash('sha256','')||$open['scope_key']!==$a->scope->key()||(int)$open['connection_id']!==$connection||(int)$open['layout_binding_id']!==$binding)throw new \DomainException('bb_batch_corrupt');
+                foreach($existing as $snapshot)if((int)$snapshot['contract_id']!==(int)$contract['id']||$snapshot['connection']!==$c)throw new \DomainException('bb_batch_corrupt');
+                if(count($existing)+count($normalized)>100)$open=null;
+            }
+            // The first emission fixes the file date; later emissions retain their own invoice dates.
+            if($open)$date=$existing[0]['generation_date'];
             $counter=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[self::bankNamespace($a)])[0]??null;
-            if(!$counter||(int)$counter['issuer_id']!==$issuer||$counter['beneficiary_tax_id']!==$a->taxId||(int)$counter['next_number']> (int)$counter['last_number']-count($normalized)+1||(int)$counter['next_file']>999999)throw new \DomainException('bb_number_range_exhausted');
-            $number=(int)$counter['next_number'];$file=(int)$counter['next_file'];$snapshots=[];$wire=[];
+            if(!$counter||(int)$counter['issuer_id']!==$issuer||$counter['beneficiary_tax_id']!==$a->taxId||(int)$counter['next_number']> (int)$counter['last_number']-count($normalized)+1||(!$open&&(int)$counter['next_file']>999999))throw new \DomainException('bb_number_range_exhausted');
+            $number=(int)$counter['next_number'];$file=$open?(int)$open['file_sequence']:(int)$counter['next_file'];$snapshots=[];$wire=[];
             $acl=new \IssuerResourceAccess($this->db,$this->prefix);$docs=new \InvoiceIssuerDocuments($this->db,$this->prefix,$actor,static fn($id,$staff,$cap)=>$id===$issuer&&$staff===$actor&&$acl->can($issuer,$actor,'invoices','view'));
             foreach($normalized as $invoice=>$payer){
                 $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,i.currency currency_id FROM '.$this->prefix.'invoices i WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
@@ -140,15 +155,16 @@ final class Origination
             }
             // Validate all fields before a durable reservation. These bytes never leave this scope.
             (new Cnab240Generator())->generate($a,$file,$date,$wire);
-            \IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_number_reservations SET next_number=?,next_file=? WHERE bank_namespace=?',[$number,$file+1,self::bankNamespace($a)]);
-            $batch=$this->insert('bb_batches',['issuer_id'=>$issuer,'connection_id'=>$connection,'scope_key'=>$a->scope->key(),'idempotency_key'=>$requestKey,'payload_hash'=>$hash,'layout_id'=>Agreement::LAYOUT_ID,'layout_source_hash'=>Agreement::SOURCE_SHA256,'layout_binding_id'=>$binding,'file_sequence'=>$file,'content_hash'=>hash('sha256',''),'content'=>'','generation_state'=>'reserved','delivery_state'=>'not_submitted','financial_state'=>'not_applied','created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s')]);
+            \IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_number_reservations SET next_number=?,next_file=? WHERE bank_namespace=?',[$number,$open?(int)$counter['next_file']:$file+1,self::bankNamespace($a)]);
+            $batch=$open?(int)$open['id']:$this->insert('bb_batches',['issuer_id'=>$issuer,'connection_id'=>$connection,'scope_key'=>$a->scope->key(),'idempotency_key'=>$requestKey,'payload_hash'=>$hash,'layout_id'=>Agreement::LAYOUT_ID,'layout_source_hash'=>Agreement::SOURCE_SHA256,'layout_binding_id'=>$binding,'file_sequence'=>$file,'content_hash'=>hash('sha256',''),'content'=>'','generation_state'=>'open','delivery_state'=>'not_submitted','financial_state'=>'not_applied','created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s')]);
             if($batch<1)throw new \RuntimeException('issuer_bb_write_unconfirmed');
+            $this->insert('bb_batch_requests',['issuer_id'=>$issuer,'batch_id'=>$batch,'scope_key'=>$a->scope->key(),'request_key'=>$requestKey,'payload_hash'=>$hash,'compatibility_hash'=>$compatible,'created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s')]);
             foreach($snapshots as $snapshot){$snapshot['generation_date']=$date;$json=json_encode($snapshot,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$t=$snapshot['title'];
                 $origin=$this->insert('bb_origins',['invoice_id'=>$snapshot['invoice']['id'],'issuer_id'=>$issuer,'connection_id'=>$connection,'account_id'=>$a->scope->accountId,'environment'=>$a->scope->environment,'agreement_number'=>$a->scope->agreement,'provider'=>'banco_brasil','channel'=>'cnab240','layout_binding_id'=>$binding,'remote_id'=>$a->ourNumber($t['sequence']),'control_reference'=>$t['control'],'scope_key'=>$a->scope->key(),'state'=>'reserved','active_slot'=>1,'payload_hash'=>hash('sha256',$json),'created_at'=>date('Y-m-d H:i:s')]);
                 if($origin<1)throw new \RuntimeException('issuer_bb_write_unconfirmed');$this->insert('bb_origin_snapshots',['origin_id'=>$origin,'layout_binding_id'=>$binding,'contract_id'=>$contract['id'],'snapshot_json'=>$json]);$this->insert('bb_batch_origins',['batch_id'=>$batch,'origin_id'=>$origin]);
             }
             $confirmed=$this->rows('SELECT next_number,next_file FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=?',[self::bankNamespace($a)])[0]??[];
-            if((int)($confirmed['next_number']??0)!==$number||(int)($confirmed['next_file']??0)!==$file+1)throw new \RuntimeException('issuer_bb_write_unconfirmed');
+            if((int)($confirmed['next_number']??0)!==$number||(int)($confirmed['next_file']??0)!==($open?(int)$counter['next_file']:$file+1))throw new \RuntimeException('issuer_bb_write_unconfirmed');
             $this->audit($issuer,$connection,$actor,'numbers_reserved','batch',$batch);$this->authorize($issuer,$actor,'generate',true);return $batch;
         });
         $this->finish($issuer,$actor,$id);return $id;
@@ -179,7 +195,7 @@ final class Origination
     public function finish($issuer,$actor,$batch):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$batch=\IssuerPolicy::id($batch);$this->authorize($issuer,$actor,'generate',true);
-        [$b,$snapshots]=$this->load($issuer,$batch);if($b['generation_state']==='generated')return;
+        [$b,$snapshots]=$this->load($issuer,$batch);if(in_array($b['generation_state'],['generated','open'],true))return;
         $c=$snapshots[0]['connection'];$a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$snapshots[0]['beneficiary_name']??$c['issuer_name'],$c['variation'],$c['wallet']);
         try{
             $encode=$this->encoder??static fn($agreement,$sequence,$date,$titles)=>(new Cnab240Generator())->generate($agreement,$sequence,$date,$titles);
@@ -207,6 +223,18 @@ final class Origination
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$batch=\IssuerPolicy::id($batch);
         return $this->transaction(function()use($issuer,$actor,$batch):array{
             $this->authorize($issuer,$actor,'download',true);[$b,$snapshots]=$this->load($issuer,$batch);
+            if($b['generation_state']==='open'){
+                if($b['delivery_state']!=='not_submitted'||$b['content']!==''||$b['content_hash']!==hash('sha256',''))throw new \DomainException('bb_batch_corrupt');
+                $c=$snapshots[0]['connection'];$a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$snapshots[0]['beneficiary_name'],$c['variation'],$c['wallet']);
+                $encode=$this->encoder??static fn($agreement,$sequence,$date,$titles)=>(new Cnab240Generator())->generate($agreement,$sequence,$date,$titles);
+                $bytes=$encode($a,(int)$b['file_sequence'],$snapshots[0]['generation_date'],array_column($snapshots,'title'));self::validateBytes($bytes,count($snapshots));
+                // The issuer financial lock covers selection, encoding, persistence and first download.
+                \IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_batches SET content=?,content_hash=?,generation_state=? WHERE id=? AND issuer_id=?',[$bytes,hash('sha256',$bytes),'generated',$batch,$issuer]);
+                \IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_origins SET state='generated_not_submitted' WHERE id IN(SELECT origin_id FROM ".$this->prefix."bb_batch_origins WHERE batch_id=?)",[$batch]);
+                [$b]=$this->load($issuer,$batch);
+                if($b['content']!==$bytes||$b['content_hash']!==hash('sha256',$bytes))throw new \RuntimeException('issuer_bb_write_unconfirmed');
+                $this->audit($issuer,(int)$b['connection_id'],$actor,'remittance_frozen','batch',$batch);
+            }
             if($b['generation_state']!=='generated'||!hash_equals($b['content_hash'],hash('sha256',$b['content'])))throw new \DomainException('bb_batch_unavailable');self::validateBytes($b['content'],count($snapshots));
             if($b['delivery_state']==='not_submitted')\IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_batches SET delivery_state='downloaded' WHERE id=? AND issuer_id=?",[$batch,$issuer]);
             $this->audit($issuer,(int)$b['connection_id'],$actor,'remittance_downloaded','batch',$batch);$this->authorize($issuer,$actor,'download',true);
