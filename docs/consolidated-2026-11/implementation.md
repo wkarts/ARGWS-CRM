@@ -2,6 +2,14 @@
 
 **Entrega parcial em draft. Não atende integralmente o consolidado e não está pronta para merge/deploy.**
 
+Retomada após desconexão: arquivos locais preservados e comparados ao remoto8bcff568.
+Asaas1.5.6 confirmado emc3f169e7 é a fonte funcional vigente. A SDK fixada pela
+fonte foi consumida em172;173 adapta parâmetros/simulação de cartão por conta,
+174 acrescenta monitor local paginado. [Matriz específica e evidências](asaas-156-adaptation.md).
+Parâmetros ainda não alimentam captura/oferta parcelada. Monitor ainda não inclui
+consulta remota paginada/associação legada/lote de conciliação. Trânsito de dados
+de cartão continua aguardando decisão; a ampliação remota da SDK permanece pausada.
+
 ## Fonte e bases verificadas
 
 O contrato integral está em [contract.md](contract.md): 153446 bytes, 1713 linhas,
