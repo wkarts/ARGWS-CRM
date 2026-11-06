@@ -25,6 +25,18 @@ são enviados de volta ao navegador, persistidos em sessão, banco ou auditoria.
 fingerprint de idempotência inclui SHA-256 do comando, nunca o token em claro.
 O retorno bruto do pagamento também não é persistido.
 
+Restrição expressa do usuário: PAN/CVV não podem ser armazenados em banco, logs,
+sessão, cookies, localStorage, sessionStorage ou outros arquivos. Este fluxo não
+coleta esses campos. O token informado existe transitoriamente no campo de senha
+do navegador, no POST HTTPS ao CRM e na memória do processo durante o POST HTTPS
+ao Asaas; não é salvo como credencial reutilizável. O ledger persiste identificadores
+de origem/empresa/ator, revisão da conta, operação, prova, estado, códigos internos,
+datas, chave de idempotência e hash do comando (que inclui o token), sem o valor
+do token. Cookies de autenticação/CSRF nativos não recebem dados do cartão.
+Isso não constitui homologação PCI; configurações externas de proxy/APM não foram
+validadas e não devem capturar corpos dessas requisições. Tokenização segura e
+a experiência completa de cartão ainda precisam da implementação descrita nas lacunas.
+
 ## Persistência, concorrência e resultados desconhecidos
 
 A migration nativa 162 cria `asaas_company_card_payments`, com FK para origem,

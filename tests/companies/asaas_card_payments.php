@@ -40,4 +40,6 @@ essentialCheck($db->query("SELECT state FROM {$p}asaas_company_card_payments WHE
 $db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");$beforeRetry=count($cardCalls);
 essentialCheck($card->refresh($a,7,$origin3,$dec,$cardTransport)['state']==='observed'&&count($cardCalls)===$beforeRetry,'authorized recovery queries without resending card payment');
 $db->trans_begin();essentialThrows(fn()=>\Asaas\CompanyCardPaymentsSchema::ensure($db,$p),'asaas_card_schema_outer_transaction_denied','card migration refuses implicit commit in caller transaction');$db->trans_rollback();
+foreach(['asaas_company_card_payments','asaas_company_proofs','issuers_audit'] as $privateTable) essentialCheck(!str_contains(json_encode($db->query('SELECT * FROM '.$p.$privateTable)->result_array()),$token['creditCardToken']),'success/timeout/revocation does not persist card token in '.$privateTable);
+essentialCheck(!str_contains(json_encode($GLOBALS['essentialLogs']??[]),$token['creditCardToken']),'service outcomes never log the card token');
 echo 'Direct card token payments: '.$GLOBALS['essentialChecks'].' cumulative checks; simulated provider only.'.PHP_EOL;

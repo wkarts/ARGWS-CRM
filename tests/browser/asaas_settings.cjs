@@ -40,11 +40,14 @@ const server = http.createServer((req,res) => {
     assert.equal(await cardForm.locator('[name=creditCard], [name=cvv], [name=number]').count(),0);
     await cardForm.locator('[name=card_operation]').selectOption('payWithCard');
     await cardForm.locator('[name=card_token]').fill('synthetic-test-token');
+    const privateStorage = async () => ({cookies: await page.context().cookies(), storage: await page.evaluate(() => ({local: {...localStorage}, session: {...sessionStorage}}))});
+    assert.deepEqual(await privateStorage(), {cookies: [], storage: {local: {}, session: {}}});
     assert.equal(await cardForm.evaluate(f=>f.checkValidity()),false);
     await cardForm.locator('[name=confirm]').check();
     assert.equal(await cardForm.evaluate(f=>f.checkValidity()),true);
     await page.reload();await page.locator('#asaas-tab-card').click();
     assert.equal(await cardForm.locator('[name=card_token]').inputValue(),'');
+    assert.deepEqual(await privateStorage(), {cookies: [], storage: {local: {}, session: {}}});
     await page.locator('#asaas-tab-jobs').click();
     assert.equal(await page.locator('#jobs').isVisible(),true);
     assert.equal(await page.locator('#credentials').isVisible(),false);

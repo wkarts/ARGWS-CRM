@@ -3,7 +3,9 @@
 require __DIR__.'/native_expense_custom_fields.php';
 require_once APPPATH.'services/NativeCompanyExpenseOriginalForm.php';
 if(!function_exists('_l')){function _l($key,$values=null){return $key;}}
-foreach(NativeCompanyExpenseBillabilitySchema::definitions($p) as $table=>$parts)$db->query(preg_replace('/ CHARACTER SET [a-z0-9]+ COLLATE [a-z0-9_]+/','', 'CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB'));
+// MySQL must exercise the exact production DDL, including ascii_bin revisions.
+if($db->driver()==='mysql')NativeCompanyExpenseBillabilitySchema::ensure($db,$p);
+else foreach(NativeCompanyExpenseBillabilitySchema::definitions($p) as $table=>$parts)$db->query(preg_replace('/ CHARACTER SET [a-z0-9]+ COLLATE [a-z0-9_]+/','', 'CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB'));
 foreach(['contacts','contact_permissions'] as $table){
     if($db->table_exists($p.$table))continue;preg_match('/CREATE TABLE `tbl'.preg_quote($table,'/').'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$native,$match);
     $ddl=str_replace('`tbl'.$table.'`','`'.$p.$table.'`',$match[0]);$ddl=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$ddl);

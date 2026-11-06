@@ -22,11 +22,18 @@ $bCategory=$ex->saveCategory($b,7,'Directory B',hash('sha256','expense-index-b-c
 $db->query('INSERT INTO '.$p.'expenses_categories(id,name,description) VALUES(77,?,?)',['Historical category','Historical description preserved']);
 $db->query('INSERT INTO '.$p.'expenses(id,category,expense_name,note,clientid,date,amount,currency,billable,addedfrom,send_invoice_to_customer,dateadded) VALUES(77,77,?,?,9999,?,25.10,1,1,7,0,?)',['Historical permitted expense','Legacy untouched','2026-11-05','2026-11-05 12:00:00']);
 $db->query('INSERT INTO '.$p.'expenses(id,category,expense_name,note,clientid,date,amount,currency,billable,addedfrom,send_invoice_to_customer,dateadded) VALUES(78,77,?,?,?, ?,90.00,1,1,7,0,?)',['Historical forbidden private relation','Legacy untouched',$cb,'2026-11-05','2026-11-05 12:00:00']);
+$db->query('INSERT INTO '.$p.'payment_modes(id,name) VALUES(5,?)',['Legacy mode exact']);
+$db->query('UPDATE '.$p.'expenses SET paymentmode=? WHERE id=77',['5']);
 $legacySnapshot=$db->query('SELECT * FROM '.$p.'expenses ORDER BY id')->result_array();
 $expenseTableRequest=static function(int $count=12):array{return['draw'=>'4','start'=>'0','length'=>'25','columns'=>array_map(static fn($n)=>['data'=>(string)$n,'name'=>'','searchable'=>'true','orderable'=>'true','search'=>['value'=>'','regex'=>'false']],range(0,$count-1)),'search'=>['value'=>'','regex'=>'false'],'order'=>[['column'=>'6','dir'=>'desc']]];};
 $request=$expenseTableRequest();$page=$index->page($a,7,$request);$ids=array_column($page['rows'],'id');
 essentialCheck($page['recordsTotal']===count($page['rows'])&&in_array($saved['expenseid'],$ids,true)&&!in_array(NativeCompanyResourceId::encode('company_expense',$bExpense),$ids,true),'Actual directory includes A records with canonical IDs and excludes company B');
 $primaryPage=$index->page($primary,7,$request);$primaryIds=array_column($primaryPage['rows'],'id');essentialCheck($primaryPage['recordsTotal']===2&&in_array('77',$primaryIds,true)&&in_array(NativeCompanyResourceId::encode('company_expense',$primaryExpense),$primaryIds,true)&&!in_array('78',$primaryIds,true),'Primary union keeps authorized historical and current records distinct and excludes private legacy relations');
+$legacyModeRow=static fn($page)=>array_values(array_filter($page['rows'],static fn($r)=>(string)$r['id']==='77'))[0];
+essentialCheck($legacyModeRow($primaryPage)['payment_mode_name']==='Legacy mode exact','Legacy textual mode joins across native table and connection collations');
+$db->query('UPDATE '.$p.'expenses SET paymentmode=? WHERE id=77',['05']);
+essentialCheck($legacyModeRow($index->page($primary,7,$request))['payment_mode_name']==='','Legacy textual mode does not coerce a different string into the same numeric ID');
+$db->query('UPDATE '.$p.'expenses SET paymentmode=? WHERE id=77',['5']);
 $search=$request;$search['search']['value']="%' OR 1=1 --";essentialCheck($index->page($a,7,$search)['recordsFiltered']===0,'Expense directory search binds a literal rather than executing wildcards or SQL');
 $search=$request;$search['filters']=['match_type'=>'and','rules'=>[['id'=>'category','type'=>'MultiSelectRule','operator'=>'in','value'=>[NativeCompanyResourceId::encode('company_expense_category',$category)]]]];essentialCheck($index->page($a,7,$search)['recordsFiltered']>0,'Original category filter uses the current typed catalogue identity');
 $search['filters']['rules'][0]['value']=[NativeCompanyResourceId::encode('company_expense_category',$bCategory)];essentialCheck($index->page($a,7,$search)['recordsFiltered']===0,'Known other-company category cannot select foreign expense records');

@@ -191,3 +191,37 @@ cumulativas em MySQL8.4, incluindo o ponto que falhava nos dois bancos do CI.
 - Admin100 e module_version54 checks PHP;5 verificações estáticas bridge125.
 - Chromium renderiza HTML produzido pela suíte SQL: dimensões físicas, escala de todas as barras, zona de silêncio, linha sem corte, controles ocultos na impressão e nenhum recurso externo. Não é HTTP autenticado nem homologação bancária.
 - `npm run production` recompilou sem diff nos assets; main/tickets e os outros quatro banners já eram4.9.2. Acrescentado gate de banner em `crm_integrations_contract.test.cjs`, incluído no node-contracts existente.8 testes Node passaram, sem afrouxar o gate.
+
+## Correções do CI e privacidade do cartão após 473352dc
+
+O CI do SHA473352dc confirmou `node-contracts`, incluindo reconstrução idêntica
+com banners4.9.2; os gates não foram relaxados. Os jobs BB MariaDB e focused MySQL
+reproduziram fixtures desatualizados: configuração400 movida para Settings e
+`company_items` criado antes do grupo referenciado. A configuração continua
+coberta no local novo e a FK permanece ativa. O teste da declaração de billability
+usa agora o helper real no MySQL, preservando `ascii_bin`.
+
+Após corrigir os fixtures, MySQL revelou dois defeitos na consulta de despesas:
+comparação do ID textual com collations incompatíveis e número de fatura no UNION.
+A consulta agora compara IDs legados por bytes e declara a collation da projeção
+numérica; não altera schema nem dados históricos. Regressão: `5` encontra o meio,
+`05` não é convertido silenciosamente no mesmo ID.
+
+Executados localmente com as correções:
+
+- `banco_brasil_cnab400_aux_controller.php`: 355 verificações cumulativas em MySQL.
+- `native_expense_index_http.php`: MySQL e SQLite, 23 verificações de consulta e
+  31 de controlador/DOM/SQL, além dos pré-requisitos. Framework/sessão/shell são
+  spies explícitos: não é navegação autenticada completa.
+- `asaas_card_payments.php`: 169 verificações cumulativas em MySQL com transporte
+  simulado; token ausente de tentativas, provas, auditoria e logs após sucesso,
+  timeout e revogação.
+- `asaas_card_payment_controller.php`: 200 verificações cumulativas em SQLite;
+  token não retorna ao DTO nem entra na sessão/logs após rejeição.
+- `tests/browser/asaas_settings.cjs`: Chromium com view PHP real; cookies,
+  localStorage e sessionStorage vazios após preencher token sintético e recarregar.
+  O formulário não coleta PAN/CVV. Nenhuma cobrança real ou homologação PCI.
+
+O Composer local continua bloqueado pelo HTTP403 no download oficial de Mustache;
+nenhum gate foi retirado. O CI remoto conseguiu construir a imagem de smoke de
+473352dc, mas seus grupos HTTP ainda estavam em execução nesta verificação.

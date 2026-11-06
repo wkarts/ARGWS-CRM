@@ -14,4 +14,6 @@ $_SERVER['HTTPS']='on';$_SERVER['SERVER_PORT']='443';
 foreach(['card_operation','card_token','request_key'] as $field){$bad=$post;$bad[$field]=['invalid'];$controller->input->posted=$bad;$controller->output->status=200;$run();essentialCheck($controller->output->status===422,'array-valued '.$field.' fails without provider access');}
 $bad=$post;unset($bad['confirm']);$controller->input->posted=$bad;$controller->output->status=200;$run();essentialCheck($controller->output->status===422,'payment requires explicit immediate-charge confirmation');
 $post['action']='card_query';unset($post['company_asaas_preferences_csrf']);$controller->input->posted=$post;$controller->output->status=200;$run();essentialCheck($controller->output->status===409,'query also requires scoped CSRF');
+essentialCheck(!str_contains(json_encode($controller->session->data),$post['card_token']),'card token never enters native session after rejected submissions');
+essentialCheck(!str_contains(json_encode($GLOBALS['essentialLogs']??[]),$post['card_token']),'controller errors never log the submitted card token');
 echo 'Direct card controller guards: '.$GLOBALS['essentialChecks'].' cumulative checks; no provider calls.'.PHP_EOL;
