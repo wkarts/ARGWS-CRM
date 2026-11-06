@@ -11,7 +11,7 @@ final class CompanyRemoteOperations
     private CompanyService $service;
     public function __construct(private $db,private string $p){$this->service=new CompanyService($db,$p);}
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
-    public function tables():array{return array_values(array_unique(array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'asaas_company_manual_settlements')?['asaas_company_manual_settlements']:[],$this->db->table_exists($this->p.'asaas_company_card_payments')?['asaas_company_card_payments']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
+    public function tables():array{return array_values(array_unique(array_merge(CompanyService::tables($this->db,$this->p),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'asaas_company_manual_settlements')?['asaas_company_manual_settlements']:[],$this->db->table_exists($this->p.'asaas_company_card_payments')?['asaas_company_card_payments']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
     private function run(int $issuer,int $actor,callable $fn)
     {
         CompanySchema::ensure($this->db,$this->p,false);CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);

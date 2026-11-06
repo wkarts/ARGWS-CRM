@@ -3107,12 +3107,24 @@
     [
       "php",
       "tests/companies/asaas_invoice_delete.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_invoice_edits.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_invoice_edit_controller.php"
     ]
   ],
   "browser": [
     [
       "node",
       "tests/companies/native_credit_checkbox.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_credit_preview_helpers.browser.cjs"
     ],
     [
       "node",

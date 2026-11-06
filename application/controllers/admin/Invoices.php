@@ -549,7 +549,7 @@ class Invoices extends AdminController
                     CompanyRequestScope::assertNativeMutation($this);
                     $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
                     if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
-                    $result=$id===''?$form->create($context->issuerId(),$context->staffId(),$input):$form->update($context->issuerId(),$context->staffId(),$id,$input);
+                    $result=$id===''?$form->create($context->issuerId(),$context->staffId(),$input):$form->update($context->issuerId(),$context->staffId(),$id,$input,function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                     if($result['action']==='save_and_record_payment')$this->session->set_userdata('record_payment',true);
                     set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('invoice')));
                     redirect(admin_url('invoices/list_invoices/'.$result['result']['canonical_id']));

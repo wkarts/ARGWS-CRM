@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Asaas;
 require_once APPPATH.'services/CompanyInvoiceBalance.php';
 require_once __DIR__.'/CompanySchema.php';
+require_once __DIR__.'/CompanyInvoiceEditJournal.php';
 require_once __DIR__.'/CompanyOriginGenerations.php';
 require_once __DIR__.'/CompanyOriginPolicy.php';
 require_once __DIR__.'/CompanyInstruments.php';
@@ -35,12 +36,12 @@ final class CompanyService
         $row=$this->rows('SELECT active,installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]??[];
         if((int)($row['active']??0)!==1||!preg_match('/^[0-9]\.[0-9]\.[0-9]$/D',(string)($row['installed_version']??''))||(int)str_replace('.','',$row['installed_version'])<149)throw new \DomainException('asaas_company_module_required');
     }
-    public static function tables():array
+    public static function tables($db=null,?string $p=null):array
     {
-        return array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','modules','issuers_audit','invoices','issuers_invoice_documents','itemable','item_tax','currencies','company_currency_units','clients','issuers_clients','invoicepaymentrecords','credits','asaas_payment_origins'],CompanySchema::tables());
+        return array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','modules','issuers_audit','invoices','issuers_invoice_documents','itemable','item_tax','currencies','company_currency_units','clients','issuers_clients','invoicepaymentrecords','credits','asaas_payment_origins'],CompanySchema::tables(),$db!==null&&$p!==null?CompanyInvoiceEditJournal::tables($db,$p):[]);
     }
     /** Shared owned boundary for adapters calling the service in an existing transaction. */
-    public function tablesForRun():array{return array_values(array_unique(array_merge(self::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[],$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[])));}
+    public function tablesForRun():array{return array_values(array_unique(array_merge(self::tables($this->db,$this->p),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[],$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[])));}
     private function transaction(callable $operation,array $additionalTables=[])
     {
         CompanySchema::ensure($this->db,$this->p,false);if($this->db->table_exists($this->p.'asaas_company_remote_operations'))CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);$this->module();
@@ -397,7 +398,7 @@ final class CompanyService
         $this->unchanged($old,$parent);(new CompanyPreferences($this->db,$this->p))->originSnapshot($old,$old);
         return (int)$old['id'];
     }
-    private function source(int $issuer,int $origin):array
+    private function source(int $issuer,int $origin,?string $editKey=null):array
     {
         $row=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND provider=? AND channel=? FOR UPDATE',[$origin,$issuer,'asaas','api'])[0]??null;
         $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$origin])[0]??null;
@@ -407,7 +408,17 @@ final class CompanyService
             foreach($this->rows('SELECT e.event_type,e.state FROM '.$this->p.'asaas_payment_origins old JOIN '.$this->p.'asaas_company_origin_meta om ON om.origin_id=old.id JOIN '.$this->p.'asaas_company_events e ON e.account_row=om.account_row AND e.remote_id=old.remote_id WHERE old.invoice_id=? AND old.issuer_id=? AND old.active_slot IS NULL FOR UPDATE',[$row['invoice_id'],$issuer]) as $historical)
                 if(!in_array($historical['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true)||$historical['state']==='conflict')throw new \DomainException('asaas_recreation_historical_event_review');
         }
+        [$row,$meta]=CompanyInvoiceEditJournal::effective($this->db,$this->p,$row,$meta,$editKey);
         $parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);$meta['profile']=(new CompanyPreferences($this->db,$this->p))->originSnapshot($row,$meta);return [$row,$meta,$account,$parent];
+    }
+    /** Closed invoice-edit composition; pending-key bypass remains internal to the edit writer. */
+    public function editSourceInOwnedTransaction(int $issuer,int $actor,int $origin,?string $key=null):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');return $this->source($issuer,$origin,$key);
+    }
+    public function editSnapshotInOwnedTransaction(int $issuer,int $actor,int $invoice,bool $profile):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');$snapshot=self::snapshot($this->parent($issuer,$invoice));if($profile)$snapshot['asaas_profile_contract']='company_profile_v1';return $snapshot;
     }
     /** Internal composition: private credentials never leave a transaction-owning service. */
     public function remoteSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array

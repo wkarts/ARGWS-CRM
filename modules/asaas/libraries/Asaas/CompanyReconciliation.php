@@ -11,7 +11,7 @@ final class CompanyReconciliation
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function transaction(callable $work)
     {
-        CompanySchema::ensure($this->db,$this->p,false);return \IssuerTransaction::run($this->db,$this->p,array_merge(CompanyService::tables(),CompanyOriginPolicy::tables($this->db,$this->p)),$work);
+        CompanySchema::ensure($this->db,$this->p,false);return \IssuerTransaction::run($this->db,$this->p,array_merge(CompanyService::tables($this->db,$this->p),CompanyOriginPolicy::tables($this->db,$this->p)),$work);
     }
     private function policy(array $job):array
     {

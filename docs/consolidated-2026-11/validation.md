@@ -656,3 +656,20 @@ cargo do novo CI. Não altera saldo, banco, schema ou permissões; core492 prese
   A correção de visibilidade do label anterior permanece necessária.
 
 Os resultados não encerram R01–R11, exclusão/edição remota, cartão ou homologação.
+
+
+## Continuação170 — edição remota e exclusão nativa
+
+Executados em PHP8.3.36/MySQL8.4 descartáveis, transporte Asaas simulado:
+
+- `tests/companies/asaas_invoice_edits.php`: 38 verificações adicionais sobre118. PUT com resposta perdida, falha local/rollback, recuperação GET sem reenvio, isolamento A/B, revogação, hash adulterado, duas sessões concorrentes (um PUT), revisões auditadas, cancelamento/recriação após edição e baixa pela nova origem.
+- `tests/companies/asaas_invoice_edit_controller.php`: quatro verificações adicionais sobre187; controller/view reais com sessão/request adaptados, CSRF, confirmação e ausência de formulário sem autoridade. Não equivale a HTTP autenticado.
+- `tests/asaas_module_migrations.php`:297 verificações pelo runner MySQL, incluindo DDL/tracking/repetição170 e limpeza da fixture respeitando FKs.
+- Regressão `asaas_post_refund_generations.php`:69 verificações de gerações, mais30 pós-reembolso, sob128MiB; inclui disputas reais de escritores.
+- `asaas_invoice_delete.php`:12 verificações adicionais sobre cancelamento/concorrência; exclusão nativa cancela preservando histórico e confirma remoção Asaas, não apaga a fatura fisicamente.
+- Lint PHP dos arquivos alterados e23 testes Python de inventário/monitor passaram.
+
+CIb45 confirmou focusedPHP8.1, node-contracts, preflight browser8.1/8.5, interface nativa, Asaas, recorrências e reajustes. Falhou em boundary-inventory desatualizado e nos grupos HTTP ao abrir Créditos (`init_btn_with_tooltips` ausente): helpers de preview estavam restritos ao bundle de Faturas. Inventário regenerado; correção compartilhada e nova rodada ainda exigem CI do próximo SHA. Não se converte a aprovação parcial em CI verde.
+
+
+Correção R07 do preview: `native_credit_preview_helpers.browser.cjs` passou com o script inline real, jQuery e plugin de abas reais, sem carregar o bundle de Faturas, em1280/390px e RTL. Inicialização repetida não duplica os rótulos. Nove testes Node de dependências/lifecycle e o verificador de referências JS passaram. Teste autenticado mantém assert de ausência de pageerror; não foi afrouxado.

@@ -1,5 +1,12 @@
 # Histórico de alterações — integração Asaas
 
+## 1.7.0 — 2026-11-06
+
+- Edição pelo formulário nativo de cobranças Pix/boleto não pagas: simulação transacional, intenção durável, PUT único e confirmação por consulta antes de gravar a fatura. Recuperação em Transações, com ACL, CSRF e identidade do solicitante.
+- Revisões verificáveis de valor/vencimento preservam origem, snapshot e provas anteriores. Históricos financeiros, contratos não elegíveis e eventos conflitantes impedem a operação; cartão permanece fora deste fluxo.
+- Exclusão nativa propaga a remoção remota e conserva a fatura cancelada e seus vínculos; não há exclusão física do histórico.
+- Migration170 aditiva, sem backfill. Não reverter para leitor que ignore as revisões após usar o recurso.
+
 ## 1.6.9 — 2026-11-06
 
 - Política por conta para quitação manual integral: desabilitada, dinheiro recebido externamente ou remoção. Guia nativa, confirmação, ACL/CSRF/revisões; nenhum consentimento automático.

@@ -260,3 +260,14 @@ Resultado incerto não é sucesso. Retry consulta o mesmo ID e não repete DELET
 Teste MySQL:12 verificações adicionais de exclusão sobre167 de operações remotas,
 22 de cancelamento e seis de concorrência entre processos. Transporte simulado;
 aceitação HTTP autenticada dessa rota ainda pendente.
+
+
+## Edição nativa e histórico170
+
+O formulário nativo usa a API oficial [atualizar cobrança existente](https://docs.asaas.com/reference/atualizar-cobranca-existente): PUT de billingType, value e dueDate. Escopo inicial: PIX/BOLETO pendente/vencido, sem pagamentos, créditos, juros/descontos/tarifas, assinatura, parcelamento, dunning, reembolso ou outra operação financeira conflitante. Cliente, data de emissão, moeda e identidade permanecem imutáveis; a confirmação pode gerar notificações conforme a configuração existente do cliente no provedor. Não se altera essa configuração.
+
+Antes do PUT, o escritor completo executa em transação e desfaz a simulação, incluindo linhas, impostos, campos e tags. Reserva então a entrada e os snapshots com revisão/ACL, persistindo o estado sending antes da única chamada mutante. Timeout ou erro HTTP deixa resultado pendente: recuperação consulta a cobrança, carteira e cliente; não repete PUT nem apresenta gravação local como concluída. Rejeição definitiva atualmente exige revisão, sem reenvio automático.
+
+A fatura, recibo idempotente nativo, revisão do snapshot e auditoria são confirmados na mesma transação. O snapshot original da origem não é atualizado: leitores financeiros aplicam somente a cadeia de revisões com hashes, auditoria e confirmações coerentes. Uma edição pendente bloqueia a leitura financeira comum. Recuperação em Configurações > Meios de pagamento > Asaas > Transações, restrita ao solicitante autorizado; revalida permissões atuais. Não há captura de cartão.
+
+Migration170 cria um journal vazio, sem seed/backfill. Backup consistente antes de atualização; preservar o journal no rollback. Após efetuar edição, não voltar a um leitor anterior que desconheça essas revisões. Cobranças em disputa/contratos complexos e decisões sobre cartão continuam fora do fluxo. Validação autenticada e sandbox do provedor continuam pendentes; testes SQL usam transporte simulado.

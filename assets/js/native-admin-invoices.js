@@ -21,28 +21,6 @@
     }).join('');
   }
 
-  root.init_btn_with_tooltips = function () {
-    if (!is_mobile() || navigator.userAgent.match(/iPad/i)) return false;
-    $('._buttons').find('.btn-with-tooltip, .btn-with-tooltip-group').each(function () {
-      var node = $(this), title = node.attr('title') || node.attr('data-title');
-      if (!title) return;
-      if (node.hasClass('btn-with-tooltip-group')) node.find('.btn').eq(0).append(' ' + title);
-      else node.append(' ' + title);
-      node.removeClass('btn-with-tooltip btn-with-tooltip-group');
-    });
-  };
-
-  root.init_tabs_scrollable = function () {
-    if (isRTL !== 'true') {
-      if ($(root).width() <= 768) $('body').find('.toggle_view').remove();
-      $('.horizontal-scrollable-tabs').horizontalTabs();
-      return;
-    }
-    $('.arrow-left, .arrow-right').hide();
-    $('.horizontal-scrollable-tabs').removeClass('horizontal-scrollable-tabs');
-    $('.nav-tabs-horizontal').removeClass('nav-tabs-horizontal');
-  };
-
   root.toggle_small_view = function (table, mainData) {
     if (!is_mobile() && $('#small-table').hasClass('hide') && $('.small-table-right-col').hasClass('col-md-12')) {
       $('#small-table').toggleClass('hide');

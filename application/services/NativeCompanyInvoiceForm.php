@@ -65,7 +65,7 @@ final class NativeCompanyInvoiceForm
   else {require_once __DIR__.'/NativeCompanyBillableTaskRead.php';$taskSelection=(new NativeCompanyBillableTaskRead($this->db,$this->p))->forCustomer($i,$a,$customer);$data['billable_tasks']=$taskSelection['items'];$data['native_invoice_task_selection']=$taskSelection;}
   $this->authorize($i,$a,$cap);$editor->assertCurrent();return$data;
  }
- public function update(int $i,int $a,$id,array $input):array
+ public function update(int $i,int $a,$id,array $input,?callable $decrypt=null,?callable $transport=null):array
  {
   $this->authorize($i,$a,'edit');require_once __DIR__.'/NativeCompanyInvoiceFormInput.php';require_once __DIR__.'/NativeCompanyInvoiceCommands.php';
   $identity=(new NativeCompanyInvoiceIdentity($this->db,$this->p))->resolve($i,$a,$id,'edit');if($identity['lineage']!=='named_company')throw new DomainException('native_invoice_editor_denied');
@@ -85,7 +85,12 @@ final class NativeCompanyInvoiceForm
    require_once __DIR__.'/CompanyProjects.php';$project=NativeCompanyResourceId::decode('project',$request['project']);if($project['source_kind']!=='company_project')throw new DomainException('company_invoice_project_invalid');$source=(new CompanyProjects($this->db,$this->p))->get($i,$a,$project['source_id']);
    if((int)$source['client_id']!==$request['payload']['client_id'])throw new DomainException('company_invoice_project_invalid');$request['payload']['native_project']=['source_kind'=>'company_project','source_id'=>$project['source_id'],'source_revision'=>(int)$source['revision']];
   }
-  $result=(new NativeCompanyInvoiceCommands($this->db,$this->p))->updateIssued($i,$a,$request['invoice_id'],$request['revision'],$request['payload'],$request['metadata'],$request['request_key']);return['result'=>$result,'action'=>$request['action']];
+  $origins=$this->db->table_exists($this->p.'asaas_payment_origins')?IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND issuer_id=?',[$request['invoice_id'],$i])->result_array():[];
+  if($origins){
+   if($decrypt===null)throw new DomainException('asaas_company_credentials_required');require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyInvoiceEdits.php';
+   $result=(new \Asaas\CompanyInvoiceEdits($this->db,$this->p))->update($i,$a,$request['invoice_id'],$request['revision'],$request['payload'],$request['metadata'],$request['request_key'],$decrypt,$transport);
+  }else $result=(new NativeCompanyInvoiceCommands($this->db,$this->p))->updateIssued($i,$a,$request['invoice_id'],$request['revision'],$request['payload'],$request['metadata'],$request['request_key']);
+  return['result'=>$result,'action'=>$request['action']];
  }
  /** Original POST composition. Non-manual sources/actions are explicit, never ignored. */
  public function create(int $i,int $a,array $input):array

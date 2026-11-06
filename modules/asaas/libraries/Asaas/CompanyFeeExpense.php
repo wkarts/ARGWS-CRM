@@ -13,7 +13,7 @@ final class CompanyFeeExpense
     public function post($issuer,$actor,$origin,$proof,$category):int
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$origin=\IssuerPolicy::id($origin);$proof=\IssuerPolicy::id($proof);$category=\IssuerPolicy::id($category);
-        CompanySchema::ensure($this->db,$this->p,false);$expenses=new \CompanyExpenses($this->db,$this->p);$tables=array_values(array_unique(array_merge(CompanyService::tables(),$expenses->tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[])));
+        CompanySchema::ensure($this->db,$this->p,false);$expenses=new \CompanyExpenses($this->db,$this->p);$tables=array_values(array_unique(array_merge(CompanyService::tables($this->db,$this->p),$expenses->tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[])));
         if($this->db->table_exists($this->p.'asaas_company_refund_requests')){require_once __DIR__.'/CompanyRefundSchema.php';CompanyRefundSchema::ensure($this->db,$this->p,false);$tables=array_values(array_unique(array_merge($tables,array_keys(CompanyRefundSchema::definitions()))));}
         return \IssuerTransaction::run($this->db,$this->p,$tables,function()use($issuer,$actor,$origin,$proof,$category,$expenses):int{
             $acl=new \IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'expenses','view')||!$acl->can($issuer,$actor,'expenses','create'))throw new \DomainException('company_expense_denied');

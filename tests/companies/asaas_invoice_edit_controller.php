@@ -1,0 +1,13 @@
+<?php
+require __DIR__.'/asaas_manual_controller.php';
+$editControllerStart=$GLOBALS['essentialChecks'];
+$controller->input->verb='POST';$controller->input->posted=['action'=>'recover_invoice_edit','request_key'=>str_repeat('a',64),'confirm'=>'1'];$controller->output->status=200;$run();
+essentialCheck($controller->output->status===409,'edit recovery rejects missing CSRF before provider access');
+$controller->input->posted['company_asaas_preferences_csrf']=$controller->session->data['company_asaas_preferences_csrf'];$controller->input->posted['confirm']='0';$controller->output->status=200;$run();
+essentialCheck($controller->output->status===422,'edit recovery requires explicit confirmation');
+$controller->input->verb='GET';$controller->input->posted=[];$run();$dto=$controller->load->view;
+$renderEdit=function($dto){extract($dto);$e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$hidden=function($values)use($e,$context_token){echo '<input name="_company_context" value="'.$e($context_token).'">';foreach($values as $k=>$v)echo '<input name="'.$e($k).'" value="'.$e($v).'">';};ob_start();include APPPATH.'views/admin/settings/native_asaas_invoice_edits.php';return ob_get_clean();};
+$dto['invoice_edit_ready']=true;$dto['invoice_edit_pending']=[['invoice_id'=>123,'request_key'=>str_repeat('a',64),'state'=>'uncertain']];$html=$renderEdit($dto);
+essentialCheck(str_contains($html,'name="company_asaas_preferences_csrf"')&&str_contains($html,'name="_company_context"')&&str_contains($html,'recover_invoice_edit'),'edit recovery view preserves CSRF and company scope');
+$dto['invoice_edit_ready']=false;essentialCheck(!str_contains($renderEdit($dto),'recover_invoice_edit'),'unavailable edit authority exposes no recovery form');
+echo 'Asaas edit recovery controller/view: '.($GLOBALS['essentialChecks']-$editControllerStart).' additional checks, no provider requests.'.PHP_EOL;

@@ -36,11 +36,15 @@ final class CompanyOriginGenerations
             if(count($links)!==1)throw new \DomainException('company_post_refund_adverse_history');
             $link=$links[0];$previous=(int)$link['origin_id'];$old=$byId[$previous]??null;
             if(!$old||in_array($previous,$seen,true)||$link['state']!=='reopened'||(int)$link['issuer_id']!==$issuer||(int)$link['invoice_id']!==$invoice||$old['active_slot']!==null||$old['state']!=='remote_removed')throw new \DomainException('company_post_refund_adverse_history');
-            foreach(['issuer_id','invoice_id','provider','account_id','environment','channel','invoice_hash','invoice_total','invoice_due_date'] as $field)
+            foreach(['issuer_id','invoice_id','provider','account_id','environment','channel','invoice_hash'] as $field)
                 if((string)$old[$field]!== (string)$active[$field])throw new \DomainException('company_post_refund_adverse_history');
-            $meta=$rows('SELECT account_row FROM '.$p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$previous])[0]??null;
+            $meta=$rows('SELECT * FROM '.$p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$previous])[0]??null;
             $nextMeta=$rows('SELECT account_row,request_key FROM '.$p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$cursor])[0]??null;
             if(!$meta||!$nextMeta||$meta['account_row']!==$nextMeta['account_row']||$nextMeta['request_key']!==$link['request_key'])throw new \DomainException('company_post_refund_adverse_history');
+            require_once __DIR__.'/CompanyInvoiceEditJournal.php';
+            [$effectiveOld]=CompanyInvoiceEditJournal::effective($db,$p,$old,$meta);
+            foreach(['invoice_total','invoice_due_date'] as $field)
+                if((string)$effectiveOld[$field]!== (string)$byId[$cursor][$field])throw new \DomainException('company_post_refund_adverse_history');
             $proof=$rows('SELECT * FROM '.$p.'asaas_company_proofs WHERE id=? AND origin_id=? FOR UPDATE',[$link['proof_id'],$previous])[0]??null;
             if(!$proof||$proof['operation']!=='query'||$proof['account_revision']!==$link['account_revision'])throw new \DomainException('company_post_refund_adverse_history');
             $safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);
