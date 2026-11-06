@@ -79,7 +79,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | PIGE07 Histórico/segredos | Revisão, disable, invalidar consentimento | Testar HTTP autenticado/revogação concorrente | Preservado | Guards PHP e browser token/consentimento |
 | ASA01 Configuração unificada | View nativa já contém operações | Equivalência total ao1.4.8 não comprovada | Guias e acesso em Meios de pagamento | PHP+Chromium com Bootstrap real |
 | ASA02 Credenciais | Guard/cifra por conta/ambiente | Token webhook permanece recuperável mediante ação protegida | Chave API salva nunca exportada pelo controller | POST com/sem CSRF, A/B, master/secundário |
-| ASA03 Cartão obrigatório | Checkout hospedado; SDK já oferece tokenização/cobrança | Checkout rejeitado não satisfaz; seguir documentação e parametrização flexível conforme esclarecimento posterior | Guia de configuração efetiva; SDK ganhou contrato ausente e bloqueio de retry; pagamento direto CRM pendente | Inventário abaixo; sem sandbox/cartão aprovado |
+| ASA03 Cartão obrigatório | Checkout hospedado; SDK já oferece tokenização/cobrança | Checkout rejeitado não satisfaz; seguir documentação e parametrização flexível conforme esclarecimento posterior | Guia de configuração efetiva; SDK ganhou contrato ausente e bloqueio de retry; pagamento direto por token com dois contratos e tentativa única (1.6.2); fluxo completo pendente | [Evidências e limites](asaas-direct-card.md); sem sandbox/cartão aprovado |
 | ASA04 Ciclo faturas | Origem, operações remotas e reconciliação | Delete/cancel/reactivate/manual parcial/HTTP incerto exigem matriz ponta a ponta | Preservado, não reescrito | Escritor MySQL e suites delimitadas; não aceite integral |
 | ASA05 Observabilidade | Eventos, jobs, provas e revisão existentes | Operações relacionadas a cada evento não homologadas integralmente | Guias para recursos existentes | View/controller; sem efeito financeiro real |
 | REA01 Tela/filtros | Rota nativa Faturas recorrentes | Homologação autenticada pendente | Tela única, filtros item/meio, grid e múltiplas regras | View PHP real em Chromium; dados/HTTP sintéticos |
@@ -145,3 +145,8 @@ executada em MySQL descartável; tracking do runner 492 ainda deve ser validado.
 Após uso do reajuste, não reverter para um emissor que ignore o journal: poderia
 emitir preços antigos. Em incidente, suspender o worker e corrigir adiante,
 preservando snapshots, auditoria e marcadores. Nenhuma implantação executada.
+
+## Delta cartão 1.6.2
+
+[Operação direta por token, evidências e limites](asaas-direct-card.md). O SDK remoto
+foi integrado pelo usuário; nesta etapa não há alteração de SDK/vendor/Perfex.

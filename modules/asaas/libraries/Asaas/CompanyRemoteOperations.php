@@ -11,7 +11,7 @@ final class CompanyRemoteOperations
     private CompanyService $service;
     public function __construct(private $db,private string $p){$this->service=new CompanyService($db,$p);}
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
-    private function tables():array{return array_values(array_unique(array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
+    private function tables():array{return array_values(array_unique(array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'asaas_company_card_payments')?['asaas_company_card_payments']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
     private function run(int $issuer,int $actor,callable $fn)
     {
         CompanySchema::ensure($this->db,$this->p,false);CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);
@@ -31,6 +31,7 @@ final class CompanyRemoteOperations
     private function eligible(array $origin,array $meta,array $account,bool $confirmation=false):array
     {
         $id=(int)$origin['id'];$invoice=(int)$origin['invoice_id'];
+        if($this->db->table_exists($this->p.'asaas_company_card_payments')&&$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_card_payments WHERE origin_id=? FOR UPDATE',[$id]))throw new \DomainException('asaas_card_attempt_requires_review');
         if(!$origin['remote_id']||(!$confirmation&&$origin['state']==='review_required'))throw new \DomainException('asaas_company_remote_review_required');
         if($this->rows('SELECT id FROM '.$this->p.'invoicepaymentrecords WHERE invoiceid=? FOR UPDATE',[$invoice])||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=? FOR UPDATE',[$invoice])||$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? FOR UPDATE',[$id]))throw new \DomainException('asaas_company_remote_financial_history');
         if($this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND id<>? FOR UPDATE',[$invoice,$id])||($this->db->table_exists($this->p.'bb_origins')&&$this->rows('SELECT id FROM '.$this->p.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice])))throw new \DomainException('asaas_company_multiple_providers');

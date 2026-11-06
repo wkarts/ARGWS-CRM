@@ -5928,24 +5928,24 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "2ca98891ce051a6f5275a69d6b7740e8f05a78f23b32f5824990559c951c59c8",
+      "sha256": "0ebd9d48699588d15fb949946b812fb94c22afbe2b5e2308e743637907a334af",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        249,
-        252,
-        261,
-        268,
-        301,
-        305,
-        333,
-        441,
-        445,
-        582,
-        779,
-        782,
-        794
+        262,
+        265,
+        276,
+        283,
+        316,
+        320,
+        348,
+        456,
+        460,
+        597,
+        794,
+        797,
+        809
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8562,7 +8562,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "f47a3e75d19e122af670f8afb57eb7e9961421f3e3af4fa7b17db6f6679fd9d6",
+      "sha256": "e464ea62a6f914111006377308a9a9dd5db81b5281da9ee9102cd3d4a8b5875b",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8640,6 +8640,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/asaas/libraries/Asaas/CompanyCardPayments.php": {
+      "sha256": "29c5ff47dc526b08b4917539508c930856d8127c446f173aaa71fa4e63af88d3",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        53
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/asaas/libraries/Asaas/CompanyCheckoutSchema.php": {
       "sha256": "969faa8ca6ca4392ab8dbe3d296d0c16637cee0dc8b75d09aba8e659aa7ba614",
       "categories": [
@@ -8691,12 +8702,12 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRemoteOperations.php": {
-      "sha256": "81ee8a8ee0bc31375d3010c332b18e53e6cb7fcb13e04af6876764d8e9c28e90",
+      "sha256": "017beaaeeba8d5a87565bf03bd2e23ba8ea645fbe4c2d57c89c41a5512a7f767",
       "categories": [
         "payments"
       ],
       "signal_lines": [
-        35
+        36
       ],
       "state": "unreviewed",
       "evidence": ""

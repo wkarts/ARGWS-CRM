@@ -10,6 +10,11 @@ on:
       - application/services/InvoicePaymentWriter.php
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
+      - tests/companies/asaas_card_*.php
+      - tests/browser/asaas_settings.cjs
+      - tests/fixtures/asaas_settings_page.php
+      - application/views/admin/settings/native_asaas_card.php
+      - application/services/NativeCompanySpecializedOperations.php
       - tests/companies/asaas_origin_policy.php
       - tests/companies/asaas_instruments.php
       - tests/companies/asaas_explicit_reconciliation.php
@@ -29,6 +34,11 @@ on:
       - application/services/InvoicePaymentWriter.php
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
+      - tests/companies/asaas_card_*.php
+      - tests/browser/asaas_settings.cjs
+      - tests/fixtures/asaas_settings_page.php
+      - application/views/admin/settings/native_asaas_card.php
+      - application/services/NativeCompanySpecializedOperations.php
       - tests/companies/asaas_origin_policy.php
       - tests/companies/asaas_instruments.php
       - tests/companies/asaas_explicit_reconciliation.php
@@ -130,6 +140,8 @@ jobs:
           php tests/companies/asaas_instruments.php
           php tests/companies/asaas_explicit_reconciliation.php
           php tests/companies/asaas_inflight_quarantine.php
+          php tests/companies/asaas_card_api_contract.php
+          php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:
     runs-on: ubuntu-latest
@@ -144,7 +156,7 @@ jobs:
           node --test tests/asaas_settings_dom_harness.test.cjs
           node --check modules/asaas/assets/js/settings-tabs.js
           node --check assets/js/native-asaas-settings.js
-          php tests/companies/asaas_card_settings.php
+          php tests/companies/asaas_card_payment_controller.php
           node tests/browser/asaas_settings.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs

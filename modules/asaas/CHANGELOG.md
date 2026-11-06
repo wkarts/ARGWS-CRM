@@ -1,5 +1,12 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.2 — 2026-11-06
+
+- Pagamento direto por token de cobrança CREDIT_CARD existente, com seleção dos contratos payWithCreditCard/payWithCard na guia Cartão.
+- Migration nativa 162: ledger de tentativa única, consulta canônica de recuperação, ACL/CSRF/HTTPS e bloqueio de reenvio incerto.
+- Sem captura de PAN/CVV, criação de token, voucher/débito, parcelamento ou lançamento financeiro implícito.
+- Evidências e lacunas: `docs/consolidated-2026-11/asaas-direct-card.md` no repositório CRM.
+
 ## 1.4.5
 
 - Renomeia o identificador local do cliente para `client_id` com migration aditiva e cópia dos vínculos existentes.

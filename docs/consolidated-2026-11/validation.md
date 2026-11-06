@@ -131,3 +131,10 @@ nome do schema não estava na lista segura do harness. O workflow passou a usar
 - `pige_bridge_settings.browser.cjs`: view PHP e JS reais em Chromium, desktop/mobile, pesquisa/paginação, revisão, limpeza de token, troca explícita de provedor/conta/perfil e consentimento não ativado. Framework sintético, sem chamadas HTTP autenticadas.
 - `pige_bridge_migration.php`:33 checks com runner nativo e adaptador de metadados. Não equivale ao MySQL de instalação.
 - Descoberta bilateral por URL/credencial ainda não implementada; os seletores não são descoberta nem consentimento financeiro.
+
+## Cartão 1.6.2
+
+Resultados novos e sua natureza em [asaas-direct-card.md](asaas-direct-card.md).
+MySQL: 227 assertions migration; 177 checks cumulativos serviços/concorrência.
+Controller SQLite: 198; transporte: 19; Chromium view real aprovado.
+Sem sandbox nem HTTP autenticado completo para pagamento direto.
