@@ -172,7 +172,9 @@ Testes executados:
 - Conciliação por item:8 novos MySQL após38 de edição e118 da cadeia; comparar,
   PENDING recusado, recebimento único/retry, empresa estrangeira e ACL revogada,
   incluindo chamada direta ao writer sem settings.view. Fixture MySQL usa dois
-  processos na cadeia de edição; não se declara concorrência específica de lote.
+  processos na cadeia de edição. O teste adicional tests/companies/asaas_batch_concurrency.php passou10 checks com dois
+  writers de recebimento monitorado, mesmo pagamento no retry e revogação
+  durante espera bloqueando ambos. Não é concorrência da chamada remota.
 - Fila JS:5 testes de ordem, parada, resultado incerto, revisão e seleção inválida;
   12 contratos do driver original passaram. Controller/MySQL permanece separado
   da simulação de respostas da interface.

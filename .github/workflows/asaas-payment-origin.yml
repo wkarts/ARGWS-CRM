@@ -148,7 +148,7 @@ jobs:
           php tests/companies/asaas_card_pricing_concurrency.php
           php tests/companies/asaas_monitor.php
           php tests/companies/asaas_remote_monitor.php
-          php tests/companies/asaas_batch_reconciliation.php
+          php tests/companies/asaas_batch_concurrency.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:
