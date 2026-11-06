@@ -73,7 +73,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | PIGE01 Configurações | Settings e registro nativo107 | Acesso em empresas secundárias depende do contrato atual | Preservado | Browser PIGE atual, resultado abaixo |
 | PIGE02 Múltiplas conexões | Connections::listed/save por chave/escopo | Validar instalação alvo | Preservado | Fixture com12 conexões A/B |
 | PIGE03 Modais/guias | views/settings.php e settings.js | Autoconfiguração bilateral continua separada | Seletores de funcionário, moeda, conta e perfil por escopo; revisão e consentimento preservados | MySQL100 verificações cumulativas + Chromium desktop/mobile |
-| PIGE04 URL/credencial | Não existe descoberta bilateral | URL/token não autoconfigura | Não implementado | Inspeção do contrato remoto, não conexão real |
+| PIGE04 URL/credencial | APIs remotas reais de instituições/configuração | Criação bilateral e compartilhamento seguro do HMAC pendentes | Descoberta somente leitura109 preenche escola/conta/ambiente de configuração compatível existente | Contrato/SSRF/ACL com transporte simulado e Chromium; [limites](pige-discovery.md) |
 | PIGE05 Bilateral | PIGE GET/PUT configuration e connection-test | Contrato mínimo de descoberta e credencial específica faltam | Não inventado; nenhum push PIGE | Referência remota abaixo |
 | PIGE06 Empresa/navegação | Administração primária; ACL por empresa | Abrir configuração secundária não autorizado por inferência | Preservado | Browser não prova ACL de servidor |
 | PIGE07 Histórico/segredos | Revisão, disable, invalidar consentimento | Testar HTTP autenticado/revogação concorrente | Preservado | Guards PHP e browser token/consentimento |

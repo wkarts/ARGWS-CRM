@@ -37,6 +37,18 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 <li role="presentation"><a href="#pige-tab-setup" aria-controls="pige-tab-setup" role="tab" data-toggle="tab">Como conectar</a></li>
 </ul><div class="tab-content mtop20">
 <div role="tabpanel" class="tab-pane active" id="pige-tab-connection">
+<div id="pige-discovery" data-url="<?=html_escape(admin_url('pige_bridge/settings/discover'));?>" class="well well-sm">
+<h5>Consultar configuração existente no PIGE</h5>
+<p>Selecione a empresa abaixo e informe a URL pública do PIGE e uma credencial administrativa JWT com acesso à instituição e integrations.manage. O HMAC financeiro não serve para esta consulta. A leitura não salva nem habilita a ponte.</p>
+<div class="form-group"><label for="pige-discovery-url">URL HTTPS do PIGE</label><input id="pige-discovery-url" class="form-control" type="url" autocomplete="off" placeholder="https://pige.exemplo.com"></div>
+<div class="form-group"><label for="pige-discovery-credential">Credencial administrativa temporária</label><input id="pige-discovery-credential" class="form-control" type="password" autocomplete="new-password" maxlength="16386"></div>
+<button id="pige-discovery-schools" type="button" class="btn btn-default">Consultar instituições</button>
+<div class="form-group mtop10"><label for="pige-discovery-school">Instituição autorizada</label><select id="pige-discovery-school" class="form-control"><option value="">Consulte as instituições</option></select></div>
+<button id="pige-discovery-read" type="button" class="btn btn-default">Preencher pela configuração selecionada</button>
+<p id="pige-discovery-status" class="mtop10" role="status" aria-live="polite"></p>
+<p>Continuam manuais: identificador local, HMAC compartilhado e consentimentos financeiros. Uma ponte ainda não configurada no PIGE precisa ser criada naquela aplicação. Esta consulta exige destino público IPv4 e não segue redirecionamentos.</p>
+</div>
+
 <?=form_open(admin_url('pige_bridge/settings/save'), ['id'=>'pige-connection-form']);?>
 <input type="hidden" name="revision" value="0">
 <input type="hidden" name="pige_csrf" value="<?=html_escape($pige_csrf);?>"><input type="hidden" name="_company_context" value="<?=html_escape($company_context_token??'');?>">
@@ -70,11 +82,11 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 <p>Parcial, estorno, juros e desconto permanecem em revisão. Nenhum efeito acadêmico é aplicado. BB exige espécie, aceite e endereço explícitos por cobrança; não há Pix BB, juros, desconto, cessão ou recebimento parcial neste contrato.</p>
 <button class="btn btn-default" type="submit">Validar consentimento sem efeito financeiro</button><?=form_close();?></div>
 <div role="tabpanel" class="tab-pane" id="pige-tab-setup">
-<p>Cadastre no PIGE a URL HTTPS deste CRM, o mesmo identificador, escola, empresa, conta, ambiente e token. A URL sozinha e o token não descobrem esses dados.</p>
+<p>Cadastre no PIGE a URL HTTPS deste CRM, o mesmo identificador, escola, empresa, conta, ambiente e token. A consulta acima pode preencher escola, conta e ambiente de uma configuração existente destinada a este CRM e à empresa selecionada. Não cria a configuração na outra ponta.</p>
 <p>O teste autenticado existente é enviado pelo PIGE para o endpoint de diagnóstico do CRM e confirma o escopo e as capacidades disponíveis. Ele não cadastra a outra ponta nem ativa permissões financeiras.</p>
 <p>Após salvar ou rotacionar a conexão, reabra Editar e revalide Fatura local; depois revalide Cobrança externa. Cada salvamento atualiza a revisão e fecha esta janela.</p>
 </div></div></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button></div>
 </div></div></div>
 <script type="application/json" id="pige-settings-data"><?=json_encode($publicConnections,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR);?></script>
 <?php init_tail(); ?>
-<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=108"></script>
+<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=109"></script>

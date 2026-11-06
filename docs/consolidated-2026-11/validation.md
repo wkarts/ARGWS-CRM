@@ -274,3 +274,44 @@ A alternativa oficial de baixar a imagem968f6eea também ficou bloqueada: o
 conector limita artefatos a512MiB (imagem aproximadamente1GiB), e `gh run download`
 recebeu Forbidden. Nenhuma imagem foi obtida nem houve contorno da restrição.
 A construção remota dessa imagem passou; isso não comprova os testes HTTP locais.
+
+## Descoberta PIGE109 e navegação de despesas
+
+A descoberta usa os GETs reais do PIGE360-self
+`f47b8916b92231ac29b56862b133c9d2b2eec851`, revalidado no remoto.
+Nenhuma alteração naquele repositório ou no SDK. Consulte
+[pige-discovery.md](pige-discovery.md) para campos importados, limites e fluxo de
+credenciais. Não cria a outra ponta, não recupera HMAC e não habilita consentimento.
+
+Executados localmente em PHP8.3/MySQL8.4:
+- 71 verificações de contrato, minimização, SSRF, DNS e respostas remotas, com
+  transporte/DNS simulados explicitamente.
+- 9 verificações adicionais do controlador com ACL/MySQL reais: empresa alheia,
+  revogação durante resposta, módulo inativo/desatualizado, HTTPS de entrada e
+  cabeçalho de proxy não confiável; conexão/auditoria preservadas e segredo ausente
+  dos logs do recurso. Nenhuma chamada PIGE externa.
+- Instalação limpa, repetição, upgrade108→109 e falha de tracking pelo runner
+  nativo; configuração e seletores:100 checks cumulativos.35 checks do runner
+  isolado. Migrations anteriores preservadas.
+- Chromium desktop/mobile com view e JS reais, transporte simulado: preenchimento,
+  limpeza de credencial, flags financeiras preservadas e resposta atrasada após
+  cancelar/reabrir outra conexão descartada.
+- 8 checks Python de inventário/configuração e sintaxe JavaScript aprovados.
+  Isso não substitui teste HTTP/TLS bilateral autenticado.
+
+CI de `b91a4734`: contratos Node/assets e preflight de navegador PHP8.1/8.5
+aprovados. Focused8.1 falhou em `native_expense_navigation.php`: fixture antigo
+substituía a view atual por DTO do workspace e não implementava a saída HTTP atual.
+O teste agora usa a view/controlador/SQL originais compartilhados com a suíte de
+índice. Preservado o gate que exige MySQL no entrypoint de índice HTTP em CI;
+nenhuma verificação foi removida do manifesto.
+
+Reprodução corrigida em SQLite e MySQL8.4:5 checks de navegação adicionados aos
+31 checks de índice HTTP. Dois caminhos preservam o ID canônico no DOM; conflito
+rota/query, troca de empresa e ID numérico são recusados antes de renderizar.
+Shell, sessão e entrada HTTP são spies explícitos; não é navegação autenticada.
+
+A sequência de20 comandos SQLite desde o ponto de falha até o fim do manifesto
+também passou, com CI=true. O entrypoint MySQL foi executado deliberadamente sem
+DSN e recusou a fase incorreta, conforme esperado. Os três inventários oficiais
+foram regenerados; continuam declarando rollout operacional bloqueado.

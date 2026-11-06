@@ -35,6 +35,30 @@ class Settings extends AdminController
         $choices=[];try{require_once __DIR__.'/../libraries/PigeBridgeSettingsChoices.php';$selector=new PigeBridgeSettingsChoices($this->db,db_prefix());foreach($connections as $connection)$choices[$connection['connection_key']]=$selector->forScope($caller,$connection['scope']);}catch(Throwable $e){$choices=[];}
         $this->load->view('pige_bridge/settings',['title'=>'Integração PIGE — ponte CRM','issuers'=>$issuers,'connections'=>$connections,'external'=>$external,'choices'=>$choices,'pige_csrf'=>$token,'company_context_token'=>CompanyRequestScope::token()]);
     }
+    protected function discoveryService(callable $authorize):PigeBridgeDiscovery{return new PigeBridgeDiscovery($authorize);}
+    /** Read-only remote discovery; POST prevents credentials entering URLs/history. */
+    public function discover()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            require_once __DIR__.'/../libraries/PigeBridgeDiscovery.php';
+            if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443'))throw new DomainException('pige_discovery_https');
+            $issuer=$this->integer('issuer_id');$caller=(int)get_staff_user_id();
+            $authorize=function()use($issuer,$caller):void{
+                if(!is_admin()||(int)get_staff_user_id()!==$caller||!(new IssuerResourceAccess($this->db,db_prefix()))->can($issuer,$caller,'settings','edit'))throw new DomainException('pige_discovery_access');
+                $module=IssuerStorage::query($this->db,'SELECT active,installed_version FROM '.db_prefix().'modules WHERE module_name=?',['pige_bridge'])->row_array();
+                if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.0.9')throw new DomainException('pige_discovery_upgrade');
+            };
+            $service=$this->discoveryService($authorize);$action=$this->value('discovery_action');
+            if($action==='schools')$data=['schools'=>$service->schools($this->value('pige_url'),$this->value('admin_credential'))];
+            elseif($action==='configuration')$data=['configuration'=>$service->configuration($this->value('pige_url'),$this->value('admin_credential'),$this->value('school_id'),$issuer,(string)$this->config->item('base_url'))];
+            else throw new DomainException('pige_discovery_input');
+            $authorize();$this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true]+$data,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT));
+        }catch(Throwable $error){
+            // Do not echo remote bodies, URLs, JWTs or exception messages.
+            $this->output->set_status_header(422)->set_content_type('application/json')->set_output(json_encode(['success'=>false,'message'=>'Consulta não confirmada. Confira a URL HTTPS pública, credencial administrativa, permissões, empresa e configuração existente no PIGE. Nenhuma configuração foi salva.']));
+        }
+    }
     public function save()
     {
         if(!$this->writeAllowed())return;

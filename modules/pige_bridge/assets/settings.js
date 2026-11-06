@@ -8,7 +8,61 @@
             if (field.is(':checkbox')) field.prop('checked', v === true);
             else field.val(v == null ? '' : String(v));
         }
-        var current = null;
+        var current = null, discoveryEpoch = 0, discoveryRequest = null;
+        function clearDiscovery() {
+            discoveryEpoch++;
+            if (discoveryRequest) discoveryRequest.abort();
+            discoveryRequest = null;
+            $('#pige-discovery-url, #pige-discovery-credential').val('');
+            $('#pige-discovery-school').empty().append($('<option>', {value:'',text:'Consulte as instituições'}));
+            $('#pige-discovery-status').text('');
+            $('#pige-discovery button').prop('disabled', false);
+        }
+        function discover(action) {
+            if (current || discoveryRequest) return;
+            if (window.location.protocol !== 'https:') {$('#pige-discovery-status').text('Abra esta configuração por HTTPS antes de informar a credencial administrativa.');return;}
+            var issuer = String($('#pige-issuer').val() || ''), origin = $('#pige-discovery-url').val(), epoch = ++discoveryEpoch;
+            var credential = $('#pige-discovery-credential').val(), school = $('#pige-discovery-school').val();
+            if (!origin || !credential || (action === 'configuration' && !school)) {
+                $('#pige-discovery-status').text('Informe URL, credencial administrativa e, para preencher, selecione uma instituição consultada.'); return;
+            }
+            var payload = {};
+            $('#pige-connection-form input[type=hidden]').each(function () {if (this.name && this.name !== 'revision') payload[this.name] = this.value;});
+            Object.assign(payload, {discovery_action:action,issuer_id:issuer,pige_url:origin,admin_credential:credential,school_id:school || ''});
+            $('#pige-discovery button').prop('disabled', true);
+            $('#pige-discovery-status').text('Consultando a API do PIGE…');
+            discoveryRequest = $.ajax({url:$('#pige-discovery').attr('data-url'),method:'POST',data:payload,dataType:'json',timeout:20000});
+            discoveryRequest.done(function (reply) {
+                if (epoch !== discoveryEpoch || current || String($('#pige-issuer').val()) !== issuer || $('#pige-discovery-url').val() !== origin) return;
+                if (!reply || reply.success !== true) {$('#pige-discovery-status').text('Consulta não confirmada. Nenhum dado foi preenchido.');return;}
+                if (action === 'schools' && Array.isArray(reply.schools)) {
+                    var choices = $('#pige-discovery-school').empty().append($('<option>', {value:'',text:'Selecione a instituição'}));
+                    reply.schools.forEach(function (row) {choices.append($('<option>', {value:row.id,text:row.name}));});
+                    $('#pige-discovery-status').text('Instituições consultadas. Selecione uma para ler a configuração da ponte.');
+                } else if (action === 'configuration' && reply.configuration && reply.configuration.issuer_id === issuer) {
+                    var connection = $('#pige-connection-form'), config = reply.configuration;
+                    ['school_id','account_id','environment'].forEach(function (name) {value(connection, name, config[name]);});
+                    $('#pige-discovery-credential').val('');
+                    $('#pige-discovery-status').text('Escopo preenchido pela revisão ' + config.remote_revision + ' do PIGE. Revise identificador local e HMAC; nenhuma conexão ou autorização financeira foi habilitada.');
+                }
+            }).fail(function () {
+                if (epoch !== discoveryEpoch) return;
+                $('#pige-discovery-credential').val('');
+                $('#pige-discovery-status').text('Consulta não confirmada. Confira URL, credencial, permissões e configuração da ponte para esta empresa.');
+            }).always(function () {
+                if (epoch === discoveryEpoch) {discoveryRequest = null;$('#pige-discovery button').prop('disabled', false);}
+            });
+        }
+        $('#pige-discovery-schools').on('click', function () {discover('schools');});
+        $('#pige-discovery-read').on('click', function () {discover('configuration');});
+        $('#pige-discovery-url, #pige-discovery-credential, #pige-issuer').on('change', function () {
+            discoveryEpoch++;
+            if (discoveryRequest) discoveryRequest.abort();
+            discoveryRequest = null;
+            $('#pige-discovery button').prop('disabled', false);
+            $('#pige-discovery-school').empty().append($('<option>', {value:'',text:'Consulte as instituições'}));
+            $('#pige-discovery-status').text('');
+        });
         function options(selector, entries, selected) {
             var field = $(selector).empty().append($('<option>', {value:'',text:'Selecione'}));
             (entries || []).forEach(function (entry) { field.append($('<option>', {value:String(entry.id),text:entry.label})); });
@@ -32,7 +86,9 @@
         function open(index) {
             var record = index == null ? null : data[index];
             if (index != null && !record) return;
+            clearDiscovery();
             current = record;
+            $('#pige-discovery').toggle(!record);
             $('#pige-choices-warning').toggle(!!record && !record.choices);
             modal.find('form').each(function () { this.reset(); });
             var connection = $('#pige-connection-form'), mapping = $('#pige-mapping-form'), external = $('#pige-external-form');
@@ -82,6 +138,7 @@
         });
         if (typeof window.initDataTableInline === 'function') window.initDataTableInline($('#pige-connections'));
         modal.on('hidden.bs.modal', function () {
+            clearDiscovery();
             current = null;
             modal.find('select[name=actor_id], select[name=currency_id], select[name=account_row], select[name=profile_row]').empty();
             modal.find('input[type="password"]').val('');

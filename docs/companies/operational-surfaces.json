@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "d5e9210c17a13ff66ebebb537161484eafdf190237f33b9c04485b8bbc388dac",
+    "source_manifest_sha256": "ff996db1cd60a564c68def9ccd9c84af5646f9015f1baf3b9b46332734568a14",
     "counts": {
         "modules": 38,
-        "source_files": 4812,
+        "source_files": 4814,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -1721,7 +1721,7 @@
         {
             "name": "pige_bridge",
             "entry": "modules/pige_bridge/pige_bridge.php",
-            "version": "1.0.8",
+            "version": "1.0.9",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -21554,7 +21554,7 @@
         },
         {
             "path": "modules/pige_bridge/controllers/Settings.php",
-            "source_sha256": "aa7ac321ae4746ffcc614b54a3cf92820d016549f60cea0656366c364ceb0e11",
+            "source_sha256": "2228885952280e0c39c813fce742b26f5c2130cfe1f461b27af7ec296bac03c1",
             "module": "pige_bridge",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21570,23 +21570,28 @@
                     "visibility": "public"
                 },
                 {
+                    "method": "discover",
+                    "line": 40,
+                    "visibility": "public"
+                },
+                {
                     "method": "save",
-                    "line": 38,
-                    "visibility": "public"
-                },
-                {
-                    "method": "disable",
-                    "line": 49,
-                    "visibility": "public"
-                },
-                {
-                    "method": "mapping",
                     "line": 62,
                     "visibility": "public"
                 },
                 {
+                    "method": "disable",
+                    "line": 73,
+                    "visibility": "public"
+                },
+                {
+                    "method": "mapping",
+                    "line": 86,
+                    "visibility": "public"
+                },
+                {
                     "method": "external",
-                    "line": 69,
+                    "line": 93,
                     "visibility": "public"
                 }
             ],
@@ -29433,7 +29438,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 109
+            "reference_count": 110
         },
         {
             "name": "mrp_manufacturing_orders",
