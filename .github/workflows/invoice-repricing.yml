@@ -27,12 +27,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: SQLite — aplicação, revisão e calendário preservado
-        run: php tests/companies/invoice_repricing.php
+        run: php tests/companies/invoice_repricing_http.php
       - name: MySQL — schema, transações e snapshots reais
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: ephemeral-test-only
-        run: php tests/companies/invoice_repricing_concurrency.php
+        run: |
+          php tests/companies/invoice_repricing_concurrency.php
+          php tests/companies/invoice_repricing_http.php
       - name: Chromium — view nativa e alvos explícitos
         run: node tests/browser/invoice_repricing.cjs

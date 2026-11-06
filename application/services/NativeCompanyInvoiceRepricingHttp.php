@@ -50,7 +50,7 @@ final class NativeCompanyInvoiceRepricingHttp
             if($search!==null){
                 if(!$can_manage||!is_string($search)||strlen($search)>200)throw new DomainException('invoice_reprice_denied');
                 $items=(new NativeCompanyCatalogUi($this->ci->db,db_prefix(),$issuer,$actor))->searchForInvoiceEditor($search);
-                $public=array_map(static fn($r)=>['id'=>(string)$r['id'],'description'=>(string)$r['description'],'rate'=>(string)$r['rate']],$items);
+                $public=array_map(static fn($r)=>['id'=>(string)$r['id'],'description'=>(string)$r['name'],'rate'=>(string)$r['rate']],$items);
                 $this->ci->output->set_content_type('application/json')->set_output(json_encode($public,JSON_THROW_ON_ERROR));return;
             }
             $key=$this->ci->input->get('proposal',false);
