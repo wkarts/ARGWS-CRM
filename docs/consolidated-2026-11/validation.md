@@ -831,3 +831,38 @@ Ainda falharam no mesmo run: botão de tipo em Contratos, abertura de Nova
 recorrência e persistência do detalhe de checklist. Não são marcados como
 resolvidos por estes testes locais. Cartão continua aguardando decisão específica;
 SDK pausado, sem merge, deploy ou operações financeiras reais.
+
+### Seletor e modal de tipo de Contratos
+
+A view `contracts/native_form.php` com os CSS publicados reproduziu o botão de
+novo tipo invisível: o ancestral `.input-group` tinha `display:none` porque a
+classe `select-placeholder` permanecia após renderizar o Bootstrap-select.
+Os handlers `rendered.bs.select` e `loaded.bs.select` existiam apenas em main.js,
+que não é o bootstrap do contexto multiempresa. Foram movidos, sem duplicação,
+para `NativeAdminWidgets.initSelects`, compartilhado pelos dois shells.
+
+O teste `tests/browser/native_contract_selects.cjs` executa a view PHP real,
+assets publicados e lifecycle compartilhado. Passou com dropdown visível, abertura
+e fechamento do modal, acesso mobile e ausência de erros JS; chamar init duas
+vezes não duplica o registro. É teste de apresentação, não CRUD autenticado.
+O teste autenticado também passa a usar os dropdowns reais de cliente/projeto,
+sem `force:true`. `npm run production` recompilou main.min.js; versão4.9.2 mantida.
+Recorrências agora verifica separadamente a existência, visibilidade e destino
+da criação antes de aguardar navegação, para não mascarar a falha original.
+
+Correção da evidência de captura: o prepare de `72999fe5` demonstrou que
+`Network.enable(enableDurableMessages)` não resolve a perda no navegador fixado
+pelo CI. Esse resultado substitui a inferência do teste local anterior. O driver
+passa a pausar somente a resposta real do endpoint salvo, ler o corpo via
+`Fetch.getResponseBody` e liberar com `Fetch.continueResponse`, sem informar
+status/headers/body substitutos. A pausa introduz atraso de observação; não é
+teste de concorrência. Mantidos POST200, JSON, destino, preview e replay exato.
+A regressão inclui também o bloqueio de destinos externos usado no smoke.
+
+A biblioteca Playwright1.55.1 do lockfile foi instalada localmente. O download do
+Chromium Headless Shell140.0.7339.186 retornou HTTP403 `Domain forbidden` nos
+endpoints oficiais tentados pelo instalador; nenhuma restrição foi contornada.
+A verificação local usa essa biblioteca com `/usr/bin/chromium`; o binário exato
+permanece dependente do CI. Os 23 testes Node de lifecycle/assets/header/driver
+passaram no container com PHP (zero skips). Inventário de isolamento atualizado
+para o diagnóstico Asaas, mantendo estado unreviewed e rollout bloqueado.

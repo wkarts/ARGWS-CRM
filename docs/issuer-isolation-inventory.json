@@ -5963,26 +5963,26 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "0e2231a80f74ece66da19692a6c74b592015c31152dc9d3905e56f3d3a19c3bf",
+      "sha256": "ca5d40629beeecb13af857dfd8ecd3ad58b5b345746cf8edfe2a64d731333f89",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        276,
-        279,
-        295,
-        300,
-        303,
-        310,
-        343,
+        280,
+        283,
+        299,
+        304,
+        307,
+        314,
         347,
-        375,
-        483,
+        351,
+        379,
         487,
-        624,
-        821,
-        824,
-        836
+        491,
+        628,
+        825,
+        828,
+        840
       ],
       "state": "unreviewed",
       "evidence": ""

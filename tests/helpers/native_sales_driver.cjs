@@ -51,20 +51,27 @@ async function settle(page){const target=new URL(page.url());if(!/^\/admin\/(?:e
 async function open(page,target){const response=await page.goto(target);if(response?.ok())await settle(page);return response;}
 async function save(page,url,kind){
   const resource=type(kind),form=page.locator('#'+resource+'-form'),endpoint=new URL(await form.getAttribute('action'),page.url()).pathname;
-  // Read-only CDP observation. Durable bodies survive the application's redirect;
-  // no request/response interception, DOM substitution or second write is used.
-  // https://chromedevtools.github.io/devtools-protocol/tot/Network/#method-enable
-  const session=await page.context().newCDPSession(page);let requestId,finish,timer;
+  // Pause only this real response long enough to copy its body before navigation.
+  // continueResponse preserves original status, headers and bytes; no fulfill,
+  // request rewrite, DOM substitution or replacement response is used.
+  const session=await page.context().newCDPSession(page);let finish,timer;
   const captured=new Promise(resolve=>{finish=resolve;timer=setTimeout(()=>resolve({error:new Error('Original Sales POST body was not observed')}),30000);});
-  session.on('Network.requestWillBeSent',event=>{if(event.request.method==='POST'&&new URL(event.request.url).origin===new URL(url).origin&&new URL(event.request.url).pathname===endpoint)requestId=event.requestId;});
-  session.on('Network.loadingFinished',async event=>{
-    if(event.requestId!==requestId)return;
-    try{const body=await session.send('Network.getResponseBody',{requestId});finish({result:JSON.parse(body.base64Encoded?Buffer.from(body.body,'base64').toString('utf8'):body.body)});}
-    catch(error){finish({error});}
+  session.on('Fetch.requestPaused',async event=>{
+    let observed;
+    try{
+      if(event.request.method==='POST'){
+        const body=await session.send('Fetch.getResponseBody',{requestId:event.requestId});
+        observed={result:JSON.parse(body.base64Encoded?Buffer.from(body.body,'base64').toString('utf8'):body.body)};
+      }
+    }catch(error){observed={error};}
+    finally{
+      try{await session.send('Fetch.continueResponse',{requestId:event.requestId});}
+      catch(error){observed={error};}
+      if(observed)finish(observed);
+    }
   });
-  session.on('Network.loadingFailed',event=>{if(event.requestId===requestId)finish({error:new Error('Original Sales POST failed before its response completed')});});
   try{
-    await session.send('Network.enable',{enableDurableMessages:true,maxTotalBufferSize:1048576,maxResourceBufferSize:65536});
+    await session.send('Fetch.enable',{patterns:[{urlPattern:new URL(endpoint,url).href,requestStage:'Response'}]});
     const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('.transaction-submit:not(.save-and-send):not(.save-and-send-later)').first().click()]);
     assert.equal(response.status(),200,'original '+kind+' AJAX POST commits');
     const observed=await captured;if(observed.error)throw observed.error;const result=observed.result;

@@ -29,6 +29,7 @@ const server=http.createServer((req,res)=>{
  try{
   const context=await browser.newContext(),page=await workspacePage(context);
   const origin='http://127.0.0.1:'+server.address().port;
+  await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await page.goto(origin+'/admin/estimates/estimate');
   assert.equal((await driver.save(page,origin,'estimates')).id,'123');
   assert.equal(posts.length,2,'original POST and durable replay are both checked');

@@ -80,29 +80,6 @@ $("body").on("loaded.bs.select change", "select.ajax-search", function (e) {
   }
 });
 
-// On render select remove the placeholder
-$("body").on("rendered.bs.select", "select", function () {
-  $(this).parents().removeClass("select-placeholder");
-  $(this)
-    .parents(".form-group")
-    .find(".select-placeholder")
-    .removeClass("select-placeholder");
-});
-
-$("body").on("loaded.bs.select", "select", function () {
-  if ($(this).data("toggle") == 1) {
-    $(this).selectpicker("toggle");
-  }
-});
-
-// Init bootstrap selectpicker
-$("body").on("loaded.bs.select", "._select_input_group", function (e) {
-  $(this)
-    .parents(".form-group")
-    .find(".input-group-select .input-group-addon")
-    .css("opacity", "1");
-});
-
 NativeAdminNavigation.init({isMobile:is_mobile,isRTL:isRTL,persistSetup:function(state){requestGet("misc/set_setup_menu_"+state);}});
 
 $(function () {

@@ -381,6 +381,30 @@ function fix_kanban_height(col_px, container_px) {
     initSelects:function(){
       if(selectBound)return;
       selectBound=true;
+  // Shared original picker lifecycle: reveal rendered groups in both admin shells.
+// On render select remove the placeholder
+$("body").on("rendered.bs.select", "select", function () {
+  $(this).parents().removeClass("select-placeholder");
+  $(this)
+    .parents(".form-group")
+    .find(".select-placeholder")
+    .removeClass("select-placeholder");
+});
+
+$("body").on("loaded.bs.select", "select", function () {
+  if ($(this).data("toggle") == 1) {
+    $(this).selectpicker("toggle");
+  }
+});
+
+// Init bootstrap selectpicker
+$("body").on("loaded.bs.select", "._select_input_group", function (e) {
+  $(this)
+    .parents(".form-group")
+    .find(".input-group-select .input-group-addon")
+    .css("opacity", "1");
+});
+
   // jQuery validation fix for select, works only on required
   // Wrap it in another validate event because is throwing errors if the form is not yet validated
   $(document).on("app.form-validate", function (e, form) {
