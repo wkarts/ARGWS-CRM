@@ -3103,6 +3103,10 @@
     [
       "php",
       "tests/companies/asaas_manual_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_invoice_delete.php"
     ]
   ],
   "browser": [

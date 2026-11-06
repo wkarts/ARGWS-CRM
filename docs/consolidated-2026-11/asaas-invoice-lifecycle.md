@@ -247,3 +247,16 @@ e [remoção de cobrança](https://docs.asaas.com/reference/excluir-cobranca).
 Confirmar dinheiro não credita saldo Asaas; remover não é reembolsar. Nenhuma
 transação real foi executada. Testes de transporte simulado não são homologação
 bancária, sandbox ou aceitação HTTP autenticada.
+
+## Rota nativa Excluir — preservação do histórico
+
+`POST invoices/delete/{id}` agora exige a permissão `invoices.delete` e usa o
+mesmo coordenador de remoção remota confirmada antes do cancelamento local.
+O contrato local já existente mantém a fatura cancelada e sua origem; a resposta
+explicita `status=cancelled` e `history_preserved=true`. Isso corrige a propagação
+ao Asaas, **não implementa apagamento físico nem desaparecimento da fatura**.
+Resultado incerto não é sucesso. Retry consulta o mesmo ID e não repete DELETE.
+
+Teste MySQL:12 verificações adicionais de exclusão sobre167 de operações remotas,
+22 de cancelamento e seis de concorrência entre processos. Transporte simulado;
+aceitação HTTP autenticada dessa rota ainda pendente.

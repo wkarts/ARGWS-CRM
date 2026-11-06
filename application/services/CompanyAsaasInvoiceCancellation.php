@@ -6,14 +6,25 @@ require_once __DIR__.'/CompanyAsaasCancellationSource.php';
 final class CompanyAsaasInvoiceCancellation
 {
     public function __construct(private $db,private string $p){}
+    /** Native deletion retains the invoice/history, but removes the unpaid provider charge. */
+    public function delete(int $issuer,int $actor,int $invoice,string $revision,callable $decrypt,?callable $transport=null):void
+    {
+        $this->coordinate($issuer,$actor,$invoice,$revision,$decrypt,$transport,true);
+    }
     public function cancel(int $issuer,int $actor,int $invoice,string $revision,callable $decrypt,?callable $transport=null):void
     {
+        $this->coordinate($issuer,$actor,$invoice,$revision,$decrypt,$transport,false);
+    }
+    private function coordinate(int $issuer,int $actor,int $invoice,string $revision,callable $decrypt,?callable $transport,bool $deletion):void
+    {
+        $deleteGuard=$deletion?function()use($issuer,$actor):bool{if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','delete'))throw new DomainException('company_invoice_access_denied');return true;}:null;
+        if($deleteGuard!==null)$deleteGuard();
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('company_invoice_stale');
         $writer=new CompanyInvoices($this->db,$this->p);$remote=new \Asaas\CompanyRemoteOperations($this->db,$this->p);
         $providers=CompanyInvoiceProviderTables::current($this->db,$this->p);
-        if(!in_array('asaas_payment_origins',$providers,true)){$writer->change($issuer,$actor,$invoice,$revision);return;}
+        if(!in_array('asaas_payment_origins',$providers,true)){$writer->change($issuer,$actor,$invoice,$revision,null,$deleteGuard);return;}
         $rows=IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=?'.\Asaas\CompanyOriginGenerations::predicate($this->db,$this->p),[$invoice])->result_array();
-        if(!$rows){$writer->change($issuer,$actor,$invoice,$revision);return;}
+        if(!$rows){$writer->change($issuer,$actor,$invoice,$revision,null,$deleteGuard);return;}
         $origin=IssuerTransaction::run($this->db,$this->p,$writer->transactionParticipants($remote->tables()),function()use($issuer,$actor,$invoice,$revision,$writer,$providers){
             $acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);
             (new \Asaas\CompanyService($this->db,$this->p))->authorize($issuer,$actor,'remote_remove');
@@ -37,6 +48,6 @@ final class CompanyAsaasInvoiceCancellation
         // Even a previously confirmed removal needs a fresh canonical observation before local mutation.
         (new \Asaas\CompanyService($this->db,$this->p))->query($issuer,$actor,$origin,$decrypt,$transport);
         $source=new CompanyAsaasCancellationSource($this->db,$this->p,$issuer,$actor,$invoice,$origin,$revision);
-        $writer->change($issuer,$actor,$invoice,$revision,null,null,[],null,$source);
+        $writer->change($issuer,$actor,$invoice,$revision,null,$deleteGuard,[],null,$source);
     }
 }

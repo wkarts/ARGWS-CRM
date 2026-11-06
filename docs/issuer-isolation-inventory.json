@@ -2863,12 +2863,13 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasInvoiceCancellation.php": {
-      "sha256": "f5fe69dd67e44bd16462321d1031d77974cb8eda92efbc4b75919fad0a6bc5ab",
+      "sha256": "fc93d9b34df029efd58e15dd0fbca817cb52d67d9cba2004778906221b268543",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        29
+        20,
+        40
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5584,7 +5585,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyParityHttp.php": {
-      "sha256": "b5a4fcd412d2abf243bceaa522b4c54abcfd1902986d47ba082790153b6425e7",
+      "sha256": "2fce594787df36afff9e991cb13c25586e9b404c4e6d2bf90a3096afe3de8e8e",
       "categories": [
         "customer_privacy",
         "documents_numbering",
