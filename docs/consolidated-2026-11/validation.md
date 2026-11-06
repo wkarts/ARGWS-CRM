@@ -548,3 +548,7 @@ com preservação byte a byte de todos os predecessores.
 Validação local da correção166: 66 checks MySQL de gerações/concorrência/falhas,
 280 asserts MySQL de migrations e os 19 comandos PHP do job de contratos Asaas
 passaram. Provedor simulado, sem cobrança real ou homologação externa.
+
+Ampliação de segurança166: a mesma suíte passou com69 checks após acrescentar
+revogação do operador durante o GET de cliente. Confirma zero POST, intenção
+continuando prepared e fatura cancelada. Não é teste HTTP contra o Asaas real.

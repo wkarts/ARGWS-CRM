@@ -51,6 +51,18 @@ $proofTime=$db->query("SELECT created_at FROM {$p}asaas_company_proofs WHERE id=
 $db->query("UPDATE {$p}asaas_company_proofs SET created_at=? WHERE id=?",[gmdate('Y-m-d H:i:s',time()-601),$oldProof]);
 essentialThrows(fn()=>$asaas->dispatchRecreation($b,7,$origin,$key,$dec,$mock),'asaas_recreation_fresh_query_required','unsent preparation cannot dispatch on expired deletion proof');
 $db->query("UPDATE {$p}asaas_company_proofs SET created_at=? WHERE id=?",[$proofTime,$oldProof]);
+// Revocation during the external customer preflight must prevent the durable POST claim.
+$revokedPosts=0;
+$revokedTransport=function($environment,$method,$path,$payload,$secret)use($mock,$db,$p,&$revokedPosts){
+ if($method==='POST')$revokedPosts++;
+ $response=$mock($environment,$method,$path,$payload,$secret);
+ if(str_starts_with($path,'customers/'))$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7");
+ return $response;
+};
+try{essentialThrows(fn()=>$asaas->dispatchRecreation($b,7,$origin,$key,$dec,$revokedTransport),'asaas_company_access_denied','permission revoked during customer preflight prevents POST');}
+finally{$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");}
+essentialCheck($revokedPosts===0&&$db->query("SELECT state FROM {$p}asaas_company_recreations WHERE origin_id=?",[$origin])->row()->state==='prepared','preflight revocation leaves a retryable unsent reservation');
+essentialCheck((int)$db->query("SELECT status FROM {$p}invoices WHERE id=?",[$id])->row()->status===5,'preflight revocation leaves the native invoice cancelled');
 $recreatePosts=0;$recoveredRemote=null;
 $recreateTransport=function($environment,$method,$path,$payload,$secret)use($mock,&$recreatePosts,&$recoveredRemote,$db,$p,$origin){
  if($method==='POST'){

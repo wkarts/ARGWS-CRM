@@ -156,3 +156,13 @@ fonte que mudou de natureza. É necessária autoridade específica, política ex
 por empresa/ambiente, ledger da tentativa e recuperação canônica, composição com
 recebimentos parciais e reversão/compensação sem tratar resultado incerto como
 falha definitiva. Nenhuma dessas políticas foi ativada por inferência nesta etapa.
+
+## Limite de composição com pós-reembolso
+
+A auditoria dos leitores confirmou que CompanyPostRefundAsaasSource e
+CompanyPostRefundAsaasManualSource ainda exigem uma única origem histórica por
+fatura. Assim, cancelamento local pós-reembolso e recebimento manual específico
+pós-reembolso não são suportados sobre uma fatura que já tenha sucessores.
+Esses guards continuam recusando a composição; não foram reduzidos a um filtro
+de geração ativa que ignoraria fundos ou eventos históricos. A adaptação exige
+prova de toda a cadeia e testes próprios, e permanece pendente em ASA04.
