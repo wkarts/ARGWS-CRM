@@ -73,7 +73,13 @@ homologam convênio, boleto, agrupamento aberto ou baixa por retorno.
 CI da PR deve ser consultado pelo SHA final; registrar o estado remoto na
 entrega. Workflow adicionado executa o browser novo e configuração de cartão.
 
-SDK, PR21, commit0a1180b2f5a27c6348ee7d686e78e875951d9d14: PHPUnit11.5.19
+SDK, PR21, commit7deb034aab8792c7cd58f6128fee2e9656c269d6: PHPUnit11.5.19
 executou19 testes/84 assertions do source atual contra Guzzle real com transporte
 simulado. Três testes novos/18 assertions cobrem contratos de cartão, erros e
 retry. CI do SDK deve confirmar PHPUnit10 e instalação Composer do projeto.
+
+SDK CI final aprovado em7deb034aab8792c7cd58f6128fee2e9656c269d6:
+[CI42149805472](https://github.com/wkarts/asaas-sdk-argws/actions/runs/42149805472)
+e [Audit42149805461](https://github.com/wkarts/asaas-sdk-argws/actions/runs/42149805461).
+O primeiro CI detectou tipos de arrays ausentes na fixture nova; corrigidos sem
+reduzir gates. Composer/PHPUnit10 e matriz PHP8.1/8.2/8.3 passaram remotamente.
