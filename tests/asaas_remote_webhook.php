@@ -42,5 +42,9 @@ rejects(fn()=>new Asaas\RemoteWebhook($transport,$url,"a\n".str_repeat('b',64)),
 $clientCalls=[];$client=new Asaas\CompanyClient('sandbox','synthetic-key',function(...$args)use(&$clientCalls){$clientCalls[]=$args;return ['ok'=>true];});
 foreach([['GET','webhooks?limit=100&offset=0',null],['POST','webhooks',[]],['PUT','webhooks/hook_own',[]],['DELETE','webhooks/hook_own',null]] as $call)$client->request(...$call);
 check(count($clientCalls)===4,'bounded company transport permits official webhook verbs');
-foreach([['PUT','payments/pay_1',[]],['PUT','webhooks/../wallets',[]],['GET','https://attacker.test',null],['GET','webhooks?limit=100&offset=1000',null]] as $call)rejects(fn()=>$client->request(...$call),'asaas_company_request_invalid');
+foreach([['PUT','webhooks/../wallets',[]],['GET','https://attacker.test',null],['GET','webhooks?limit=100&offset=1000',null]] as $call)rejects(fn()=>$client->request(...$call),'asaas_company_request_invalid');
+$edit=['billingType'=>'PIX','value'=>'10.00','dueDate'=>'2026-12-01'];
+$client->request('PUT','payments/pay_1',$edit);check(count($clientCalls)===5,'bounded payment update permits only the reviewed native edit payload');
+foreach([[],array_replace($edit,['billingType'=>'CREDIT_CARD']),array_replace($edit,['value'=>'10,00']),array_replace($edit,['dueDate'=>'2026-02-30']),$edit+['customer'=>'other']] as $bad)rejects(fn()=>$client->request('PUT','payments/pay_1',$bad),'asaas_invoice_edit_request_invalid');
+check(count($clientCalls)===5,'invalid edit payload never reaches transport');
 echo "Remote webhook protocol tests complete; no external requests.\n";

@@ -673,3 +673,6 @@ CIb45 confirmou focusedPHP8.1, node-contracts, preflight browser8.1/8.5, interfa
 
 
 Correção R07 do preview: `native_credit_preview_helpers.browser.cjs` passou com o script inline real, jQuery e plugin de abas reais, sem carregar o bundle de Faturas, em1280/390px e RTL. Inicialização repetida não duplica os rótulos. Nove testes Node de dependências/lifecycle e o verificador de referências JS passaram. Teste autenticado mantém assert de ausência de pageerror; não foi afrouxado.
+
+
+CI92278fa6: node-contracts e preflight Chromium8.1/8.5 passaram. O contrato remoto Asaas ainda esperava erro genérico ao rejeitar PUT de cobrança; atualizado para a rejeição específica de payload inválido, mantendo caminho/escopo restritos e acrescentando Pix válido, cartão recusado, data impossível, valor inválido e cliente extra. Os19 scripts do job `contracts` passaram localmente sem rede, incluindo contato2316, retry847, webhook171 e escritores84/44. Versão mínima do módulo170 ajustada para núcleo4.9.2; callback13 passou. A nova rodada precisa confirmar o SHA posterior, sem tratar922 como verde.
