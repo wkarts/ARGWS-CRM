@@ -148,3 +148,38 @@ operacional desatualizado no job `registry-shards (8.1, 1)` do run
 O inventário foi regenerado a partir do código atual (4808 arquivos, 38 módulos).
 Estados `not_verified` e `operational_ready: false` foram preservados; atualizar
 esse artefato não comprova isolamento, homologação ou prontidão operacional.
+
+### Dependências reais do fixture de migration489
+
+A falha de `native_sales_projection_mysql.php` no run42159426044 foi reproduzida
+em MySQL8.4: erro1824 ao criar `company_leads`, pois o fixture de vendas não havia
+criado a tabela nativa `contacts` referenciada pela FK. O fixture agora carrega a
+definição de `install/database.sql` e mantém a FK ativa. O teste rejeita uma
+referência de contato inexistente (SQLSTATE23000/1452). A execução corrigida passou
+com DDL/replay, precisão monetária, rollback e preservação dos registros prévios.
+Nenhuma migration ou restrição de produção foi alterada.
+
+O inventário de fronteiras também foi regenerado:15296 arquivos, hash
+`2abf33de533549c29eac9788b16e976c9c4e2185848fb69618543b37a56d10bc`, exatamente o
+esperado pelo CI. Os três testes do gerador e seu `--check` passaram. As fronteiras
+continuam classificadas como não verificadas; o inventário não prova isolamento.
+
+### Adaptadores dos testes de controller BB
+
+O run42159425980 falhou em MySQL/MariaDB porque `ExtensionRequest` não expunha
+`get()`, utilizado pelo controller real para o destino fixo de configurações.
+Os cinco adaptadores agora separam os parâmetros GET dos dados POST. O teste
+histórico439 também passa a restaurar o marcador realmente instalado antes das
+sondagens negativas, mantendo recusa de versões antigas/futuras e verificando o
+marcador restaurado. Nenhum controle de produção foi relaxado.
+
+Resultados locais MySQL8.4: `native_sales_projection_mysql.php` aprovado;
+`banco_brasil_tariff_controller.php`289 checks cumulativos;
+`banco_brasil_own_number_controller.php`864;
+`banco_brasil_resume_439_controller.php`564;
+`banco_brasil_resume_440_controller.php`564.
+São controllers reais com requisição/sessão adaptadas e transporte bancário
+simulado; não representam HTTP autenticado completo ou homologação bancária.
+Os27 testes Python dos planos de CI registry/focused passaram.
+`banco_brasil_api_window_discount_controller.php` também passou:1233 verificações
+cumulativas em MySQL8.4, incluindo o ponto que falhava nos dois bancos do CI.

@@ -117,7 +117,7 @@ ponta a ponta ainda depende do CI/instalação de teste, e não é alegada como 
   na referência. Sua existência não autoriza copiá-los para este CRM.
 - SDK já incluído `modules/asaas/vendor/argws/asaas-sdk-php` possui
   CreditCardService::creditCardTokenization e PaymentService::
-  createNewPaymentWithCreditCard/payAChargeWithCreditCard. O SDK remoto foi inspecionado em `7a9b3324e7d2365fcbff0b0265ba7f7deecd92be`; não possuía payWithCard e repetia POST após erro. Delta específico em branch `fix/card-payment-contracts`: payAChargeWithCard e nenhuma repetição automática para pagamento/criação com cartão. PR SDK [21](https://github.com/wkarts/asaas-sdk-argws/pull/21), head `7deb034aab8792c7cd58f6128fee2e9656c269d6`, draft. Vendor CRM permanece na versão anterior.
+  createNewPaymentWithCreditCard/payAChargeWithCreditCard. O SDK remoto foi inspecionado em `7a9b3324e7d2365fcbff0b0265ba7f7deecd92be`; não possuía payWithCard e repetia POST após erro. Delta específico em branch `fix/card-payment-contracts`: payAChargeWithCard e nenhuma repetição automática para pagamento/criação com cartão. PR SDK [21](https://github.com/wkarts/asaas-sdk-argws/pull/21) posteriormente integrada pelo usuário; main remota verificada em `170831639665082c3bf50422877942b04a4a5315`. Vendor CRM permanece na versão anterior. A ampliação independente do SDK está pausada; este delta do CRM não altera SDK nem Perfex.
 - Documentação oficial consultada: [PCI](https://docs.asaas.com/docs/pci-dss),
   [tokenização](https://docs.asaas.com/reference/credit-card-tokenization),
   [pagamento de cobrança](https://docs.asaas.com/reference/pay-a-charge-with-credit-card).
