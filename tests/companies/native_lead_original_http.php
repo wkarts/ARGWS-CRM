@@ -2,6 +2,8 @@
 /** Actual controller + writer + original views on MySQL; framework/session/shell are explicit spies. */
 ob_start();require __DIR__.'/native_lead_directory.php';$fixtureOutput=ob_get_clean();
 require_once APPPATH.'helpers/datatables_helper.php';
+require_once APPPATH.'helpers/fields_helper.php';require_once APPPATH.'helpers/custom_fields_helper.php';
+function set_value($name,$value=''){return e($value);}
 function admin_url($path=''){return'https://synthetic.invalid/admin/'.$path;}function init_head(){}function init_tail(){}
 function form_hidden($name,$value=''){return'<input type="hidden" name="'.e($name).'" value="'.e($value).'">';}function form_open($url,$attrs=[]){$out='<form action="'.e($url).'" method="post"';foreach($attrs as$key=>$value)$out.=' '.e($key).'="'.e($value).'"';return$out.'>'.form_hidden('_native_company_csrf','synthetic-native-token');}function form_open_multipart($url,$attrs=[]){$attrs['enctype']='multipart/form-data';return form_open($url,$attrs);}function form_close(){return'</form>';}
 function get_option($name){if($name!=='save_last_order_for_tables')throw new RuntimeException('Unscoped option request');return$GLOBALS['leadRememberOrder']??'0';}

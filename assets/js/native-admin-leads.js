@@ -59,8 +59,25 @@
       if (typeof reply.leadView !== 'string') throw Error('Resposta do lead incompleta.');
       var host = modal(); host.find('.modal-content').html(reply.leadView);
       if ($.fn.selectpicker) host.find('.selectpicker').selectpicker();
+      if (typeof root.init_datepicker === 'function') root.init_datepicker(host.find('.datepicker'), host.find('.datetimepicker'));
+      if (typeof root.init_color_pickers === 'function') root.init_color_pickers();
+      if (typeof root.custom_fields_hyperlink === 'function') root.custom_fields_hyperlink();
+      host.find('[data-native-lead-tags]').each(function () {
+        if (!$.fn.tagit) return;
+        // The reference tag-it widget uses one literal field per label here. No
+        // global suggestions or comma-joined transport can mix company tags.
+        $(this).tagit({ fieldName: 'tags[]', singleField: false, allowSpaces: true, animate: false, caseSensitive: false, tagLimit: 100, availableTags: [], showAutocompleteOnFocus: false, autocomplete: { appendTo: '#inputTagsWrapper' } });
+        $(this).closest('form').find('[data-native-lead-tag-initial]').remove();
+      });
+      contactDate(host);
       if (tab && host.find('a[href="' + tab + '"]').length) host.find('a[href="' + tab + '"]').tab('show');
       host.modal('show');
+    }
+    function contactDate(host) {
+      var today = host.find('#contacted_today'), date = host.find('[data-native-lead-contact-date]');
+      if (!today.length) return;
+      date.toggleClass('hide', today.prop('checked'));
+      if (today.prop('checked')) date.find('[name="custom_contact_date"]').val('');
     }
     function open(id, edit, status) {
       var path = 'leads/lead' + (id === undefined || id === null || id === '' ? '' : '/' + canonical(id));
@@ -101,6 +118,7 @@
     $(document).on('click.nativeLeads', '[data-native-lead-edit],[data-native-lead-cancel]', function (event) {
       event.preventDefault(); var edit = this.hasAttribute('data-native-lead-edit'), host = modal(); host.find('[data-lead-profile-view]').prop('hidden', edit); host.find('[data-lead-profile-edit]').toggleClass('hide', !edit); host.find('.lead-wrapper').toggleClass('open-edit', edit);
     });
+    $(document).on('change.nativeLeads', '#lead-modal #contacted_today', function () { contactDate(modal()); });
     $(document).on('submit.nativeLeads', '[data-native-lead-form]', function (event) {
       event.preventDefault(); var form = this, button = form.querySelector('[data-lead-confirm]'); if (button && !root.confirm(button.getAttribute('data-lead-confirm'))) return;
       var tab = modal().find('.nav-tabs li.active a').attr('href'), target = $(form).find('[data-native-lead-error]'); if (!target.length) target = modal().find('[data-native-lead-error]'); target.addClass('hide');
@@ -120,7 +138,7 @@
       var element = $('table.table-leads');
       if (element.length) {
         element.on('xhr.dt', function (event, settings, data, xhr) { if (!data) { pageError(xhr); return true; } if (Array.isArray(data.summary)) data.summary.forEach(function (row) { $('[data-lead-summary="' + row.id + '"]').text(row.total); }); });
-        table = root.initDataTable(element, root.admin_url + 'leads/table', [0, 6, 7, 11], [0, 6, 7, 11], { native_leads_csrf: '#native-leads-csrf', state: '#native-lead-state' }, [[12, 'desc'], [1, 'asc']]);
+        table = root.initDataTable(element, root.admin_url + 'leads/table', [0, 7], [0], { native_leads_csrf: '#native-leads-csrf', state: '#native-lead-state' }, [[12, 'desc'], [1, 'asc']]);
         $('#native-lead-state').on('change.nativeLeads', function () { table.ajax.reload(); });
       }
       if (page.dataset.mode === 'kanban') loadBoard();

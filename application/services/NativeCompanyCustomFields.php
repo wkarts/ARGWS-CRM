@@ -56,8 +56,26 @@ final class NativeCompanyCustomFields
     public function definitionsForResource(int$issuer,int$actor,string$fieldto,$id,array$filters=[],string$cap='view'):array
     {
         if(!in_array($cap,['view','edit'],true))throw new DomainException('native_custom_field_denied');
-        return$this->readDefinitions($issuer,$actor,$fieldto,$filters,fn()=>$this->resource($issuer,$actor,$fieldto,$id,$cap));
+        $definitions=$this->readDefinitions($issuer,$actor,$fieldto,$filters,fn()=>$this->resource($issuer,$actor,$fieldto,$id,$cap));
+        if($fieldto==='contracts'){$reference=NativeCompanyResourceId::decode('contract',$id);if($reference['source_kind']==='company_contract'){
+            require_once __DIR__.'/CompanyContractMetadata.php';$definitions=(new CompanyContractMetadata($this->db,$this->p))->visibleDefinitions($issuer,$actor,$reference['source_id'],$definitions);
+        }}
+        return$definitions;
     }
+    /** Draft form capabilities are checked independently of the generic immutable-field editor. */
+    public function contractFormDefinitions(int $issuer,int $actor,?int $contract,string $cap):array
+    {
+        if(!in_array($cap,['create','edit'],true)||($contract===null)!==($cap==='create'))throw new DomainException('native_custom_field_denied');
+        $this->authorize($issuer,$actor,'contracts','view');$definitions=$this->definitions($issuer,$actor,'contracts',['active'=>1],$cap);
+        if($contract!==null){
+            $row=IssuerStorage::query($this->db,'SELECT status FROM '.$this->p.'company_contracts WHERE issuer_id=? AND id=?',[$issuer,$contract])->row_array();
+            if(!$row||$row['status']!=='draft')throw new DomainException('company_contract_immutable');
+            require_once __DIR__.'/CompanyContractMetadata.php';$definitions=(new CompanyContractMetadata($this->db,$this->p))->visibleDefinitions($issuer,$actor,$contract,$definitions);
+        }
+        return$definitions;
+    }
+    public function validateContractFormValues(int $issuer,int $actor,?int $contract,string $cap,array $submitted):array
+    {return self::validateDefined($this->contractFormDefinitions($issuer,$actor,$contract,$cap),$submitted);}
     /** Invoice line fields share native definitions, never the catalogue item's ACL or identity. */
     public function invoiceItemDefinitions(int $issuer,int $actor,?int $invoice=null,array $filters=[],string $cap='view'):array
     {
@@ -146,6 +164,16 @@ final class NativeCompanyCustomFields
     }
     private function resource(int $issuer,int $actor,string $fieldto,$id,string $cap):array
     {
+        if($fieldto==='contracts'&&$cap==='edit'){
+            $reference=NativeCompanyResourceId::decode('contract',$id);
+            if($reference['source_kind']==='company_contract'){
+                require_once __DIR__.'/CompanyContractMetadataSchema.php';
+                if(CompanyContractMetadataSchema::available($this->db,$this->p)&&IssuerStorage::query($this->db,'SELECT contract_id FROM '.$this->p.CompanyContractMetadataSchema::TABLE.' WHERE issuer_id=? AND contract_id=?',[$issuer,$reference['source_id']])->row_array()){
+                    $this->authorize($issuer,$actor,$fieldto,'edit');
+                    throw new DomainException('native_contract_fields_require_draft_form');
+                }
+            }
+        }
         if($fieldto==='credit_note'&&$cap==='edit'){
             $this->authorize($issuer,$actor,$fieldto,$cap);
             if($this->db->table_exists($this->p.'company_credit_documents')){
@@ -193,11 +221,16 @@ final class NativeCompanyCustomFields
     {
         if(!in_array($cap,['view','edit'],true))throw new DomainException('native_custom_field_denied');
         $ref=$this->resource($issuer,$actor,$fieldto,$id,$cap);$defs=$this->definitionsForResource($issuer,$actor,$fieldto,$id,[],$cap);$out=[];
+        if($fieldto==='contracts'&&$ref['source_kind']==='company_contract'){
+            require_once __DIR__.'/CompanyContractMetadata.php';$defs=(new CompanyContractMetadata($this->db,$this->p))->visibleDefinitions($issuer,$actor,$ref['source_id'],$defs);
+        }
         foreach($defs as$d){$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'company_custom_field_values WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind=? AND source_id=?',[$issuer,$d['field_source_kind'],$d['source_field_id'],$ref['source_kind'],$ref['source_id']])->row_array();
             if(!$row&&$d['field_source_kind']==='custom_field'&&(new IssuerResourceAccess($this->db,$this->p))->primaryId()===$issuer&&!str_starts_with($ref['source_kind'],'company')&&($ref['source_kind']!=='invoice_item'||$ref['lineage']==='native_legacy_null')){$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'customfieldsvalues WHERE fieldid=? AND fieldto=? AND relid=?',[$d['source_field_id'],$fieldto,$ref['source_id']])->row_array();}
             if($row)$out[(string)$d['id']]=(string)$row['value'];
         }
-        $this->resource($issuer,$actor,$fieldto,$id,$cap);return$out;
+        $this->resource($issuer,$actor,$fieldto,$id,$cap);
+        if($fieldto==='contracts'&&$ref['source_kind']==='company_contract'&&(new CompanyContractMetadata($this->db,$this->p))->visibleDefinitions($issuer,$actor,$ref['source_id'],$defs)!==$defs)throw new DomainException('native_contract_fields_stale');
+        return$out;
     }
     /** Native global-search contract: administrative users only, with per-resource ownership first. */
     public function search(int $issuer,int $actor,string $query,int $limit=20):array
@@ -426,10 +459,34 @@ final class NativeCompanyCustomFields
         $definitions=$line===null?$this->definitions($issuer,$actor,'credit_note',['active'=>1],'create'):$this->creditItemDefinitions($issuer,$actor,'create',['active'=>1]);
         $this->writeValues($issuer,$actor,$line===null?'credit_note':'items',['source_kind'=>$kind,'source_id'=>$id],$submitted,$verify,$definitions);
     }
+    /** Exact writer frame covers fresh creation, draft edits and internal copy/renewal preservation. */
+    public function saveContractMetadataInOwned(int $issuer,int $actor,int $contract,int $revision,array $captured,CompanyContracts $writer):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tableNames());
+        $verify=function()use($issuer,$actor,$contract,$revision,$captured,$writer):void{
+            $frame=$writer->assertNativeMetadataWriteInOwned($this->db,$this->p,$issuer,$actor,$contract,$revision);
+            if($frame['fields']!==$captured)throw new DomainException('native_custom_field_creation_denied');
+        };$verify();$expected=[];
+        foreach($captured as$field){
+            $reference=NativeCompanyResourceId::decode('custom_field',$field['id']);
+            if($reference['source_kind']!==$field['field_source_kind']||$reference['source_id']!==$field['source_field_id']||$field['definition']['fieldto']!=='contracts')throw new DomainException('native_custom_field_creation_denied');
+            $definition=self::definition($field['definition']);$input=in_array($definition['type'],['checkbox','multiselect'],true)?($field['value']===''?[]:explode(', ',$field['value'])):$field['value'];
+            if(self::value($definition,$input)!==$field['value'])throw new DomainException('native_custom_field_corrupt');
+            $args=[$issuer,$field['field_source_kind'],$field['source_field_id'],$contract];
+            $old=IssuerStorage::query($this->db,'SELECT value,revision FROM '.$this->p."company_custom_field_values WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind='company_contract' AND source_id=? FOR UPDATE",$args)->row_array();
+            if($old&&(string)$old['value']===$field['value']){$expected[]=$args;continue;}
+            $next=$old?(int)$old['revision']+1:1;if($next>2147483647)throw new DomainException('native_custom_field_revision_overflow');
+            if($old)IssuerStorage::query($this->db,'UPDATE '.$this->p."company_custom_field_values SET value=?,revision=? WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind='company_contract' AND source_id=? AND revision=?",array_merge([$field['value'],$next],$args,[(int)$old['revision']]));
+            else IssuerStorage::query($this->db,'INSERT INTO '.$this->p."company_custom_field_values(issuer_id,field_source_kind,field_id,source_kind,source_id,value,revision) VALUES(?,?,?,'company_contract',?,?,1)",array_merge($args,[$field['value']]));
+            $stored=IssuerStorage::query($this->db,'SELECT value,revision FROM '.$this->p."company_custom_field_values WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind='company_contract' AND source_id=?",$args)->row_array();
+            if(!$stored||$stored['value']!==$field['value']||(int)$stored['revision']!==$next)throw new RuntimeException('native_custom_field_write_unconfirmed');
+        }
+        $verify();
+    }
     /** Only the real final native writer can attest its own freshly inserted resource. */
     public function saveCreatedInOwnedTransaction(int $issuer,int $actor,string $fieldto,$id,array $submitted,object $writer):void
     {
-        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line'],'estimate'=>['CompanySales','company_estimate'],'proposal'=>['CompanySales','company_proposal'],'expenses'=>['CompanyExpenses','company_expense']][$fieldto]??null;
+        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line'],'estimate'=>['CompanySales','company_estimate'],'proposal'=>['CompanySales','company_proposal'],'expenses'=>['CompanyExpenses','company_expense'],'leads'=>['CompanyLeads','company_lead']][$fieldto]??null;
         if(in_array($fieldto,['invoice','items'],true)&&get_class($writer)==='CompanyInvoices')$expected=['CompanyInvoices',$fieldto==='invoice'?'invoice':'invoice_item'];
         if($fieldto==='items_pr')$expected=['NativeCompanyCatalog'=>['NativeCompanyCatalog','company_item'],'NativeCompanyCatalogLegacy'=>['NativeCompanyCatalogLegacy','item']][get_class($writer)]??null;
         if(!$expected||get_class($writer)!==$expected[0])throw new DomainException('native_custom_field_creation_denied');

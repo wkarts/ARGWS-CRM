@@ -24,9 +24,9 @@ $valueFields=function(string $prefix,string $amountName,string $currencyName,arr
 <?php init_head(); ?>
 <div id="wrapper">
   <div class="content">
-    <div class="row"><div class="col-md-12">
+    <div class="tw-max-w-5xl tw-mx-auto">
       <div class="sm:tw-flex sm:tw-justify-between sm:tw-items-center tw-mb-3">
-        <h4 class="tw-my-0 tw-font-bold tw-text-lg tw-text-neutral-700"><?= $esc(_l('contracts')); ?></h4><a href="<?= admin_url('contracts/types?source=company'); ?>" class="btn btn-default"><?= e(_l('contract_types')); ?></a>
+        <h4 class="tw-my-0 tw-font-bold tw-text-lg tw-text-neutral-700"><?= $esc($contract['name']??_l('contract_information')); ?></h4><a class="btn btn-default" href="<?= $esc($indexUrl); ?>"><?= $esc(_l('contracts')); ?></a><a href="<?= admin_url('contracts/types?source=company'); ?>" class="btn btn-default"><?= e(_l('contract_types')); ?></a>
         <?php if($can_create){ ?><a class="btn btn-primary" href="<?= $esc($createUrl); ?>"><i class="fa-regular fa-plus tw-mr-1"></i><?= $esc(_l('new_contract')); ?></a><?php } ?>
       </div>
 
@@ -40,6 +40,8 @@ $valueFields=function(string $prefix,string $amountName,string $currencyName,arr
         <?php if($contract['number']!==null){$snapshot=json_decode($contract['snapshot_json'],true,32,JSON_THROW_ON_ERROR); ?><p class="text-muted"><?= $esc(($snapshot['identity']['legal_name']??'').' → '.($snapshot['client']['name']??'')); ?></p><?php } ?>
 
         <?php if($can_edit&&$contract['status']==='draft'){ ?>
+        <hr><h5 class="tw-font-semibold"><?= e(_l('contract_information')); ?></h5>
+        <?php if(!empty($native_contract_form)){include __DIR__.'/native_form.php';}elseif(empty($native_contract_metadata_available)){ ?>
         <hr><h5 class="tw-font-semibold">Editar rascunho</h5>
         <?= form_open($detailUrl); ?><?php $hidden('update',$contract_id,$contract['revision']); ?><input type="hidden" name="contract[client_id]" value="<?= (int)$contract['client_id']; ?>">
         <?php $values=$contract;$formId='contract-edit'; ?>
@@ -47,6 +49,7 @@ $valueFields=function(string $prefix,string $amountName,string $currencyName,arr
         <div class="form-group"><label for="<?= $formId; ?>-body">Texto do contrato</label><textarea id="<?= $formId; ?>-body" class="form-control" name="contract[body]" maxlength="40000" rows="12" required><?= $esc($values['body']); ?></textarea></div>
         <div class="row"><div class="col-md-6 form-group"><label for="<?= $formId; ?>-start">Início</label><input id="<?= $formId; ?>-start" type="date" class="form-control" name="contract[start_date]" required value="<?= $esc($values['start_date']); ?>"></div><div class="col-md-6 form-group"><label for="<?= $formId; ?>-due">Fim</label><input id="<?= $formId; ?>-due" type="date" class="form-control" name="contract[due_date]" required value="<?= $esc($values['due_date']); ?>"></div></div>
         <?php $typeField('contract-edit-type',$contract_type['contract_type']['id']??null);$valueFields('contract-edit','contract[contract_value]','contract[currency]',$contract_value??[]); ?><button class="btn btn-primary" type="submit">Salvar rascunho</button><?= form_close(); ?>
+        <?php } ?>
         <div class="tw-mt-3 tw-flex tw-gap-2">
           <?= form_open($detailUrl); ?><?php $hidden('activate',$contract_id,$contract['revision']); ?><button class="btn btn-success" type="submit">Ativar contrato e preservar texto</button><?= form_close(); ?>
           <?= form_open($detailUrl); ?><?php $hidden('cancel',$contract_id,$contract['revision']); ?><button class="btn btn-default" type="submit">Cancelar e preservar o histórico</button><?= form_close(); ?>
@@ -62,7 +65,7 @@ $valueFields=function(string $prefix,string $amountName,string $currencyName,arr
       <?php if($can_edit&&$can_create&&$contract['status']==='active'){ ?>
       <div class="panel_s"><div class="panel-body"><h4>Renovar contrato</h4><p>A renovação gera um novo rascunho vinculado a este contrato. Revise e ative o novo documento para numerá-lo.</p>
       <?= form_open(admin_url('contracts/renew')); ?><?php $hidden('renew',$contract_id,$contract['revision']); ?>
-      <div class="row"><div class="col-md-6 form-group"><label for="renew-start">Início</label><input type="date" name="new_start_date" id="renew-start" class="form-control" required></div><div class="col-md-6 form-group"><label for="renew-end">Fim</label><input type="date" name="new_end_date" id="renew-end" class="form-control" required></div></div><?php $valueFields('contract-renew','new_value','currency',isset($contract_value['currency'])?['currency'=>$contract_value['currency']]:[]); ?><p class="text-muted">Deixe o novo valor vazio para preservar o valor armazenado no contrato anterior.</p><button class="btn btn-primary" type="submit">Criar renovação</button><?= form_close(); ?></div></div><?php } ?>
+      <div class="row"><div class="col-md-6 form-group"><label for="renew-start">Início</label><input type="date" name="new_start_date" id="renew-start" class="form-control" required></div><div class="col-md-6 form-group"><label for="renew-end">Fim</label><input type="date" name="new_end_date" id="renew-end" class="form-control" <?= empty($native_contract_metadata_available)?'required':''; ?>></div></div><?php $valueFields('contract-renew','new_value','currency',isset($contract_value['currency'])?['currency'=>$contract_value['currency']]:[]); ?><p class="text-muted">Deixe o novo valor vazio para preservar o valor armazenado no contrato anterior.</p><button class="btn btn-primary" type="submit">Criar renovação</button><?= form_close(); ?></div></div><?php } ?>
       <?php if($can_edit&&($mail_recipients??[])){ ?><div class="panel_s"><div class="panel-body"><h4>Enviar contrato por e-mail</h4><p>O contato recebe um link para o contrato publicado no portal autenticado desta empresa.</p>
       <?= form_open(admin_url('contracts/send_to_email/'.$contract_id)); ?><?php $hidden('send_to_email',$contract_id,$contract['revision']); ?><label for="contract-mail-contact">Contato autorizado</label><select id="contract-mail-contact" class="form-control" name="contact_id" required><?php foreach($mail_recipients as$recipient){ ?><option value="<?= (int)$recipient['id']; ?>"><?= $esc(trim($recipient['firstname'].' '.$recipient['lastname']).' — '.$recipient['email']); ?></option><?php } ?></select><div class="form-group mtop15"><label for="contract-mail-cc">CC (opcional, separado por vírgulas)</label><input id="contract-mail-cc" class="form-control" name="cc" maxlength="4000" placeholder="contato@exemplo.com"></div><label><input type="checkbox" name="attach_pdf" value="1"> Anexar o PDF deste contrato</label><p class="text-muted">O PDF será enviado aos destinatários informados. O acesso pelo link continua sujeito às permissões do portal.</p><button class="btn btn-primary mtop15" type="submit">Agendar envio</button><?= form_close(); ?></div></div><?php } ?>
       <?php if(($can_delete??false)&&$contract['status']!=='deleted'){ ?><div id="contract-actions" class="panel_s"><div class="panel-body"><?= form_open(admin_url('contracts/delete/'.$contract_id)); ?><?php $hidden('delete',$contract_id,$contract['revision']); ?><button class="btn btn-danger" type="submit">Remover da listagem</button><p class="text-muted">O documento e seu histórico serão preservados.</p><?= form_close(); ?></div></div><?php } ?>
@@ -97,18 +100,22 @@ $valueFields=function(string $prefix,string $amountName,string $currencyName,arr
       <?php } ?>
       <?php } ?>
 
+      <?php if(empty($native_contract_form)){ ?>
       <div class="panel_s"><div class="panel-body"><h4 class="tw-mt-0 tw-font-semibold">Lista de contratos</h4><form class="form-inline tw-mb-3" method="get" action="<?= $esc($indexUrl); ?>"><div class="form-group"><label class="sr-only" for="native-contract-search">Buscar</label><input id="native-contract-search" class="form-control" name="search" maxlength="191" placeholder="Buscar pelo nome"></div><button class="btn btn-default" type="submit"><?= $esc(_l('search')); ?></button></form>
         <div class="table-responsive"><table class="table table-striped"><thead><tr><th>Número</th><th>Nome</th><th>Estado</th><th>Vigência</th></tr></thead><tbody><?php foreach($directory['items']as$row){$rowId=$canonical($row['id']); ?><tr><td><?= $row['number']===null?'Rascunho':(int)$row['number']; ?></td><td><a href="<?= $esc(admin_url('contracts/contract/'.$rowId)); ?>"><?= $esc($row['name']); ?></a></td><td><?= $esc($labels[$row['status']]??$row['status']); ?></td><td><?= $esc($row['due_date']); ?></td></tr><?php } ?></tbody></table></div>
         <?php if($directory['next']!==null){ ?><a class="btn btn-default" href="<?= $esc($indexUrl.'?after='.(int)$directory['next']); ?>">Próxima página</a><?php } ?>
       </div></div>
 
+      <?php } ?>
       <?php if($can_create&&!$contract){ ?>
+      <?php if(!empty($native_contract_form)){ ?><div class="panel_s"><div class="panel-body"><?php include __DIR__.'/native_form.php'; ?></div></div><?php }elseif(empty($native_contract_metadata_available)){ ?>
       <div class="panel_s"><div class="panel-body"><h4 class="tw-mt-0 tw-font-semibold"><?= $esc(_l('new_contract')); ?></h4><form class="form-inline tw-mb-3" method="get" action="<?= $esc($createUrl); ?>"><input type="hidden" name="source" value="company"><div class="form-group"><label class="sr-only" for="native-contract-client-search">Cliente</label><input id="native-contract-client-search" class="form-control" name="client_search" maxlength="191" placeholder="Buscar cliente"></div><button class="btn btn-default" type="submit"><?= $esc(_l('search')); ?></button></form>
         <?= form_open($createUrl); ?><?php $hidden('create'); ?><div class="form-group"><label for="contract-client">Cliente autorizado</label><select id="contract-client" class="form-control" name="contract[client_id]" required><option value="">Selecione</option><?php foreach($clients as$client){ ?><option value="<?= (int)$client['userid']; ?>"><?= $esc($client['company']); ?></option><?php } ?></select></div>
         <div class="form-group"><label for="contract-new-name">Nome</label><input id="contract-new-name" class="form-control" name="contract[name]" maxlength="191" required></div><div class="form-group"><label for="contract-new-body">Texto do contrato</label><textarea id="contract-new-body" class="form-control" name="contract[body]" maxlength="40000" rows="12" required></textarea></div><div class="row"><div class="col-md-6 form-group"><label for="contract-new-start">Início</label><input id="contract-new-start" type="date" class="form-control" name="contract[start_date]" value="<?= gmdate('Y-m-d'); ?>" required></div><div class="col-md-6 form-group"><label for="contract-new-due">Fim</label><input id="contract-new-due" type="date" class="form-control" name="contract[due_date]" value="<?= gmdate('Y-m-d'); ?>" required></div></div><?php $typeField('contract-new-type');$valueFields('contract-new','contract[contract_value]','contract[currency]'); ?><button class="btn btn-primary" type="submit">Criar rascunho de contrato</button><?= form_close(); ?>
       </div></div>
       <?php } ?>
-    </div></div>
+      <?php } ?>
+    </div>
   </div>
 </div>
 <?php init_tail(); ?>

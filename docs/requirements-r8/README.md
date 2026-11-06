@@ -53,9 +53,12 @@ são exercitados onde o relatório indica; dependências do framework são
 controladas em diversos fixtures. Isso não substitui uma instalação completa
 autenticada nem uma comparação visual lado a lado com dados equivalentes.
 O primeiro checkpoint passou no gate focado de PHP 8.1/8.5, MySQL e
-Chromium. A suíte HTTP completa encontrou uma corrida de XHR durante a troca
-de empresa; o tratamento e os formulários novos aguardam o CI da composição
-seguinte. Resultados por SHA constam em [checkpoints](validation-checkpoints.md). PWA instalado/offline e integrações externas reais
+Chromium. A suíte HTTP completa encontrou uma resposta Ajax 409 durante a
+navegação/troca de empresa. No segundo checkpoint, esse cenário passou,
+assim como os testes de apresentação em navegador; outras etapas encontraram
+expectativas antigas e dependências ausentes nas fixtures, com correções
+identificadas para a execução seguinte. Resultados por SHA constam em
+[checkpoints](validation-checkpoints.md). PWA instalado/offline e integrações externas reais
 exigem homologação própria.
 
 ## Diferenças que precisam de decisão funcional
@@ -78,17 +81,24 @@ esta entrega não executa merge, publicação de release ou implantação.
 A ausência de um adaptador ou campo no writer atual, por si só, não constitui
 decisão pendente do usuário. Os formulários compatíveis de Propostas/Orçamentos e os campos opcionais
 de emissão de crédito foram implementados e exercitados em testes de
-roundtrip. Campos complementares de Leads, listagem de Despesas e criação/edição
-de rascunhos de Contratos seguem em implementação autorizada; o resultado de
-cada frente é registrado nos relatórios específicos.
+roundtrip. Campos complementares privados de Leads e Contratos, a listagem,
+categorias, totais e lote de Despesas possuem implementação e verificações
+locais nesta composição. Colunas personalizadas/ordenação/lote de Leads e
+conteúdo das prévias/pipeline de Vendas seguem em implementação autorizada;
+ausência de adapter não é tratada como conflito do usuário. O resultado e os
+limites de cada frente constam nos relatórios específicos.
 
 ## Banco, compatibilidade e atualização
 
-A migration 489 cria somente a projeção aditiva `company_sales_projection` e a
-reconcilia com `company_sales_documents`. Ela não renumera documentos, não cria
-empresa, não emite fatura, não muda saldo e não altera registros históricos
-`issuer_id IS NULL`. Fonte, hashes e cálculo decimal são conferidos durante o
-backfill. Os writers atualizam a projeção na mesma transação de suas operações.
+A migration 489 cria a projeção aditiva `company_sales_projection` e a
+reconcilia com `company_sales_documents`. Acrescenta `company_lead_metadata` e
+`company_contract_metadata`, sem popular dados privados por suposição; admite
+`due_date` nula em contratos e acrescenta descrição opcional às categorias de
+despesas. A conversão do DDL de Contratos compara os registros antes/depois.
+Nenhuma dessas mudanças renumera documentos, cria empresa, emite fatura, muda
+saldo ou atribui propriedade aos registros históricos `issuer_id IS NULL`.
+Fonte, hashes e cálculo decimal são conferidos durante o backfill de Vendas.
+Os writers atualizam sua projeção/metadados na mesma transação de suas operações.
 
 O backfill usa o bloqueio/transação já previstos no domínio; duração e volume
 de produção precisam ser medidos em uma cópia representativa. MySQL não desfaz
@@ -109,7 +119,7 @@ cenários de empresa, Pagamentos, Sales e documentos desta revisão.
 O retorno ao estado anterior exige plano consistente de código, banco,
 configuração e uploads. Reverter apenas código não desfaz documentos emitidos,
 movimentos, notas ou filas gravadas após a atualização. `down()` de 489 conserva
-a projeção e o histórico; o atualizador não implementa downgrade automático.
+as tabelas aditivas, os campos e o histórico; o atualizador não implementa downgrade automático.
 Não reduzir marcadores ou apagar dados para simular retorno de versão.
 
 ## Índice de evidências

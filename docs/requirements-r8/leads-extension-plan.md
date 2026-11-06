@@ -1,4 +1,4 @@
-# Leads — checkpoint de UI e extensão compatível de campos
+# Leads — UI original e implementação compatível de campos
 
 ## Bases e limite deste registro
 
@@ -31,18 +31,18 @@ Fontes primárias do inventário: `application/views/admin/leads/profile.php`,
 `CompanyLeadsSchema.php` e as views de tabela/Kanban da mesma tag. A tabela usa
 os nomes reais do formulário. As views legadas foram conservadas no repositório.
 
-| Campo/controle 4.0.2 | Situação no contrato próprio | Extensão compatível a implementar |
+| Campo/controle 4.0.2 | Situação na base antes desta extensão | Implementação nesta PR |
 | --- | --- | --- |
 | `name`, `company`, `email`, `phonenumber`, `description` | Já gravados por `CompanyLeads`; telefone mapeado para `phone`. | Manter o writer, validação e ordem funcional do formulário. |
 | `status`, `source`, `assigned` | Já gravados como `stage_id`, `source_id`, `assignee_id`, com catálogos/autoridade por empresa. | Manter IDs próprios de catálogo e nomes autorizados. Não reusar filtros legados com IDs de outra origem. |
-| `title`, `website` | Ausentes do pai próprio. | Persistência opcional de texto; exibição escapada e URL segura, sem executar conteúdo. |
-| `address`, `city`, `state`, `country`, `zip` | Ausentes do pai próprio. | Endereço opcional e país validado na referência real de países. Preservar ausência, sem atribuir endereço histórico. |
-| `default_language` | Ausente do pai próprio. | Valor opcional validado contra idiomas reais; vazio conserva a escolha padrão. |
-| `lead_value` | Ausente; coluna correspondente está vazia. | Decimal exato opcional com moeda real da empresa. Nenhum zero inventado. Avaliar snapshot da moeda para não reinterpretar valor após mudança da moeda base. |
-| `tags` | Infraestrutura `NativeCompanyWorkTags`/`NativeCompanyResourceTags` já resolve `company_lead`, mas o formulário não a escreve atomicamente. | Integrar labels/links próprios à mesma transação de criação/edição; origem e revisão corretas. |
-| `lastcontact` | Ausente; coluna correspondente está vazia. | Data/hora opcional real, com conversão explícita do formato de entrada e preservação de vazio. |
-| `contacted_today`, `custom_contact_date` | Controles de criação; modelo legado calcula `lastcontact` com a data atual ou entrada customizada. | Restaurar esses controles e calcular o valor uma vez no corpo normalizado, preservando replay idempotente. Não recalcular a data a cada replay. |
-| `custom_fields[leads]` | Leitores/definições de `NativeCompanyCustomFields` já suportam `leads`; prova de criação própria ainda não está no mapping do writer. | Compor valores obrigatórios/opcionais na transação do pai e validar prova privada de criação, igual ao padrão de Despesas. |
+| `title`, `website` | Ausentes do pai próprio. | Persistência opcional com os comprimentos reais da tabela 4.0.2; perfil/formulário escapados e link HTTP(S) validado. |
+| `address`, `city`, `state`, `country`, `zip` | Ausentes do pai próprio. | Persistidos em `company_lead_metadata`; país verificado no catálogo público real. Criação reutiliza `customer_default_country` da empresa via `CompanySettingsStorage`. Não há adoção de endereço histórico. |
+| `default_language` | Ausente do pai próprio. | Validado contra `NativeAvailableLanguages::all()`; vazio mantém o padrão. O catálogo atual contém `portuguese_br`. |
+| `lead_value` | Ausente; coluna correspondente vazia. | `DECIMAL(15,2)` opcional, assinado e calculado/formatado sem float. Captura a moeda base do catálogo público **já existente** em `NativeCompanyCurrencyReference`; não é uma nova configuração monetária por empresa. Valor salvo conserva a captura após troca da moeda base, sem conversão implícita. `NULL` e zero permanecem distintos. |
+| `tags` | Infraestrutura já resolve `company_lead`; faltava composição pelo formulário. | Criação/edição usa `NativeCompanyResourceTags` na transação do Lead. O widget tag-it da referência transmite `tags[]`, preservando vírgulas e rótulos literais, sem sugestões globais. |
+| `lastcontact` | Ausente; coluna correspondente vazia. | Persistência opcional e conversão explícita do formato capturado no formulário. Lista, perfil e filtro de data usam o valor real. |
+| `contacted_today`, `custom_contact_date` | Controles originais de criação. | Checkbox e data alternativa restaurados. O recibo guarda a instrução estável; o relógio UTC do writer resolve o contato uma vez no primeiro trabalho confirmado. Reenvio não recalcula o horário. |
+| `custom_fields[leads]` | Leitores/definições existentes; faltava prova de criação. | Helper original renderiza os campos; writer existente valida obrigatórios e tipos, com prova privada de `CompanyLeads` para criação. Valores, tags e metadados são confirmados novamente após o último recibo. Não entram no DTO genérico da API. |
 | `is_public` | Ausente; no legado participa de `staff_can_access_lead`. | Não permitir que o checkbox amplie permissões da empresa ou exponha registros a não membros. Metadado e semântica efetiva precisam ficar distintos; resolver o conflito de ACL antes de alterar o acesso atual. |
 | `dateassigned` | Campo derivado legado sem equivalente próprio. | Se acrescentado, derivar exclusivamente de atribuição real; não inferir histórico desconhecido. |
 | `dateadded` | Já corresponde a `created_at`. | Manter a data real, sem recriar na extensão. |
@@ -53,33 +53,45 @@ referência. Responsável que perdeu acesso conserva seu ID sem divulgar nome
 privado; a edição deve escolher um responsável atualmente autorizado ou nenhum,
 em vez de apagar o vínculo implicitamente.
 
-## Composição recomendada
+## Composição implementada
 
-Implementar os campos ausentes de forma aditiva e opcional. O conjunto exato deve
-seguir os contratos reais já usados pelo projeto; uma tabela própria de metadados
-com chave empresa/Lead é uma opção que não altera os recibos históricos do pai.
-Se houver DDL, integrá-lo somente à migration 489 coordenada pela frente principal
-e acrescentar o schema guard/manifesto correspondente. Não reescrever migrations
-antigas nem a definição histórica de `CompanyLeadsSchema` para encobrir mudança.
+`CompanyLeadMetadataSchema` acrescenta uma única tabela com PK `lead_id`, FK
+composta `(issuer_id, lead_id)` para o Lead próprio e índices por empresa e último
+contato. `ensure($db, $prefix)` é idempotente e valida tipos, precisão, collation,
+chaves e engine; a chamada pertence exclusivamente à nova migration 489. Não há
+backfill nem alteração da definição histórica de `CompanyLeadsSchema`. Uma
+instalação que já registra a migration 489 falha fechada se essa tabela faltar.
 
-`CompanyLeads::create/update/request/transaction` devem continuar sendo o único
-caminho de gravação do Lead. A composição de metadados/tags/campos precisa ocorrer
-na transação proprietária com locks, prova de criação quando aplicável, revisão,
-validação de autoridade e rollback real. A ausência do novo conjunto deve manter
-o hash/corpo/replay dos chamadores antigos (workspace, importação, API e
-automação). Somente o envio explícito dos campos novos acrescenta conteúdo ao
-recibo; não mudar todos os hashes por adicionar defaults a payloads antigos.
+`CompanyLeads::create/update/request/transaction` continuam sendo o único caminho
+de gravação. `CompanyLeadsNativeFields` compõe o grupo opcional `native_fields`
+dentro dessa transação, com as permissões e revisão do pai. A normalização só
+acrescenta esse grupo quando ele foi enviado: workspace, API, importação e
+automação sem o grupo preservam a forma e ordem do corpo/hash históricos. Uma
+edição antiga não apaga os metadados novos por omissão.
 
-`CompanySalesNativeFields` fornece um exemplo recente de campos opcionais;
-`NativeCompanyCustomFields::saveCreatedInOwnedTransaction` e os métodos
-`create*TagsInOwnedTransaction` mostram a composição existente. Atualmente o
-mapping de criação inclui Despesas/Propostas/Orçamentos, mas não Leads: a extensão
-precisa validar o writer real e sua prova, nunca aceitar um objeto arbitrário.
+O compromisso `form_revision` inclui empresa, ator, revisão do Lead, metadados,
+definições/valores autorizados, etiquetas, moeda e opções de formato. Uma mudança
+concorrente de campo personalizado ou tag invalida o formulário mesmo sem mudar
+a revisão do pai. Datas do formulário usam o formato capturado e assinado por esse
+compromisso; por isso um POST já confirmado continua idempotente após mudança da
+localização. A renderização em buffer repete a leitura antes de publicar o HTML.
 
-Atualizar conjuntamente `NativeCompanyLeadInput`, o perfil do modal,
-`CompanyLeadsDirectory`, a linha de tabela e os filtros admitidos quando houver
-persistência real. Não preencher a view antes do writer. Datas/decimais devem
-ter testes de serialização dos controles reais, não apenas chamadas de DTO.
+`NativeCompanyCustomFields::saveCreatedInOwnedTransaction` admite apenas o writer
+final `CompanyLeads` e a prova de criação que existe dentro do intervalo de gravação.
+`NativeCompanyResourceTags::createLeadTagsInOwnedTransaction` usa a mesma prova.
+Não há permissão de edição concedida como efeito de criação. O perfil mostra os
+valores administrativos autorizados, enquanto `get()`, `page()` e API mantêm o
+DTO anterior sem esses valores privados.
+
+`CompanyLeadsDirectory` faz JOIN por empresa/Lead para os campos e busca literal
+em etiquetas com `EXISTS`; hidrata as etiquetas em um lote limitado para a página,
+sem uma leitura por linha. A página/contagens e esse lote são relidos antes da
+conclusão. Exportação acima de 10.000 registros ou 20.000 etiquetas na página é
+recusada, nunca truncada silenciosamente. Ordenação de etiquetas permanece
+desabilitada: não há comparação integral equivalente ao `GROUP_CONCAT` legado.
+Valor e último contato têm ordenação real. O builder expõe as 12 regras originais
+com armazenamento próprio: nome, telefone, país, cidade, estado, CEP, último
+contato, criação, valor, status, origem e responsável.
 
 ## Ações adicionais e conflitos reais
 
@@ -93,7 +105,44 @@ ter testes de serialização dos controles reais, não apenas chamadas de DTO.
 | Visibilidade pública | Manter as autorizações existentes. | `is_public` legado amplia acesso de staff; introduzi-lo como bypass de ACL viola R11. |
 | Propostas, tarefas, lembretes, GDPR, e-mail e captação | Inspecionar os vínculos reais e adaptar somente os contratos próprios encontrados. | Public forms, configuração/filas globais e integrações externas precisam de propriedade/equivalência de efeitos antes de admissão em outra empresa. |
 
+As colunas opcionais que `show_on_table` acrescenta à tabela legada e sua busca/
+ordenação ainda não foram acopladas à grade própria de 13 colunas; os campos
+personalizados desta rodada estão conectados ao perfil e ao formulário. Rank da
+coluna, cor de status e `dateassigned` também permanecem trabalho compatível
+pendente, não conflitos de autorização do usuário. O uso dos writers atuais não
+comprova equivalência dessas superfícies adicionais.
+
 ## Testes e transferência de responsabilidade
+
+Rodada de campos compatíveis executada localmente:
+
+- `tests/native_lead_metadata_input.php`: **55 verificações** do código puro real,
+  incluindo DECIMAL assinado, limites, datas, captura de moeda, leitura corrompida,
+  formatos, opções literais e links inertes.
+- `tests/native_lead_metadata_schema.php`: **11 verificações SQLite** de DDL
+  aditivo, idempotência, índices e FK. Este teste não executa o writer de Leads em
+  SQLite; a exigência de MySQL de `CompanyLeadsSchema` permanece intacta.
+- `tests/native_lead_metadata_transport.php`: **27 verificações adicionais** às
+  31 do transporte original, com views e helper de data reais e serialização DOM.
+  O renderer de campos personalizados é explicitamente vazio nessa prova portátil;
+  não é evidência SQL desses campos.
+- `tests/native_company/lead_transport.test.cjs`: **6 testes** de requisições
+  antigas/troca de empresa, concorrência e recibos do cliente.
+
+Gate novo **MySQL**, preparado e sintaticamente verificado, sem execução local:
+`tests/companies/native_lead_metadata.php`. Inclui os gates reais de diretório e
+HTTP e acrescenta helpers reais/POST, compatibilidade de hash, precisão, A/B/
+principal, criação sem permissão de edição, campo/tag concorrente, replay após
+mudança de formato/moeda, rollback por falhas/triggers tardios e privacidade do
+DTO da API. O fixture `lead_metadata_setup.php` usa DDL original para dependências
+e o schema novo. O resultado desse gate pertence ao próximo CI; ainda não é PASS.
+
+O browser `tests/companies/leads_browser.cjs` foi ampliado para os campos,
+etiquetas com vírgula, checkbox/multiselect, hyperlink e reenvio exato, com leitura
+do resultado real no fixture dedicado. Apenas a sintaxe foi validada localmente.
+Chromium local continua indisponível por restrição de sockets do ambiente. Não
+há declaração de equivalência visual lado a lado nem de funcionamento integral
+do browser/PWA com base nessas provas.
 
 Checkpoint local: `tests/native_lead_original_transport.php` (31 checks) e
 `tests/native_company/lead_transport.test.cjs` (6 testes) passaram. Navegação

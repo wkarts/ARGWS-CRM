@@ -6,7 +6,7 @@ class Filters extends AdminController
 {
     private function nativeStore($identifier,$view):array
     {
-        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='contracts'&&$view==='contracts')||($identifier==='company_leads'&&$view==='leads')||($identifier==='credit_notes'&&$view==='credit_notes')||(in_array($identifier,['proposals','estimates'],true)&&$view===$identifier)||($identifier==='related_tasks'&&$view==='tasks_relations')||($identifier==='tasks'&&$view==='tasks')))throw new DomainException('native_filter_invalid');
+        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='contracts'&&$view==='contracts')||($identifier==='company_leads'&&$view==='leads')||($identifier==='company_expenses'&&$view==='expenses')||($identifier==='credit_notes'&&$view==='credit_notes')||(in_array($identifier,['proposals','estimates'],true)&&$view===$identifier)||($identifier==='related_tasks'&&$view==='tasks_relations')||($identifier==='tasks'&&$view==='tasks')))throw new DomainException('native_filter_invalid');
         $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');
         require_once APPPATH.'services/NativeCompanyFilters.php';
         $ctx=CompanyRequestScope::context();
@@ -22,6 +22,9 @@ class Filters extends AdminController
         }elseif($identifier==='credit_notes'){
             require_once APPPATH.'services/NativeCompanyCreditTableFactory.php';
             $table=(new NativeCompanyCreditTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
+        }elseif($identifier==='company_expenses'){
+            require_once APPPATH.'services/NativeCompanyExpenseTableFactory.php';
+            $table=(new NativeCompanyExpenseTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
         }elseif($identifier==='company_leads'){
             require_once APPPATH.'services/NativeCompanyLeadTableFactory.php';
             $table=(new NativeCompanyLeadTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);

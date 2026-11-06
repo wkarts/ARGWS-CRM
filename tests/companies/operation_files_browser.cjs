@@ -1,4 +1,5 @@
 'use strict';
+const {selectContractClient} = require('../helpers/native_contract_driver.cjs');
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 const ticketDriver = require('../helpers/native_ticket_driver.cjs');
@@ -18,7 +19,7 @@ function fileRoute(kind,id,key,preview=false){return kind==='contract'?'/admin/c
  async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
  for(const[issuer,letter]of[[a,'a'],[b,'b']]){await select(issuer);const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");proofs[issuer]={};parents[issuer]={};
   for(const kind of['contract','ticket']){const route=kind==='contract'?'/admin/contracts/contract?source=company':'/admin/tickets';await page.goto(url+route);
-   if(kind==='contract'){await page.locator('#contract-client').selectOption(client);await page.locator('#contract-new-name').fill('Operational private files '+letter);await page.locator('#contract-new-body').fill('Synthetic internal private contract');await page.locator('#contract-new-start').fill('2026-10-19');await page.locator('#contract-new-due').fill('2026-11-19');await go(page,page.getByRole('button',{name:'Criar rascunho de contrato',exact:true}));await go(page,page.getByRole('button',{name:'Ativar contrato e preservar texto',exact:true}));}
+   if(kind==='contract'){await selectContractClient(page, client);await page.locator('#contract-new-name').fill('Operational private files '+letter);await page.locator('#contract-new-body').fill('Synthetic internal private contract');await page.locator('#contract-new-start').fill('2026-10-19');await page.locator('#contract-new-due').fill('2026-11-19');await go(page,page.getByRole('button',{name:'Criar rascunho de contrato',exact:true}));await go(page,page.getByRole('button',{name:'Ativar contrato e preservar texto',exact:true}));}
    else{await ticketDriver.create(page,url,sql,{issuer,client,subject:'Operational private support '+letter,body:'Synthetic internal proof'});}
    const routedId=new URL(page.url()).pathname.split('/').filter(Boolean).at(-1);assert.match(routedId||'',/^[1-9]\d*$/);const id=String(BigInt(routedId)%4294967296n);parents[issuer][kind]=id;const snapshot=kind==='contract'?sql('SELECT snapshot_json FROM tblcompany_contracts WHERE id='+id):null;
    for(const [name,mimeType,buffer]of[['proof.pdf','application/pdf',pdf],['proof.png','image/png',png]]){const form=page.locator('form').filter({has:page.locator('#operation-file')});assert.equal(await form.getAttribute('enctype'),'multipart/form-data');await page.locator('#operation-file').setInputFiles({name,mimeType,buffer});if(letter==='a')old=await hidden(form);await go(page,form.locator('button[type=submit]').filter({hasText:'Anexar arquivo privado'}));}

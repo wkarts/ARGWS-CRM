@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_expense_categories)&&$native_expense_categories){require __DIR__.'/native_categories.php';return;} ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

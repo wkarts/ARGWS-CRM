@@ -212,6 +212,7 @@ final class NativeCompanyRoutes
             'add_contract_attachment'=>['POST'], 'delete_contract_attachment'=>['POST'],
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'send_to_email'=>['POST'], 'renew'=>['POST'], 'copy'=>['POST'], 'delete'=>['POST'], 'get_comments'=>['GET','HEAD'], 'add_comment'=>['POST'], 'edit_comment'=>['POST'], 'remove_comment'=>['POST'],
             'contract'=>['GET','HEAD','POST'],
+            'client_change_data'=>['GET','HEAD'],
             'pdf'=>['GET','HEAD'],
             'file'=>['GET','HEAD'],
         ],
@@ -259,8 +260,9 @@ final class NativeCompanyRoutes
         ],
         'expenses'=>[
             'get_customer_change_data'=>['GET','HEAD'],
+            'table'=>['POST'], 'get_expenses_total'=>['POST'],
             'bulk_action'=>['POST'], 'pdf'=>['GET','HEAD'],
-            'expense'=>['GET','HEAD','POST'],'categories'=>['GET','HEAD'],'category'=>['POST'],'delete_category'=>['POST'],
+            'expense'=>['GET','HEAD','POST'],'categories'=>['GET','HEAD','POST'],'category'=>['POST'],'delete_category'=>['POST'],
             'get_expense_data_ajax'=>['GET','HEAD'],'delete'=>['POST'],'add_expense_attachment'=>['POST'],'delete_expense_attachment'=>['POST'],
             'convert_to_invoice'=>['POST'],'import'=>['GET','HEAD','POST'],
             'index'=>['GET','HEAD','POST'], 'list_expenses'=>['GET','HEAD','POST'],

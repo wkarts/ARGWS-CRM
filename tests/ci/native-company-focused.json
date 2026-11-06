@@ -2661,6 +2661,26 @@
     [
       "php",
       "tests/companies/native_sales_item_transfer.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_custom_field_labels.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_billing_invoice_calculation.php"
+    ],
+    [
+      "php",
+      "tests/native_lead_metadata_input.php"
+    ],
+    [
+      "php",
+      "tests/native_lead_metadata_schema.php"
+    ],
+    [
+      "php",
+      "tests/native_lead_metadata_transport.php"
     ]
   ],
   "node": [
@@ -2918,6 +2938,21 @@
       "node",
       "--test",
       "tests/native_company/sales_original_transport.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/expense_index.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/expense_categories.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/contract_form.test.cjs"
     ]
   ],
   "mysql": [
@@ -3004,6 +3039,50 @@
     [
       "php",
       "tests/companies/native_project_credit_relation.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_index_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_related_tasks.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_category_description.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_category_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_lead_metadata.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_bulk_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_pdf.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_metadata.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_form.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_commit_guard.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_expense_original_render.php"
     ]
   ],
   "browser": [

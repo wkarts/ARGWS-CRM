@@ -1,4 +1,5 @@
 'use strict';
+const {selectContractClient} = require('../helpers/native_contract_driver.cjs');
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 const assert = require('node:assert/strict');
@@ -55,21 +56,42 @@ function currentContract(page) {
     for (const [issuer, letter] of [[a, 'a'], [b, 'b']]) {
       await select(issuer);
       const client = sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client " + letter + "'");
+      sql("INSERT INTO tblcompany_projects(issuer_id,client_id,responsible_id,name,description,status,start_date,due_date,revision,created_at,updated_at) SELECT "+issuer+","+client+",17,'Browser contract project "+letter+"','','active','2026-10-19','2027-10-19',1,UTC_TIMESTAMP(),UTC_TIMESTAMP() WHERE NOT EXISTS(SELECT 1 FROM tblcompany_projects WHERE issuer_id="+issuer+" AND name='Browser contract project "+letter+"')");
+      const project = sql("SELECT id FROM tblcompany_projects WHERE issuer_id="+issuer+" AND name='Browser contract project "+letter+"'");
       await page.goto(url + '/admin/contracts/contract?source=company');
-      await page.locator('#contract-client').selectOption(client);
+      const clientData = await selectContractClient(page, client);
+      const projectCanonical = String(4294967296n + BigInt(project));
+      assert(clientData.projects.some(row => row.id === projectCanonical));
+      await page.locator('#contract-project').selectOption(projectCanonical,{force:true});
+      assert.equal(await page.locator('#contract-project-revision').inputValue(),'1');
       await page.locator('#contract-new-name').fill('Browser contract ' + letter + ' <script>');
       await page.locator('#contract-new-body').fill('Synthetic contract ' + letter + ' <script>literal</script>');
+      await page.locator('#contract-description').fill('PRIVATE CONTRACT DESCRIPTION '+letter);
+      await page.locator('#contract-new-value').fill('12.50');
       await page.locator('#contract-new-start').fill('2026-10-19');
-      await page.locator('#contract-new-due').fill('2026-11-19');
+      await page.locator('#contract-new-due').fill(letter==='a'?'':'2026-11-19');
+      if(letter==='a'){
+        await page.locator('[data-target="#native-contract-type-modal"]').click();
+        await page.locator('#native-contract-type-name').fill('Browser inline contract type');
+        const typeResponse=page.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/contracts/type')&&r.request().method()==='POST');
+        await page.locator('#native-contract-type-form button[type=submit]').click();
+        const response=await typeResponse;assert.equal(response.status(),200);const savedType=await response.json();
+        await page.locator('#native-contract-type-modal').waitFor({state:'hidden'});
+        assert.equal(await page.locator('#contract-new-type').inputValue(),savedType.id,'original inline type creation selects its owned result');
+      }
       await nav(page, page.locator('form').filter({ has: page.locator('#contract-client') }).locator('button[type=submit]'));
       const contract = currentContract(page);
       contracts[issuer] = contract;
       assert.equal(sql('SELECT issuer_id FROM tblcompany_contracts WHERE id=' + contract.raw), issuer);
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + contract.raw), 'draft');
+      assert.equal(sql('SELECT due_date IS NULL FROM tblcompany_contracts WHERE id='+contract.raw),letter==='a'?'1':'0');
+      assert.equal(sql("SELECT JSON_UNQUOTE(JSON_EXTRACT(data_json,'$.description')) FROM tblcompany_contract_metadata WHERE issuer_id="+issuer+' AND contract_id='+contract.raw),'PRIVATE CONTRACT DESCRIPTION '+letter);
+      assert.equal(sql("SELECT JSON_EXTRACT(data_json,'$.project.source_id') FROM tblcompany_contract_metadata WHERE issuer_id="+issuer+' AND contract_id='+contract.raw),project);
 
       const old = await hidden(page.locator('form').filter({ has: page.locator('input[name=action][value=cancel]') }));
       await nav(page, page.getByRole('button', { name: 'Ativar contrato e preservar texto', exact: true }));
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + contract.raw), 'active');
+      assert.equal(sql("SELECT snapshot_json LIKE '%PRIVATE CONTRACT DESCRIPTION%' FROM tblcompany_contracts WHERE id="+contract.raw),'0','emitted public snapshot excludes administrative description');
       const pdf = await ctx.request.get(url + '/admin/contracts/pdf/' + contract.canonical);
       assert.equal(pdf.status(), 200);
       assert.equal((await pdf.body()).subarray(0, 5).toString(), '%PDF-');
@@ -81,9 +103,13 @@ function currentContract(page) {
       await nav(page, page.locator('form[action$="/contracts/copy/'+contract.canonical+'"] button[type=submit]'));
       const copy = currentContract(page);
       assert.notEqual(copy.canonical, contract.canonical);
+      assert.equal(await page.locator('#contract-description').inputValue(),'PRIVATE CONTRACT DESCRIPTION '+letter);
+      assert.equal(await page.locator('#contract-project').inputValue(),projectCanonical);
       await page.locator('#contract-edit-body').fill('New independent draft ' + letter);
+      await page.locator('#contract-edit-value').fill('');
       await nav(page, page.locator('form').filter({ has: page.locator('#contract-edit-body') }).locator('button[type=submit]'));
       assert.equal(sql('SELECT body FROM tblcompany_contracts WHERE id=' + copy.raw), 'New independent draft ' + letter);
+      assert.equal(sql("SELECT JSON_CONTAINS_PATH(snapshot_json,'one','$.contract_value') FROM tblcompany_contracts WHERE id="+copy.raw),'0','draft form can explicitly clear an optional amount');
       await nav(page, page.locator('form').filter({has:page.locator('input[name=action][value=cancel]')}).locator('button[type=submit]'));
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + copy.raw), 'cancelled');
       assert.equal(sql('SELECT status FROM tblcompany_contracts WHERE id=' + contract.raw), 'active', 'copy does not change source');
@@ -125,7 +151,7 @@ function currentContract(page) {
     }
     assert.match(primaryClient, /^[1-9]\d*$/);
     await page.goto(url + '/admin/contracts/contract?source=company');
-    await page.locator('#contract-client').selectOption(primaryClient);
+    await selectContractClient(page, primaryClient);
     await page.locator('#contract-new-name').fill('Browser principal owned contract');
     await page.locator('#contract-new-body').fill('Principal company-owned contract body');
     await page.locator('#contract-new-start').fill('2026-10-19');

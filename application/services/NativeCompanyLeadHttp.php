@@ -22,7 +22,9 @@ final class NativeCompanyLeadHttp
     }
     private function render(string $view,array $data):string
     {
-        $level=ob_get_level();ob_start();try{$html=$this->ci->load->view($view,$data,true);if(!is_string($html))throw new RuntimeException('native_lead_render_invalid');$extra=ob_get_clean();$this->authorize();return$extra.$html;}finally{while(ob_get_level()>$level)ob_end_clean();}
+        $level=ob_get_level();ob_start();try{$html=$this->ci->load->view($view,$data,true);if(!is_string($html))throw new RuntimeException('native_lead_render_invalid');$extra=ob_get_clean();$this->authorize();
+            if(isset($data['native_lead_fields'])){$fresh=$this->leads->nativeFieldForm($this->issuer,$this->actor,$data['detail']['id']??null);if($fresh['revision']!==$data['native_lead_fields']['revision'])throw new DomainException('company_lead_metadata_stale');}
+            return$extra.$html;}finally{while(ob_get_level()>$level)ob_end_clean();}
     }
     private function token():string
     {
@@ -47,10 +49,11 @@ final class NativeCompanyLeadHttp
     {
         if(in_array(strtoupper((string)$this->ci->input->method(true)),$allowed,true))return true;$this->ci->output->set_header('Allow: '.implode(', ',$allowed));$this->json(['success'=>false,'message'=>'Método não permitido.'],405);return false;
     }
-    private function data(?int $id=null):array
+    private function data(?int $id=null,bool $form=false):array
     {
         $detail=$id===null?null:$this->leads->get($this->issuer,$this->actor,$id);$configuration=$this->leads->configuration($this->issuer,$this->actor);$staff=$this->leads->staffOptions($this->issuer,$this->actor);$history=$id===null?[]:$this->leads->nativeHistory($this->issuer,$this->actor,$id);
-        return['native_original_leads'=>true,'issuer'=>$this->issuer,'actor'=>$this->actor,'detail'=>$detail,'configuration'=>$configuration,'staff_options'=>$staff,'history'=>$history,'capabilities'=>$this->capabilities(),'native_leads_csrf'=>$this->token(),'canonical_id'=>$id===null?'':NativeCompanyResourceId::encode('company_lead',$id),'request_key'=>bin2hex(random_bytes(32))];
+        $data=['native_original_leads'=>true,'issuer'=>$this->issuer,'actor'=>$this->actor,'detail'=>$detail,'configuration'=>$configuration,'staff_options'=>$staff,'history'=>$history,'capabilities'=>$this->capabilities(),'native_leads_csrf'=>$this->token(),'canonical_id'=>$id===null?'':NativeCompanyResourceId::encode('company_lead',$id),'request_key'=>bin2hex(random_bytes(32))];
+        if($form){$data['native_lead_fields']=$this->leads->nativeFieldForm($this->issuer,$this->actor,$id);if($data['native_lead_fields']['lead_revision']!==($detail['revision']??null))throw new DomainException('company_lead_metadata_stale');}return$data;
     }
     public function index($canonical=''):void
     {
@@ -88,7 +91,7 @@ final class NativeCompanyLeadHttp
     {
         try{$this->prepare();if(!$this->method(['GET','HEAD','POST']))return;$id=NativeCompanyLeadInput::source($canonical,true);$created=false;
             if($this->ci->input->method(true)==='POST'){$request=NativeCompanyLeadInput::decode($this->post(),$canonical);$created=$request['action']==='create';$id=$this->mutate($request);CompanyRequestScope::invalidateCaches($this->ci);}
-            $data=$this->data($id);if($id===null&&!$data['capabilities']['create'])throw new DomainException('company_lead_access_denied');$stage=$this->ci->input->get('status',false);$data['initial_status']=$stage===null||$stage===''?null:IssuerPolicy::id($stage);$data['openEdit']=$id===null||$this->ci->input->get('edit',false)==='1';if($this->ci->input->method(true)==='HEAD'){$this->ci->output->set_output('');return;}
+            $data=$this->data($id,true);if($id===null&&!$data['capabilities']['create'])throw new DomainException('company_lead_access_denied');$stage=$this->ci->input->get('status',false);$data['initial_status']=$stage===null||$stage===''?null:IssuerPolicy::id($stage);$data['openEdit']=$id===null||$this->ci->input->get('edit',false)==='1';if($this->ci->input->method(true)==='HEAD'){$this->ci->output->set_output('');return;}
             $html=$this->render('admin/leads/lead',$data);$this->json(['success'=>true,'created'=>$created,'id'=>$data['canonical_id'],'revision'=>$data['detail']['revision']??null,'leadView'=>$html]);
         }catch(Throwable $error){$this->failure($error);}
     }

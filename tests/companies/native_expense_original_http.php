@@ -11,6 +11,7 @@ function is_admin(){throw new RuntimeException('Global privileges must not hydra
 function base_url($path=''){return 'https://synthetic.invalid/'.$path;}function admin_url($path=''){return base_url('admin/'.$path);}
 function form_hidden($name,$value=''){return '<input type="hidden" name="'.e($name).'" value="'.e($value).'">';}
 function form_open_multipart($url,$attrs=[]){$html='<form action="'.e($url).'" method="post" enctype="multipart/form-data"';foreach($attrs as $key=>$value)$html.=' '.e($key).'="'.e($value).'"';return $html.'>'.form_hidden('_native_company_csrf','synthetic-scope-csrf').form_hidden('_company_context','synthetic-context');}
+function form_open($url,$attrs=[]){return str_replace(' enctype="multipart/form-data"','',form_open_multipart($url,$attrs));}
 function show_error($message,$status=500){$GLOBALS['CI']->output->set_status_header($status);}
 class CompanyRequestScope
 {
@@ -31,7 +32,7 @@ class NativeExpenseTestLoader
         if(!in_array($path,['admin/expenses/expense','admin/expenses/expense_recurring_options'],true))throw new RuntimeException('Unexpected original expense view');
         $this->views[]=[$path,$data];$this->shared=array_merge($this->shared,$data);extract($this->shared);
         ob_start();try{include APPPATH.'views/'.$path.'.php';$html=ob_get_clean();}catch(Throwable $error){ob_end_clean();$GLOBALS['nativeExpenseRenderError']=$error->getMessage();throw $error;}
-        if($return)return $html;if($path==='admin/expenses/expense')$this->html=$html;else echo $html;
+        if($path==='admin/expenses/expense')$this->html=$html;if($return)return $html;if($path!=='admin/expenses/expense')echo $html;
     }
 }
 require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
@@ -46,10 +47,11 @@ $GLOBALS['essentialHooks']=new class{public function __call($name,$args){throw n
 $start=$GLOBALS['essentialChecks'];CompanyRequestScope::$issuer=$a;$controller=new Expenses();$http=$GLOBALS['CI']->input;$out=$GLOBALS['CI']->output;
 $reset=function(string $verb='GET',array $posts=[],array $gets=[])use($http,$out){$http->verb=$verb;$http->posts=$posts;$http->gets=$gets;$out->status=200;$out->body='';$out->mime='';$GLOBALS['CI']->load->views=[];$GLOBALS['CI']->load->shared=[];$GLOBALS['CI']->load->html='';};
 $reset();$controller->expense();$html=$GLOBALS['CI']->load->html;
-essentialCheck($out->status===200&&str_contains($html,'id="expense-form"')&&str_contains($html,'tw-max-w-4xl')&&str_contains($html,'id="expenseRecurringOptions"'),'Actual original controller renders its original expense panel, optional fields and recurring controls'.($GLOBALS['nativeExpenseRenderError']??$out->body));
+essentialCheck($out->status===200&&$out->body===$html&&str_contains($html,'id="expense-form"')&&str_contains($html,'tw-max-w-4xl')&&str_contains($html,'id="expenseRecurringOptions"'),'Actual original controller returns its buffered original expense panel, optional fields and recurring controls'.($GLOBALS['nativeExpenseRenderError']??$out->body));
 essentialCheck(str_contains($html,'name="native_expense_form"')&&str_contains($html,'native_expenses_csrf')&&str_contains($html,'_native_company_csrf')&&str_contains($html,'_company_context'),'Original form retains all native context/CSRF fields');
 essentialCheck(str_contains($html,'name="custom_fields[expenses]['.$field['id'].']"')&&!str_contains($html,'Private B reference'),'Actual custom-field renderer includes A definitions and excludes B');
 essentialCheck(str_contains($html,'name="tax2"')&&str_contains($html,'name="reference_no"')&&str_contains($html,'name="paymentmode"'),'Original view retains both taxes, reference and payment-mode fields');
+essentialCheck(str_contains($html,'data-native-expense-category="new"')&&str_contains($html,'data-native-category-modal data-inline="1"')&&str_contains($html,'name="native_expense_category"'),'Original expense form restores the inline category modal without leaving the entered expense fields');
 $token=$GLOBALS['CI']->session->userdata('native_expenses_csrf');$payload=$wire;$payload['request_key']=hash('sha256','original-http-create');$payload['native_expenses_csrf']=$token;$payload['_native_company_csrf']='synthetic-scope-csrf';
 $reset('POST',$payload);$controller->expense();$reply=json_decode($out->body,true,512,JSON_THROW_ON_ERROR);
 essentialCheck($out->status===200&&$reply['success']===true&&str_contains($reply['url'],'expenses/list_expenses/'.$reply['expenseid'])&&preg_match('/^[a-f0-9]{64}$/D',$reply['upload_key']),'Actual original AJAX POST returns a confirmed typed detail URL and separate upload key');

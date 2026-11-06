@@ -23,6 +23,7 @@
             <?php } ?></div>
         </div></div>
         <input type="hidden" id="native-leads-csrf" name="native_leads_csrf" value="<?= e($native_leads_csrf); ?>">
+        <?php if(!empty($lead_table_fields['revision'])){ ?><input type="hidden" id="native-lead-columns-revision" name="native_lead_columns_revision" value="<?= e($lead_table_fields['revision']); ?>"><?php } ?>
         <div id="native-lead-page-error" class="alert alert-danger hide" role="alert"></div>
         <div class="<?= $isKanBan?'':'panel_s'; ?>"><div class="<?= $isKanBan?'':'panel-body'; ?>"><div class="tab-content">
             <?php if($isKanBan){ ?>
@@ -31,6 +32,7 @@
             <div class="row mbot15"><div class="col-md-3"><label for="native-lead-state">Exibir</label><select id="native-lead-state" class="form-control selectpicker"><option value="active">Ativos</option><option value="archived">Arquivados</option><option value="all">Todos</option></select></div></div>
             <div class="panel-table-full">
                 <?php $headings=['<span class="hide"> - </span>'];$labels=['number'=>'the_number_sign','name'=>'leads_dt_name','company'=>'lead_company','email'=>'leads_dt_email','phone'=>'leads_dt_phonenumber','lead-value'=>'leads_dt_lead_value','tags'=>'tags','assigned'=>'leads_dt_assigned','status'=>'lead_status','source'=>'lead_source','last-contact'=>'leads_dt_last_contact','created'=>'date_created'];foreach($labels as$id=>$label)$headings[]=['name'=>_l($label),'th_attrs'=>['class'=>'toggleable','id'=>'th-'.$id]];
+                foreach($lead_table_fields['definitions']??[]as$definition)$headings[]=['name'=>e($definition['name']),'th_attrs'=>['class'=>'toggleable','data-type'=>$definition['type'],'id'=>'th-lead-custom-field-'.e($definition['id'])]];
                 render_datatable($headings,'leads',['customizable-table number-index-2'],['id'=>'company_leads','data-last-order-identifier'=>'leads','data-default-order'=>get_table_last_order('leads')]); ?>
             </div><?php } ?>
         </div></div></div>

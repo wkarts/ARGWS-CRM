@@ -8,7 +8,7 @@ final class NativeCompanyTaskRelationAuthority
     {
         $type=$fields['relation_type']??null;$kind=$fields['relation_source_kind']??null;$id=$fields['relation_source_id']??null;
         if($type===null){if($kind!==null||$id!==null)throw new DomainException('native_task_relation_invalid');return null;}
-        if(!($type==='ticket'&&in_array($kind,['ticket','company_ticket'],true))&&!($type==='invoice'&&in_array($kind,['invoice','company_invoice_draft'],true)))throw new DomainException('native_task_relation_writer_required');
+        if(!($type==='ticket'&&in_array($kind,['ticket','company_ticket'],true))&&!($type==='invoice'&&in_array($kind,['invoice','company_invoice_draft'],true))&&!($type==='expense'&&in_array($kind,['expense','company_expense'],true)))throw new DomainException('native_task_relation_writer_required');
         $canonical=NativeCompanyResourceId::encode($kind,IssuerPolicy::id($id));
         $ref=$kind==='company_invoice_draft'&&class_exists('NativeCompanyTaskScopedDb',false)&&$db instanceof NativeCompanyTaskScopedDb
             ?$db->draftReference($i,$a,$canonical):NativeCompanyResourceReferences::resolve($db,$p,$i,$a,$type,$canonical,'view');

@@ -56,6 +56,7 @@ final class CompanyRequestScope
     private static function ownedContractRoute($ci,string $class,string $method):bool
     {
         if($class!=='contracts')return false;
+        if($method==='client_change_data')return true;
         if(in_array($method,['index','table'],true))return true;
         if(in_array($method,['types','type','delete_contract_type'],true)&&$ci->input->get('source',false)==='company')return true;
         if($method==='file')return true;
@@ -128,7 +129,10 @@ final class CompanyRequestScope
     /** Preserve historical primary routes while resolving typed operational records identically. */
     private static function ownedExpenseRoute($ci,string $class,string $method):bool
     {
-        if($class!=='expenses'||!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        if($class!=='expenses')return false;
+        // Explicit category requests keep the owned boundary even for a rejected verb.
+        if(in_array($method,['categories','category'],true)&&$ci->input->get('source',false)==='company')return true;
+        if($method==='bulk_action'&&($ci->input->get('source',false)==='company'||$ci->input->post('native_expense_bulk',false)!==null))return true;
         $argument=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
         // Native copy protocol must fail in its bounded writer even for malformed
         // source fields; it must never fall through to the legacy copy model.
@@ -257,6 +261,15 @@ final class CompanyRequestScope
             // invoked by the owned form. Historical primary forms keep theirs.
             $sharedExpenseCustomer = $native && $class === 'expenses' && $method === 'get_customer_change_data'
                 && (!self::$context->isPrimary() || $ci->input->get('source', false) === 'company');
+            // The original index composes authorized historical and owned expenses.
+            // Keep the explicit principal historical workspace on its existing path.
+            $sharedExpenseIndex = $native && $class === 'expenses'
+                && in_array($method, ['index','list_expenses','table','get_expenses_total','get_expense_data_ajax'], true)
+                && $ci->input->get('source', false) !== 'legacy';
+            // The same task table must include historical and owned relationships
+            // for a primary expense; the old global table cannot see private tasks.
+            $sharedExpenseTasks = $native && $class === 'tasks' && $method === 'init_relation_tasks'
+                && isset($ci->uri) && method_exists($ci->uri,'rsegment') && $ci->uri->rsegment(4) === 'expense';
             $sharedInvoiceDrafts = $native && $class === 'invoices' && $method === 'drafts';
             // Settings uses the same bounded, issuer-owned forms for the
             // principal and named companies, including asset actions and the
@@ -302,7 +315,7 @@ final class CompanyRequestScope
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedExpenseCustomer || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedExpenseCustomer || $sharedExpenseIndex || $sharedExpenseTasks || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
@@ -312,6 +325,8 @@ final class CompanyRequestScope
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if($sharedInvoiceRecurring&&!self::$nativePresentation)self::deny($ci,'native_invoice_recurring_method_invalid',405);
             if($sharedExpenseCustomer&&!self::$nativePresentation)self::deny($ci,'native_expense_customer_method_invalid',405);
+            if($sharedExpenseIndex&&!self::$nativePresentation)self::deny($ci,'native_expense_index_method_invalid',405);
+            if($sharedExpenseTasks&&!self::$nativePresentation)self::deny($ci,'native_expense_tasks_method_invalid',405);
             if($sharedInvoiceDrafts&&!self::$nativePresentation)self::deny($ci,'native_invoice_drafts_method_invalid',405);
             if($sharedSettings&&!self::$nativePresentation)self::deny($ci,'native_settings_method_invalid',405);
             if($sharedClientImport&&!self::$nativePresentation)self::deny($ci,'native_client_import_method_invalid',405);
@@ -321,6 +336,7 @@ final class CompanyRequestScope
             if($sharedOwnedLead&&!self::$nativePresentation)self::deny($ci,'native_lead_method_invalid',405);
             if($sharedOwnedSales&&!self::$nativePresentation)self::deny($ci,'native_sales_method_invalid',405);
             if($sharedOwnedCredits&&!self::$nativePresentation)self::deny($ci,'native_credit_method_invalid',405);
+            if($sharedOwnedOperational&&!self::$nativePresentation)self::deny($ci,'native_operational_method_invalid',405);
             // Route-specific adapters report an unsupported HTTP verb as 405.
             // The generic isolated-route denial remains the final fallback for
             // actions that are not part of one of those explicit contracts.

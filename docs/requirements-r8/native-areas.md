@@ -105,6 +105,12 @@ abrem o detalhe emitido existente; a ação de exclusão leva aos seus controles
 explícitos, sem transformar um link GET em mutação. Renovações, notas, arquivos,
 discussões, PDF e entregas não foram removidos para forçar igualdade de telas.
 
+A extensão posterior de criação e edição de rascunhos está documentada em
+[contracts.md](contracts.md): cliente/projeto tipados, valor/moeda, tipo, término
+opcional, descrição administrativa e dez tipos reais de campos personalizados.
+Esses campos compatíveis não são mais uma decisão funcional pendente. O snapshot
+público emitido e os metadados privados têm contratos distintos, preservados.
+
 ### Despesas: formulário original com contratos financeiros atuais
 
 `NativeCompanyExpenseOriginalForm` e `NativeCompanyExpenseOriginalHttp` conectam
@@ -138,6 +144,12 @@ recibos desta tentativa. Despesas escalares antigas, despesas canceladas ou
 vinculadas a faturamento reservado/emitido, e agendas ativas/pausadas conservam
 seu fluxo específico recente; não há migração silenciosa desses contratos.
 
+No delta seguinte ao freeze de Despesas, o GET desse formulário passou a usar
+buffer e confirmação pós-render do contexto, ator, permissões, DTO e campos
+personalizados. O HTML completo só é publicado após confirmar a mesma projeção;
+troca de empresa/ator, revogação ou mudança dos campos descarta a resposta antiga,
+inclusive buffers parciais deixados por uma falha de renderização.
+
 A troca de cliente chama o endpoint real
 `expenses/get_customer_change_data/<id>?source=company`. O serviço valida o
 cliente autorizado antes e depois da projeção, filtra projetos e contatos e
@@ -154,9 +166,78 @@ e opções de contatos são inseridas como texto, preservando o escape.
 
 Os controles recentes de cópia revisada, recorrência, declaração/faturamento,
 comprovantes privados, histórico e categorias permanecem disponíveis. A view
-original aponta para a gestão atual de categorias; o modal antigo contém
-semântica de descrição que o catálogo próprio não possui, diferença registrada
-como pendência em vez de descartar dados ou inventar um campo.
+original agora também abre o modal de categoria sem perder o formulário em
+preenchimento. Nome, descrição e estado usam o catálogo próprio descrito abaixo.
+
+### Despesas: lista, preview, totais e relações originais
+
+`NativeCompanyExpenseIndex`, `NativeCompanyExpenseTable`, as regras e a factory
+restauram a composição original de `manage`, tabela, preview e cinco cartões de
+resumo. As doze colunas fixas são seleção, ID, categoria, valor, nome, comprovante,
+data, projeto, cliente, fatura, referência e modo de pagamento. Somente campos
+personalizados reais e autorizados acrescentam colunas. Busca, filtros salvos,
+ordenação, paginação e a preferência de última ordem usam a mesma projeção.
+
+Na principal, o índice reúne despesas próprias e históricas autorizadas pela
+regra existente de relação com cliente. Nas demais empresas, apresenta os
+registros próprios. As identidades de origem são distintas; uma despesa histórica
+não vira despesa própria por coincidência do número. Clientes, projetos e faturas
+dependem das permissões e vínculos efetivos. A consulta não adota históricos nem
+altera suas regras de propriedade. Os totais usam uma moeda por consulta e
+valores decimais exatos; ausência de declaração ou de acesso à fatura não produz
+uma quitação ou um estado de faturamento inventado.
+
+O preview usa os leitores atuais de despesas, comprovantes, agenda, faturamento
+e campos personalizados. Conserva os dois impostos persistidos, as abas de
+despesa, tarefas, despesas recorrentes e lembretes quando autorizadas. A aba de
+Tarefas usa `init_relation_tasks_table` e o endpoint real de tarefas relacionadas,
+com criação, edição e revisão do pai canônico; o adaptador compartilhado também
+preserva as relações históricas permitidas na principal. Upload, cancelamento,
+cópia, revisão de agenda e faturamento continuam nos escritores recentes. O PDF
+compartilhado resolve a referência tipada e confirma destinatário, permissões e
+contexto novamente antes de emitir.
+
+`NativeCompanyExpenseIndexHttp` confirma contexto/ator/permissões antes e depois
+da renderização em buffer. Revogação ou mudança de dados descarta o HTML parcial.
+Tabela e totais exigem POST e os controles de CSRF; leitura aceita GET/HEAD, com
+HEAD vazio. O JavaScript descarta respostas atrasadas, coordena tabela/resumos e
+preview, mantém os modos de tela dividida e tela completa e atualiza o link do
+detalhe somente após uma resposta válida. O workspace permanece acessível pelo
+botão visível e por `?workspace=1`, com os recursos recentes preservados.
+
+### Despesas: categorias e lote compatível
+
+A gestão original de categorias e o modal incorporado ao formulário apresentam
+nome, descrição e ações. A migration 489 acrescenta apenas
+`company_expense_categories.description TEXT NULL`: não preenche conteúdo antigo.
+O helper valida o schema e invalida somente o cache de colunas dessa tabela após
+o ALTER. Ausência de descrição conserva os hashes e revisões anteriores; uma
+descrição já existente é preservada se o cliente antigo omitir o campo. Limpar o
+campo exige envio explícito. Escrita, revisão, replay e confirmação final da
+categoria continuam dentro da transação proprietária.
+
+O lote original de edição recupera seus quatro campos reais: valor, data,
+categoria e modo de pagamento. Campos vazios mantêm os valores atuais. A seleção
+transporta IDs próprios canônicos e a revisão de cada despesa; categoria e modo
+também precisam pertencer à empresa. `NativeCompanyExpenseBulk` compõe o escritor
+financeiro existente numa transação única, com recibo durável do lote e provas dos
+recibos de cada comando. Replay confirma corpo, ator, empresa e todos os registros
+envolvidos. Falha ou revogação tardia desfaz o lote inteiro, sem deixar uma parte
+das despesas alterada.
+
+O cancelamento em lote usa a operação atual de cancelamento e informa que o
+histórico permanece. Não é apresentado como a exclusão física antiga. Despesas
+com agenda ativa/pausada ou faturamento reservado/emitido continuam exigindo seus
+fluxos próprios. Valores, moeda, impostos, declaração e campos fora dos quatro
+campos editáveis são preservados; não há conversão implícita de uma despesa
+escalar em um perfil tributário novo.
+
+Na integração com faturamento, foi reproduzida divergência entre o cálculo do
+escritor e o recibo: base `0,05` com dois impostos de `10%` é `0,06` no contrato
+atual. `CompanyBillingInvoiceLifecycle` passa a reconciliar usando o contrato de
+cálculo e as linhas efetivamente gravadas. Recibos antigos sem esse contrato
+mantêm seu cálculo e hash anteriores, inclusive `0,07` no cenário legado; valores
+adulterados continuam recusados.
 
 ### Projetos: campos personalizados no índice
 
@@ -182,10 +263,12 @@ com perfil/anexos/notas/atividade e as classes do Kanban. Não executa o modelo
 global antigo para preencher essas superfícies.
 
 Nome, empresa, e-mail, telefone, responsável, status, origem e criação vêm de dados
-reais. Valor, tags e último contato permanecem vazios enquanto a extensão opcional
-de persistência desses campos não estiver concluída; não foram preenchidos com
-zero ou datas presumidas. O inventário de todos os campos ausentes e o plano de
-extensão estão em [leads-extension-plan.md](leads-extension-plan.md).
+reais. A extensão opcional agora grava título/site, endereço/país/idioma, valor
+decimal exato com captura da moeda pública existente, etiquetas, último contato e
+campos personalizados na mesma transação. Perfil/formulário/lista/board usam os
+valores reais; ausência histórica continua sem valor ou contato inventado. Os
+12 filtros originais compatíveis consultam o armazenamento próprio. Implementação,
+testes e limites estão em [leads-extension-plan.md](leads-extension-plan.md).
 
 A tabela faz busca literal, paginação, ordenação, filtros e contagens na fonte da
 empresa selecionada. O namespace de filtros salvos `company_leads` evita reaplicar
@@ -201,7 +284,10 @@ base recente. Não substitui esse comportamento pela conversão legada com efeit
 externos diferentes. Revisão, idempotência, CSRF, vínculo de empresa e permissões
 são verificados antes de operar. A renderização é armazenada em buffer e revalida
 contexto/permissão antes de liberar HTML; revogação ou troca durante a renderização
-descarta a resposta parcial.
+descarta a resposta parcial. A revisão dos novos campos inclui definições,
+valores/tags e localização, invalidando alterações concorrentes mesmo sem mudar a
+revisão do pai. Payloads antigos sem `native_fields` mantêm hash/replay e não
+apagam os campos novos. O DTO genérico da API conserva o contrato anterior.
 
 O Kanban pagina 25 registros por coluna e grava a mudança de status usando a
 revisão atual. Reordenar dentro da mesma coluna é cancelado porque a persistência
@@ -229,9 +315,9 @@ HEAD não devolve o corpo do detalhe.
 `expenses/index/<id>` e `expenses/list_expenses/<id>` passam o parâmetro ao
 controlador escopado, que cruza rota, query e corpo. O detalhe estrangeiro não é
 hidratado. HEAD também não entrega conteúdo de página ou arquivo. Esses ajustes
-restauram navegação direta. A restauração adicional de Leads está descrita acima;
-a lista/preview/resumos de Despesas continua sendo a próxima implementação
-compatível, sem declarar essa lacuna resolvida pelo formulário.
+restauram navegação direta. A restauração adicional de Leads e a lista, preview e
+resumos de Despesas estão descritos acima; não se presume que a existência de um
+formulário ou de um link comprove todos os recursos da área.
 
 ## O que já estava na base e foi preservado
 
@@ -272,9 +358,19 @@ capturas de Chromium.
 | `tests/companies/native_expense_navigation.php` | 5 verificações adicionais sobre 125 anteriores: detalhe por rota, colisão query/rota, ID bruto, outra empresa e HEAD. |
 | `tests/companies/native_expense_custom_fields.php` | 13 verificações adicionais: pai e campos reais, recibo idempotente, campo obrigatório/estrangeiro, rollback tardio, prova de criação expirada, acesso B a recurso A negado. |
 | `tests/companies/native_expense_original_form.php` | 21 verificações adicionais: mapeamento/catálogos, dois impostos, DTO, campos personalizados, edição/revisão, recorrência atômica, replay e rollback por erro real na gravação da agenda. |
-| `tests/companies/native_expense_original_http.php` | 19 verificações adicionais: controller/view/fields helper reais, contexto e CSRF, JSON, HEAD, verbos recusados, cliente estrangeiro, XSS escapado, anexo forjado e contexto não selado. |
+| `tests/companies/native_expense_original_http.php` | 20 verificações adicionais: controller/view/fields helper reais, contexto e CSRF, JSON, HEAD, verbos recusados, cliente estrangeiro, XSS escapado, anexo forjado, contexto não selado e modal de categoria incorporado. |
+| `tests/companies/native_expense_original_render.php` | Delta posterior ao freeze: 16 verificações adicionais de render real, mudança de empresa/ator, perda de contexto, revogação SQL, campo alterado, buffer parcial e recuperação. PASS SQLite; em CI exige MySQL. O transporte de campos (9) e o script original Node (6) foram reexecutados sem regressão. |
 | `tests/native_company/expense_form.test.cjs` | 6 testes do script emitido: envio pendente único, objeto/string JSON, falhas, upload posterior à confirmação, erro persistente e limpeza de destinatários na troca de cliente. |
 | `tests/companies/native_expense_fields_transport.php` | Render dos controles reais, serialização URL-encoded, decoder real e escritor financeiro; precisão decimal de dois impostos, texto escapado, posições canônicas, lista vazia e rollback de posição inválida. 9 verificações adicionais aprovadas no reteste local; CI MySQL ainda pendente. |
+| `tests/companies/native_expense_index.php` | 21 verificações adicionais: SQL real da união principal/histórico, A/B, referências e ACLs, campos personalizados, busca/ordem/paginação, totais por moeda, recibo e dados ausentes. |
+| `tests/companies/native_expense_index_http.php` | 31 verificações adicionais: controller, filtros, helpers e views reais; doze colunas/cinco cartões, detalhes e tarefas, CSRF, preferência de ordenação, métodos, HEAD, ACL/contexto revogados durante render e ausência de HTML parcial. Local SQLite; fase CI exige MySQL. |
+| `tests/companies/native_expense_category_description.php` | 22 verificações adicionais: DDL/validator reais, proxy que reproduz o cache de colunas CI, compatibilidade de hash/revisão anterior, replay, preservação/limpeza de descrição, negações e rollback após escrita/recibo/auditoria. Local SQLite; fase CI exige MySQL. |
+| `tests/companies/native_expense_category_http.php` | 18 verificações adicionais: tabela/modal originais, controller e writer reais, seleção canônica, escape, gravação/replay, CSRF, verbos, revisão e escopo. Herda o requisito MySQL em CI. |
+| `tests/companies/native_expense_bulk_http.php` | 24 verificações adicionais: quatro campos originais, revisão por linha, atualização atômica, replay/reordenação/conflito, negações A/B/ACL/CSRF, agendas/faturadas, cancelamento preservando histórico, rollback por trigger tardio e retry. Herda o requisito MySQL em CI. |
+| `tests/companies/native_billing_invoice_calculation.php` | 11 verificações adicionais: writer e recibo reais, base 0,05 com dois impostos, contrato atual versus legado sem marcador, replay/hash anteriores e rejeição de payload/valores adulterados. |
+| `tests/companies/native_expense_related_tasks.php` | 23 verificações adicionais mantidas pela frente compartilhada: modal/criação/edição/replay, relação exata A/B, histórico principal, revogação do pai por trigger tardio, rollback integral e retry. Total cumulativo 199 inclui pré-requisitos; não somar como 199 cenários novos. |
+| `tests/companies/native_expense_pdf.php` | 13 verificações adicionais mantidas pela frente compartilhada: PDF TCPDF e extração Poppler reais, identidade tipada, SQL, destinatário autorizado, revogação, métodos e HEAD. MySQL remoto deste delta pendente. |
+| `tests/native_company/expense_index.test.cjs` e `expense_categories.test.cjs` | 15 testes Node: resposta obsoleta/contexto, totais/preview, payloads de lote/categorias, erro e chave de replay; os validadores JS são cruzados com IDs emitidos pelo encoder PHP real, inclusive limites de namespace. Não substituem browser. |
 | `tests/companies/expense_recurring_atomic.php` | Regressão: 168 verificações cumulativas aprovadas. |
 | `tests/companies/expense_recurring_controller.php` | Regressão: 204 verificações cumulativas aprovadas. |
 | `tests/companies/expense_api_controller.php` | Regressão: 154 verificações cumulativas aprovadas. |
@@ -298,6 +394,16 @@ Preparados e incluídos no manifesto, com execução remota pendente neste delta
   arraste real entre colunas, leitura posterior do status, negações A/B e
   capturas desktop/mobile. Executar um teste de DOM Node não comprova esses
   cenários Chromium.
+- `tests/companies_expenses_browser.cjs`: conserva criação/edição/replay/arquivo
+  e negações atuais no workspace, acessado pelo botão visível. Acrescenta A/B no
+  formulário e índice originais: categoria em modal sem perder campos, POST
+  real, doze colunas/cinco cartões, preview, tela completa, aba Tarefas, edição em
+  lote com confirmação no banco e capturas desktop/mobile. O cenário foi escrito
+  e verificado sintaticamente; não foi executado localmente.
+- `expense_billing_browser.cjs`, `expense_recurring_browser.cjs` e
+  `expense_copies_resume_442_browser.cjs` preservam suas operações e passam pelo
+  mesmo botão visível para acessar o workspace recente. O helper comum não
+  modifica DOM, permissões ou estado do banco para simular essa navegação.
 
 Após recuperar o runtime, foram repetidos os testes novos e regressões afetadas
 com PHP 8.3.6, `display_errors=1` e `error_reporting=E_ALL`: Contratos (índice,
@@ -319,13 +425,13 @@ financeira ou homologação fiscal.
 
 | ID local de evidência | Diferença confirmada no código | Tratamento nesta PR e decisão necessária |
 | --- | --- | --- |
-| NA01 | O contrato próprio recente é emitido com snapshot imutável. Não possui o mesmo vínculo `project_id`, fim opcional e edição livre de conteúdo do contrato legado. | Lista original restaurada; emissão/portal/renovação recentes preservados. Decidir o fluxo compatível para alterar conteúdo/metadados após emissão antes de aproximar o detalhe antigo. Não transformar snapshot em texto mutável silenciosamente. |
-| NA02 | A listagem/detalhe principal recente de Despesas continua seu workspace próprio; os índices/totais/exportações/preview do legado não têm uma projeção única cobrindo todos os registros próprios. | Formulário original e links recuperados; recursos recentes preservados. Falta portar a listagem/preview/resumos/importação/lote com vínculo financeiro e contexto corretos. |
-| NA03 | Despesas escalares antigas e despesas com agenda/faturamento já vinculados não aceitam substituição por um perfil editável com dois impostos. A categoria própria tem nome/estado, sem descrição antiga. | Mantido fluxo recente desses contratos e gestão de categorias; o original atende os contratos compatíveis. Definir eventual migração explícita e conteúdo de categoria se desejado. |
+| NA01 | O contrato próprio emitido conserva snapshot imutável, tombstone e publicação explícita. O formulário de rascunho já admite projeto tipado, fim opcional, descrição privada e campos personalizados. | Lista e formulário compatíveis implementados; ver `contracts.md`. Editor rico/merge e abas completas/templates/tarefas/tracking ainda são adaptações a concluir. Alterar conteúdo após emissão ou tornar privado em público exige conciliar o contrato real, sem mutação silenciosa do snapshot. |
+| NA02 | Lista, preview, totais, categorias, lote de quatro campos e formulário originais já operam sobre as fontes próprias e históricas autorizadas. Importação/exportação e ações originais restantes ainda não têm cobertura completa equivalente por empresa. | A ausência anterior de lista/preview/resumos não é mais uma pendência de implementação. Restam adapters compatíveis e comparação completa campo/estado, além de MySQL/Chromium e homologação visual deste delta. O workspace e seus recursos financeiros atuais permanecem. |
+| NA03 | Despesas escalares e despesas com agenda/faturamento já vinculados não aceitam substituição silenciosa por um perfil tributário editável. A exclusão física antiga diverge do cancelamento atual com histórico preservado. | O formulário/lote respeita os contratos existentes. Categorias agora têm descrição opcional compatível, sem alterar hashes/revisões antigos. Eventual migração de perfil, alteração de uma despesa comprometida ou exclusão destrutiva exige decisão específica; falta de campo/adaptador compatível, por si só, não é conflito funcional. |
 | NA04 | `Subscriptions` conserva Stripe e tabelas legadas globais; não foi encontrado serviço/tabela própria de assinatura Stripe admitido para empresa nomeada. | Nenhuma equivalência presumida com faturas recorrentes. É necessário determinar propriedade dos planos/assinaturas/clientes e credenciais atuais antes de liberar operações nesse contexto. |
 | NA05 | `Estimate_request` conserva solicitações legadas. Os serviços de formulários próprios cobrem configuração de captação, não o ciclo dos registros recebidos/conversão. | Recursos legados preservados. Falta contrato de propriedade e vínculo das solicitações, campos, atribuição e conversão. |
-| NA06 | Lista/modal/Kanban próprios foram adaptados, mas campos opcionais e algumas ações antigas ainda não possuem persistência compatível; históricos globais, visibilidade pública e efeitos da conversão legada têm contratos distintos. | A extensão de campos é trabalho de implementação autorizado, detalhado em `leads-extension-plan.md`; não exige nova decisão só por faltar um campo. Propriedade/migração dos históricos e alteração de efeitos/permissões reais continuam exigindo definição antes de mudança. Workspace/inbox/importação/automação preservados; testes MySQL/browser deste delta pendentes. |
-| NA07 | Notas de crédito agora usam o vínculo tipado capturado do projeto, sem inferência pelo cliente. A relação de Contratos ainda usa o cliente; `project_subscriptions` consulta `company_recurring` (faturas recorrentes), embora a referência seja Assinaturas. | `native_project_credit_relation.php` passou 11 checks adicionais: dois projetos do mesmo cliente, ausência de vínculo, A/B, permissões e preservação dos dados. MySQL deste delta pendente. Contratos segue em adaptação; distinguir Assinaturas de séries recorrentes sem remover recursos ou atribuir equivalência presumida. |
+| NA06 | Lista/modal/Kanban e campos opcionais compatíveis agora possuem persistência própria. Ainda faltam rank dentro da coluna, cor de status, data de atribuição e abas/colunas dinâmicas antigas; históricos globais, visibilidade pública e efeitos da conversão legada têm contratos distintos. | Campos implementados e testes estão em `leads-extension-plan.md`. Rank/cor/colunas não são decisões pendentes só por faltar implementação. Propriedade/migração dos históricos e alteração de efeitos/permissões reais continuam exigindo definição antes de mudança. Workspace/inbox/importação/automação preservados; novo gate MySQL/browser desta extensão pendente. |
+| NA07 | Notas de crédito usam o vínculo tipado capturado do projeto, sem inferência pelo cliente. O formulário de Contratos agora captura projeto tipado, mas a relação de listagem do projeto ainda precisa consumir esse vínculo exato; `project_subscriptions` consulta `company_recurring`, embora a referência seja Assinaturas. | `native_project_credit_relation.php` passou 11 checks adicionais: dois projetos do mesmo cliente, ausência de vínculo, A/B, permissões e preservação dos dados. MySQL deste delta pendente. Completar a relação de Contratos é adaptação compatível; distinguir Assinaturas de séries recorrentes exige preservar os dois contratos. |
 | NA08 | Mídia, exportação PDF em lote, activity_log e pipe_log conservam volumes/exportadores/logs globais; os clear endpoints legados esvaziam tabelas globais. | Não abrir consulta ou limpeza global como se fosse filtrada por empresa. Definir propriedade/migração dos arquivos e estratégia de logs/exportações; a trilha de auditoria própria recente não é prova de equivalência desses logs. |
 | NA09 | Goals/Backup/Surveys/Exports/Einvoice mantêm operações globais ou filtros somente parciais. | Inventário completo das entradas e ações mantido, sem remoção. Decisão necessária para operações de instância, arquivos, filas, templates e dados históricos antes de expandir a admissão por empresa. |
 | NA10 | Não houve comparação visual lado a lado com dados/telas iguais, nem browser real com troca A→B→A, nem concorrência MySQL local nesta frente. | Gates remotos e homologação visual continuam pendentes. Teste sintético de autorização não autoriza declarar AC54/57–64 integralmente cumpridos. |

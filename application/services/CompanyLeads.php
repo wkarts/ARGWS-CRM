@@ -9,11 +9,12 @@ require_once __DIR__.'/CompanyLeadsFiles.php';
 require_once __DIR__.'/CompanyLeadsImports.php';
 require_once __DIR__.'/CompanyLeadsNotifications.php';
 require_once __DIR__.'/CompanyLeadsDirectory.php';
+require_once __DIR__.'/CompanyLeadsNativeFields.php';
 
 /** Private company leads; legacy lead IDs, hooks, email and ambient sessions are never inputs. */
 final class CompanyLeads
 {
-    use CompanyLeadsFiles, CompanyLeadsImports, CompanyLeadsNotifications, CompanyLeadsDirectory;
+    use CompanyLeadsFiles, CompanyLeadsImports, CompanyLeadsNotifications, CompanyLeadsDirectory, CompanyLeadsNativeFields;
     public const NATIVE_COLUMNS=['selection','id','name','company','email','phone','lead_value','tags','assigned_name','status_name','source_name','lastcontact','created_at'];
     private const CSV_FIELDS=['name','company','email','phone','vat','description'];
     private IssuerResourceAccess $acl;
@@ -33,7 +34,7 @@ final class CompanyLeads
     }
     public function tables():array
     {
-        return array_values(array_unique(array_merge(array_keys(CompanyLeadsSchema::definitions($this->p)),(new CompanyClients($this->db,$this->p))->tables(),(new CompanyContacts($this->db,$this->p))->leadTables(),['company_api_tokens','company_api_token_requests'])));
+        return array_values(array_unique(array_merge(array_keys(CompanyLeadsSchema::definitions($this->p)),(new CompanyClients($this->db,$this->p))->tables(),(new CompanyContacts($this->db,$this->p))->leadTables(),['company_api_tokens','company_api_token_requests'],CompanyLeadMetadataSchema::available($this->db,$this->p)?[CompanyLeadMetadataSchema::TABLE]:[])));
     }
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private static function now():string{return gmdate('Y-m-d H:i:s');}
@@ -52,17 +53,18 @@ final class CompanyLeads
         if(!$this->acl->can($issuer,$actor,'leads','view')||!$this->acl->can($issuer,$actor,'leads',$cap==='convert'?'edit':$cap)||($cap==='convert'&&(!$this->acl->can($issuer,$actor,'customers','view')||!$this->acl->can($issuer,$actor,'customers','create'))))throw new DomainException('company_lead_access_denied');
         if($this->api!==null){if($this->api['issuer_id']!==$issuer||$this->api['actor_id']!==$actor)throw new DomainException('company_api_scope_denied');(new CompanyApiTokens($this->db,$this->p))->guard($this->api['secret'],$this->api['scope'],$issuer,$actor);}
     }
-    private function transaction(int $issuer,int $actor,string $cap,string $operation,?string $key,callable $work)
+    private function transaction(int $issuer,int $actor,string $cap,string $operation,?string $key,callable $work,array $extraTables=[])
     {
         CompanyLeadsSchema::assertValid($this->db,$this->p);CompanyApiSchema::assertValid($this->db,$this->p);
+        if(CompanyLeadMetadataSchema::available($this->db,$this->p))CompanyLeadMetadataSchema::assertValid($this->db,$this->p);
         $this->frames=[];$this->validators=[];
-        try{return IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$cap,$operation,$key,$work){
+        try{return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge($this->tables(),$extraTables))),function()use($issuer,$actor,$cap,$operation,$key,$work){
             $this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);$result=$work();
             $this->authorize($issuer,$actor,$cap);
             if($this->api!==null)(new CompanyApiTokens($this->db,$this->p))->usedInOwnedTransaction($this->api['secret'],$this->api['scope'],$issuer,$actor,'leads_'.$operation,$key);
             $this->authorize($issuer,$actor,$cap);$this->assertFrames();foreach($this->validators as $check)$check();
             return $result;
-        });}finally{$this->frames=[];$this->validators=[];}
+        });}finally{$this->frames=[];$this->validators=[];$this->nativeLeadCreation=null;}
     }
     private function remember(string $table,array $where,array $want,bool $replace=false):void
     {
@@ -96,7 +98,7 @@ final class CompanyLeads
         [$table,$pk]=match($kind){'lead'=>['company_leads','id'],'stage'=>['company_lead_stages','id'],'source'=>['company_lead_sources','id'],'import'=>['company_lead_imports','batch_id'],'notice'=>['company_lead_notices','id'],default=>throw new RuntimeException('issuer_lead_receipt_invalid')};
         $check=function()use($table,$pk,$id,$issuer,$actor,$kind):void{$r=$this->rows('SELECT * FROM '.$this->p.$table.' WHERE `'.$pk.'`=? AND issuer_id=?',[$id,$issuer])[0]??null;if(!$r||($kind==='import'&&(int)$r['actor_id']!==$actor)||($kind==='notice'&&(int)$r['recipient_id']!==$actor))throw new DomainException('company_lead_request_conflict');if($kind==='notice')$this->guardNotice($r);if($kind==='import')$this->importPayload($r);};$check();$this->validators[]=$check;
     }
-    private function request($issuer,$actor,string $cap,string $operation,string $key,array $input,callable $work)
+    private function request($issuer,$actor,string $cap,string $operation,string $key,array $input,callable $work,array $extraTables=[])
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);self::key($key);
         $origin=$this->api===null?null:[$this->api['token_id'],$this->api['scope']];$hash=hash('sha256',json_encode([$operation,$input,$origin],JSON_THROW_ON_ERROR));
@@ -105,7 +107,7 @@ final class CompanyLeads
             if($r){if((int)$r['issuer_id']!==$issuer||(int)$r['actor_id']!==$actor||$r['operation']!==$operation||!hash_equals($r['input_hash'],$hash))throw new DomainException('company_lead_request_conflict');$this->receiptObject($issuer,$actor,$r['object_kind'],$r['object_id']);$this->remember('company_lead_requests',['request_key'=>$key],$r);return json_decode($r['result_json'],true,32,JSON_THROW_ON_ERROR);}
             [$kind,$id,$result]=$work($issuer,$actor);$id=(string)$id;$this->audit($issuer,$actor,$operation,$kind,$id);
             $this->insert('company_lead_requests',['request_key'=>$key,'issuer_id'=>$issuer,'actor_id'=>$actor,'operation'=>$operation,'input_hash'=>$hash,'object_kind'=>$kind,'object_id'=>$id,'result_json'=>json_encode($result,JSON_THROW_ON_ERROR),'created_at'=>self::now()],'request_key');return $result;
-        });
+        },$extraTables);
     }
     private function lead(int $issuer,int $id,bool $lock=true):array
     {
@@ -143,28 +145,34 @@ final class CompanyLeads
     }
     private function input(array $input):array
     {
-        $fields=['name','company','email','phone','vat','description','stage_id','source_id','assignee_id','notify_assignee','reminder_local','reminder_timezone'];
+        $fields=['name','company','email','phone','vat','description','stage_id','source_id','assignee_id','notify_assignee','reminder_local','reminder_timezone','native_fields'];
         if(array_diff(array_keys($input),$fields))throw new DomainException('company_lead_invalid_input');$r=[];
         foreach(['name'=>191,'company'=>191,'email'=>100,'phone'=>64,'description'=>4000] as $field=>$max)$r[$field]=self::text($input[$field]??'', $max,$field==='name',$field==='description');
         $r['email']=strtolower($r['email']);if($r['email']!==''&&!filter_var($r['email'],FILTER_VALIDATE_EMAIL))throw new DomainException('company_lead_invalid_input');$r['vat']=IssuerPolicy::taxId($input['vat']??'',false)??'';
         $r['stage_id']=self::integer($input['stage_id']??null,1);$r['source_id']=self::integer($input['source_id']??null,1);$r['assignee_id']=self::integer($input['assignee_id']??0);$r['notify_assignee']=self::integer($input['notify_assignee']??0,0,1);
         [$r['reminder_at'],$r['reminder_timezone']]=self::reminder(self::text($input['reminder_local']??'',16),self::text($input['reminder_timezone']??'',64));
-        if(($r['notify_assignee']===1||$r['reminder_at']!==null)&&$r['assignee_id']===0)throw new DomainException('company_lead_assignee_denied');return $r;
+        if(($r['notify_assignee']===1||$r['reminder_at']!==null)&&$r['assignee_id']===0)throw new DomainException('company_lead_assignee_denied');
+        if(array_key_exists('native_fields',$input))$r['native_fields']=CompanyLeadMetadata::normalize($input['native_fields']);return $r;
     }
     private function createRow(int $issuer,int $actor,array $input):int
     {
+        $native=array_key_exists('native_fields',$input)?$this->nativeFieldPreparation($issuer,$actor,null,$input['native_fields']):null;unset($input['native_fields']);
         $this->related($issuer,'stage',$input['stage_id']);$this->related($issuer,'source',$input['source_id']);$this->assignee($issuer,$input['assignee_id']);$now=self::now();
         $row=['issuer_id'=>$issuer,'created_by'=>$actor]+$input+['archived'=>0,'converted_client_id'=>null,'converted_contact_id'=>null,'converted_at'=>null,'revision'=>1,'created_at'=>$now,'updated_at'=>$now];
-        $id=$this->insert('company_leads',$row);$this->scheduleNotices($issuer,$actor,['id'=>$id]+$row,'create');return $id;
+        $id=$this->insert('company_leads',$row);$this->scheduleNotices($issuer,$actor,['id'=>$id]+$row,'create');if($native!==null)$this->persistNativeFields($issuer,$actor,$id,$native,true);return $id;
     }
     public function create($issuer,$actor,array $input,string $key):int
     {
-        $r=$this->input($input);return $this->request($issuer,$actor,'create','created',$key,$r,function(int $i,int $a)use($r):array{$id=$this->createRow($i,$a,$r);return ['lead',$id,$id];});
+        $r=$this->input($input);return $this->request($issuer,$actor,'create','created',$key,$r,function(int $i,int $a)use($r):array{$id=$this->createRow($i,$a,$r);return ['lead',$id,$id];},isset($r['native_fields'])?$this->nativeFieldsTables():[]);
     }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {
         $id=IssuerPolicy::id($id);$revision=self::integer($revision,1);$r=$this->input($input);
-        return $this->request($issuer,$actor,'edit','updated',$key,[$id,$revision,$r],function(int $i,int $a)use($id,$revision,$r):array{$old=$this->lead($i,$id);$this->editable($old,$revision);$this->related($i,'stage',$r['stage_id']);$this->related($i,'source',$r['source_id']);$this->assignee($i,$r['assignee_id']);$new=$this->updateRow('company_leads',$old,$r+['revision'=>$revision+1,'updated_at'=>self::now()]);$this->cancelNotices($i,$id);$this->scheduleNotices($i,$a,$new,'edit');return ['lead',$id,$id];});
+        return $this->request($issuer,$actor,'edit','updated',$key,[$id,$revision,$r],function(int $i,int $a)use($id,$revision,$r):array{
+            $old=$this->lead($i,$id);$this->editable($old,$revision);$native=array_key_exists('native_fields',$r)?$this->nativeFieldPreparation($i,$a,$old,$r['native_fields']):null;unset($r['native_fields']);
+            $this->related($i,'stage',$r['stage_id']);$this->related($i,'source',$r['source_id']);$this->assignee($i,$r['assignee_id']);$new=$this->updateRow('company_leads',$old,$r+['revision'=>$revision+1,'updated_at'=>self::now()]);$this->cancelNotices($i,$id);$this->scheduleNotices($i,$a,$new,'edit');
+            if($native!==null)$this->persistNativeFields($i,$a,$id,$native,false);return ['lead',$id,$id];
+        },isset($r['native_fields'])?$this->nativeFieldsTables():[]);
     }
     public function move($issuer,$actor,$id,$revision,$stage,string $key):int
     {

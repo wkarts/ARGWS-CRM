@@ -10,6 +10,7 @@ require_once __DIR__.'/NativeCompanyDataTableWire.php';
 require_once __DIR__.'/CustomerRelationBoundary.php';
 require_once __DIR__.'/ClientIssuerScope.php';
 require_once __DIR__.'/CompanySettingsCatalog.php';
+require_once __DIR__.'/CompanyContractMetadataSchema.php';
 
 /** Read-only projection for the original contract list, summaries and filters. */
 final class NativeCompanyContractIndex
@@ -27,7 +28,7 @@ final class NativeCompanyContractIndex
     {
         $acl=new IssuerResourceAccess($this->db,$this->p);
         if (!$acl->can($issuer,$actor,'contracts','view')) throw new DomainException('native_contract_denied');
-        return ['primary'=>$acl->primaryId()===$issuer,'projects'=>$acl->can($issuer,$actor,'projects','view'),'customers'=>$acl->can($issuer,$actor,'customers','view')];
+        return ['primary'=>$acl->primaryId()===$issuer,'projects'=>$acl->can($issuer,$actor,'projects','view'),'customers'=>$acl->can($issuer,$actor,'customers','view'),'administrative'=>$acl->administrative($issuer,$actor)];
     }
 
     private function source(int $issuer,array $authority,array $definitions=[]):array
@@ -41,7 +42,14 @@ final class NativeCompanyContractIndex
         $customer=$json('c.snapshot_json','client.name');
         $marked=$json('a.metadata_json','marked');
         $signed="COALESCE((SELECT CASE WHEN CAST($marked AS CHAR) IN ('true','1') THEN 1 ELSE 0 END FROM {$p}issuers_audit a WHERE a.issuer_id=c.issuer_id AND a.subject_id=c.id AND a.event='native_contract_signature_changed' ORDER BY a.id DESC LIMIT 1),0)";
-        $sql="SELECT c.id+21474836480 id,c.id source_id,c.issuer_id,'company_contract' source_kind,c.client_id,c.name subject,COALESCE($customer,u.company,'') company,CASE WHEN u.userid IS NULL THEN 0 ELSE 1 END client_visible,c.start_date datestart,c.due_date dateend,SUBSTR(c.start_date,1,4) year,c.created_at dateadded,CASE c.status WHEN 'deleted' THEN 1 ELSE 0 END trash,0 signed,$signed marked_as_signed,$type contract_type,$typeName type_name,CAST($value AS DECIMAL(15,2)) contract_value,$currency currency,NULL project_id,'' project_name,c.status,c.revision FROM {$p}company_contracts c LEFT JOIN {$p}issuers_clients o ON o.client_id=c.client_id LEFT JOIN {$p}clients u ON u.userid=c.client_id AND (o.owner_issuer_id=c.issuer_id OR EXISTS(SELECT 1 FROM {$p}issuers_client_links l WHERE l.client_id=c.client_id AND l.issuer_id=c.issuer_id)) WHERE c.issuer_id=?";
+        $metadata=CompanyContractMetadataSchema::available($this->db,$p);$metadataJoin='';$projectId='NULL';$projectName="''";
+        if($metadata&&$authority['projects']&&$this->db->table_exists($p.'company_projects')){
+            $projectSource=$json('m.data_json','project.source_id');$projectKind=$json('m.data_json','project.source_kind');$capturedName=$json('m.data_json','project.name');
+            $offset=(int)NativeCompanyResourceId::encode('company_project',1)-1;
+            $metadataJoin=" LEFT JOIN {$p}company_contract_metadata m ON m.issuer_id=c.issuer_id AND m.contract_id=c.id LEFT JOIN {$p}company_projects pr ON pr.issuer_id=c.issuer_id AND pr.client_id=c.client_id AND pr.id=$projectSource AND $projectKind='company_project'";
+            $projectId="CASE WHEN pr.id IS NULL THEN NULL ELSE pr.id+$offset END";$projectName="CASE WHEN pr.id IS NULL THEN '' ELSE $capturedName END";
+        }
+        $sql="SELECT c.id+21474836480 id,c.id source_id,c.issuer_id,'company_contract' source_kind,c.client_id,c.name subject,COALESCE($customer,u.company,'') company,CASE WHEN u.userid IS NULL THEN 0 ELSE 1 END client_visible,c.start_date datestart,c.due_date dateend,SUBSTR(c.start_date,1,4) year,c.created_at dateadded,CASE c.status WHEN 'deleted' THEN 1 ELSE 0 END trash,0 signed,$signed marked_as_signed,$type contract_type,$typeName type_name,CAST($value AS DECIMAL(15,2)) contract_value,$currency currency,$projectId project_id,$projectName project_name,c.status,c.revision FROM {$p}company_contracts c LEFT JOIN {$p}issuers_clients o ON o.client_id=c.client_id LEFT JOIN {$p}clients u ON u.userid=c.client_id AND (o.owner_issuer_id=c.issuer_id OR EXISTS(SELECT 1 FROM {$p}issuers_client_links l WHERE l.client_id=c.client_id AND l.issuer_id=c.issuer_id))$metadataJoin WHERE c.issuer_id=?";
         if ($authority['primary']) {
             $project=$authority['projects']?'pr.name':"''";
             $projectJoin=$authority['projects']?" LEFT JOIN {$p}projects pr ON pr.id=c.project_id AND ".\app\services\CustomerRelationBoundary::sql($this->db,$p,'projects','pr'):'';
@@ -53,6 +61,10 @@ final class NativeCompanyContractIndex
             if (!in_array($kind,['custom_field','company_custom_field'],true)) throw new DomainException('native_contract_columns_invalid');
             $expr="(SELECT v.value FROM {$p}company_custom_field_values v WHERE v.issuer_id=q.issuer_id AND v.field_source_kind='$kind' AND v.field_id=$raw AND v.source_kind=q.source_kind AND v.source_id=q.source_id)";
             if ($kind==='custom_field') $expr="CASE WHEN q.source_kind='contract' THEN COALESCE($expr,(SELECT v.value FROM {$p}customfieldsvalues v WHERE v.fieldto='contracts' AND v.fieldid=$raw AND v.relid=q.source_id)) ELSE $expr END";
+            if($metadata&&!$authority['administrative']){
+                $private=$sqlite?"EXISTS(SELECT 1 FROM json_each(m.data_json,'$.custom_fields') f WHERE json_extract(f.value,'$.id')='$id' AND json_extract(f.value,'$.definition.only_admin')=1)":"JSON_CONTAINS(m.data_json,JSON_OBJECT('id','$id','definition',JSON_OBJECT('only_admin',1)),'$.custom_fields')=1";
+                $expr="CASE WHEN q.source_kind='company_contract' AND EXISTS(SELECT 1 FROM {$p}company_contract_metadata m WHERE m.issuer_id=q.issuer_id AND m.contract_id=q.source_id AND $private) THEN NULL ELSE $expr END";
+            }
             $custom.=",$expr cf_$id";
         }
         return ['sql'=>"SELECT q.*$custom FROM ($sql) q",'params'=>[$issuer]];
@@ -117,6 +129,10 @@ final class NativeCompanyContractIndex
         $rows=$this->rows($sql,$args); $projected=[];
         foreach ($rows as $row) {
             $row['id']=(string)$row['id']; NativeCompanyResourceReferences::resolve($this->db,$this->p,$issuer,$actor,'contract',$row['id'],'view');
+            if($row['source_kind']==='company_contract'&&CompanyContractMetadataSchema::available($this->db,$this->p)){
+                require_once __DIR__.'/CompanyContracts.php';$document=(new CompanyContracts($this->db,$this->p))->getForAdmin($issuer,$actor,$row['source_id']);$project=$document['native_metadata']['project']??null;
+                if($project!==null&&($row['project_name']!==$project['name']||(string)$row['project_id']!==NativeCompanyResourceId::encode('company_project',$project['source_id'])))throw new DomainException('native_contract_snapshot_changed');
+            }
             $row['custom_values']=$definitions?$custom->values($issuer,$actor,'contracts',$row['id']):[]; $projected[]=$row;
         }
         if ($this->authority($issuer,$actor)!==$authority || $this->rows($sql,$args)!==$rows || (int)$this->rows($totalSql,$totalArgs)[0]['n']!==$total || (int)$this->rows($filteredSql,$args)[0]['n']!==$filtered || $custom->definitions($issuer,$actor,'contracts',['active'=>1,'show_on_table'=>1])!==$definitions) throw new DomainException('native_contract_snapshot_changed');

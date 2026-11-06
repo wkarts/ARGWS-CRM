@@ -143,7 +143,7 @@
                     <div class="tw-mt-6">
                         <?php $selected = (isset($expense) ? $expense->category : ''); ?>
                         <?php if ($native_expense_form) {
-                            $group=$native_expense_can_create_category?'<div class="input-group-btn"><a class="btn btn-default" href="'.e(admin_url('expenses/categories?source=company')).'" title="'.e(_l('expense_categories')).'"><i class="fa fa-plus"></i></a></div>':'';
+                            $group=$native_expense_can_create_category?'<div class="input-group-btn"><a class="btn btn-default" href="#" data-native-expense-category="new" title="'.e(_l('expense_categories')).'"><i class="fa fa-plus"></i></a></div>':'';
                             echo $group!==''?render_select_with_input_group('category',$categories,['id','name'],'expense_category',$selected,$group):render_select('category',$categories,['id','name'],'expense_category',$selected);
                         } elseif (is_admin() || get_option('staff_members_create_inline_expense_categories') == '1') {
                             echo render_select_with_input_group('category', $categories, ['id', 'name'], 'expense_category', $selected, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_category();return false;"><i class="fa fa-plus"></i></a></div>');
@@ -378,7 +378,7 @@ if (!$native_expense_form) $currency_attr = hooks()->apply_filters('expense_curr
 
     </div>
 </div>
-<?php if (!$native_expense_form) $this->load->view('admin/expenses/expense_category'); ?>
+<?php if (!$native_expense_form) $this->load->view('admin/expenses/expense_category');elseif($native_expense_can_create_category){$native_expense_category_inline=true;require __DIR__.'/native_category_modal.php';} ?>
 <?php init_tail(); ?>
 <script>
     var nativeExpenseForm = <?= $native_expense_form ? 'true' : 'false'; ?>;

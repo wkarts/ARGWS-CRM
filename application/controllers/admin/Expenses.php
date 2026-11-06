@@ -22,6 +22,8 @@ class Expenses extends AdminController
     public function index($id = '')
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';
+            if(!NativeCompanyExpenseIndexHttp::workspace($this)){(new NativeCompanyExpenseIndexHttp($this))->index($id);return;}
             require_once APPPATH.'services/NativeCompanyExpensesController.php';
             NativeCompanyExpensesController::handle($this,$id);
             return;
@@ -32,6 +34,8 @@ class Expenses extends AdminController
     public function list_expenses($id = '')
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';
+            if(!NativeCompanyExpenseIndexHttp::workspace($this)){(new NativeCompanyExpenseIndexHttp($this))->index($id);return;}
             require_once APPPATH.'services/NativeCompanyExpensesController.php';
             NativeCompanyExpensesController::handle($this,$id);
             return;
@@ -55,6 +59,7 @@ class Expenses extends AdminController
 
     public function table($clientid = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';(new NativeCompanyExpenseIndexHttp($this))->table($clientid);return;}
         if (staff_cant('view', 'expenses') && staff_cant('view_own', 'expenses')) {
             ajax_access_denied();
         }
@@ -183,7 +188,8 @@ class Expenses extends AdminController
 
     public function bulk_action()
     {
-        if($this->nativeCompanyExpenses()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','bulk_action',[]);return;}
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)&&$this->input->post('native_expense_bulk',false)!==null){require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';(new NativeCompanyExpenseIndexHttp($this))->bulk();return;}
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','bulk_action',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_expenses');
         $total_deleted = 0;
         $total_updated = 0;
@@ -231,6 +237,7 @@ class Expenses extends AdminController
 
     public function get_expenses_total()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';(new NativeCompanyExpenseIndexHttp($this))->totals();return;}
         if ($this->input->post()) {
             $data['totals'] = $this->expenses_model->get_expenses_total($this->input->post());
 
@@ -255,7 +262,7 @@ class Expenses extends AdminController
     // Not used at this time
     public function pdf($id)
     {
-        if($this->nativeCompanyExpenses()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','pdf',[$id]);return;}
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','pdf',[$id]);return;}
         $expense = $this->expenses_model->get($id);
 
         if (staff_cant('view', 'expenses') && $expense->addedfrom != get_staff_user_id()) {
@@ -346,7 +353,7 @@ class Expenses extends AdminController
 
     public function get_expense_data_ajax($id)
     {
-        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,$id,'get_expense_data_ajax'); return; }
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php'; (new NativeCompanyExpenseIndexHttp($this))->preview($id); return; }
         if (staff_cant('view', 'expenses') && staff_cant('view_own', 'expenses')) {
             echo _l('access_denied');
             die;
@@ -382,7 +389,7 @@ class Expenses extends AdminController
 
     public function categories()
     {
-        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,null,'categories'); return; }
+        if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php'; (new NativeCompanyExpenseIndexHttp($this))->categories(); return; }
         if (!is_admin()) {
             access_denied('expenses');
         }
@@ -395,6 +402,7 @@ class Expenses extends AdminController
 
     public function category()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)&&$this->input->post('native_expense_category',false)!==null){require_once APPPATH.'services/NativeCompanyExpenseIndexHttp.php';(new NativeCompanyExpenseIndexHttp($this))->category();return;}
         if (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyExpensesController.php'; NativeCompanyExpensesController::handle($this,null,'category'); return; }
         if (!is_admin() && get_option('staff_members_create_inline_expense_categories') == '0') {
             access_denied('expenses');

@@ -557,7 +557,7 @@ class Tasks extends AdminController
                 CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');
                 require_once APPPATH.'services/NativeCompanyRelatedTaskPage.php';require_once APPPATH.'services/NativeCompanyRelatedTaskRows.php';
                 $wire=$this->input->post(null,false)?:[];unset($wire['_company_context'],$wire['_native_company_csrf']);if(isset($this->security))unset($wire[$this->security->get_csrf_token_name()]);
-                $today=date('Y-m-d');$scoped=null;$readDb=$this->db;if(in_array($rel_type,['project','invoice'],true)){require_once APPPATH.'services/NativeCompanyTaskScopedDb.php';$scoped=new NativeCompanyTaskScopedDb($this->db,db_prefix());$readDb=$scoped;}
+                $today=date('Y-m-d');$scoped=null;$readDb=$this->db;if(in_array($rel_type,['project','invoice','expense'],true)){require_once APPPATH.'services/NativeCompanyTaskScopedDb.php';$scoped=new NativeCompanyTaskScopedDb($this->db,db_prefix());$readDb=$scoped;}
                 $reader=new NativeCompanyRelatedTaskPage($readDb,db_prefix());$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today);
                 $data=(new NativeCompanyRelatedTaskRows($readDb,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page);
                 if($reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today)!==$page)throw new DomainException('native_task_relation_stale');

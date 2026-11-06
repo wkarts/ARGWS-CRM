@@ -196,6 +196,11 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
             }
 
             $field_name = $field['name'];
+            // Native definitions are literal text. These original primitives
+            // accept an already translated label and print it as HTML.
+            if ($nativeFields !== null && in_array($field['type'], ['input','number','date_picker','date_picker_time','textarea','colorpicker'], true)) {
+                $field_name = htmlspecialchars((string)$field_name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
 
             if ($field['type'] == 'input' || $field['type'] == 'number') {
                 $t = $field['type'] == 'input' ? 'text' : 'number';

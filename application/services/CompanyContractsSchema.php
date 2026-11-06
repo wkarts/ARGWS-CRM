@@ -37,6 +37,7 @@ final class CompanyContractsSchema
                 $actual=preg_replace('/^(int)\([0-9]+\)/','$1',strtolower($r['COLUMN_TYPE']??''));$nullable=str_contains($tail,'NOT NULL')?'NO':'YES';
                 // Only the complete, validated core474 email-ticket shape may relax this one FK column.
                 if($table==='company_tickets'&&$column==='client_id'&&($r['IS_NULLABLE']??null)==='YES'){require_once __DIR__.'/NativeCompanyTicketCustomerSchema.php';NativeCompanyTicketCustomerSchema::assertValid($db,$p);$nullable='YES';}
+                if($table==='company_contracts'&&$column==='due_date'&&($r['IS_NULLABLE']??null)==='YES'){require_once __DIR__.'/CompanyContractMetadataSchema.php';CompanyContractMetadataSchema::assertValid($db,$p);$nullable='YES';}
                 if($actual!==$type||($r['IS_NULLABLE']??null)!==$nullable||!IssuerStorage::sqlNullDefault($r)||str_contains($tail,'AUTO_INCREMENT')!==str_contains(strtolower($r['EXTRA']??''),'auto_increment'))throw new RuntimeException('issuer_contract_schema_invalid');
                 if(preg_match('/COLLATE ([a-z0-9_]+)/',$tail,$c)&&($r['COLLATION_NAME']??null)!==$c[1])throw new RuntimeException('issuer_contract_schema_invalid');
             }

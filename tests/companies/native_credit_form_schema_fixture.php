@@ -14,3 +14,16 @@ foreach(['items','items_groups','taxes']as$table)if(!$db->table_exists($p.$table
     if($db->driver()==='sqlite')$ddl=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$ddl);$db->query($ddl);
 }
 CompanyClientProfileSchema::ensure($db,$p);unset($db->data_cache['table_names']);
+
+// The original client callback validates each project through CompanyProjects.
+// Its canonical reader verifies the complete project/task schema on MySQL;
+// a single company_projects table is insufficient even for a read callback.
+foreach([CompanyProjectsSchema::class,CompanyProjectExtrasSchema::class,CompanyStandaloneTasksSchema::class] as $schema){
+    if($db->driver()==='mysql'){$schema::ensure($db,$p);continue;}
+    foreach($schema::definitions($p) as $table=>$parts){
+        if($db->table_exists($p.$table))continue;
+        $ddl='CREATE TABLE '.$p.$table.'('.implode(',',$parts).') ENGINE=InnoDB';
+        $db->query(str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$ddl));
+    }
+}
+unset($db->data_cache['table_names']);

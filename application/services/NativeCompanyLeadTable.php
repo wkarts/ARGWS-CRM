@@ -15,9 +15,9 @@ final class NativeCompanyLeadTable
     private array $rules=[];
     public function __construct(private $db,private string $p,private int $issuer,private int $actor,private string $identifier,array $options,private array $savedFilters=[])
     {
-        if($identifier!=='company_leads'||array_keys($options)!==['status','source','assigned'])throw new DomainException('native_lead_filter_invalid');$this->authorize();
+        if($identifier!=='company_leads'||array_keys($options)!==['status','source','assigned','country'])throw new DomainException('native_lead_filter_invalid');$this->authorize();
         foreach($options as$list){if(!is_array($list)||count($list)>1000)throw new DomainException('native_lead_filter_invalid');foreach($list as$row)if(!is_array($row)||array_keys($row)!==['value','label']||(!is_int($row['value'])&&!is_string($row['value']))||!is_string($row['label']))throw new DomainException('native_lead_filter_invalid');}
-        $labels=['name'=>'leads_dt_name','phonenumber'=>'leads_dt_phonenumber','dateadded'=>'date_created','status'=>'lead_status','source'=>'lead_source','assigned'=>'leads_dt_assigned'];
+        $labels=['name'=>'leads_dt_name','phonenumber'=>'leads_dt_phonenumber','country'=>'lead_country','city'=>'lead_city','state'=>'lead_state','zip'=>'lead_zip','lastcontact'=>'leads_dt_last_contact','dateadded'=>'date_created','lead_value'=>'lead_add_edit_lead_value','status'=>'lead_status','source'=>'lead_source','assigned'=>'leads_dt_assigned'];
         foreach(NativeCompanyLeadRules::TYPES as$id=>$type){$rule=App_table_filter::new($id,$type)->label(_l($labels[$id]));if(isset($options[$id]))$rule->options($options[$id]);if($id==='assigned')$rule->withEmptyOperators()->emptyOperatorValue(0);$this->rules[$id]=$rule;}
         foreach($savedFilters as$filter){if(!is_array($filter)||($filter['identifier']??null)!=='company_leads'||IssuerPolicy::id($filter['issuer_id']??null)!==$issuer||(IssuerPolicy::id($filter['staff_id']??null)!==$actor&&!in_array($filter['is_shared']??null,[1,'1',true],true))||!is_array($filter['builder']??null))throw new DomainException('native_lead_filter_invalid');$this->normalizeBuilder($filter['builder']);}
     }

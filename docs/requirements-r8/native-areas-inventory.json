@@ -8,7 +8,7 @@
     "version": "4.8.8",
     "commit": "3cd2ac577a969840c94b019f602cb69d710c0e78"
   },
-  "generated_from": "working tree including the Leads original UI checkpoint; source inventory, not runtime evidence",
+  "generated_from": "Frozen operations composition (Leads metadata, Contracts form, Expenses index/categories/bulk); static source inventory, not runtime or visual-equivalence evidence.",
   "areas": {
     "assinaturas": {
       "controller": "application/controllers/admin/Subscriptions.php",
@@ -165,7 +165,7 @@
           "path": "application/controllers/admin/Expenses.php",
           "ref_402_blob": "c0542e3c7f8a70bea559e70f0c8afa985a3cc51f",
           "main_488_blob": "d72032af1953e0f8634d257b65263808a2fddb3d",
-          "working_blob": "9b8ce4819d710d0dcfd8917cb24c58976e558e0e",
+          "working_blob": "984e03c551d93a0482964eb8cc5128cc52c45c64",
           "comparison_402": "changed",
           "changed_this_pr": true
         },
@@ -197,7 +197,7 @@
           "path": "application/views/admin/expenses/expense.php",
           "ref_402_blob": "bbe401e45320b10d2410ffb52bb525aff6172664",
           "main_488_blob": "bbe401e45320b10d2410ffb52bb525aff6172664",
-          "working_blob": "ac91869c0432e027197d28b229339602eff60a02",
+          "working_blob": "3a21cbcf154ad066d22a46de59ef786a3b039f42",
           "comparison_402": "changed",
           "changed_this_pr": true
         },
@@ -221,9 +221,9 @@
           "path": "application/views/admin/expenses/expense_preview_template.php",
           "ref_402_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
           "main_488_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
-          "working_blob": "164c6b520e62f5e98489f19c6fe1c169ddeef2c0",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "13297ed62c0a0befb7867d2c362f536d739a090b",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/expenses/expense_recurring_options.php",
@@ -237,9 +237,9 @@
           "path": "application/views/admin/expenses/expenses_total_template.php",
           "ref_402_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
           "main_488_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
-          "working_blob": "89102e91492ea940ef628470766565abdd7dbbb0",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "0bffb1399c146969ab38f24a3f6d35dc983e864f",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/expenses/fields.php",
@@ -277,23 +277,63 @@
           "path": "application/views/admin/expenses/manage.php",
           "ref_402_blob": "78f5b5665c457f474e9916f979c3153804046070",
           "main_488_blob": "78f5b5665c457f474e9916f979c3153804046070",
-          "working_blob": "78f5b5665c457f474e9916f979c3153804046070",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "9a173c01154e5796b428dea670c4b1b2fc268741",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/expenses/manage_categories.php",
           "ref_402_blob": "84915828258b3160f520673d305b08961471e7db",
           "main_488_blob": "84915828258b3160f520673d305b08961471e7db",
-          "working_blob": "84915828258b3160f520673d305b08961471e7db",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "93fe01464aa7161c3039d8e8bdfaee5f424f5554",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/expenses/native.php",
           "ref_402_blob": null,
           "main_488_blob": "6de82499adff24c3eb8f693c0d07a446e566f410",
-          "working_blob": "bed81ab904da67a85d04d6d241231c7d3134013b",
+          "working_blob": "475895d70abeafc8f782c8632dcb76b9aba2038b",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_bulk_modal.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "c2b4304378d380f3d0b0e21d86d7f982a4102ca2",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_categories.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "576e04809a3426222cc9cb197a99df7b426bc30a",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_category_modal.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "6e5108a7aeffc1fc68ca57bd4a28cf175b0d0c62",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_manage.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "f8378ca9877e4ac0b33f7c5155dac462e7d76704",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_preview.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "b468288fdf2bac9e8f7bf0b69449fa5d4becd9af",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -320,6 +360,30 @@
           "working_blob": "8f9718494f19ad7ef7a403dd5e34415939e70f18",
           "comparison_402": "new_since_402",
           "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/expenses/native_reminder.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "d24193f4661166c8a37d32803249162f6b46e6f3",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_table_row.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "92737774e9e620927fbb60cf99a89a936f0a8262",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/expenses/native_totals.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "87f7eec93d17c096f39d4a207de3219ec30f3c11",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/expenses/recurring.php",
@@ -375,6 +439,7 @@
         "add_external_attachment",
         "add_note",
         "clear_signature",
+        "client_change_data",
         "contract",
         "copy",
         "delete",
@@ -419,9 +484,9 @@
           "path": "application/controllers/admin/Contracts.php",
           "ref_402_blob": "e6946f6a1de7d120b0f74537a378f172e1bb9887",
           "main_488_blob": "73735d088ea863c99e24b00cf52816d984f7333f",
-          "working_blob": "73735d088ea863c99e24b00cf52816d984f7333f",
+          "working_blob": "7cd60263f1e15b1728468df29c7cb2cd63655513",
           "comparison_402": "changed",
-          "changed_this_pr": false
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/contracts/comments_template.php",
@@ -435,9 +500,9 @@
           "path": "application/views/admin/contracts/contract.php",
           "ref_402_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
           "main_488_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
-          "working_blob": "7667dae920a2d11108a5ae3aefa82c3903826886",
-          "comparison_402": "identical",
-          "changed_this_pr": false
+          "working_blob": "10fe0839272ac87736c7bf9053a6b635292c4b6c",
+          "comparison_402": "changed",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/contracts/contract_type.php",
@@ -483,7 +548,7 @@
           "path": "application/views/admin/contracts/native.php",
           "ref_402_blob": null,
           "main_488_blob": "2fe0a413b969a798468a43f68c6dbb4eed96796b",
-          "working_blob": "55cb8fc861031582fbd5f859d38e54668c9a2515",
+          "working_blob": "fc3b6ef9e8a11457e0f8f0a7ac7c50d833b9a835",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -494,6 +559,14 @@
           "working_blob": "597df0fcee21418c39bc5ff617b6043519adec4e",
           "comparison_402": "new_since_402",
           "changed_this_pr": false
+        },
+        {
+          "path": "application/views/admin/contracts/native_form.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "b63bdae29d41df31bf1740a9d5ea1394bfbb9d0c",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/contracts/native_table_row.php",
@@ -1308,9 +1381,9 @@
           "path": "application/controllers/admin/Tasks.php",
           "ref_402_blob": "82bd7d9dc561b7d653fbefb6b880ee4f4569bc0b",
           "main_488_blob": "fc9fb72d0b7bdb6cd47e74276eb7ecc274de315b",
-          "working_blob": "fc9fb72d0b7bdb6cd47e74276eb7ecc274de315b",
+          "working_blob": "25a22876f5964b64d8591a40f025b8661aa72d55",
           "comparison_402": "changed",
-          "changed_this_pr": false
+          "changed_this_pr": true
         },
         {
           "path": "application/views/admin/tasks/_bulk_actions.php",
@@ -2083,7 +2156,7 @@
           "path": "application/views/admin/leads/native_board_card.php",
           "ref_402_blob": null,
           "main_488_blob": null,
-          "working_blob": "041d624ec1888d2f1d71dbf42674f21f2414bdd5",
+          "working_blob": "054c78d91a73826cab0daa612e1536e972fde793",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -2104,10 +2177,26 @@
           "changed_this_pr": false
         },
         {
+          "path": "application/views/admin/leads/native_fields_edit.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "9e1d054177cd520b6558c4e9c4707ff626545ec3",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
+          "path": "application/views/admin/leads/native_fields_profile.php",
+          "ref_402_blob": null,
+          "main_488_blob": null,
+          "working_blob": "c57b1473a6a90d29e1696dc62a284fedb5b7f25b",
+          "comparison_402": "new_since_402",
+          "changed_this_pr": true
+        },
+        {
           "path": "application/views/admin/leads/native_manage.php",
           "ref_402_blob": null,
           "main_488_blob": null,
-          "working_blob": "9fee8867d4fb90c451b138ca3d3cda8114b911fb",
+          "working_blob": "79a1804fae7b2743bb2a6c9ac8fc91aa118a6d10",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -2115,7 +2204,7 @@
           "path": "application/views/admin/leads/native_modal.php",
           "ref_402_blob": null,
           "main_488_blob": null,
-          "working_blob": "5661a7db85a2a3dd20bb938a3160e7a6e8e97584",
+          "working_blob": "455f056f08b67ee90b43f998ff17a450b727fcfe",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -2123,7 +2212,7 @@
           "path": "application/views/admin/leads/native_table_row.php",
           "ref_402_blob": null,
           "main_488_blob": null,
-          "working_blob": "132481e03544c1b3d8229933c54682dca3992247",
+          "working_blob": "8d032525dd8fec2857af0b4b2ffab49ac13e830f",
           "comparison_402": "new_since_402",
           "changed_this_pr": true
         },
@@ -3146,29 +3235,78 @@
   },
   "method": "Static source inventory: public controller methods and literal view calls; exact reference/main/current blobs for the selected controller/view/model/entrypoint files and all first-party PHP utility layers (excluding vendor/language). Runtime capability is reported separately in native-areas.md.",
   "current_service_paths": [
-    "application/services/NativeCompanyContractRules.php",
-    "application/services/NativeCompanyContractIndex.php",
-    "application/services/NativeCompanyContractTable.php",
-    "application/services/NativeCompanyContractTableFactory.php",
-    "application/services/NativeCompanyContractsController.php",
-    "application/services/NativeCompanyProjectPage.php",
-    "application/services/NativeCompanyProjectOriginalHttp.php",
-    "application/services/NativeCompanyExpensesController.php",
-    "application/services/NativeCompanyExpenseOriginalForm.php",
-    "application/services/NativeCompanyExpenseOriginalHttp.php",
-    "application/services/NativeCompanyExpenseFormValues.php",
-    "application/services/NativeCompanyCustomFields.php",
-    "application/services/CompanyExpenses.php",
+    "application/services/CompanyBillingInvoiceLifecycle.php",
+    "application/services/CompanyContractDiscussions.php",
+    "application/services/CompanyContractDiscussionsSchema.php",
+    "application/services/CompanyContractMetadata.php",
+    "application/services/CompanyContractMetadataSchema.php",
+    "application/services/CompanyContractValue.php",
+    "application/services/CompanyContracts.php",
+    "application/services/CompanyContractsPdf.php",
+    "application/services/CompanyContractsSchema.php",
+    "application/services/CompanyContractsStorage.php",
+    "application/services/CompanyExpenseApi.php",
+    "application/services/CompanyExpenseApiHttp.php",
+    "application/services/CompanyExpenseApiReceipt.php",
+    "application/services/CompanyExpenseBilling.php",
+    "application/services/CompanyExpenseBillingSchema.php",
+    "application/services/CompanyExpenseBillingStorage.php",
+    "application/services/CompanyExpenseCopies.php",
+    "application/services/CompanyExpenseCopiesSchema.php",
+    "application/services/CompanyExpenseFiles.php",
     "application/services/CompanyExpenseRecurring.php",
+    "application/services/CompanyExpenseRecurringBillingSource.php",
+    "application/services/CompanyExpenseRecurringDeliverySource.php",
+    "application/services/CompanyExpenseRecurringSchema.php",
+    "application/services/CompanyExpenseRecurringStorage.php",
+    "application/services/CompanyExpenseSchema.php",
+    "application/services/CompanyExpenses.php",
+    "application/services/CompanyLeadMetadata.php",
+    "application/services/CompanyLeadMetadataSchema.php",
+    "application/services/CompanyLeads.php",
+    "application/services/CompanyLeadsApi.php",
+    "application/services/CompanyLeadsDirectory.php",
+    "application/services/CompanyLeadsFiles.php",
+    "application/services/CompanyLeadsHttpApi.php",
+    "application/services/CompanyLeadsImports.php",
+    "application/services/CompanyLeadsNativeFields.php",
+    "application/services/CompanyLeadsNotifications.php",
+    "application/services/CompanyLeadsSchema.php",
     "application/services/NativeCompanyAuxiliaryUi.php",
     "application/services/NativeCompanyCalendarEndpoints.php",
-    "application/services/CompanyLeads.php",
-    "application/services/CompanyLeadsDirectory.php",
+    "application/services/NativeCompanyContractForm.php",
+    "application/services/NativeCompanyContractIndex.php",
+    "application/services/NativeCompanyContractMail.php",
+    "application/services/NativeCompanyContractMailSource.php",
+    "application/services/NativeCompanyContractRules.php",
+    "application/services/NativeCompanyContractTable.php",
+    "application/services/NativeCompanyContractTableFactory.php",
+    "application/services/NativeCompanyContractTypes.php",
+    "application/services/NativeCompanyContractsController.php",
+    "application/services/NativeCompanyCustomFields.php",
+    "application/services/NativeCompanyExpenseBillability.php",
+    "application/services/NativeCompanyExpenseBillabilitySchema.php",
+    "application/services/NativeCompanyExpenseBulk.php",
+    "application/services/NativeCompanyExpenseCategorySchema.php",
+    "application/services/NativeCompanyExpenseCopiesController.php",
+    "application/services/NativeCompanyExpenseFormProfile.php",
+    "application/services/NativeCompanyExpenseFormSchema.php",
+    "application/services/NativeCompanyExpenseFormValues.php",
+    "application/services/NativeCompanyExpenseIndex.php",
+    "application/services/NativeCompanyExpenseIndexHttp.php",
+    "application/services/NativeCompanyExpenseOriginalForm.php",
+    "application/services/NativeCompanyExpenseOriginalHttp.php",
+    "application/services/NativeCompanyExpenseRules.php",
+    "application/services/NativeCompanyExpenseTable.php",
+    "application/services/NativeCompanyExpenseTableFactory.php",
+    "application/services/NativeCompanyExpensesController.php",
     "application/services/NativeCompanyLeadHttp.php",
     "application/services/NativeCompanyLeadInput.php",
     "application/services/NativeCompanyLeadRules.php",
     "application/services/NativeCompanyLeadTable.php",
-    "application/services/NativeCompanyLeadTableFactory.php"
+    "application/services/NativeCompanyLeadTableFactory.php",
+    "application/services/NativeCompanyProjectOriginalHttp.php",
+    "application/services/NativeCompanyProjectPage.php"
   ],
   "utility_resource_layers": {
     "goals": [

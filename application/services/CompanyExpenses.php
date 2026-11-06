@@ -222,17 +222,26 @@ final class CompanyExpenses
     }
     public function categories($issuer,$actor):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');$rows=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE issuer_id=? ORDER BY id LIMIT 500',[$issuer]);foreach($rows as &$row)$row['revision_token']=self::revision($row);unset($row);$this->authorize($issuer,$actor,'view');return $rows;
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');$rows=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE issuer_id=? ORDER BY id LIMIT 500',[$issuer]);foreach($rows as &$row)$row['revision_token']=self::categoryRevision($row);unset($row);$this->authorize($issuer,$actor,'view');return $rows;
     }
-    public function saveCategory($issuer,$actor,string $name,string $key,$id=null,?string $revision=null,bool $active=true):int
+    private static function categoryRevision(array$row):string
+    {
+        // NULL marks the additive field as never supplied. Existing category CAS bytes stay usable after upgrade.
+        if(array_key_exists('description',$row)&&$row['description']===null)unset($row['description']);return self::revision($row);
+    }
+    public function saveCategory($issuer,$actor,string $name,string $key,$id=null,?string $revision=null,bool $active=true,?string $description=null):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$name=self::text($name,191);$id=$id===null?null:IssuerPolicy::id($id);$payload=[$name,$id,$revision,$active];
-        return $this->transaction($issuer,$actor,$id===null?'create':'edit',function()use($issuer,$actor,$name,$key,$id,$revision,$active,$payload):int{
-            $retry=$this->receipt($issuer,$actor,'category',$key,$payload);if($retry!==null)return $retry;
+        require_once __DIR__.'/NativeCompanyExpenseCategorySchema.php';$hasDescription=NativeCompanyExpenseCategorySchema::available($this->db,$this->p);
+        if($hasDescription||$description!==null)NativeCompanyExpenseCategorySchema::assertValid($this->db,$this->p);
+        if($description!==null){$description=self::text($description,4000,false);$payload[]=['description'=>$description];}
+        return $this->transaction($issuer,$actor,$id===null?'create':'edit',function()use($issuer,$actor,$name,$key,$id,$revision,$active,$description,$hasDescription,$payload):int{
+            $retry=$this->receipt($issuer,$actor,'category',$key,$payload,function(int$result)use($issuer):void{if(!$this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$result,$issuer]))throw new DomainException('company_expense_denied');});if($retry!==null)return $retry;
             if($this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE issuer_id=? AND name=? AND id<>?',[$issuer,$name,$id??0]))throw new DomainException('company_expense_category_conflict');
             if($id===null){$count=(int)$this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_expense_categories WHERE issuer_id=?',[$issuer])[0]['n'];if($count>=500)throw new DomainException('company_expense_invalid');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_expense_categories(issuer_id,name,active,revision,created_at) VALUES(?,?,?,1,?)',[$issuer,$name,(int)$active,date('Y-m-d H:i:s')]);$id=(int)$this->db->insert_id();}
-            else{$old=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$old)throw new DomainException('company_expense_denied');if($revision===null||!hash_equals(self::revision($old),$revision))throw new DomainException('company_expense_stale');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expense_categories SET name=?,active=?,revision=revision+1 WHERE id=? AND issuer_id=?',[$name,(int)$active,$id,$issuer]);}
-            if(!$this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? AND name=? AND active=?',[$id,$issuer,$name,(int)$active]))throw new RuntimeException('issuer_expense_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_expense_category_saved');$this->writeReceipt($issuer,$actor,'category',$key,$payload,$id);$verified=$this->rows('SELECT name,active,revision FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$verified||$verified['name']!==$name||(int)$verified['active']!==(int)$active||(int)$verified['revision']!==(isset($old)?(int)$old['revision']+1:1))throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
+            else{$old=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$old)throw new DomainException('company_expense_denied');if($revision===null||!hash_equals(self::categoryRevision($old),$revision))throw new DomainException('company_expense_stale');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expense_categories SET name=?,active=?,revision=revision+1 WHERE id=? AND issuer_id=?',[$name,(int)$active,$id,$issuer]);}
+            if($description!==null)IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expense_categories SET description=? WHERE id=? AND issuer_id=?',[$description,$id,$issuer]);
+            if(!$this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? AND name=? AND active=?',[$id,$issuer,$name,(int)$active]))throw new RuntimeException('issuer_expense_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_expense_category_saved',$description===null?[]:['description'=>$description]);$this->writeReceipt($issuer,$actor,'category',$key,$payload,$id);$verified=$this->rows('SELECT name,active,revision'.($hasDescription?',description':'').' FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$verified||$verified['name']!==$name||(int)$verified['active']!==(int)$active||(int)$verified['revision']!==(isset($old)?(int)$old['revision']+1:1)||$hasDescription&&$verified['description']!==($description??($old['description']??null)))throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
         });
     }
 }

@@ -33,6 +33,23 @@ final class NativeCompanyExpenseOriginalHttp
         return $post;
     }
     private function url($canonical):string{return CompanyRequestScope::adminUrl($this->ci,'expenses/list_expenses/'.$canonical.'?source=company');}
+    private function assertContext():void
+    {
+        $context=CompanyRequestScope::context();
+        if(!CompanyRequestScope::sealedFor($this->ci)||!CompanyRequestScope::nativeFor($this->ci)
+            ||$context?->issuerId()!==$this->issuer||$context?->staffId()!==$this->actor){
+            throw new DomainException('company_expense_denied');
+        }
+    }
+    private function renderFrame(array $data):string
+    {
+        $fields=new NativeCompanyCustomFields($this->ci->db,db_prefix());
+        $id=$data['native_expense_id'];
+        $definitions=$id===''?$fields->definitions($this->issuer,$this->actor,'expenses',['active'=>1],'create')
+            :$fields->definitionsForResource($this->issuer,$this->actor,'expenses',$id,['active'=>1],'edit');
+        $values=$id===''?[]:$fields->values($this->issuer,$this->actor,'expenses',$id,'edit');
+        return hash('sha256',json_encode([$data,$definitions,$values],JSON_THROW_ON_ERROR));
+    }
     private function json(array $data,int $status=200):void
     {
         $this->ci->output->set_status_header($status)->set_content_type('application/json')->set_output(json_encode($data,JSON_THROW_ON_ERROR|JSON_INVALID_UTF8_SUBSTITUTE));
@@ -53,6 +70,7 @@ final class NativeCompanyExpenseOriginalHttp
     /** False retains the existing editor for scalar/immutable/scheduled source contracts. */
     public function expense($canonical=''):bool
     {
+        $bufferLevel=ob_get_level();
         try{
             $this->prepare();
             $verb=strtoupper((string)$this->ci->input->method(true));
@@ -64,13 +82,22 @@ final class NativeCompanyExpenseOriginalHttp
                 $this->json(['success'=>true,'expenseid'=>$result['expenseid'],'url'=>$this->url($result['expenseid']),'upload_key'=>hash('sha256','original-expense-file|'.$post['request_key'])]);return true;
             }
             if(!in_array($verb,['GET','HEAD'],true)){$this->ci->output->set_header('Allow: GET, HEAD, POST');$this->json(['success'=>false,'message'=>'Método não permitido.'],405);return true;}
-            $data=$this->form->form($this->issuer,$this->actor,$canonical,$this->ci->input->get('customer_id',false)??'');
+            $customer=$this->ci->input->get('customer_id',false)??'';
+            $data=$this->form->form($this->issuer,$this->actor,$canonical,$customer);
             if($data===null)return false;
             if($verb==='HEAD'){$this->ci->output->set_output('');return true;}
+            $frame=$this->renderFrame($data);
             $data['native_expenses_csrf']=$this->token();$data['native_expense_request_key']=bin2hex(random_bytes(32));
             $data['native_expense_form_action']=CompanyRequestScope::adminUrl($this->ci,'expenses/expense'.($canonical===''?'':'/'.$canonical).'?source=company');
-            $this->ci->load->view('admin/expenses/expense',$data);return true;
-        }catch(Throwable $error){$this->failure($error);return true;}
+            ob_start();
+            $html=$this->ci->load->view('admin/expenses/expense',$data,true);
+            while(ob_get_level()>$bufferLevel)ob_end_clean();
+            $this->assertContext();
+            $current=$this->form->form($this->issuer,$this->actor,$canonical,$customer);
+            if(!is_string($html)||$current===null||!hash_equals($frame,$this->renderFrame($current)))throw new DomainException('company_expense_stale');
+            $this->assertContext();
+            $this->ci->output->set_output($html);return true;
+        }catch(Throwable $error){while(ob_get_level()>$bufferLevel)ob_end_clean();$this->failure($error);return true;}
     }
     public function customer($id=''):void
     {
