@@ -45,6 +45,13 @@ jobs:
           php tests/native_operational_layout.php
           node --test tests/native_shell_controls.test.cjs tests/native_navigation_tabs.test.cjs
           php tests/native_settings_certificate_link.php
+      - name: Regressões de definições da principal e isolamento
+        run: |
+          php tests/settings/primary_settings_dispatch.php
+          php tests/settings/primary_settings_scope.php
+          php tests/native_company/google_settings_missing_options.php
+          php tests/settings/oauth_configuration_http.php
+          php tests/settings/bb_channel_http_boundary.php
       - name: Fluxos desktop/mobile, grid e modal
         env:
           SCREENSHOT_DIR: artifacts/company-native-ui
