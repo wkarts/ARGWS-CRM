@@ -119,7 +119,8 @@ final class PaymentOriginStore
             throw new \RuntimeException('payment_origin_is_immutable');
         }
         if (empty($origin['remote_id'])) {
-            $ok = $this->db->where('invoice_id', $invoiceId)->where('remote_id IS NULL', null, false)
+            if(method_exists($this->db,'field_exists')&&$this->db->field_exists('active_slot',$this->table))$this->db->where('active_slot',1);
+            $ok = $this->db->where('id', $origin['id'])->where('remote_id IS NULL', null, false)
                 ->update($this->table, ['remote_id' => $remoteId]);
             if (!$ok || $this->db->affected_rows() !== 1) {
                 throw new \RuntimeException('payment_origin_binding_failed');
@@ -133,6 +134,7 @@ final class PaymentOriginStore
         if (!$this->ready()) {
             throw new \RuntimeException('payment_origin_migration_required');
         }
+        if(method_exists($this->db,'field_exists')&&$this->db->field_exists('active_slot',$this->table))$this->db->where('active_slot',1);
         if (!$this->db->where('invoice_id', $invoiceId)->update($this->table, [
             'state' => $state, 'last_code' => $code, 'updated_at' => date('Y-m-d H:i:s'),
         ])) {

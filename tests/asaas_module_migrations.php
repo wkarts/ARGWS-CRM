@@ -252,10 +252,12 @@ verify((string)(new App_module_migration('asaas'))->version('164')==='164','164 
 verify($pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_recreations')->fetchColumn()==0,'164 creates no intentions or charges');
 foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'164 preserves data: '.$table);
 $db->failQuery='ADD COLUMN active_slot';$failed=false;
-try{(new App_module_migration('asaas'))->to_latest();}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+try{(new App_module_migration('asaas'))->version('165');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
 verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.4','165 DDL failure preserves164');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'165 tracking failure rejected');$db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='165','165 replay finishes tracking');verify((new App_module_migration('asaas'))->to_latest()===true,'165 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('165')===false,'165 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('165')==='165','165 replay finishes tracking');verify((new App_module_migration('asaas'))->version('165')===true,'165 replay no-op');
 \Asaas\CompanyOriginGenerations::ensure($db,db_prefix(),false);
 foreach($before156 as $table=>$rows){$actual=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);if($table==='asaas_payment_origins')foreach($actual as &$row){verify((int)$row['active_slot']===1,'165 preserves active legacy origin');unset($row['active_slot']);}unset($row);verify($actual===$rows,'165 preserves data: '.$table);}
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'166 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->to_latest()==='166','166 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'166 replay no-op');
 echo "OK: {$n} native module migration MySQL assertions.\n";

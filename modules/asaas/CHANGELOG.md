@@ -1,5 +1,10 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.6 — 2026-11-06
+
+- Escritas do PaymentOriginStore legado limitadas à origem ativa; binding usa também o ID selecionado.
+- Migration166 NOOP, sem alterar schema165 ou histórico. Fixtures anteriores à165 declaram ausência de active_slot, sem afrouxar guards.
+
 ## 1.6.5 — 2026-11-06
 
 - Recriação PIX/BOLETO na reabertura nativa: sucessor ativo distinto, POST com claim durável, recuperação por GET e reabertura atômica com diário.

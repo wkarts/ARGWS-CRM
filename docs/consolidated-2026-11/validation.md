@@ -531,3 +531,20 @@ O mesmo log HTTP comprovou instalação/upgrade e execução real do recurring_w
 no núcleo492 (223 checks) antes da falha de créditos. Isso amplia a evidência do
 núcleo para aquele SHA, sem converter o shard inteiro nem a nova recriação165 em
 homologação HTTP aprovada.
+
+## Correção da rodada CI ecf053f4 / Asaas166
+
+A rodada encontrou `payment_origin_is_immutable` em
+`asaas_payment_origin_integration.php`: FakeDB dizia que qualquer coluna existia,
+mas suas linhas pré165 não tinham active_slot/default1. ContactDb tinha o mesmo
+contrato fictício. Esses dois fixtures agora declaram ausência da coluna165; não
+houve relaxamento do seletor ativo de produção.
+A inspeção também encontrou state()/attachRemote() do store legado escrevendo
+por invoice_id sem limitar a geração. As escritas passam a usar active_slot=1
+quando disponível; binding fixa o ID selecionado. Migration166 NOOP conserva165.
+A suíte MySQL de gerações foi ampliada para verificar lookup e escrita legada
+com preservação byte a byte de todos os predecessores.
+
+Validação local da correção166: 66 checks MySQL de gerações/concorrência/falhas,
+280 asserts MySQL de migrations e os 19 comandos PHP do job de contratos Asaas
+passaram. Provedor simulado, sem cobrança real ou homologação externa.

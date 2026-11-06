@@ -106,3 +106,20 @@ $db->query("INSERT INTO {$p}asaas_company_events(account_row,event_id,event_type
 essentialThrows(fn()=>$asaas->query($b,7,(int)$latest['id'],$dec,$mock),'asaas_recreation_historical_event_review','late financial event of predecessor fences current origin for review');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords WHERE invoiceid=?",[$id])->row()->n===1,'late predecessor event cannot duplicate native payment');
 echo 'Asaas successor receipt/history: '.($GLOBALS['essentialChecks']-$start).' cumulative MySQL checks.'.PHP_EOL;
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/PaymentOriginStore.php';
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/PaymentOriginSchema.php';
+// Company fixtures omit the legacy audit table; exercise the native schema creator, not a readiness bypass.
+\Asaas\PaymentOriginSchema::install($db);unset($db->data_cache['table_names']);
+// Supply CI's get_where convenience using the same PDO-backed query builder; no canned result rows.
+$legacyDb=new class($db){
+ public function __construct(private EssentialTestDb $inner){}
+ public function field_exists($field,$table){return $this->inner->field_exists($field,$table);}
+ public function get_where($table,array $where){foreach($where as $field=>$value)$this->inner->where($field,$value);return $this->inner->get($table);}
+ public function __call($method,$args){return $this->inner->$method(...$args);}
+};
+$legacyStore=new \Asaas\PaymentOriginStore($legacyDb);
+essentialCheck((int)$legacyStore->byInvoice($id)['id']===(int)$latest['id'],'legacy invoice lookup selects current generation on actual SQL schema');
+$historicalBefore=$db->query("SELECT * FROM {$p}asaas_payment_origins WHERE invoice_id=? AND active_slot IS NULL ORDER BY id",[$id])->result_array();
+$legacyStore->state($id,'received_observed','generation_adapter_fixture');
+essentialCheck($db->query("SELECT * FROM {$p}asaas_payment_origins WHERE invoice_id=? AND active_slot IS NULL ORDER BY id",[$id])->result_array()===$historicalBefore,'legacy state writer leaves every retired identity unchanged');
+echo 'Asaas generations and legacy store: '.($GLOBALS['essentialChecks']-$start).' cumulative MySQL checks.'.PHP_EOL;

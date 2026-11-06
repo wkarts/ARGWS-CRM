@@ -1,4 +1,4 @@
-# Ciclo nativo Asaas — cancelamento163
+# Ciclo nativo Asaas — cancelamento e recriação
 
 O comando nativo Cancelar fatura agora coordena a exclusão de uma cobrança Asaas
 não paga e o cancelamento local. A origem precisa ser única, canônica, da empresa
@@ -30,8 +30,8 @@ possui migration NOOP; nenhum backfill, segredo, cobrança ou registro de produ�
 - Revogação, empresa incorreta, formulário obsoleto, origem múltipla ou fundos:
   bloqueados. Não há compensação por criação automática de cobrança.
 
-Isso implementa o cancelamento, **não todo ASA04**. Exclusão definitiva da fatura,
-reativação/recriação, edição remota e configuração de recebimento manual integral
+O checkpoint163 implementou o cancelamento; a seção165 abaixo acrescenta a recriação PIX/BOLETO, **não todo ASA04**. Exclusão definitiva da fatura,
+cartão na recriação, edição remota e configuração de recebimento manual integral
 versus parcial continuam pendentes. Não ampliar a permissão de um operador para
 contornar ACL nem apagar a origem para liberar reativação.
 
@@ -137,3 +137,22 @@ uma origem por fatura, código anterior à165 não é compatível: rollback deve
 preservar dados/marcadores e usar correção progressiva ou restauração consistente
 anterior a qualquer novo efeito remoto, com conciliação. Nunca apagar gerações nem
 recriar a constraint antiga sobre dados novos para simular reversão.
+
+## Recebimento manual — contrato verificado, implementação ainda pendente
+
+Reconsulta oficial em6/11/2026: POST payments/{id}/receiveInCash recebe paymentDate,
+value e notifyCustomer. É baixa de pagamento externo, sem crédito de saldo Asaas;
+a cobrança passa a billingType RECEIVED_IN_CASH e gera PAYMENT_RECEIVED.
+POST payments/{id}/undoReceivedInCash desfaz somente essa confirmação manual e
+gera PAYMENT_RECEIVED_IN_CASH_UNDONE; não é devolução de Pix/boleto/cartão.
+
+A referência somente leitura1.4.8 acumula o valor manual anterior ao quitar,
+mantém cobrança aberta no parcial e distingue remover de confirmar dinheiro.
+Essas regras não foram conectadas ao writer multiempresa atual: ele bloqueia
+origens de provider em recebimento manual, e o normalizador Asaas atual exige
+billing_type compatível com o snapshot. Não basta permitir receiveInCash no
+transporte: isso poderia fazer o webhook virar uma segunda baixa ou aceitar uma
+fonte que mudou de natureza. É necessária autoridade específica, política explícita
+por empresa/ambiente, ledger da tentativa e recuperação canônica, composição com
+recebimentos parciais e reversão/compensação sem tratar resultado incerto como
+falha definitiva. Nenhuma dessas políticas foi ativada por inferência nesta etapa.

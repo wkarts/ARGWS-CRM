@@ -8584,7 +8584,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "c4ac098eb741c7a7d05ab555ae90b89fc8e8efd5f7748e28804761bd3b9437bf",
+      "sha256": "ee7ec6009dc8ba0fd7b7e56d8386acc35d12c9b2578b60d78038009ea2f8ddf2",
       "categories": [
         "customer_privacy",
         "invoice_model",
