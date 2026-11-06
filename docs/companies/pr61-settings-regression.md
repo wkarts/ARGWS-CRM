@@ -221,3 +221,19 @@ passaram. Reexecutados os testes `primary_settings_dispatch.php`,
 `primary_settings_scope.php` e `efi/native_controller_contract.php`, aprovados.
 Nenhum código funcional, schema, versão, tag ou configuração de produção mudou
 neste follow-up. A aprovação remota do novo SHA precisa ser observada separadamente.
+
+## Follow-up do contrato CI após b47bbe1f
+
+O run Native company experience focused 42136812089 falhou no preflight dos
+contratos: o teste MySQL `tests/settings/efi_primary_configuration_mysql.php`
+foi incluído no workflow, mas faltava na lista exata de comandos externos de
+`tests/ci/test_company_registry_shards.py`. Reproduzido localmente: 93 testes,
+uma falha, com exatamente esse comando adicional. As falhas dos workflows
+dependentes no validation-gate não comprovam defeitos de produto independentes.
+
+O contrato agora inclui o comando na ordem efetiva e exige 501 comandos PHP
+distintos (471 do manifesto mais 30 externos), mantendo a comparação exata de
+argv, a condição `matrix.shard == 1` e a proibição de duplicações ou mudanças
+de etapa. Nenhum teste foi removido e o workflow permaneceu inalterado.
+Após a correção, os 93 testes completos de `tests/ci` passaram localmente.
+A aprovação do CI remoto continua exigindo observação do SHA publicado.
