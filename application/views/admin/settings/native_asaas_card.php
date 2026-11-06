@@ -18,8 +18,9 @@ foreach(['production','sandbox'] as $cardEnvironment){$cardProfile=$preferences[
 <?php }else{ ?><p><?= $cardProfile['allow_card']==='1'?'Habilitado':'Desabilitado'; ?>. É necessária permissão de edição para alterar.</p><?php } ?>
 </div></div>
 <?php }} ?>
+<?php require APPPATH.'views/admin/settings/native_asaas_card_pricing.php'; ?>
 <h3>Pagar cobrança existente com token</h3>
-<p>O token deve ter sido gerado pelo Asaas para o mesmo cliente da cobrança. Escolha o contrato correspondente ao token recebido. A operação é imediata, mesmo com vencimento futuro. Esta tela não coleta número do cartão ou CVV e não cria tokens.</p>
+<p>O token deve ter sido gerado pelo Asaas para o mesmo cliente da cobrança. Escolha o contrato correspondente ao token recebido. A operação é imediata, mesmo com vencimento futuro. Esta tela não coleta número do cartão ou CVV e não cria tokens. Este pagamento por token usa o valor integral já registrado na cobrança; não acrescenta os encargos da simulação de condições.</p>
 <?php if(($card_payments_ready??false)&&$can_issue&&$can_settle){foreach($origins as $cardOrigin){if(($cardOrigin['billing_type']??null)!=='CREDIT_CARD')continue;$cardAttempt=$card_payments[(int)$cardOrigin['id']]??null; ?>
 <article class="panel panel-default"><div class="panel-body"><h4>Fatura #<?= (int)$cardOrigin['invoice_id']; ?> — <?= $e($cardOrigin['account_id'].' / '.$environmentLabel($cardOrigin['environment'])); ?></h4>
 <?php if($cardAttempt){ ?><p role="status">Tentativa: <?= $e($cardAttempt['state']); ?>. Consulta confirma o estado remoto; não repete o pagamento.</p>

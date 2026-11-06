@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');const {execFileSync}=require('node:ch
 
 // Diagnostic fields are allowlisted. Never serialize exception messages, URLs, bodies,
 // field values, page content, CSRF material, or browser console arguments.
-const PHASES = /^(?:authenticate|install-native|preferences-unselected|preferences-selected|isolation|capture-evidence|[ab]:(?:select-company|open-company|save-account|prepare-origin|refresh-account|rotate-token|refresh-proof|refresh-token|reveal-token|refresh-reveal|settle|fee|callback|automation|worker|refresh-worker))$/;
+const PHASES = /^(?:authenticate|install-native|preferences-unselected|preferences-selected|isolation|capture-evidence|[ab]:(?:select-company|open-company|save-account|save-pricing|preview-pricing|prepare-origin|refresh-account|rotate-token|refresh-proof|refresh-token|reveal-token|refresh-reveal|settle|fee|callback|automation|worker|refresh-worker))$/;
 function safeResponse(response) {
  const request=response.request();let pathname='other';
  try {const path=new URL(response.url()).pathname;if(['/admin','/admin/','/admin/authentication','/admin/authentication/admin','/admin/issuers/select','/admin/settings/asaas'].includes(path))pathname=path;}catch{}
@@ -70,6 +70,18 @@ try{
   await page.locator('#asaas-tab-credentials').click();await page.locator('#asaas-new-environment').selectOption('sandbox');await page.locator('#asaas-new-account').fill('wallet-browser-'+letter);await page.locator('#asaas-new-key').fill('synthetic-browser-key-'+letter);
   await go(page,page.locator('form').filter({has:page.locator('#asaas-new-key')}).locator('button[type=submit]'),trace,letter+':save-account');
   assert.equal(await page.locator('#asaas-new-key').inputValue(),'');assert.ok(!await page.content().then(v=>v.includes('synthetic-browser-key-'+letter)),'stored API secret is never rendered');
+  await page.locator('#asaas-tab-card').click();
+  const pricing=page.locator('[data-card-pricing-account]').first();
+  const pricingSave=pricing.locator('form').filter({has:page.locator('input[name=action][value=save_card_pricing]')});
+  assert.equal(await pricingSave.locator('select[name="pricing[card_fee_mode]"]').inputValue(),'absorb','another company cannot inherit surcharge');
+  await pricingSave.locator('select[name="pricing[card_fee_mode]"]').selectOption(letter==='a'?'customer':'absorb');
+  await go(page,pricingSave.locator('button[type=submit]'),trace,letter+':save-pricing');
+  await page.locator('#asaas-tab-card').click();
+  const pricingPreview=page.locator('[data-card-pricing-account]').first().locator('form').filter({has:page.locator('input[name=action][value=preview_card_pricing]')});
+  await pricingPreview.locator('input[name=balance]').fill('100.00');
+  await go(page,pricingPreview.locator('button[type=submit]'),trace,letter+':preview-pricing');
+  await page.locator('#asaas-tab-card').click();
+  assert.ok((await page.locator('[data-card-pricing-account]').first().innerText()).includes(letter==='a'?'103.59':'100.00'),'nominal simulation uses this account settings');
   trace.stage(letter+':prepare-origin');const x=fixture(letter);prepared[issuer]=x;await openCompany(page,url,trace,letter+':refresh-account');
   await page.locator('#asaas-tab-webhooks').click();await page.locator('#webhooks details summary').click();const rotate=page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')});await rotate.locator('input[name=confirm]').check();await go(page,rotate.locator('button[type=submit]'),trace,letter+':rotate-token');
   const token=(await page.locator('#asaas-one-time-token').inputValue()).trim();assert.match(token,/^[a-f0-9]{64}$/);

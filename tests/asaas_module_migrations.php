@@ -33,7 +33,7 @@ function cleanupAsaasNativeFixture(PDO $pdo):void
     // These are the three disposable databases configured by CI/local verification.
     if(!in_array((string)$pdo->query('SELECT DATABASE()')->fetchColumn(),['asaas_test','callback_test','crm_tests'],true)
         ||!in_array(db_prefix(),['module_test_','callback_module_test_'],true))throw new RuntimeException('Disposable native fixture database required');
-    $tables=['asaas_company_invoice_edits','asaas_company_manual_settlements','asaas_company_manual_policies','asaas_company_recreations','asaas_company_card_payments','asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
+    $tables=['asaas_company_card_pricing','asaas_company_invoice_edits','asaas_company_manual_settlements','asaas_company_manual_policies','asaas_company_recreations','asaas_company_card_payments','asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
         'asaas_settlement_outbox','asaas_payment_origin_events','asaas_payment_origins','asaas_webhook_admin_audit','asaas_webhook_integrations','asaas_webhook_events','asaas_payments_map','asaas_customers_map','asaas_logs',
         'company_expenses','invoicepaymentrecords','invoices','issuers_registry','clients','options','modules'];
     foreach($tables as $table)$pdo->exec('DROP TABLE IF EXISTS `'.db_prefix().$table.'`');
@@ -282,8 +282,17 @@ $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.0','171 failed tracking preserves170');
 verify((string)(new App_module_migration('asaas'))->version('171')==='171','171 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('171')===true,'171 replay no-op');
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_manual_settlements')->fetchColumn()===0,'171 creates no manual financial command');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'172 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('172')===false,'172 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.1','172 failed tracking preserves171');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='172','172 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'172 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('172')==='172','172 retry confirmed');verify((new App_module_migration('asaas'))->version('172')===true,'172 replay no-op');
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()===0,'172 does not create card attempts');
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_card_pricing`';$failed=false;
+try{(new App_module_migration('asaas'))->to_latest();}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+$db->failQuery=null;
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 DDL failure preserves172');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'173 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 failed tracking preserves172');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='173','173 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'173 replay no-op');
+\Asaas\CompanyCardPricingSchema::ensure($db,db_prefix(),false);
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_pricing')->fetchColumn()===0,'173 creates no automatic pricing configuration');
 echo "OK: {$n} native module migration MySQL assertions.\n";

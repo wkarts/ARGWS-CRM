@@ -62,3 +62,53 @@ Isso não comprova checkout, parcelamento ou recorrência adaptados; seguem aber
 Nenhuma configuração financeira ativada, credencial criada, cobrança, merge ou
 deploy. O rollout integral continua bloqueado até implementação e validação das
 linhas acima. O fluxo completo da fonte ainda não foi transplantado/adaptado.
+
+## Parametrização e simulação por conta — módulo1.7.3/173
+
+Os helpers de validação e cálculo foram consumidos byte a byte da fonte1.5.6.
+A guia Cartão incorpora os16 parâmetros de parcelas, taxas, repasse e antecipação
+estimada. A configuração pertence a empresa/conta/ambiente; revisões da conta e
+do formulário são revalidadas sob lock. Salvar exige settings.edit e CSRF;
+simular exige settings.view. Leitura sem configuração usa defaults da fonte
+(empresa absorve, antecipação não incluída), sem inserir registros nem ativar
+consentimento. Alteração de ambiente/hash armazenado é recusada.
+
+Migration173 adiciona somente `asaas_company_card_pricing` com prefixo nativo.
+Chave primária issuer_id/account_row; FKs para empresa e conta; ambiente, JSON
+canônico/hash, revisão e data. Sem seed/backfill ou alteração em faturas/Produtos.
+JSON e hashes são da configuração financeira, não de cartão ou credenciais.
+Auditoria guarda ator/empresa/conta/evento/data. O mutex nativo serializa
+salvamentos; não há rede sob transação. Duração/locks em produção não medidos.
+
+Evidências:
+- `tests/asaas_card_pricing_reference.php`:92 cenários/333 asserts da fonte,
+  usando agora os helpers distribuídos no CRM.
+- `tests/companies/asaas_card_pricing.php`:15 checks novos SQLite/MySQL além de172
+  da cadeia, com revisão, empresa, ambiente/hash inválido, rollback de auditoria,
+  defaults e prova de nenhuma alteração de fatura/chamada externa.
+- `tests/companies/asaas_card_pricing_controller.php`:8 checks novos em ambos
+  motores, controller/view reais com requests sintéticos, CSRF/replay/ACL/A+B.
+- `tests/companies/asaas_card_pricing_concurrency.php`:dois processos e esperas
+  MySQL observadas, um único salvamento por revisão; revogação durante espera
+  nega ambos. Não é teste de carga.
+- Runner nativo MySQL:313 checks, falhas DDL/tracking173 preservam172, retry/replay,
+  nenhum parâmetro automaticamente salvo. Cleanup inclui nova tabela antes da FK.
+- Chromium local autenticado/PHP8.3.36/MySQL8.4: runner nativo173 pela manutenção,
+  formulário original salva HTTP200, simulação100.00→103.59 HTTP200. Rede externa
+  bloqueada no navegador, conta e credenciais sintéticas. O teste revelou e
+  corrigiu leitura indevida de result_array em INSERT/UPDATE do driver real.
+- Driver A/B autenticado existente ganhou salvar/simular em cada empresa; sua
+  execução completa no CI do SHA final permanece pendente.12 contratos Node
+  passaram. Callback13 e históricos154/155:48/101 passaram.
+
+**Limite funcional:** estes parâmetros alimentam a simulação administrativa.
+A cobrança existente por token mantém seu valor original; não usa esta simulação
+para aumentar preço. Oferta congelada, captura/parcelamento e alocação somente do
+principal ainda precisam de integração. Não há coleta PAN/CVV nem armazenamento
+em cookies, sessão, logs ou navegador; decisão de trânsito continua pendente.
+Não confundir simulação de antecipação com solicitação ao Asaas.
+
+Rollout somente após revisão/autorização: backup e runner nativo, confirmar173 e
+schema, testar salvar/reabrir/contas autorizadas. Em falha, suspender configuração
+e corrigir adiante; não reduzir marcador ou apagar histórico. Reversão de view
+não desfaz configurações já salvas. Sem publicação de release, merge ou deploy.

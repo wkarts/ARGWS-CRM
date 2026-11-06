@@ -88,6 +88,7 @@ jobs:
           php tests/asaas_callback_route.php
           php tests/asaas_callback_version.php
           php tests/asaas_sdk_reference.php
+          php tests/asaas_card_pricing_reference.php
           php tests/asaas_webhook_admin.php
           php tests/asaas_remote_webhook.php
           php tests/asaas_hosted_card.php
@@ -142,6 +143,9 @@ jobs:
           php tests/companies/asaas_explicit_reconciliation.php
           php tests/companies/asaas_inflight_quarantine.php
           php tests/companies/asaas_card_api_contract.php
+          php tests/companies/asaas_card_pricing.php
+          php tests/companies/asaas_card_pricing_controller.php
+          php tests/companies/asaas_card_pricing_concurrency.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:
