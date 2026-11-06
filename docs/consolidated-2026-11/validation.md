@@ -780,3 +780,21 @@ Corrigida a leitura para o modelo DataTables, exigindo8 colunas e confirmando
 que somente o campo Ano esperado está oculto. Nenhuma coluna de produto foi
 removida ou tornada visível para satisfazer o teste. Execução autenticada nova
 ainda pendente.
+
+## Orçamentos/Propostas: helpers de status ausentes no contexto nativo
+
+Reprodução local adicional do HTTP503 observado no job sales-pdf: o bootstrap
+selado de `AdminController` não carrega os helpers legados de Orçamentos e
+Propostas. As views originais os chamavam; o teste de view fornecia substitutos
+que ocultavam a ausência. Retirados os dois substitutos, o teste MySQL falhou
+com `Call to undefined function format_estimate_status()` em `estimate.php:19`.
+
+O formulário usa agora `NativeCompanySalesTable::statusHtml`, com os mesmos
+rótulos e cores da listagem nativa, escaping de texto e sem hooks globais.
+Os caminhos legados permanecem com seus helpers. O teste exige ausência das
+funções legadas e confere cada rótulo de status na criação/edição de ambas as
+views. A execução SQL/controlador após a correção passou (36 verificações de
+formulário, 75 de views, 53 de controlador e 2 de redação de diagnóstico),
+incluindo a ampliação final dos asserts de status.
+Isso não substitui a execução autenticada de navegador nem comprova resolução
+de todos os erros posteriores do fluxo de Vendas.

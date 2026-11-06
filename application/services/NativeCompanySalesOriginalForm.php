@@ -7,6 +7,7 @@ require_once __DIR__.'/NativeCompanySalesSequencePreferences.php';
 require_once __DIR__.'/NativeCompanySalesSettings.php';
 require_once __DIR__.'/NativeCompanyClients.php';
 require_once __DIR__.'/NativeCompanyFormatting.php';
+require_once __DIR__.'/NativeCompanySalesTable.php';
 
 /** Data and writers for the original estimate/proposal forms, using the existing company services. */
 final class NativeCompanySalesOriginalForm

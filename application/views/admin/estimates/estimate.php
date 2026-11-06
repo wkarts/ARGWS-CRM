@@ -16,7 +16,7 @@
                     <span>
                         <?php echo e( isset($estimate) ? ($native_sales_formatted_number ?? format_estimate_number($estimate)) : _l('create_new_estimate')); ?>
                     </span>
-                    <?php echo isset($estimate) ? format_estimate_status($estimate->status) : ''; ?>
+                    <?php echo isset($estimate) ? (!empty($native_sales_form)?NativeCompanySalesTable::statusHtml('estimates',(int)$estimate->status):format_estimate_status($estimate->status)) : ''; ?>
                 </h4>
                 <?php $this->load->view('admin/estimates/estimate_template'); ?>
             </div>

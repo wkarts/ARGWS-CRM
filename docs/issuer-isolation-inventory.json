@@ -7308,7 +7308,7 @@
       "evidence": ""
     },
     "application/views/admin/proposals/proposal.php": {
-      "sha256": "51ee7c87fd85bddd485e3c0fc59b89f43dc26a64eb7c1dc000b1cd03505c2a56",
+      "sha256": "dbac7651c0cc65ee328f1b686c6ce28ac4db7a5fd71fb17ab5d499abdbef7c4e",
       "categories": [
         "customer_privacy"
       ],

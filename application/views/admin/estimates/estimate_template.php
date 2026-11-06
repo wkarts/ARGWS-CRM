@@ -259,7 +259,7 @@
                                     <?php foreach ($estimate_statuses as $status) { ?>
                                     <option value="<?php echo e($status); ?>" <?php if (isset($estimate) && $estimate->status == $status) {
                             echo 'selected';
-                        } ?>><?php echo format_estimate_status($status, '', false); ?></option>
+                        } ?>><?php echo ($scopedSales?NativeCompanySalesTable::statusHtml('estimates',(int)$status,false):format_estimate_status($status, '', false)); ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
