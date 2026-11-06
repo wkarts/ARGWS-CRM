@@ -8584,7 +8584,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "a2260fdce27013bc760b96edc0f6654c496a888a8fa35e2aa94b448731195483",
+      "sha256": "ecc27078391874924e655db861d1865c5d2c26675a8f379d1d066e63a0297781",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8704,6 +8704,17 @@
       ],
       "signal_lines": [
         27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyRecreationIntents.php": {
+      "sha256": "2c0d142852180698eb9183ef017b120929aa3d7ef9c7f4f07b05695eaa825f64",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        22
       ],
       "state": "unreviewed",
       "evidence": ""

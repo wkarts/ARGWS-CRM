@@ -3090,7 +3090,7 @@
     ],
     [
       "php",
-      "tests/companies/asaas_invoice_cancellation.php"
+      "tests/companies/asaas_recreation_intents.php"
     ]
   ],
   "browser": [

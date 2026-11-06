@@ -490,3 +490,16 @@ Reexecução MySQL: preparação/concorrência e32 verificações adicionais de 
 passaram, após266 cumulativas da emissão e35 de rejeições de retorno. A cadeia
 SQLite de `companies/contracts_controller.php`, que compartilha o adaptador de
 metadados, passou. Sem transmissão ou homologação bancária.
+
+## Intenção interna de recriação Asaas164
+
+11 verificações adicionais de banco: replay, conflito de chave, empresa/revisão,
+revogação, prova vencida, rollback e preservação de origem/eventos/status cancelado.
+Ainda não testa criação de sucessor nem reativação, que não foram conectadas.
+Runner MySQL:261 assertions passaram, incluindo falhas DDL/tracking e retry;
+primeira execução encontrou apenas limpeza incompleta do fixture, corrigida para
+remover a nova tabela antes de suas referências, sem desabilitar FKs.
+Concorrência de intenções: cinco checks adicionais com dois processos MySQL,
+bloqueio observado, resultado idêntico e uma única linha; nenhum arquivo de
+chamada externa foi produzido. Incluído como filho da suíte de cancelamento no
+manifesto focused, preservando seus testes anteriores.

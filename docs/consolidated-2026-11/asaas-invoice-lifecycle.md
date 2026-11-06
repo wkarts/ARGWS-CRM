@@ -64,3 +64,27 @@ sem alterar a proteção. Teste de header/runner com double de metadados:13 chec
 HTTP autenticado integral e homologação Asaas ainda pendentes. Sem chamada externa,
 transação real, merge ou deploy. Em rollback, preservar ledger/recibos e marcadores;
 faturas já canceladas não devem ser reativadas por código antigo ou reenvio remoto.
+
+## Preparação interna da recriação164 — ainda sem envio
+
+A migration164 acrescenta `asaas_company_recreations`, vinculando a intenção à
+origem anterior, empresa, fatura, ator, revisão cancelada e prova canônica de
+exclusão. Reservar exige cancelamento nativo comprovado, prova recente de cobrança
+excluída/não paga, saldo, ausência de eventos financeiros adversos e permissões
+atuais. Retry idêntico devolve a intenção; outra chave para a mesma origem falha.
+A intenção preserva origem, remote_id, eventos, snapshots e status cancelado.
+Não armazena credenciais, dados de cartão, nem envia HTTP.
+
+Esta etapa é infraestrutura interna, sem botão ou ativação do fluxo. **Não recria
+cobrança nem reabre fatura.** A restrição histórica UNIQUE(invoice_id) continua
+intacta enquanto não estiver concluída a mudança coordenada dos consumidores.
+Ela não pode ser removida isoladamente: `PaymentOriginStore::byInvoice`,
+`CompanyService::existingIssuance`, seleção de eventos/jobs, publicação de links,
+conciliação e cancelamento precisam distinguir origem atual de anteriores.
+O próximo envio precisa reservar um sucessor imutável, preservar uma única origem
+ativa e bloquear recebimento automático de eventos tardios da origem substituída.
+Timeout continuará exigindo consulta, sem repetir POST; reabertura só após prova
+canônica da nova cobrança e transação local confirmada.
+
+Migration164 é aditiva e sem backfill. Reversão de código não pode apagar intenções,
+origens ou provas, nem reduzir marcadores. O fluxo integral ASA04 segue pendente.

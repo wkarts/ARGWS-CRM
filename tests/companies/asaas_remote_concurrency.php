@@ -17,7 +17,10 @@ if(($argv[1]??'')==='worker'){
     };
     try{
         $decrypt=fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false;
-        if(($in['operation']??'')==='cancel'){
+        if(($in['operation']??'')==='recreation_intent'){
+            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyRecreationIntents.php';
+            echo json_encode((new \Asaas\CompanyRecreationIntents($db,$p))->reserve($in['issuer'],7,$in['invoice'],$in['origin'],$in['revision'],$in['key']),JSON_THROW_ON_ERROR);
+        }elseif(($in['operation']??'')==='cancel'){
             require_once APPPATH.'services/CompanyAsaasInvoiceCancellation.php';
             (new CompanyAsaasInvoiceCancellation($db,$p))->cancel($in['issuer'],7,$in['invoice'],$in['revision'],$decrypt,$transport);echo 'cancelled';
         }else echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],$decrypt,$transport),JSON_THROW_ON_ERROR);

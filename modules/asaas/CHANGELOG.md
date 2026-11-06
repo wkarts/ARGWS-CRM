@@ -1,5 +1,11 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.4 — 2026-11-06
+
+- Registro durável interno de intenção de recriação após cancelamento nativo e prova recente de exclusão.
+- Migration164 aditiva; preserva origens/eventos e a restrição atual de uma origem por fatura.
+- Não envia POST, não recria cobrança nem reabre fatura; ativação do fluxo completo ainda pendente.
+
 ## 1.6.3 — 2026-11-06
 
 - Cancelamento nativo de fatura após exclusão canônica de cobrança não paga, preservando origem e histórico.
