@@ -95,11 +95,14 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     }, 'new nested role filters require a visibility audit; constructor coverage is not visibility proof');
     assert.deepEqual(aliases, {'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; the remaining legacy timer alias is in the selected-record default panel');
     const sales=fs.readFileSync(__dirname+'/companies_sales_extras_browser.cjs','utf8');
-    const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/estimates?document='+sources[a])"));
+    const open=sales.indexOf("await originalSales.open(page,url+'/admin/estimates?document='+sources[a])");
+    assert.ok(open>=0,'attachment check opens the selected original Sales preview');
+    const selected=sales.slice(open);
+    const originalTab=selected.indexOf("await originalSales.reveal(page,attachment)");
     const tab=selected.indexOf("await revealWorkspaceControl(page,attachment)");
     const visible=selected.indexOf("getByRole('link',{name:'sales-browser-a.pdf',exact:true}).isVisible()");
     const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
-    assert.ok(tab>=0&&visible>tab&&row>visible,'open actual panel and prove PDF visible before nested role lookup');
+    assert.ok(originalTab>=0&&tab>originalTab&&visible>tab&&row>visible,'open actual original and workspace panels and prove PDF visible before nested role lookup');
     assert.doesNotMatch(selected,/includeHidden:\s*true|force:\s*true/);
     for (const name of ['api16_components','api_origin_cnab240','components','external_reversal']) {
         const source=fs.readFileSync(__dirname+'/banco_brasil_'+name+'_browser.cjs','utf8');
@@ -136,13 +139,14 @@ test('sales review navigation finishes native DOM initialization before editor a
     const source=fs.readFileSync(__dirname+'/companies/sales_mutations_browser.cjs','utf8');
     const helper=source.slice(source.indexOf('async function openReview('),source.indexOf('\nfunction mutationSnapshot'));
     assert.ok(helper.startsWith('async function openReview('));
-    const openReview=require('node:vm').runInNewContext('('+helper+')',{assert,URL});
+    const originalSales=require('./helpers/native_sales_driver.cjs');
+    const openReview=require('node:vm').runInNewContext('('+helper+')',{assert,URL,originalSales});
     for(const mode of ['edit','copy']) {
-        let listening=false, loaded=false, resolveNavigation;
+        let listening=false, loaded=false, revealed=false, resolveNavigation;
         const page={
-            waitForNavigation:options=>{assert.equal(options.waitUntil,'domcontentloaded');listening=true;return new Promise(resolve=>{resolveNavigation=resolve;});},
+            waitForNavigation:options=>{assert.ok(revealed,'original controls are revealed before navigation');assert.equal(options.waitUntil,'domcontentloaded');listening=true;return new Promise(resolve=>{resolveNavigation=resolve;});},
             url:()=> 'http://127.0.0.1:1234/admin/estimates?document=17&review='+mode,
-            locator:selector=>selector==='#sales-'+mode+'-link'?{click:async()=>{assert.ok(listening);setImmediate(()=>{loaded=true;resolveNavigation({status:()=>200});});}}:{count:async()=>{assert.equal(selector,'#sales-mutation-editor');assert.ok(loaded,'editor lookup must follow native DOMContentLoaded');return 1;}}
+            locator:selector=>selector==='#sales-'+mode+'-link'?{count:async()=>1,evaluate:async()=>[],isVisible:async()=>{revealed=true;return true;},click:async()=>{assert.ok(listening);setImmediate(()=>{loaded=true;resolveNavigation({status:()=>200});});}}:{count:async()=>{assert.equal(selector,'#sales-mutation-editor');assert.ok(loaded,'editor lookup must follow native DOMContentLoaded');return 1;}}
         };
         await openReview(page,mode);assert.ok(loaded);
     }

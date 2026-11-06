@@ -67,13 +67,24 @@ test('original item lookup sends concrete invoice parent without changing legacy
  for(const native of [false,true]){
   let request;
   const form={find:selector=>({length:native?1:0,val:()=>selector.includes('_native_invoice_id')?'42949672972':'2'})};
-  const context={$:selector=>typeof selector==='function'?undefined:form,requestGetJSON:(url,params)=>{request={url,params};return{done:()=>{}};}};
+  const noSales={filter(){return this;},first(){return this;},length:0};
+  const context={$:selector=>typeof selector==='function'?undefined:selector==='#estimate-form, #proposal-form'?noSales:form,requestGetJSON:(url,params)=>{request={url,params};return{done:()=>{}};}};
   vm.createContext(context);vm.runInContext(source,context);context.add_item_to_preview('73014444033');
   assert.equal(request.url,'invoice_items/get_item_by_id/73014444033');
   if(native)assert.deepEqual(JSON.parse(JSON.stringify(request.params)),{data:{native_editor:'invoice',native_invoice_id:'42949672972',native_invoice_revision:'2'}});
   else assert.equal(request.params,undefined);
  }
  assert.ok(read('application/views/admin/invoices/invoice.php').includes("init_ajax_search('items', '#item_select.ajax-search', native_invoice_catalog_context(), admin_url + 'items/search')"));
+});
+
+test('original item lookup selects the exact Sales parent and revision instead of inventing an invoice',()=>{
+ for(const type of ['estimate','proposal']){
+  let request;const invoice={find:()=>({length:0})};
+  const sales={length:1,filter(fn){assert.equal(fn.call(this),1);return this;},first(){return this;},attr:()=>type+'-form',find:selector=>({length:1,val:()=>selector.includes('_native_sales_id')?'8589934593':'b'.repeat(64)})};
+  const context={$:selector=>typeof selector==='function'?undefined:selector==='#invoice-form'?invoice:sales,requestGetJSON:(url,params)=>{request={url,params};return{done:()=>{}};}};
+  vm.createContext(context);vm.runInContext(source,context);context.add_item_to_preview('73014444033');
+  assert.equal(request.url,'invoice_items/get_item_by_id/73014444033');assert.deepEqual(JSON.parse(JSON.stringify(request.params)),{data:{native_editor:type,native_sales_id:'8589934593',native_sales_revision:'b'.repeat(64)}});
+ }
 });
 
 test('original item modal binds on DOM readiness and keeps one set of delegates (explicit DOM doubles)', () => {

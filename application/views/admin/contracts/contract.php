@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_contract_form)){include __DIR__.'/native.php';return;} ?>
 <?php init_head(); ?>
 <?php $isSignedOrMarkedSigned = isset($contract) && ($contract->signed == 1 || $contract->marked_as_signed == 1); ?>
 <div id="wrapper">

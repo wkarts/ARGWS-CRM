@@ -95,7 +95,19 @@ final class NativeCompanyContractsController
     {
         $verb=strtoupper((string)$this->ci->input->method(true));
         if(!in_array($verb,['GET','HEAD'],true)){$this->methodNotAllowed('GET, HEAD');return;}
-        $this->render(null,$verb==='HEAD');
+        $this->authorize();$this->csrf();
+        if($verb==='HEAD'){$this->ci->output->set_output('');return;}
+        require_once __DIR__.'/NativeCompanyContractIndex.php';
+        require_once __DIR__.'/NativeCompanyContractTable.php';
+        require_once __DIR__.'/NativeCompanyFilters.php';
+        $data=(new NativeCompanyContractIndex($this->ci->db,db_prefix()))->presentation($this->issuer,$this->actor);
+        $table=new NativeCompanyContractTable($this->ci->db,db_prefix(),$this->issuer,$this->actor,'contracts',$data['options'],[]);
+        $saved=(new NativeCompanyFilters($this->ci->db,db_prefix(),$this->issuer,$this->actor,$table))->listing();
+        $data['table']=new NativeCompanyContractTable($this->ci->db,db_prefix(),$this->issuer,$this->actor,'contracts',$data['options'],$saved);
+        $data['native_contract_columns']=(new NativeCompanyCustomFields($this->ci->db,db_prefix()))->definitions($this->issuer,$this->actor,'contracts',['active'=>1,'show_on_table'=>1]);
+        $data['title']=_l('contracts');$data['can_create']=$this->acl->can($this->issuer,$this->actor,'contracts','create');
+        $this->authorize();$this->ci->output->set_header('Cache-Control: private, no-store');
+        $this->ci->load->view('admin/contracts/manage',$data);
     }
 
     public function contract($canonical=''):void
@@ -105,6 +117,14 @@ final class NativeCompanyContractsController
         $id=$this->source($canonical,true);
         if($verb==='POST'){$this->mutate($id);return;}
         $this->render($id,$verb==='HEAD');
+    }
+
+    public function clientChangeData():void
+    {
+        $verb=strtoupper($this->ci->input->method(true));if(!in_array($verb,['GET','HEAD'],true)){$this->methodNotAllowed('GET, HEAD');return;}
+        require_once __DIR__.'/NativeCompanyContractForm.php';$id=$this->source($this->ci->input->get('contract_id',false),true);
+        $data=(new NativeCompanyContractForm($this->ci->db,db_prefix()))->client($this->issuer,$this->actor,$this->ci->input->get('client_id',false),$id);
+        $this->ci->output->set_header('Cache-Control: private, no-store')->set_content_type('application/json')->set_output($verb==='HEAD'?'':json_encode($data,JSON_THROW_ON_ERROR));
     }
 
     public function pdf($canonical):void
@@ -137,15 +157,17 @@ final class NativeCompanyContractsController
 
     public function table($client=''):void
     {
-        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$post=$this->ci->input->post(null,false)?:[];
-        $start=$post['start']??0;$length=$post['length']??25;$search=$post['search']['value']??'';
-        if(!preg_match('/^(0|[1-9][0-9]{0,5})$/D',(string)$start)||!preg_match('/^[1-9][0-9]{0,2}$/D',(string)$length)||(int)$length>100||!is_string($search)||strlen($search)>191)throw new DomainException('native_contract_invalid');
-        $p=db_prefix();$where="c.issuer_id=? AND c.status<>'deleted'";$args=[$this->issuer];if($client!==''){$where.=' AND c.client_id=?';$args[]=IssuerPolicy::id($client);}
-        $base=$where;$baseArgs=$args;if($search!==''){$where.=" AND c.name LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';}
-        $total=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $base",$baseArgs)->row()->n;$filtered=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $where",$args)->row()->n;
-        $rows=IssuerStorage::query($this->ci->db,"SELECT c.id,c.name,c.start_date,c.due_date,c.status,u.company FROM {$p}company_contracts c JOIN {$p}clients u ON u.userid=c.client_id WHERE $where ORDER BY c.id LIMIT ".(int)$length.' OFFSET '.(int)$start,$args)->result_array();
-        $e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$data=[];foreach($rows as$row){$id=$this->canonical((int)$row['id']);$data[]=[$id,'<a href="'.$e(CompanyRequestScope::adminUrl($this->ci,'contracts/contract/'.$id)).'">'.$e($row['name']).'</a>',$e($row['company']),'','',$e($row['start_date']),$e($row['due_date']),'',$e($row['status'])];}$this->authorize();
-        $this->ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'recordsTotal'=>$total,'recordsFiltered'=>$filtered,'data'=>$data,'iTotalRecords'=>$total,'iTotalDisplayRecords'=>$filtered,'aaData'=>$data],JSON_THROW_ON_ERROR));
+        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();
+        require_once __DIR__.'/NativeCompanyContractIndex.php';require_once __DIR__.'/NativeCompanyTableOrder.php';
+        $post=$this->ci->input->post(null,false)?:[];
+        unset($post['_company_context'],$post['_native_company_csrf'],$post['native_contracts_csrf']);
+        if(isset($this->ci->security))unset($post[$this->ci->security->get_csrf_token_name()]);
+        $page=(new NativeCompanyContractIndex($this->ci->db,db_prefix()))->page($this->issuer,$this->actor,$post,$client);
+        $can_edit=$this->acl->can($this->issuer,$this->actor,'contracts','edit');$can_delete=$this->acl->can($this->issuer,$this->actor,'contracts','delete');
+        $native_contracts_csrf=$this->csrf();$can_view_customers=$page['can_view_customers'];$custom_fields=$page['definitions'];$data=[];
+        foreach($page['rows'] as $contract_row){$row=[];include __DIR__.'/../views/admin/contracts/native_table_row.php';$data[]=$row;}
+        if(isset($post['last_order_identifier']))(new NativeCompanyTableOrder($this->ci->db,db_prefix(),$this->issuer,$this->actor))->save('contracts',$post['order']??[['column'=>6,'dir'=>'asc']],count(NativeCompanyContractIndex::COLUMNS)+count($page['definitions']));
+        $this->authorize();$this->ci->output->set_header('Cache-Control: private, no-store')->set_content_type('application/json')->set_output(json_encode(['draw'=>$page['draw'],'recordsTotal'=>$page['recordsTotal'],'recordsFiltered'=>$page['recordsFiltered'],'data'=>$data,'iTotalRecords'=>$page['recordsTotal'],'iTotalDisplayRecords'=>$page['recordsFiltered'],'aaData'=>$data],JSON_THROW_ON_ERROR|JSON_INVALID_UTF8_SUBSTITUTE));
     }
     public function notes($canonical):void
     {
@@ -222,6 +244,10 @@ final class NativeCompanyContractsController
             $id=$this->files->hide($this->issuer,$this->actor,'contract',$id,$revision,$file,$key);
         }elseif(in_array($action,['create','update'],true)){
             $input=$this->ci->input->post('contract',false);if(!is_array($input))throw new DomainException('native_contract_invalid');
+            if($this->ci->input->post('native_contract_form',false)!==null){
+                require_once __DIR__.'/NativeCompanyContractForm.php';
+                $input=(new NativeCompanyContractForm($this->ci->db,db_prefix()))->input($this->issuer,$this->actor,$action==='create'?null:$id,$this->ci->input->post(null,false));
+            }
             if($action==='create')$id=$this->contracts->create($this->issuer,$this->actor,$input,$key);
             else {if($id===null)throw new DomainException('native_contract_invalid');$id=$this->contracts->update($this->issuer,$this->actor,$id,$revision,$input,$key);}
         }elseif(in_array($action,['activate','cancel','copy'],true)){
@@ -238,7 +264,7 @@ final class NativeCompanyContractsController
         $this->ci->output->set_header('Cache-Control: private, no-store');
         $contract=null;$discussion=null;$operationFiles=[];$portalControls=null;
         if($id!==null){
-            $contract=$this->contracts->get($this->issuer,$this->actor,$id);
+            $contract=$this->contracts->getForAdmin($this->issuer,$this->actor,$id);
             $discussion=(new CompanyContractDiscussions($this->ci->db,db_prefix()))->staffPage($this->issuer,$this->actor,$id);
             $operationFiles=$this->files->page($this->issuer,$this->actor,'contract',$id);
             $portalControls=CompanyOperationalPortalAdmin::controls($this->ci,$this->issuer,$this->actor,'contracts',$contract);
@@ -257,7 +283,13 @@ final class NativeCompanyContractsController
             if($successor['status']==='draft'&&$successor['number']===null)$pendingRenewals[]=['link_id'=>(int)$event['id'],'successor'=>$successor];
         }
         require_once __DIR__.'/NativeCompanyAuxiliaryUi.php';$notes=$id===null?[]:(new NativeCompanyAuxiliaryUi($this->ci->db,db_prefix(),$this->issuer,$this->actor,$this->ci))->notes('contract',$this->canonical($id));
-        $this->ci->load->view('admin/contracts/native',[
+        $form=[];$schema=CompanyContractMetadataSchema::available($this->ci->db,db_prefix());
+        if($schema&&$this->acl->can($this->issuer,$this->actor,'customers','view')&&($id===null?$this->acl->can($this->issuer,$this->actor,'contracts','create'):($contract['status']==='draft'&&$this->acl->can($this->issuer,$this->actor,'contracts','edit')))){
+            require_once __DIR__.'/NativeCompanyContractForm.php';$form=(new NativeCompanyContractForm($this->ci->db,db_prefix()))->data($this->issuer,$this->actor,$id);
+            if($form['contract_form_client']!==null&&!in_array($form['contract_form_client']['client_id'],array_column($clients,'userid'),true))$clients[]=['userid'=>$form['contract_form_client']['client_id'],'company'=>$form['contract_form_client']['client_name']];
+        }
+        $this->ci->load->view($form?'admin/contracts/contract':'admin/contracts/native',$form+[
+            'native_contract_metadata_available'=>$schema,
             'contract_types'=>(new NativeCompanyContractTypes($this->ci->db,db_prefix()))->listing($this->issuer,$this->actor),
             'contract_type'=>$contract?NativeCompanyContractTypes::stored(json_decode($contract['snapshot_json'],true,32,JSON_THROW_ON_ERROR)):[],
             'notes'=>$notes,'external_files'=>$contract&&$contract['status']!=='deleted'?$this->contracts->externalFiles($this->issuer,$this->actor,$id):[],

@@ -107,8 +107,18 @@ class Leads extends AdminController
         return $message;
     }
 
-    private function nativeLeadIndex(): void
+    private static function nativeLeadPathId($path): ?int
     {
+        if ($path === '' || $path === null) return null;
+        require_once APPPATH.'services/NativeCompanyResourceId.php';
+        $reference=NativeCompanyResourceId::decode('lead',$path);
+        if ($reference['source_kind']!=='company_lead') throw new DomainException('company_lead_access_denied');
+        return $reference['source_id'];
+    }
+
+    private function nativeLeadIndex($routeId=''): void
+    {
+        require_once APPPATH.'services/NativeCompanyResourceId.php';
         $ctx = $this->nativeLeadContext();
         if ($ctx === null) return;
         [$issuer, $actor, $acl, $service] = $ctx;
@@ -119,6 +129,7 @@ class Leads extends AdminController
         $configuration = ['stages' => [], 'sources' => []]; $directory = ['items' => [], 'next' => null];
         $inbox = ['items' => [], 'next' => null]; $staff = []; $search = ''; $state = 'active'; $stageFilter = null;
         try {
+            $pathId=self::nativeLeadPathId($routeId);
             if ($method === 'POST') {
                 CompanyRequestScope::assertNativeMutation($this);
                 $token = $this->input->post('native_leads_csrf', false);
@@ -126,6 +137,7 @@ class Leads extends AdminController
                 $action = $this->input->post('action', false); $key = $this->input->post('request_key', false);
                 if (!is_string($key)) throw new DomainException('company_lead_invalid_input');
                 $id = $this->input->post('lead_id', false); $revision = $this->input->post('revision', false);
+                if ($pathId!==null && IssuerPolicy::id($id)!==$pathId) throw new DomainException('company_lead_access_denied');
                 $redirect = '';
                 if (in_array($action, ['create', 'update'], true)) {
                     $input = $this->input->post('lead', false); if (!is_array($input)) throw new DomainException('company_lead_invalid_input');
@@ -142,12 +154,14 @@ class Leads extends AdminController
                 } elseif ($action === 'import_commit') { $batchId = $this->input->post('batch_id', false); $hash = $this->input->post('preview_hash', false); if (!is_string($batchId) || !is_string($hash)) throw new DomainException('company_lead_invalid_input'); $service->commitImport($issuer, $actor, $batchId, $hash, $key); $redirect = '?batch=' . $batchId . '#import-preview';
                 } elseif ($action === 'notice_ack') { $service->acknowledge($issuer, $actor, $this->input->post('notice_id', false), $key); $redirect = '#inbox';
                 } else throw new DomainException('company_lead_invalid_input');
-                CompanyRequestScope::invalidateCaches($this); redirect(CompanyRequestScope::adminUrl($this, 'leads' . $redirect), 'location', 303); return;
+                CompanyRequestScope::invalidateCaches($this); redirect(CompanyRequestScope::adminUrl($this, 'leads?workspace=1' . (str_starts_with($redirect,'?')?'&'.substr($redirect,1):$redirect)), 'location', 303); return;
             }
             $search = $this->input->get('search', false) ?? ''; $state = $this->input->get('state', false) ?? 'active';
             if (!is_string($search) || !is_string($state)) throw new DomainException('company_lead_invalid_input');
             $filter = $this->input->get('stage', false); $stageFilter = $filter === null || $filter === '' ? null : IssuerPolicy::id($filter);
-            $id = $this->input->get('lead', false); if ($id !== null) $detail = $service->get($issuer, $actor, $id);
+            $id = $this->input->get('lead', false);
+            if ($pathId!==null && $id!==null && IssuerPolicy::id($id)!==$pathId) throw new DomainException('company_lead_access_denied');
+            $id=$pathId??$id; if ($id !== null) $detail = $service->get($issuer, $actor, $id);
             $batchId = $this->input->get('batch', false); if ($batchId !== null) { if (!is_string($batchId)) throw new DomainException('company_lead_invalid_input'); $batch = $service->importBatch($issuer, $actor, $batchId); }
             $configuration = $service->configuration($issuer, $actor); $directory = $service->page($issuer, $actor, $this->input->get('after', false) ?? 0, 50, $search, $state, $stageFilter); $staff = $service->staffOptions($issuer, $actor); $inbox = $service->inbox($issuer, $actor, $this->input->get('notice_after', false) ?? 0);
         } catch (Throwable $error) {
@@ -157,6 +171,7 @@ class Leads extends AdminController
             $this->output->set_status_header($status);
             $error = $this->nativeLeadErrorMessage($reason);
         }
+        if ($method==='HEAD') { $this->output->set_output(''); return; }
         $caps = []; foreach (['view', 'create', 'edit', 'delete'] as $cap) $caps[$cap] = $acl->can($issuer, $actor, 'leads', $cap);
         $caps['convert'] = $caps['edit'] && $acl->can($issuer, $actor, 'customers', 'view') && $acl->can($issuer, $actor, 'customers', 'create');
         $this->load->view('admin/leads/native', ['issuer'=>$issuer,'actor'=>$actor,'detail'=>$detail,'directory'=>$directory,'configuration'=>$configuration,'staff_options'=>$staff,'inbox'=>$inbox,'batch'=>$batch,'search'=>$search,'state'=>$state,'stage_filter'=>$stageFilter,'capabilities'=>$caps,'error'=>$error,'native_leads_csrf'=>$csrf,'native_company_csrf'=>CompanyRequestScope::nativeCsrfToken($this),'request_key'=>bin2hex(random_bytes(32))]);
@@ -166,7 +181,11 @@ class Leads extends AdminController
     public function index($id = '')
     {
         if ($this->nativeCompanyLeads()) {
-            $this->nativeLeadIndex();
+            // Keep every existing private workspace flow, including its bookmarked query URLs.
+            $workspace=$this->input->method(true)==='POST'||$this->input->get('workspace',false)==='1';
+            foreach(['lead','batch','notice_after','after','search','state','stage']as$parameter)if($this->input->get($parameter,false)!==null)$workspace=true;
+            if($workspace)$this->nativeLeadIndex($id);
+            else{require_once APPPATH.'services/NativeCompanyLeadHttp.php';(new NativeCompanyLeadHttp($this))->index($id);}
             return;
         }
         close_setup_menu();
@@ -202,6 +221,7 @@ class Leads extends AdminController
 
     public function table()
     {
+        if($this->nativeCompanyLeads()){require_once APPPATH.'services/NativeCompanyLeadHttp.php';(new NativeCompanyLeadHttp($this))->table();return;}
         if (!is_staff_member()) {
             ajax_access_denied();
         }
@@ -211,6 +231,7 @@ class Leads extends AdminController
 
     public function kanban()
     {
+        if($this->nativeCompanyLeads()){require_once APPPATH.'services/NativeCompanyLeadHttp.php';(new NativeCompanyLeadHttp($this))->kanban();return;}
         if (!is_staff_member()) {
             ajax_access_denied();
         }
@@ -225,6 +246,7 @@ class Leads extends AdminController
     /* Add or update lead */
     public function lead($id = '')
     {
+        if($this->nativeCompanyLeads()){require_once APPPATH.'services/NativeCompanyLeadHttp.php';(new NativeCompanyLeadHttp($this))->lead($id);return;}
         if (!is_staff_member() || ($id != '' && !$this->leads_model->staff_can_access_lead($id))) {
             ajax_access_denied();
         }
@@ -787,6 +809,7 @@ class Leads extends AdminController
     /* Used in kanban when dragging and mark as */
     public function update_lead_status()
     {
+        if($this->nativeCompanyLeads()){require_once APPPATH.'services/NativeCompanyLeadHttp.php';(new NativeCompanyLeadHttp($this))->move();return;}
         if ($this->input->post() && $this->input->is_ajax_request()) {
             $this->leads_model->update_lead_status($this->input->post());
         }

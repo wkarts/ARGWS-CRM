@@ -1,4 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $scopedSales=!empty($native_sales_form)&&isset($native_sales_editor_items);
+      $salesOption=static fn($key)=>$scopedSales?($native_sales_options[$key]??throw new DomainException('native_sales_editor_options_invalid')):get_option($key); ?>
 <div class="panel_s accounting-template estimate">
     <div class="panel-body">
         <div class="row">
@@ -20,14 +22,14 @@
                      $selected = (isset($customer_id) ? $customer_id: '');
                  }
                  if ($selected != '') {
-                     $rel_data = get_relation_data('customer', $selected);
-                     $rel_val  = get_relation_values($rel_data, 'customer');
-                     echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                     if($scopedSales)$rel_val=$native_sales_customer;
+                     else{$rel_data = get_relation_data('customer', $selected);$rel_val=get_relation_values($rel_data,'customer');}
+                     echo '<option value="' . e($rel_val['id']) . '" selected>' . e($rel_val['name']) . '</option>';
                  } ?>
                         </select>
                     </div>
                 </div>
-                <div class="form-group select-placeholder projects-wrapper<?php if ((!isset($estimate)) || (isset($estimate) && !customer_has_projects($estimate->clientid))) {
+                <div class="form-group select-placeholder projects-wrapper<?php if ((!isset($estimate)) || (isset($estimate) && !($scopedSales?$native_sales_customer_has_projects:customer_has_projects($estimate->clientid)))) {
                      echo (isset($customer_id) && (!isset($project_id) || !$project_id)) ? ' hide' : '';
                  } ?>">
                     <label for="project_id"><?php echo _l('project'); ?></label>
@@ -42,7 +44,7 @@
                       $project_id = $estimate->project_id;
                   }
                   if ($project_id) {
-                      echo '<option value="' . $project_id . '" selected>' . e(get_project_name_by_id($project_id)) . '</option>';
+                      echo '<option value="' . e($project_id) . '" selected>' . e($scopedSales?$native_sales_project_name:get_project_name_by_id($project_id)) . '</option>';
                   }
                 ?>
                         </select>
@@ -108,25 +110,26 @@
                     </div>
                 </div>
                 <?php
-               $next_estimate_number = get_option('next_estimate_number');
-               $format               = get_option('estimate_number_format');
+               $next_estimate_number = $salesOption('next_estimate_number');
+               $format               = $salesOption('estimate_number_format');
 
                 if (isset($estimate)) {
                     $format = $estimate->number_format;
                 }
 
-               $prefix = get_option('estimate_prefix');
+               $prefix = $scopedSales?e($salesOption('estimate_prefix')):$salesOption('estimate_prefix');
+               $documentPrefix=isset($estimate)?($scopedSales?e($estimate->prefix):$estimate->prefix):'';
 
                if ($format == 1) {
                    $__number = $next_estimate_number;
                    if (isset($estimate)) {
                        $__number = $estimate->number;
-                       $prefix   = '<span id="prefix">' . $estimate->prefix . '</span>';
+                       $prefix   = '<span id="prefix">' . $documentPrefix . '</span>';
                    }
                } elseif ($format == 2) {
                    if (isset($estimate)) {
                        $__number = $estimate->number;
-                       $prefix   = $estimate->prefix;
+                       $prefix   = $documentPrefix;
                        $prefix   = '<span id="prefix">' . $prefix . '</span><span id="prefix_year">' . date('Y', strtotime($estimate->date)) . '</span>/';
                    } else {
                        $__number = $next_estimate_number;
@@ -136,7 +139,7 @@
                    if (isset($estimate)) {
                        $yy       = date('y', strtotime($estimate->date));
                        $__number = $estimate->number;
-                       $prefix   = '<span id="prefix">' . $estimate->prefix . '</span>';
+                       $prefix   = '<span id="prefix">' . $documentPrefix . '</span>';
                    } else {
                        $yy       = date('y');
                        $__number = $next_estimate_number;
@@ -146,7 +149,7 @@
                        $yyyy     = date('Y', strtotime($estimate->date));
                        $mm       = date('m', strtotime($estimate->date));
                        $__number = $estimate->number;
-                       $prefix   = '<span id="prefix">' . $estimate->prefix . '</span>';
+                       $prefix   = '<span id="prefix">' . $documentPrefix . '</span>';
                    } else {
                        $yyyy     = date('Y');
                        $mm       = date('m');
@@ -154,7 +157,7 @@
                    }
                }
 
-               $_estimate_number     = str_pad($__number, get_option('number_padding_prefixes'), '0', STR_PAD_LEFT);
+               $_estimate_number     = str_pad($__number, $salesOption('number_padding_prefixes'), '0', STR_PAD_LEFT);
                $isedit               = isset($estimate) ? 'true' : 'false';
                $data_original_number = isset($estimate) ? $estimate->number : 'false';
                ?>
@@ -162,7 +165,7 @@
                     <label for="number"><?php echo _l('estimate_add_edit_number'); ?></label>
                     <div class="input-group">
                         <span class="input-group-addon">
-                            <?php if (isset($estimate)) { ?>
+                            <?php if (isset($estimate)&&!$scopedSales) { ?>
                             <a href="#" onclick="return false;" data-toggle="popover"
                                 data-container='._transaction_form' data-html="true"
                                 data-content="<label class='control-label'><?php echo _l('settings_sales_estimate_prefix'); ?></label><div class='input-group'><input name='s_prefix' type='text' class='form-control' value='<?php echo e($estimate->prefix); ?>'></div><button type='button' onclick='save_sales_number_settings(this); return false;' data-url='<?php echo admin_url('estimates/update_number_settings/' . $estimate->id); ?>' class='btn btn-primary btn-block mtop15'><?php echo _l('submit'); ?></button>"><i
@@ -171,7 +174,7 @@
                     echo $prefix;
                   ?>
                         </span>
-                        <input type="text" name="number" class="form-control" value="<?php echo e($_estimate_number); ?>"
+                        <input type="text" name="number" class="form-control" <?php if($scopedSales)echo 'readonly'; ?> value="<?php echo e($_estimate_number); ?>"
                             data-isedit="<?php echo e($isedit); ?>"
                             data-original-number="<?php echo e($data_original_number); ?>">
                         <?php if ($format == 3) { ?>
@@ -199,8 +202,8 @@
                   if (isset($estimate)) {
                       $value = _d($estimate->expirydate);
                   } else {
-                      if (get_option('estimate_due_after') != 0) {
-                          $value = _d(date('Y-m-d', strtotime('+' . get_option('estimate_due_after') . ' DAY', strtotime(date('Y-m-d')))));
+                      if ($salesOption('estimate_due_after') != 0) {
+                          $value = _d(date('Y-m-d', strtotime('+' . $salesOption('estimate_due_after') . ' DAY', strtotime(date('Y-m-d')))));
                       }
                   }
                   echo render_date_input('expirydate', 'estimate_add_edit_expirydate', $value); ?>
@@ -213,7 +216,7 @@
                       $rel_id = $custom_fields_rel_transfer;
                   }
              ?>
-                <?php echo render_custom_fields('estimate', $rel_id); ?>
+                <?php echo render_custom_fields('estimate', $rel_id, [], $scopedSales?['native_purpose'=>isset($estimate)?'edit':'create']:[]); ?>
             </div>
             <div class="col-md-6">
                 <div class="tw-ml-3">
@@ -221,7 +224,7 @@
                         <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                             <?php echo _l('tags'); ?></label>
                         <input type="text" class="tagsinput" id="tags" name="tags"
-                            value="<?php echo(isset($estimate) ? prep_tags_input(get_tags_in($estimate->id, 'estimate')) : ''); ?>"
+                            value="<?php echo e($scopedSales?$native_sales_tags:(isset($estimate) ? prep_tags_input(get_tags_in($estimate->id, 'estimate')) : '')); ?>"
                             data-role="tagsinput">
                     </div>
                     <div class="row">
@@ -229,7 +232,7 @@
                             <?php
 
                         $currency_attr = ['disabled' => true, 'data-show-subtext' => true];
-                        $currency_attr = apply_filters_deprecated('estimate_currency_disabled', [$currency_attr], '2.3.0', 'estimate_currency_attributes');
+                        if(!$scopedSales)$currency_attr = apply_filters_deprecated('estimate_currency_disabled', [$currency_attr], '2.3.0', 'estimate_currency_attributes');
                         foreach ($currencies as $currency) {
                             if ($currency['isdefault'] == 1) {
                                 $currency_attr['data-base'] = $currency['id'];
@@ -244,7 +247,7 @@
                                 }
                             }
                         }
-                        $currency_attr = hooks()->apply_filters('estimate_currency_attributes', $currency_attr);
+                        if(!$scopedSales)$currency_attr = hooks()->apply_filters('estimate_currency_attributes', $currency_attr);
                         ?>
                             <?php echo render_select('currency', $currencies, ['id', 'name', 'symbol'], 'estimate_add_edit_currency', $selected, $currency_attr); ?>
                         </div>
@@ -267,7 +270,7 @@
                         </div>
                         <div class="col-md-6">
                             <?php
-                                $selected = !isset($estimate) && get_option('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '';
+                                $selected = !isset($estimate) && $salesOption('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '';
                                 foreach ($staff as $member) {
                                     if (isset($estimate)) {
                                         if ($estimate->sale_agent == $member['staffid']) {
@@ -316,14 +319,15 @@
 
     <div class="panel-body">
         <?php
-            $value = (isset($estimate) ? $estimate->clientnote : get_option('predefined_clientnote_estimate'));
+            $value = (isset($estimate) ? $estimate->clientnote : $salesOption('predefined_clientnote_estimate'));
             echo render_textarea('clientnote', 'estimate_add_edit_client_note', $value);
-            $value = (isset($estimate) ? $estimate->terms : get_option('predefined_terms_estimate'));
+            $value = (isset($estimate) ? $estimate->terms : $salesOption('predefined_terms_estimate'));
             echo render_textarea('terms', 'terms_and_conditions', $value, [], [], 'mtop15');
         ?>
     </div>
 </div>
 
+<?php if($scopedSales)$this->load->view('admin/includes/native_sales/form_review'); ?>
 <div class="btn-bottom-pusher"></div>
 <div class="btn-bottom-toolbar text-right">
     <div class="btn-group dropup">

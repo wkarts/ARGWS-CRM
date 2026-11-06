@@ -16,7 +16,8 @@ test('native includes consume one server-attested presentation contract, not par
 test('legacy and scoped menus share actual constant descriptors',()=>{
  const menu=read('application/helpers/menu_helper.php'),catalog=read('application/services/NativeAdminMenuCatalog.php');
  const uses=[...menu.matchAll(/NativeAdminMenuCatalog::legacy\('([^']+)'\)/g)].map(m=>m[1]);
- assert.equal(uses.length,63);assert.equal(new Set(uses).size,63);
+ assert.equal(uses.length,64);assert.equal(new Set(uses).size,64);
+ assert(uses.includes('setup_menu:modules'),'installation resource manager shares the native descriptor');
  for(const key of uses)assert(catalog.includes(`'${key}' => [`),key);
  for(const route of ['clients','invoices','projects','tasks','settings','subscriptions']) assert(catalog.includes(`'route' => '${route}'`));
  assert.doesNotMatch(catalog,/'route' => 'company_/);

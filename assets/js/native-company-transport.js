@@ -22,6 +22,7 @@
    for(var entry of entries){if(!secretName(entry[0]))continue;if(!mutation)throw Error('native_transport_secret_in_url');var expected=entry[0]==='_company_context'?context:entry[0]==='_native_company_csrf'?csrf:framework.value;if(entry[1]!==expected)throw Error('native_transport_token_mismatch');}
  }
  function prepare(options){
+   if(global.NativeCompanyContextGuard&&!global.NativeCompanyContextGuard.isCurrent())throw Error('native_company_context_obsolete');
    var u=url(options.url||location.href),headers=Object.assign({},options.headers||{}),method=String(options.type||options.method||'GET').toUpperCase();
    forbidUrlSecrets(u);
    if(!inside(u)){for(var h of Object.keys(headers))if(/^x-(?:company-context|native-company-csrf)$/i.test(h))throw Error('native_transport_external_token');var outgoing=options.data;if(typeof outgoing==='string'&&String(options.contentType||'').toLowerCase().includes('application/json')){try{outgoing=JSON.parse(outgoing);}catch(e){throw Error('native_transport_data_invalid');}}var body=typeof outgoing==='string'?new URLSearchParams(outgoing).entries():(typeof FormData!=='undefined'&&outgoing instanceof FormData?outgoing.entries():Object.entries(outgoing||{}));for(var pair of body)if(secretName(pair[0]))throw Error('native_transport_external_token');return options;}

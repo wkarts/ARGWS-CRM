@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php if(!empty($native_company_sales_workspace)){init_head(); ?><div id="wrapper"><div class="content"><div class="row"><div class="col-md-12"><div class="panel_s"><div class="panel-body"><?php require APPPATH.'views/admin/includes/native_sales_workspace.php'; ?></div></div></div></div></div></div><?php init_tail(); ?></body></html><?php return;} ?>
+<?php if(!empty($native_company_sales_workspace)&&empty($native_company_sales_manage)){init_head(); ?><div id="wrapper"><div class="content"><div class="row"><div class="col-md-12"><div class="panel_s"><div class="panel-body"><?php require APPPATH.'views/admin/includes/native_sales_workspace.php'; ?></div></div></div></div></div></div><?php init_tail(); ?></body></html><?php return;} ?>
 <?php init_head(); ?>
-<div id="wrapper">
+<div id="wrapper"<?php if(!empty($native_company_sales_manage)){ ?> data-native-sales-kind="proposals"<?php } ?>>
     <div class="content">
         <div class="row">
             <div class="panel-table-full">
@@ -23,7 +23,7 @@
         $.each($('._hidden_inputs._filters input'), function() {
             Proposals_ServerParams[$(this).attr('name')] = '[name="' + $(this).attr('name') + '"]';
         });
-        initDataTable('.table-proposals', admin_url + 'proposals/table', ['undefined'], ['undefined'],
+        initDataTable('.table-proposals', admin_url + 'proposals/table', [6,7], [6,7],
             Proposals_ServerParams, [8, 'desc']);
         init_proposal();
     });

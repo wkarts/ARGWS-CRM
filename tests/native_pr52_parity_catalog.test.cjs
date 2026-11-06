@@ -104,7 +104,7 @@ test('credit notes use one native adapter for the principal and named companies'
   const adapter = read('application/services/NativeCompanyCreditsController.php');
 
   assert.match(scope, /\$sharedOwnedCredits\s*=\s*\$native\s*&&\s*\$class\s*===\s*'credit_notes'/);
-  assert.match(scope, /\['index', 'list_credit_notes'\]/);
+  assert.match(scope, /in_array\(\$method, \['index', 'list_credit_notes', 'table', 'get_credit_note_data_ajax', 'credit_note', 'pdf', 'client_change_data', 'items', 'item'\], true\)/);
   assert.match(scope, /\|\| \$sharedOwnedCredits \|\|/);
   assert.match(scope, /native_credit_method_invalid/);
   assert.match(credits, /NativeCompanyCreditsController::handle\(\$this, \$id\)/);

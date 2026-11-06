@@ -9,7 +9,17 @@ require_once __DIR__.'/NativeCompanySalesDirectory.php';
 /** Complete issuer adapter for the original Estimates and Proposals admin routes. */
 final class NativeCompanySalesAdminHttp
 {
+    public const FORM_METADATA=['calculation_contract','native_fields','native_reference','native_tags','native_custom_fields','native_project','native_proposal','native_status','native_item_fields'];
     public function __construct(private $ci) {}
+
+    private static function formPayload(array $input,$encoded):array
+    {
+        if($encoded===null)return$input;
+        if(!is_string($encoded)||strlen($encoded)>524288)throw new DomainException('company_sales_invalid');
+        try{$metadata=json_decode($encoded,true,32,JSON_THROW_ON_ERROR);}catch(JsonException $error){throw new DomainException('company_sales_invalid',0,$error);}
+        if(!is_array($metadata)||array_diff(array_keys($metadata),self::FORM_METADATA)||array_intersect(array_keys($input),array_keys($metadata)))throw new DomainException('company_sales_invalid');
+        return array_merge($input,$metadata);
+    }
 
     private static function controller(string $kind):string
     {
@@ -25,11 +35,24 @@ final class NativeCompanySalesAdminHttp
             $post=$this->ci->input->post(null,false)?:[];$search=$post['search']['value']??($post['search']??'');
             $filter=['search'=>$search,'start'=>$post['start']??0,'length'=>$post['length']??50,'after'=>$post['after']??0];
             if($clientId!==null&&$clientId!=='')$filter['client_id']=$clientId;
-            $page=(new NativeCompanySalesDirectory($this->ci->db,db_prefix()))->query($ctx->issuerId(),$ctx->staffId(),$kind,$filter);
-            $e=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$rows=[];
-            foreach($page['items']as$row){$link='<a href="'.$e(CompanyRequestScope::adminUrl($this->ci,$kind.'/list_'.$kind.'/'.$row['id'])).'">'.$e($row['formatted_number']).'</a>';$date=$row['payload']['date'];$due=$row['payload']['due_date'];$client=$e($row['context']['recipient']['name']);$total=$e($row['context']['currency']['name'].' '.$row['total']);
-                $rows[]=$kind==='estimates'?[$link,$total,$e($row['stored_amounts']['total_tax']??$row['context']['totals']['tax']??''),$e(substr($date,0,4)),$client,'','',$e($date),$e($due),$e($row['reference_no']??''),$e($row['state'])]:[$link,$e($row['subject']??$row['formatted_number']),$client,$total,$e($date),$e($due),'',$e($row['created_at']),$e($row['state']),''];
+            if(isset($post['filters'])){
+                $builder=is_string($post['filters'])?json_decode($post['filters'],true,32,JSON_THROW_ON_ERROR):$post['filters'];
+                if(!is_array($builder))throw new DomainException('native_sales_filter_invalid');$filter['builder']=$builder;
             }
+            $orders=$kind==='estimates'?['number','total','tax','year','client',null,null,'date','expirydate','reference_no','status']:
+                ['number','subject','client','total','date','open_till',null,null,'datecreated','status'];
+            if(isset($post['order'])){
+                $order=$post['order'];if(!is_array($order)||!array_is_list($order)||count($order)!==1||!is_array($order[0])
+                    ||!is_scalar($order[0]['column']??null)||!preg_match('/^(0|[1-9][0-9]*)$/D',(string)$order[0]['column'])
+                    ||!in_array($order[0]['dir']??null,['asc','desc'],true))throw new DomainException('native_sales_filter_invalid');
+                $column=$orders[(int)$order[0]['column']]??null;
+                if($column!==null){$filter['sort_by']=$column;$filter['sort']=$order[0]['dir'];}
+            }
+            $reader=new NativeCompanySalesDirectory($this->ci->db,db_prefix());
+            $page=$reader->query($ctx->issuerId(),$ctx->staffId(),$kind,$filter);
+            $definitions=$reader->customDefinitions($ctx->issuerId(),$ctx->staffId(),$kind);
+            require_once __DIR__.'/NativeCompanySalesRows.php';$presenter=new NativeCompanySalesRows($this->ci->db,db_prefix());$rows=[];
+            foreach($page['items'] as $row)$rows[]=$presenter->data($ctx->issuerId(),$ctx->staffId(),$kind,$row,$definitions);
             $this->ci->output->set_header('Cache-Control: private, no-store')->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'recordsTotal'=>$page['total'],'recordsFiltered'=>$page['filtered'],'iTotalRecords'=>$page['total'],'iTotalDisplayRecords'=>$page['filtered'],'aaData'=>$rows,'data'=>$rows,'next'=>$page['next']],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
         }catch(DomainException $error){show_error('Tabela indisponível nesta empresa.',str_contains($error->getMessage(),'invalid')?422:403);}catch(Throwable $error){show_error('Não foi possível confirmar a tabela desta empresa.',503);}
     }
@@ -91,7 +114,47 @@ final class NativeCompanySalesAdminHttp
         }catch(DomainException $e){show_error('Pipeline indisponível.',str_contains($e->getMessage(),'invalid')?422:403);}catch(Throwable $e){show_error('Não foi possível confirmar o pipeline.',503);}
     }
 
-    public function index(string $kind,$selected=null,bool $forcePdf=false):void
+    public function pipelineSelection(string $kind,$set):void
+    {
+        if(!CompanyRequestScope::sealedFor($this->ci)||!in_array((string)$set,['0','1'],true)){show_error('Seleção indisponível.',403);return;}
+        $ctx=CompanyRequestScope::context();
+        if(!(new IssuerResourceAccess($this->ci->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),$kind,'view')){show_error('Seleção indisponível.',403);return;}
+        $this->ci->session->set_userdata('native_sales_pipeline_'.$ctx->issuerId().'_'.$kind,(string)$set);
+        redirect(CompanyRequestScope::adminUrl($this->ci,$kind.'/list_'.$kind));
+    }
+
+    public function totals():void
+    {
+        if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Totais indisponíveis nesta empresa.',403);return;}
+        try{
+            CompanyRequestScope::assertNativeMutation($this->ci);$ctx=CompanyRequestScope::context();
+            $data=(new NativeCompanySalesDirectory($this->ci->db,db_prefix()))->totals($ctx->issuerId(),$ctx->staffId(),$this->ci->input->post(null,false)?:[]);
+            $this->ci->output->set_header('Cache-Control: no-store');$data['native_company_sales_manage']=true;
+            $this->ci->load->view('admin/estimates/estimates_total_template',$data);
+        }catch(DomainException $error){show_error('Totais indisponíveis nesta empresa.',str_contains($error->getMessage(),'invalid')?422:403);}
+        catch(Throwable $error){show_error('Não foi possível confirmar os totais.',503);}
+    }
+
+    public function notes(string $kind,$id,bool $write):void
+    {
+        if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Nota indisponível nesta empresa.',403);return;}
+        try{
+            $ctx=CompanyRequestScope::context();$type=NativeCompanySalesDirectory::type($kind);
+            (new NativeCompanySalesDirectory($this->ci->db,db_prefix()))->document($ctx->issuerId(),$ctx->staffId(),$kind,$id);
+            require_once __DIR__.'/NativeCompanyAuxiliaryUi.php';
+            $service=new NativeCompanyAuxiliaryUi($this->ci->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+            if($write){CompanyRequestScope::assertNativeMutation($this->ci);$service->saveNote($type,$id,['description'=>$this->ci->input->post('description',false)]);$this->ci->output->set_content_type('text/plain')->set_output((string)$id);}
+            else{
+                if(!in_array($this->ci->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+                $notes=$service->notes($type,$id);$this->ci->output->set_header('Cache-Control: no-store');
+                if($this->ci->input->method(true)==='HEAD'){$this->ci->output->set_output('');return;}
+                $this->ci->load->view('admin/includes/sales_notes_template',['notes'=>$notes,'native_company_notes'=>true]);
+            }
+        }catch(DomainException $error){show_error('Nota indisponível ou solicitação inválida nesta empresa.',str_contains($error->getMessage(),'invalid')?422:403);}
+        catch(Throwable $error){show_error('Não foi possível confirmar a nota.',503);}
+    }
+
+    public function index(string $kind,$selected=null,bool $forcePdf=false,string $presentation='list'):void
     {
         if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Documento indisponível nesta empresa.',403);return;}
         $controller=self::controller($kind);$context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();
@@ -120,8 +183,9 @@ final class NativeCompanySalesAdminHttp
                     $source=$sales->document($issuer,$actor,$id);if($source['kind']!==$kind)throw new DomainException('company_sales_denied');
                     $input=$this->ci->input->post('invoice',false);$review=$this->ci->input->post('review',false);$key=$this->ci->input->post('request_key',false);
                     if(!is_array($input)||!is_array($review)||!is_string($key))throw new DomainException('company_sales_invalid');
+                    $input=self::formPayload($input,$this->ci->input->post('invoice_native_metadata',false));
                     if($action==='review_copy'){$mutationReview=$sales->review($issuer,$actor,$id,'copy',$input);if(($review['source_revision']??null)!==$mutationReview['source_revision'])throw new DomainException('company_sales_stale');$mutationMode='copy_confirm';}
-                    else $id=$action==='edit'?$sales->edit($issuer,$actor,$id,$input,$review,$key):$sales->copy($issuer,$actor,$id,$input,$review,$key);
+                    else $id=$action==='edit'?$sales->edit($issuer,$actor,$id,$input,$review,$key,$this->ci->input->post('native_sales_metadata_revision',false)):$sales->copy($issuer,$actor,$id,$input,$review,$key);
                 }elseif($action==='create'){
                     $input=$this->ci->input->post('invoice',false);$key=$this->ci->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new DomainException('company_sales_invalid');
                     $id=$sales->create($issuer,$actor,$kind,$input,$key);
@@ -166,9 +230,24 @@ final class NativeCompanySalesAdminHttp
             $this->ci->output->set_status_header(str_contains($reason,'conflict')||str_contains($reason,'stale')?409:422);
             $error=match($reason){'company_sales_file_invalid'=>'Envie PDF até 2 MiB ou PNG/JPEG até 512 KiB e 1600 pixels.','company_sales_file_limit'=>'O documento atingiu o limite de anexos.','company_sales_delivery_template_required'=>'Ative o modelo próprio de envio e preserve o link privado.','company_sales_delivery_sender_required','company_mail_configuration_required','company_mail_secret_unavailable'=>'Complete a configuração SMTP desta empresa antes de agendar.','company_sales_stale'=>'O documento mudou. Reabra antes de continuar.',default=>'Confira os campos, permissões e estado do documento.'};
         }catch(Throwable $exception){log_message('error','Official company sales operation unconfirmed; no document values logged.');$this->ci->output->set_status_header(503);$error='Operação não confirmada. Reabra o documento antes de continuar.';}
-        $this->ci->load->view('admin/'.$controller.'/manage',['native_company_sales_workspace'=>true,'native_sales_controller'=>$controller,'mutation_review'=>$mutationReview,'mutation_mode'=>$mutationMode,
+        $data=['native_company_sales_workspace'=>true,'native_sales_controller'=>$controller,'mutation_review'=>$mutationReview,'mutation_mode'=>$mutationMode,
             'mutations_ready'=>$mutationsReady,'portal_permissions'=>$portalPermissions,'can_contact_edit'=>$acl->can($issuer,$actor,'customers','edit'),'search'=>$search,'kind'=>$kind,'issuer'=>$issuer,
             'detail'=>$detail,'directory'=>$directory,'clients'=>$clients,'currencies'=>$currencies,'error'=>$error,'company_sales_csrf'=>$csrf,'can_create'=>$acl->can($issuer,$actor,$kind,'create'),
-            'can_edit'=>$acl->can($issuer,$actor,$kind,'edit'),'can_delete'=>$acl->can($issuer,$actor,$kind,'delete'),'can_convert'=>$acl->can($issuer,$actor,'invoices','create')]);
+            'can_edit'=>$acl->can($issuer,$actor,$kind,'edit'),'can_delete'=>$acl->can($issuer,$actor,$kind,'delete'),'can_convert'=>$acl->can($issuer,$actor,'invoices','create')];
+        if($presentation==='preview'){
+            if(!$detail){show_error('Documento indisponível nesta empresa.',404);return;}
+            $this->ci->load->view('admin/includes/native_sales/preview',$data);return;
+        }
+        $view='admin/'.$controller.'/manage';
+        if($mutationMode===null&&$presentation==='list'){
+            require_once __DIR__.'/NativeCompanySalesManage.php';
+            $data+=(new NativeCompanySalesManage($this->ci->db,db_prefix()))->data($issuer,$actor,$kind,$detail['id']??'');
+            $pipeline=$this->ci->session->userdata('native_sales_pipeline_'.$issuer.'_'.$kind)==='1';
+            if($pipeline&&!$this->ci->input->get('status',false)&&!$this->ci->input->get('filter',false)){
+                $view='admin/'.$controller.'/pipeline/manage';$data['switch_pipeline']=0;
+                $data['proposalid']=$detail['id']??'';$data['bodyclass']=$kind.'-pipeline';
+            }
+        }
+        $this->ci->load->view($view,$data);
     }
 }

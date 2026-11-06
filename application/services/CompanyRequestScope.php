@@ -56,6 +56,8 @@ final class CompanyRequestScope
     private static function ownedContractRoute($ci,string $class,string $method):bool
     {
         if($class!=='contracts')return false;
+        if($method==='client_change_data')return true;
+        if(in_array($method,['index','table'],true))return true;
         if(in_array($method,['types','type','delete_contract_type'],true)&&$ci->input->get('source',false)==='company')return true;
         if($method==='file')return true;
         if(!in_array($method,['contract','pdf','send_to_email','renew','copy','delete','get_comments','add_comment','edit_comment','remove_comment','mark_as_signed','unmark_as_signed','clear_signature','save_contract_data','add_note','get_notes','add_external_attachment','delete_renewal','add_contract_attachment','delete_contract_attachment'],true))return false;
@@ -127,7 +129,16 @@ final class CompanyRequestScope
     /** Preserve historical primary routes while resolving typed operational records identically. */
     private static function ownedExpenseRoute($ci,string $class,string $method):bool
     {
-        if($class!=='expenses'||!NativeCompanyRoutes::admits('admin','',$class,$method,strtoupper((string)$ci->input->method(true))))return false;
+        if($class!=='expenses')return false;
+        // Only catalogued actions can select this adapter. Keep ownership
+        // independent of the submitted verb so known owned routes with a wrong
+        // verb are denied before any legacy hydration, rather than falling back.
+        if(!NativeCompanyRoutes::admits('admin','',$class,$method,'GET')
+            &&!NativeCompanyRoutes::admits('admin','',$class,$method,'HEAD')
+            &&!NativeCompanyRoutes::admits('admin','',$class,$method,'POST'))return false;
+        // Explicit category requests keep the owned boundary even for a rejected verb.
+        if(in_array($method,['categories','category'],true)&&$ci->input->get('source',false)==='company')return true;
+        if($method==='bulk_action'&&($ci->input->get('source',false)==='company'||$ci->input->post('native_expense_bulk',false)!==null))return true;
         $argument=isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(3):'';
         // Native copy protocol must fail in its bounded writer even for malformed
         // source fields; it must never fall through to the legacy copy model.
@@ -249,7 +260,22 @@ final class CompanyRequestScope
             // Recurring invoices have one canonical implementation on Invoices::recurring.
             // It is a shared native action for the principal and named companies alike;
             // the retired parallel invoice-recurring surface is deliberately not admitted.
-            $sharedInvoiceRecurring = $native && $class === 'invoices' && $method === 'recurring';
+            $sharedInvoiceRecurring = $native && $class === 'invoices'
+                && (in_array($method, ['recurring', 'recurring_preview'], true)
+                    || ($method === 'table' && $ci->input->get('recurring', false) !== null));
+            // The original expense customer picker is issuer scoped only when
+            // invoked by the owned form. Historical primary forms keep theirs.
+            $sharedExpenseCustomer = $native && $class === 'expenses' && $method === 'get_customer_change_data'
+                && (!self::$context->isPrimary() || $ci->input->get('source', false) === 'company');
+            // The original index composes authorized historical and owned expenses.
+            // Keep the explicit principal historical workspace on its existing path.
+            $sharedExpenseIndex = $native && $class === 'expenses'
+                && in_array($method, ['index','list_expenses','table','get_expenses_total','get_expense_data_ajax'], true)
+                && $ci->input->get('source', false) !== 'legacy';
+            // The same task table must include historical and owned relationships
+            // for a primary expense; the old global table cannot see private tasks.
+            $sharedExpenseTasks = $native && $class === 'tasks' && $method === 'init_relation_tasks'
+                && isset($ci->uri) && method_exists($ci->uri,'rsegment') && $ci->uri->rsegment(4) === 'expense';
             $sharedInvoiceDrafts = $native && $class === 'invoices' && $method === 'drafts';
             // Settings uses the same bounded, issuer-owned forms for the
             // principal and named companies, including asset actions and the
@@ -278,24 +304,24 @@ final class CompanyRequestScope
             // Use its issuer-aware adapter for the primary company as well.
             $sharedPaymentModes = $native && $class === 'paymentmodes';
             $sharedOwnedLead = $native && $class === 'leads'
-                && in_array($method, ['index', 'file', 'export'], true);
+                && in_array($method, ['index', 'file', 'export', 'table', 'lead', 'kanban', 'update_lead_status'], true);
             // Credit notes already dispatch through the bounded native adapter
             // for named companies.  The principal must use that same official
             // route so its data, ACL and CSRF contract cannot diverge.
             $sharedOwnedCredits = $native && $class === 'credit_notes'
-                && in_array($method, ['index', 'list_credit_notes'], true);
+                && in_array($method, ['index', 'list_credit_notes', 'table', 'get_credit_note_data_ajax', 'credit_note', 'pdf', 'client_change_data', 'items', 'item'], true);
             // Estimates and proposals already dispatch to the bounded
             // NativeCompanySalesAdminHttp adapter. Mark their official list,
             // form, PDF and due-date actions as shared so the principal company
             // follows the same issuer-scoped path as secondary companies.
             $sharedOwnedSales = $native && in_array($class, ['estimates', 'proposals'], true)
-                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal', 'table', 'proposal_relations', 'pipeline', 'get_pipeline', 'pipeline_load_more'], true);
+                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal', 'table', 'proposal_relations', 'pipeline', 'get_pipeline', 'pipeline_load_more', 'get_estimate_data_ajax', 'get_proposal_data_ajax', 'get_estimates_total', 'get_notes', 'add_note', 'client_change_data', 'get_relation_data_values'], true);
             // The company selector is an isolated technical POST, not a native
             // application page. It has its own switch CSRF and must not be
             // forced through the native presentation CSRF contract.
             $technicalSelector = $native && $class === 'issuers'
                 && in_array($method, ['lookup', 'select', 'onboarding'], true);
-            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedExpenseCustomer || $sharedExpenseIndex || $sharedExpenseTasks || $sharedInvoiceDrafts || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $sharedOwnedCredits || $sharedOwnedOperational || $sharedOwnedInvoice || $specializedNativeRoute || $sharedTicketTools || $ownedStaffDownload || $sharedPaymentModes) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
@@ -304,6 +330,9 @@ final class CompanyRequestScope
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if($sharedInvoiceRecurring&&!self::$nativePresentation)self::deny($ci,'native_invoice_recurring_method_invalid',405);
+            if($sharedExpenseCustomer&&!self::$nativePresentation)self::deny($ci,'native_expense_customer_method_invalid',405);
+            if($sharedExpenseIndex&&!self::$nativePresentation)self::deny($ci,'native_expense_index_method_invalid',405);
+            if($sharedExpenseTasks&&!self::$nativePresentation)self::deny($ci,'native_expense_tasks_method_invalid',405);
             if($sharedInvoiceDrafts&&!self::$nativePresentation)self::deny($ci,'native_invoice_drafts_method_invalid',405);
             if($sharedSettings&&!self::$nativePresentation)self::deny($ci,'native_settings_method_invalid',405);
             if($sharedClientImport&&!self::$nativePresentation)self::deny($ci,'native_client_import_method_invalid',405);
@@ -313,6 +342,7 @@ final class CompanyRequestScope
             if($sharedOwnedLead&&!self::$nativePresentation)self::deny($ci,'native_lead_method_invalid',405);
             if($sharedOwnedSales&&!self::$nativePresentation)self::deny($ci,'native_sales_method_invalid',405);
             if($sharedOwnedCredits&&!self::$nativePresentation)self::deny($ci,'native_credit_method_invalid',405);
+            if($sharedOwnedOperational&&!self::$nativePresentation)self::deny($ci,'native_operational_method_invalid',405);
             // Route-specific adapters report an unsupported HTTP verb as 405.
             // The generic isolated-route denial remains the final fallback for
             // actions that are not part of one of those explicit contracts.

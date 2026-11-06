@@ -57,7 +57,7 @@ class NativeCompanyAuxiliaryUi {
 class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function member($issuer,$actor){return $issuer===2&&$actor===17;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
 class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){private $sql;function __construct($sql){$this->sql=$sql;}function result_array(){return [];}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
 class Fixture {
- public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public array $vars=[];
+ public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public $input; public array $vars=[];
  function __construct(){ $this->config=new class {public bool $csrf=false;function item($key){check($key==='csrf_protection','only infrastructure CSRF config');return $this->csrf;}};$this->security=new class {function get_csrf_token_name(){return 'fixture_csrf';}function get_csrf_hash(){return 'fixture-framework-hash';}};$this->db=new stdClass; $this->session=new class {function has_userdata($key){check($key==='setup-menu-open','only actor UI session key');return true;}function userdata($key){return false;}}; $this->lang=(object)['language'=>[]];$this->load=$this; $this->router=new class {function fetch_class(){return 'dashboard';}function fetch_method(){return 'index';}}; }
  function vars($vars){$this->vars=$vars;}
  function library($name){check($name==='user_agent','only pure user-agent parser');$this->agent=new class {function is_mobile(){return false;}function browser(){return 'Chrome';}};}
@@ -93,6 +93,21 @@ check(!isset($data['sidebar_menu']['subscriptions']),'unauthorized/unimplemented
 CompanyRequestScope::$primary=true;NativeCompanyAdminPresentation::prepare($ci);$primaryMenu=NativeCompanyAdminPresentation::current($ci);
 check(isset($primaryMenu['setup_menu']['custom-fields'],$primaryMenu['setup_menu']['email-templates'],$primaryMenu['setup_menu']['roles']),'primary administrator retains original installation definitions');
 check(count(array_filter($primaryMenu['setup_menu']['finance']['children'],static fn($item)=>$item['slug']==='currencies'))===1,'primary currency settings preserved');
+// A setup drawer is rendered with the current page; its entries must not depend
+// on whether the administrator last visited the bank or the dashboard.
+$originalRouter=$ci->router;
+foreach(['banco_brasil','dashboard','settings','banco_brasil'] as $controller){
+ $ci->router=new class($controller){private string $controller;function __construct($controller){$this->controller=$controller;}function fetch_class(){return $this->controller;}function fetch_method(){return 'index';}};
+ NativeCompanyAdminPresentation::prepare($ci);$menu=NativeCompanyAdminPresentation::current($ci)['setup_menu'];
+ check(isset($menu['modules'])&&$menu['modules']['name']==='Recursos'&&$menu['modules']['href']===admin_url('modules')&&$menu['modules']['position']===35,'resource management retains native label, destination and order after '.$controller);
+ IssuerResourceAccess::$administrative=false;NativeCompanyAdminPresentation::prepare($ci);
+ check(!isset(NativeCompanyAdminPresentation::current($ci)['setup_menu']['modules']),'nonadministrator cannot inherit resource management after '.$controller);
+ IssuerResourceAccess::$administrative=true;
+ CompanyRequestScope::$primary=false;NativeCompanyAdminPresentation::prepare($ci);
+ check(!isset(NativeCompanyAdminPresentation::current($ci)['setup_menu']['modules']),'secondary administrator cannot inherit installation resource management after '.$controller);
+ CompanyRequestScope::$primary=true;
+}
+$ci->router=$originalRouter;
 CompanyRequestScope::$primary=false;NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);
 check(!isset($data['setup_menu']['custom-fields']),'secondary cannot inherit installation-only pages');
 $app=NativeCompanyAdminPresentation::appConfig($ci);
@@ -105,6 +120,19 @@ IssuerResourceAccess::$administrative=false;check(NativeCompanyAdminPresentation
 foreach(['filter_new','filter_apply','filters'] as $key)check(isset($app['lang'][$key])&&$app['lang'][$key]!==$key,'original filter label uses trusted PT-BR '.$key);
 $originalRouter=$ci->router;$ci->router=new class{function fetch_class(){return 'tickets';}function fetch_method(){return 'index';}};
 $ticketScripts=NativeCompanyAdminPresentation::scripts($ci);check(count(array_keys($ticketScripts,'assets/builds/app.js',true))===1&&array_search('assets/builds/app.js',$ticketScripts,true)>array_search('assets/js/tickets.js',$ticketScripts,true),'ticket index reuses one original Vue bundle after native handlers');$ci->router=$originalRouter;
+$ci->router=new class{function fetch_class(){return 'expenses';}function fetch_method(){return 'index';}};
+$ci->input=new class{public array $query=[];public string $verb='GET';function method($upper=false){return$this->verb;}function get($key,$clean=false){return$this->query[$key]??null;}};
+$expenseScripts=NativeCompanyAdminPresentation::scripts($ci);
+check(count(array_keys($expenseScripts,'assets/builds/app.js',true))===1&&array_search('assets/js/native-admin-expense-index.js',$expenseScripts,true)>array_search('assets/builds/app.js',$expenseScripts,true),'Original expense index loads Vue once before its actual table/preview adapter');
+foreach([['workspace'=>'1'],['expense'=>'123'],['file'=>'synthetic'],['after'=>'0'],['search'=>''],['recurring'=>'1']]as$query){$ci->input->query=$query;$assets=NativeCompanyAdminPresentation::scripts($ci);check(!in_array('assets/js/native-admin-expense-index.js',$assets,true)&&!in_array('assets/builds/app.js',$assets,true),'Preserved expense workspace does not initialize original index components');}
+$ci->input->query=[];$ci->input->verb='POST';check(!in_array('assets/js/native-admin-expense-index.js',NativeCompanyAdminPresentation::scripts($ci),true),'Workspace POST never initializes a directory behind its response');$ci->router=$originalRouter;
+$ci->input->verb='GET';
+foreach(['categories','expense'] as $method){$ci->router=new class($method){function __construct(private string $method){}function fetch_class(){return 'expenses';}function fetch_method(){return $this->method;}};$assets=NativeCompanyAdminPresentation::scripts($ci);check(count(array_keys($assets,'assets/js/native-admin-expense-categories.js',true))===1&&!in_array('assets/js/native-admin-expense-index.js',$assets,true),'Category and inline original expense forms load only the category adapter');}
+$ci->input->verb='POST';check(!in_array('assets/js/native-admin-expense-categories.js',NativeCompanyAdminPresentation::scripts($ci),true),'Expense mutation does not initialize category read controls');
+$ci->router=new class{function fetch_class(){return 'contracts';}function fetch_method(){return 'contract';}};
+check(count(array_keys(NativeCompanyAdminPresentation::scripts($ci),'assets/js/native-admin-contracts.js',true))===1,'Original contract form loads its client/project adapter once');
+$ci->router=new class{function fetch_class(){return 'contracts';}function fetch_method(){return 'index';}};
+check(!in_array('assets/js/native-admin-contracts.js',NativeCompanyAdminPresentation::scripts($ci),true),'Contract directory does not initialize form-only behavior');$ci->router=$originalRouter;$ci->input->verb='GET';
 check($app['options']['allowed_files']==='.pdf' && (int)$app['max_php_ini_upload_size_bytes']>0,'upload preferences and actual PHP cap projected');check(!array_key_exists('google_api',$app['options']),'no provider settings');
 check($data['total_unfinished_todos']===5,'actual todo provider count not fabricated');
 check(count($data['quick_actions'])===2,'quick actions use explicit create ACL and native route catalog');

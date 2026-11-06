@@ -94,6 +94,13 @@ class Invoices extends AdminController
         $this->load->view('admin/invoices/recurring/list', $data);
     }
 
+    public function recurring_preview($schedule = '')
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyInvoiceRecurringHttp.php';
+        (new NativeCompanyInvoiceRecurringHttp($this))->preview($schedule);
+    }
+
     public function table($clientid = '')
     {
         if (CompanyRequestScope::nativeFor($this)) {
@@ -102,7 +109,11 @@ class Invoices extends AdminController
                 CompanyRequestScope::assertNativeMutation($this);
                 require_once APPPATH.'services/NativeCompanyInvoiceDataTable.php';
                 require_once APPPATH.'services/NativeCompanyInvoiceRows.php';
-                if($this->input->get('recurring'))throw new DomainException('native_company_invoice_table_request_invalid');
+                if($this->input->get('recurring',false)!==null){
+                    if($clientid!=='')throw new DomainException('native_company_invoice_table_request_invalid');
+                    require_once APPPATH.'services/NativeCompanyInvoiceRecurringHttp.php';
+                    (new NativeCompanyInvoiceRecurringHttp($this))->table();return;
+                }
                 $input=$this->input->post(null,false)?:[];
                 unset($input['_company_context'],$input['_native_company_csrf']);
                 if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);

@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if ($native_credit_preview ?? false) { $this->load->view('admin/credit_notes/native_preview', get_defined_vars()); return; } ?>
 <?= form_hidden('_attachment_sale_id', $credit_note->id); ?>
 <?= form_hidden('_attachment_sale_type', 'credit_note'); ?>
 <div class="col-md-12 no-padding">

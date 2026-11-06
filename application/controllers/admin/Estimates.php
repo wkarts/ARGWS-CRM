@@ -74,10 +74,17 @@ class Estimates extends AdminController
         ]);
     }
 
+    public function client_change_data($customer_id)
+    {
+        if(!CompanyRequestScope::nativeFor($this)){show_404();return;}
+        require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php';
+        (new NativeCompanySalesOriginalHttp($this))->clientData('estimates',$customer_id);
+    }
+
     /* Add new estimate or update existing */
     public function estimate($id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id); return; }
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php'; (new NativeCompanySalesOriginalHttp($this))->form('estimates',$id); return; }
         if ($this->input->post()) {
             $estimate_data = $this->input->post();
 
@@ -243,6 +250,7 @@ class Estimates extends AdminController
     /* Get all estimate data used when user click on estimate number in a datatable left side*/
     public function get_estimate_data_ajax($id, $to_return = false)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id,false,'preview'); return; }
         if (staff_cant('view', 'estimates') && staff_cant('view_own', 'estimates') && get_option('allow_staff_view_estimates_assigned') == '0') {
             echo _l('access_denied');
             die;
@@ -295,6 +303,7 @@ class Estimates extends AdminController
 
     public function get_estimates_total()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->totals(); return; }
         if ($this->input->post()) {
             $data['totals'] = $this->estimates_model->get_estimates_total($this->input->post());
 
@@ -327,6 +336,7 @@ class Estimates extends AdminController
 
     public function add_note($rel_id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->notes('estimates',$rel_id,true); return; }
         if ($this->input->post() && user_can_view_estimate($rel_id)) {
             $this->misc_model->add_note($this->input->post(), 'estimate', $rel_id);
             echo $rel_id;
@@ -335,6 +345,7 @@ class Estimates extends AdminController
 
     public function get_notes($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->notes('estimates',$id,false); return; }
         if (user_can_view_estimate($id)) {
             $data['notes'] = $this->misc_model->get_notes($id, 'estimate');
             $this->load->view('admin/includes/sales_notes_template', $data);
@@ -589,6 +600,7 @@ class Estimates extends AdminController
 
     public function pipeline($set = 0, $manual = false)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipelineSelection('estimates',$set); return; }
         if ($set == 1) {
             $set = 'true';
         } else {

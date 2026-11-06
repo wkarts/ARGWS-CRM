@@ -283,11 +283,11 @@
           "classless_presentation_candidates": 0
         },
         "button": {
-          "literal_tags": 3,
+          "literal_tags": 8,
           "classless_presentation_candidates": 0
         },
         "input": {
-          "literal_tags": 16,
+          "literal_tags": 26,
           "classless_presentation_candidates": 0
         },
         "select": {
@@ -554,6 +554,7 @@
         "__construct",
         "index",
         "save",
+        "disable",
         "mapping",
         "external"
       ],

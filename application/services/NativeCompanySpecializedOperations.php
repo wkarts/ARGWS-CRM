@@ -777,7 +777,11 @@ trait NativeCompanySpecializedOperations
                 if(!$canViewConfig&&!$canObserve){show_error('Acesso negado nesta empresa.',403);return;}
                 $profiles=$canViewConfig?$accounts->overview($issuer,$actor):[];$activity=$canObserve?$checkout->overview($issuer,$actor):[];
                 $this->load->view('admin/settings/native_efi',['instrument'=>$instrument,'choices'=>$canObserve?$accounts->choices($issuer,$actor):[],'profiles'=>$profiles,'activity'=>$activity,'csrf'=>$csrf,'error'=>$error,'saved'=>$saved,'can_configure'=>$canConfigure,'can_issue'=>$canObserve&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('customers','view'),'can_settle'=>$canObserve&&CompanySettingsRuntime::canResource('payments','create')]);
-            }catch(DomainException $e){show_error('Efí indisponível ou acesso revogado nesta empresa.',403);}catch(Throwable $e){show_error('Confira as migrations e a ativação local do módulo Efí.',503);}
+            }catch(DomainException $e){
+                if($e->getMessage()==='efi_company_module_required'){
+                    show_error('O módulo Efí precisa estar ativo e com a atualização instalada concluída. Confira a página de módulos antes de reabrir esta configuração.',503);
+                }else show_error('Efí indisponível ou acesso revogado nesta empresa.',403);
+            }catch(Throwable $e){show_error('Confira as migrations e a ativação local do módulo Efí.',503);}
         }
     protected function nativeTaskBilling()
         {

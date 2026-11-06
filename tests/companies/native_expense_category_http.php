@@ -1,0 +1,34 @@
+<?php
+/** Real category controller, original modal/list DOM and transactional category writer. */
+require __DIR__.'/native_expense_index_http.php';
+require_once APPPATH.'services/NativeCompanyExpenseCategorySchema.php';NativeCompanyExpenseCategorySchema::ensure($db,$p);
+$start=$GLOBALS['essentialChecks'];CompanyRequestScope::$issuer=$a;CompanyRequestScope::$actor=7;
+$reset();$controller->categories();$xpath=$dom($out->body);
+essentialCheck($out->status===200&&$xpath->query('//table[contains(@class,"table-expenses-categories")]/thead/tr/th')->length===4,'Original categories page retains its four-column structure');
+essentialCheck($xpath->query('//*[@id="expense-category-modal"]//form[contains(@action,"expenses/category?source=company")]')->length===1&&$xpath->query('//*[@id="expense-category-modal"]//textarea[@name="description"]')->length===1,'Original category modal restores name/description with an explicit company command');
+$categoryWire=['native_expense_category'=>'original_expense_category_v1','native_expenses_csrf'=>$csrf,'_native_company_csrf'=>'synthetic-native-token','id'=>'','name'=>'Travel <script>literal</script>','description'=>"Actual description\n<img src=x onerror=alert(1)>",'active'=>'1','revision'=>'','request_key'=>hash('sha256','category-http-create')];
+$reset('POST',$categoryWire);$controller->category();$created=json_decode($out->body,true,32,JSON_THROW_ON_ERROR);
+$source=NativeCompanyResourceId::decode('expense_category',$created['id']??'0');
+essentialCheck($out->status===200&&$created['success']===true&&$source['source_kind']==='company_expense_category','Original modal POST writes a real category and returns its typed identity');
+$categorySource=$source['source_id'];$snapshot=static fn()=>[$db->query('SELECT * FROM '.$p.'company_expense_categories ORDER BY id')->result_array(),$db->query('SELECT * FROM '.$p.'company_expense_requests ORDER BY request_key')->result_array(),$db->query('SELECT * FROM '.$p.'issuers_audit ORDER BY id')->result_array()];$before=$snapshot();
+$reset('POST',$categoryWire);$controller->category();essentialCheck($out->status===200&&json_decode($out->body,true)['id']===$created['id']&&$snapshot()===$before,'A repeated inline submission confirms the existing category without duplicate rows or audit');
+$tableWire=$expenseTableRequest(4)+['native_expenses_csrf'=>$csrf,'_native_company_csrf'=>'synthetic-native-token'];$tableWire['order']=[['column'=>'1','dir'=>'asc']];$tableWire['search']['value']='Travel';
+$reset('POST',$tableWire);$controller->categories();$page=json_decode($out->body,true,512,JSON_THROW_ON_ERROR);
+essentialCheck($out->status===200&&$page['recordsFiltered']===1&&count(array_filter(array_keys($page['data'][0]),'is_int'))===4,'Original category table search and four-column transport operate on the actual owner catalog');
+$rowHtml=implode('',array_filter($page['data'][0],'is_string'));
+essentialCheck(str_contains($rowHtml,'&lt;script&gt;')&&str_contains($rowHtml,'&lt;img')&&!str_contains($rowHtml,'<script>')&&!str_contains($rowHtml,'<img'),'User category text remains escaped in labels, descriptions and edit attributes');
+$current=array_values(array_filter($ex->categories($a,7),static fn($row)=>(int)$row['id']===$categorySource))[0];$edit=$categoryWire;$edit['id']=$created['id'];$edit['revision']=$current['revision_token'];$edit['active']='0';$edit['description']='Updated original description';$edit['request_key']=hash('sha256','category-http-edit');
+$reset('POST',$edit);$controller->category();$stored=$db->query('SELECT * FROM '.$p.'company_expense_categories WHERE id=?',[$categorySource])->row_array();
+essentialCheck($out->status===200&&(int)$stored['active']===0&&$stored['description']==='Updated original description','Original edit keeps the current explicit retirement control and description CAS');
+$bad=$edit;$bad['request_key']=hash('sha256','category-http-stale');$reset('POST',$bad);$controller->category();essentialCheck($out->status===409,'A stale category editor cannot silently overwrite the new value');
+CompanyRequestScope::$issuer=$b;$reset('POST',$edit);$controller->category();essentialCheck($out->status===409||$out->status===403,'Known other-company category ID cannot write through a captured command');CompanyRequestScope::$issuer=$a;
+$bad=$categoryWire;unset($bad['native_expenses_csrf']);$reset('POST',$bad);$controller->category();essentialCheck($out->status===403,'Inline category creation requires its dedicated expense CSRF token');
+$bad=$categoryWire;unset($bad['_native_company_csrf']);$reset('POST',$bad);$controller->category();essentialCheck($out->status===403,'Inline category creation also requires the shared native request guard');
+$bad=$edit;$bad['id']='77';$bad['request_key']=hash('sha256','category-http-raw');$reset('POST',$bad);$controller->category();essentialCheck($out->status===403,'A raw historical category cannot be adopted by the native category writer');
+$reset('HEAD');$controller->categories();essentialCheck($out->status===200&&$out->body===''&&$loader->views===[],'Category HEAD renders no body');
+$reset('DELETE');$controller->categories();essentialCheck($out->status===405,'Category list rejects unsupported mutation verbs');
+CompanyRequestScope::$actor=20;$reset();$controller->categories();essentialCheck($out->status===200&&!str_contains($out->body,'expense-category-form'),'Expense view alone does not render category mutation controls');
+$reset('POST',$categoryWire);$controller->category();essentialCheck($out->status===403,'Expense view alone cannot create a category');CompanyRequestScope::$actor=7;
+$level=ob_get_level();$loader->afterRender=static function()use($b){CompanyRequestScope::$issuer=$b;};$reset();ob_start();$controller->categories();$leak=ob_get_clean();essentialCheck($out->status===403&&$leak===''&&ob_get_level()===$level,'Company invalidation during category rendering discards the entire modal and table page');CompanyRequestScope::$issuer=$a;
+essentialCheck($db->query('SELECT * FROM '.$p.'expenses ORDER BY id')->result_array()===$legacySnapshot,'Restoring category management never changes historical expense rows');
+echo 'Native original expense categories HTTP: '.($GLOBALS['essentialChecks']-$start).' added real controller/DOM/writer checks passed ('.$db->driver().').'.PHP_EOL;

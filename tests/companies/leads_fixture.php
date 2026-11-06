@@ -5,7 +5,7 @@ require_once APPPATH.'services/CompanyClientRequestSchema.php';
 require_once APPPATH.'services/CompanyPortalSchema.php';
 $f=essentialFixture('1.0.2',1);$db=$f->db;$p=$f->prefix;
 if($db->driver()!=='mysql'){fwrite(STDERR,"Private leads require a real MariaDB/MySQL fixture.\n");exit(2);}
-register_shutdown_function(static function()use($db,$p):void{foreach(array_reverse(array_keys(CompanyLeadsSchema::definitions($p))) as $t)$db->pdo->exec('DROP TABLE IF EXISTS `'.$p.$t.'`');$db->pdo->exec('DROP TABLE IF EXISTS `'.$p.'leads`');essentialCleanup();});
+register_shutdown_function(static function()use($db,$p):void{$db->pdo->exec('DROP TABLE IF EXISTS `'.$p.'company_lead_metadata`');foreach(array_reverse(array_keys(CompanyLeadsSchema::definitions($p))) as $t)$db->pdo->exec('DROP TABLE IF EXISTS `'.$p.$t.'`');$db->pdo->exec('DROP TABLE IF EXISTS `'.$p.'leads`');essentialCleanup();});
 IssuerCore::reconcile($db,$p);IssuerCore::bindInstallationMaster($db,$p,7);
 $db->query("ALTER TABLE {$p}staff ADD firstname varchar(191), ADD lastname varchar(191), ADD email varchar(100)");$db->query("UPDATE {$p}staff SET firstname='Synthetic',lastname='Master',email='master@example.invalid'");
 $db->query("DROP TABLE {$p}issuers_invoice_documents");$db->query("DROP TABLE {$p}clients");
@@ -15,6 +15,7 @@ $db->query("INSERT INTO {$p}clients(userid,company,vat,datecreated,addedfrom,act
 $db->query("CREATE TABLE {$p}leads(id int PRIMARY KEY,issuer_id int NULL,name varchar(191),email varchar(100)) ENGINE=InnoDB");$db->query("INSERT INTO {$p}leads VALUES(4242,NULL,'Legacy remains native','legacy@example.invalid')");
 $registry=new IssuerRegistry($db,$p);$a=$registry->saveIssuer(7,['legal_name'=>'Leads A','tax_id'=>'12345678000195']);$b=$registry->saveIssuer(7,['legal_name'=>'Leads B','tax_id'=>'52998224725']);$primary=(new IssuerResourceAccess($db,$p))->primaryId();
 CompanyClientRequestSchema::ensure($db,$p);CompanyPortalSchema::ensure($db,$p);CompanyApiSchema::ensure($db,$p);CompanyLeadsSchema::ensure($db,$p);CompanyLeadsSchema::ensure($db,$p);
+require __DIR__.'/lead_metadata_setup.php';
 unset($db->data_cache['table_names']);
 $db->query("INSERT INTO {$p}staff(staffid,active,admin,firstname,lastname,email) VALUES(12,1,0,'Manager','A B','manager@example.invalid'),(13,1,1,'Legacy','Admin','admin@example.invalid'),(14,1,0,'Reader','A','reader@example.invalid'),(15,1,0,'Assignee','A','assignee@example.invalid')");
 foreach([$a,$b] as $i){$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(?,12,1)",[$i]);foreach(['leads'=>['view','create','edit','delete'],'customers'=>['view','create','edit'],'company_api'=>['manage']] as $feature=>$caps)foreach($caps as $cap)$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,?,?)",[$i,$feature,$cap]);}

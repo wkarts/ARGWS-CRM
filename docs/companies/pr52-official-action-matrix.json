@@ -2,16 +2,16 @@
     "format": 1,
     "scope": "All public actions of the ten official modules requested for PR52; catalogue admission is not runtime equivalence.",
     "census_controllers": 47,
-    "census_methods": 710,
-    "census_sha256": "9b2090d774298325c68e087b2fdf4ce7d8579feb22730a60a1f6d20bf8accea6",
-    "route_catalog_sha256": "48eec606b7563777c944ed58523bb118e7f47467006ea772baef7c1388ffeb3f",
-    "context_policy_sha256": "6baf30672a6a31c93f2f5174a9f1f526eb6d0ae797962d5803a1e11a5fc4e6ce",
+    "census_methods": 716,
+    "census_sha256": "4ae046c61cd9a9461e662530eb42b0cd9971313f03739552f3fc9373f570f6a2",
+    "route_catalog_sha256": "68c2c800fc2b476428c09cb53570ed2a813e9a2cdb6f5d1de1ad8f9f03a9d88b",
+    "context_policy_sha256": "8548f8bb925490df880ea9a300725580b33787b758bcda9a2c8a3da5816dfa7f",
     "primary_policy": "CompanyRequestScope retains historical primary paths except its explicit shared/typed routes. No primary/secondary equivalence is inferred.",
     "summary": {
         "modules": 10,
-        "methods": 331,
-        "catalog_admitted": 316,
-        "not_admitted": 15,
+        "methods": 333,
+        "catalog_admitted": 321,
+        "not_admitted": 12,
         "full_parity_approved": false
     },
     "runtime_evidence": "docs/companies/pr52-local-consolidation-2026-10-29.md",
@@ -604,11 +604,21 @@
         {
             "controller": "Contracts",
             "path": "application/controllers/admin/Contracts.php",
-            "source_sha256": "ff57eba44fae08b39bd1e688d3c73dd1ddaf5ab03bc0cf6d6cef176412e4c3f1",
+            "source_sha256": "9955343328ed48ac50cc4aa4405b9fe013bfd172030262b7dd72158a5fd66490",
             "methods": [
                 {
+                    "method": "client_change_data",
+                    "line": 38,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
                     "method": "index",
-                    "line": 61,
+                    "line": 67,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -618,7 +628,7 @@
                 },
                 {
                     "method": "table",
-                    "line": 90,
+                    "line": 96,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -627,7 +637,7 @@
                 },
                 {
                     "method": "contract",
-                    "line": 103,
+                    "line": 109,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -638,7 +648,7 @@
                 },
                 {
                     "method": "get_template",
-                    "line": 166,
+                    "line": 172,
                     "secondary_catalog_verbs": [],
                     "secondary_admission": "not_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -654,7 +664,7 @@
                 },
                 {
                     "method": "mark_as_signed",
-                    "line": 172,
+                    "line": 178,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -672,7 +682,7 @@
                 },
                 {
                     "method": "unmark_as_signed",
-                    "line": 184,
+                    "line": 190,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -690,7 +700,7 @@
                 },
                 {
                     "method": "pdf",
-                    "line": 196,
+                    "line": 202,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -700,7 +710,7 @@
                 },
                 {
                     "method": "file",
-                    "line": 233,
+                    "line": 239,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -710,7 +720,7 @@
                 },
                 {
                     "method": "send_to_email",
-                    "line": 242,
+                    "line": 248,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -719,7 +729,7 @@
                 },
                 {
                     "method": "add_note",
-                    "line": 257,
+                    "line": 263,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -737,7 +747,7 @@
                 },
                 {
                     "method": "get_notes",
-                    "line": 266,
+                    "line": 272,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -756,7 +766,7 @@
                 },
                 {
                     "method": "clear_signature",
-                    "line": 275,
+                    "line": 281,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -774,7 +784,7 @@
                 },
                 {
                     "method": "save_contract_data",
-                    "line": 285,
+                    "line": 291,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -792,7 +802,7 @@
                 },
                 {
                     "method": "add_comment",
-                    "line": 314,
+                    "line": 320,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -801,7 +811,7 @@
                 },
                 {
                     "method": "edit_comment",
-                    "line": 324,
+                    "line": 330,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -810,7 +820,7 @@
                 },
                 {
                     "method": "get_comments",
-                    "line": 335,
+                    "line": 341,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -820,7 +830,7 @@
                 },
                 {
                     "method": "remove_comment",
-                    "line": 342,
+                    "line": 348,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -829,7 +839,7 @@
                 },
                 {
                     "method": "renew",
-                    "line": 364,
+                    "line": 370,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -838,7 +848,7 @@
                 },
                 {
                     "method": "delete_renewal",
-                    "line": 382,
+                    "line": 388,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -856,7 +866,7 @@
                 },
                 {
                     "method": "copy",
-                    "line": 394,
+                    "line": 400,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -865,7 +875,7 @@
                 },
                 {
                     "method": "delete",
-                    "line": 413,
+                    "line": 419,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -874,7 +884,7 @@
                 },
                 {
                     "method": "type",
-                    "line": 433,
+                    "line": 439,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -892,7 +902,7 @@
                 },
                 {
                     "method": "types",
-                    "line": 469,
+                    "line": 475,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -911,7 +921,7 @@
                 },
                 {
                     "method": "delete_contract_type",
-                    "line": 483,
+                    "line": 489,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -929,7 +939,7 @@
                 },
                 {
                     "method": "add_contract_attachment",
-                    "line": 503,
+                    "line": 509,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -947,7 +957,7 @@
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 509,
+                    "line": 515,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -965,7 +975,7 @@
                 },
                 {
                     "method": "delete_contract_attachment",
-                    "line": 522,
+                    "line": 528,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -986,7 +996,7 @@
         {
             "controller": "Expenses",
             "path": "application/controllers/admin/Expenses.php",
-            "source_sha256": "02690a039e95b80876f4ecacb222516ce99c7e787b1c9af7137b8c0ba5c78c3f",
+            "source_sha256": "488708f79dc713ef324173e03bfc2268492e468c2596a97d23b9a1e016a14de6",
             "methods": [
                 {
                     "method": "purchases",
@@ -1012,7 +1022,7 @@
                 },
                 {
                     "method": "list_expenses",
-                    "line": 32,
+                    "line": 34,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1023,9 +1033,11 @@
                 },
                 {
                     "method": "table",
-                    "line": 56,
-                    "secondary_catalog_verbs": [],
-                    "secondary_admission": "not_admitted",
+                    "line": 60,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
                     "review": {
                         "controller": "Expenses",
@@ -1039,7 +1051,7 @@
                 },
                 {
                     "method": "expense",
-                    "line": 71,
+                    "line": 76,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1059,7 +1071,7 @@
                 },
                 {
                     "method": "import",
-                    "line": 145,
+                    "line": 153,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1079,7 +1091,7 @@
                 },
                 {
                     "method": "bulk_action",
-                    "line": 181,
+                    "line": 189,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1097,9 +1109,11 @@
                 },
                 {
                     "method": "get_expenses_total",
-                    "line": 229,
-                    "secondary_catalog_verbs": [],
-                    "secondary_admission": "not_admitted",
+                    "line": 238,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
                     "review": {
                         "controller": "Expenses",
@@ -1113,7 +1127,7 @@
                 },
                 {
                     "method": "pdf",
-                    "line": 253,
+                    "line": 263,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1132,7 +1146,7 @@
                 },
                 {
                     "method": "delete",
-                    "line": 267,
+                    "line": 277,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1150,7 +1164,7 @@
                 },
                 {
                     "method": "copy",
-                    "line": 290,
+                    "line": 300,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1161,7 +1175,7 @@
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 311,
+                    "line": 321,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1179,7 +1193,7 @@
                 },
                 {
                     "method": "get_expense_data_ajax",
-                    "line": 344,
+                    "line": 354,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1198,9 +1212,12 @@
                 },
                 {
                     "method": "get_customer_change_data",
-                    "line": 371,
-                    "secondary_catalog_verbs": [],
-                    "secondary_admission": "not_admitted",
+                    "line": 381,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
                     "review": {
                         "controller": "Expenses",
@@ -1214,10 +1231,11 @@
                 },
                 {
                     "method": "categories",
-                    "line": 379,
+                    "line": 390,
                     "secondary_catalog_verbs": [
                         "GET",
-                        "HEAD"
+                        "HEAD",
+                        "POST"
                     ],
                     "secondary_admission": "catalog_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -1233,7 +1251,7 @@
                 },
                 {
                     "method": "category",
-                    "line": 392,
+                    "line": 403,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1251,7 +1269,7 @@
                 },
                 {
                     "method": "delete_category",
-                    "line": 418,
+                    "line": 430,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1269,7 +1287,7 @@
                 },
                 {
                     "method": "add_expense_attachment",
-                    "line": 438,
+                    "line": 450,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1287,7 +1305,7 @@
                 },
                 {
                     "method": "delete_expense_attachment",
-                    "line": 447,
+                    "line": 460,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1308,7 +1326,7 @@
         {
             "controller": "Invoices",
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "c2031f1ccdf1ad38606e51abd25e674ef544a93526ad2b02b436dd1ccba4f9cd",
+            "source_sha256": "d47f9fb4a012f71fbc274b46ace6551062cb797a72f3c6dc1a45eb24d431f021",
             "methods": [
                 {
                     "method": "standalone_billing",
@@ -1353,8 +1371,18 @@
                     "runtime_parity": "not_inferred_from_catalog"
                 },
                 {
-                    "method": "table",
+                    "method": "recurring_preview",
                     "line": 97,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 104,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1363,7 +1391,7 @@
                 },
                 {
                     "method": "client_change_data",
-                    "line": 154,
+                    "line": 165,
                     "secondary_catalog_verbs": [
                         "GET"
                     ],
@@ -1372,7 +1400,7 @@
                 },
                 {
                     "method": "update_number_settings",
-                    "line": 201,
+                    "line": 212,
                     "secondary_catalog_verbs": [],
                     "secondary_admission": "not_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -1388,7 +1416,7 @@
                 },
                 {
                     "method": "validate_invoice_number",
-                    "line": 227,
+                    "line": 238,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1397,7 +1425,7 @@
                 },
                 {
                     "method": "add_note",
-                    "line": 267,
+                    "line": 278,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1406,7 +1434,7 @@
                 },
                 {
                     "method": "get_notes",
-                    "line": 279,
+                    "line": 290,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1416,15 +1444,6 @@
                 },
                 {
                     "method": "pause_overdue_reminders",
-                    "line": 340,
-                    "secondary_catalog_verbs": [
-                        "POST"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "resume_overdue_reminders",
                     "line": 351,
                     "secondary_catalog_verbs": [
                         "POST"
@@ -1433,7 +1452,7 @@
                     "runtime_parity": "not_inferred_from_catalog"
                 },
                 {
-                    "method": "mark_as_cancelled",
+                    "method": "resume_overdue_reminders",
                     "line": 362,
                     "secondary_catalog_verbs": [
                         "POST"
@@ -1442,8 +1461,17 @@
                     "runtime_parity": "not_inferred_from_catalog"
                 },
                 {
+                    "method": "mark_as_cancelled",
+                    "line": 373,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
                     "method": "unmark_as_cancelled",
-                    "line": 403,
+                    "line": 414,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1452,7 +1480,7 @@
                 },
                 {
                     "method": "copy",
-                    "line": 436,
+                    "line": 447,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1463,7 +1491,7 @@
                 },
                 {
                     "method": "drafts",
-                    "line": 460,
+                    "line": 471,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1474,7 +1502,7 @@
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 471,
+                    "line": 482,
                     "secondary_catalog_verbs": [],
                     "secondary_admission": "not_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -1490,7 +1518,7 @@
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 507,
+                    "line": 518,
                     "secondary_catalog_verbs": [],
                     "secondary_admission": "not_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -1506,7 +1534,7 @@
                 },
                 {
                     "method": "invoice",
-                    "line": 527,
+                    "line": 538,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1517,7 +1545,7 @@
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 670,
+                    "line": 686,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1527,7 +1555,7 @@
                 },
                 {
                     "method": "apply_credits",
-                    "line": 768,
+                    "line": 784,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1545,7 +1573,7 @@
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 790,
+                    "line": 806,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1554,7 +1582,7 @@
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 827,
+                    "line": 843,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1564,7 +1592,7 @@
                 },
                 {
                     "method": "record_payment",
-                    "line": 855,
+                    "line": 871,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1573,7 +1601,7 @@
                 },
                 {
                     "method": "send_to_email",
-                    "line": 891,
+                    "line": 907,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1591,7 +1619,7 @@
                 },
                 {
                     "method": "delete_payment",
-                    "line": 950,
+                    "line": 966,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1609,7 +1637,7 @@
                 },
                 {
                     "method": "delete",
-                    "line": 982,
+                    "line": 998,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1627,7 +1655,7 @@
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1001,
+                    "line": 1017,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1636,7 +1664,7 @@
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1029,
+                    "line": 1045,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1654,7 +1682,7 @@
                 },
                 {
                     "method": "pdf",
-                    "line": 1051,
+                    "line": 1067,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1664,7 +1692,7 @@
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1120,
+                    "line": 1136,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1673,7 +1701,7 @@
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1141,
+                    "line": 1157,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1685,7 +1713,7 @@
         {
             "controller": "Payments",
             "path": "application/controllers/admin/Payments.php",
-            "source_sha256": "88d951a4ae57bebce7b9c8b9504c18136b8e6c0e68fc6994faf0dc27f4aa4f33",
+            "source_sha256": "c63434f14b21713fe6c3684ebbd00eb014e2d14fa6f1c6fd449855d69b2c4755",
             "methods": [
                 {
                     "method": "post_refund",
@@ -1700,7 +1728,7 @@
                 },
                 {
                     "method": "post_refund_manual",
-                    "line": 35,
+                    "line": 39,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1711,7 +1739,7 @@
                 },
                 {
                     "method": "batch_payment_modal",
-                    "line": 45,
+                    "line": 53,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1730,7 +1758,7 @@
                 },
                 {
                     "method": "add_batch_payment",
-                    "line": 55,
+                    "line": 63,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1748,7 +1776,7 @@
                 },
                 {
                     "method": "index",
-                    "line": 76,
+                    "line": 84,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1767,7 +1795,7 @@
                 },
                 {
                     "method": "list_payments",
-                    "line": 82,
+                    "line": 90,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1786,7 +1814,7 @@
                 },
                 {
                     "method": "table",
-                    "line": 95,
+                    "line": 103,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1804,7 +1832,7 @@
                 },
                 {
                     "method": "payment",
-                    "line": 110,
+                    "line": 118,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -1824,7 +1852,7 @@
                 },
                 {
                     "method": "pdf",
-                    "line": 168,
+                    "line": 176,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -1843,7 +1871,7 @@
                 },
                 {
                     "method": "send_to_email",
-                    "line": 219,
+                    "line": 227,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1861,7 +1889,7 @@
                 },
                 {
                     "method": "delete",
-                    "line": 291,
+                    "line": 299,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -1882,7 +1910,7 @@
         {
             "controller": "Projects",
             "path": "application/controllers/admin/Projects.php",
-            "source_sha256": "ca26bc0a61eb2b9d3180988a7ee3c0d5d3ce902ecf25e2c4a427e3f6fc1fdf05",
+            "source_sha256": "c78bfd9ceea5bc2e9975b652e7c3aebccdc4d3d1bebfebf5b004ff46f8402241",
             "methods": [
                 {
                     "method": "extras",
@@ -2786,7 +2814,7 @@
         {
             "controller": "Settings",
             "path": "application/controllers/admin/Settings.php",
-            "source_sha256": "ffe6b0e8b94a6158563c8ea016142ad1e8312c94e2e4d9edc69d93cfbbd76b56",
+            "source_sha256": "c881988937002bfda0c20f4eb92dcaff90437bff73029e7900ee9471dd2f4613",
             "methods": [
                 {
                     "method": "pusher",
@@ -2968,72 +2996,10 @@
         {
             "controller": "Staff",
             "path": "application/controllers/admin/Staff.php",
-            "source_sha256": "9bff376c0471b34018f910391512d9737fec16a9088869d27dd3e350822d6e3f",
+            "source_sha256": "6e50e1978a95cab5387b27c6e10f9e28881103d9229ec93944cef13ae87a6732",
             "methods": [
                 {
                     "method": "hr",
-                    "line": 15,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD",
-                        "POST"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "hr_file",
-                    "line": 16,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "hr_pdf",
-                    "line": 17,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "hr_export",
-                    "line": 18,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "hr_mine",
-                    "line": 19,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD",
-                        "POST"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "hr_mine_file",
-                    "line": 20,
-                    "secondary_catalog_verbs": [
-                        "GET",
-                        "HEAD"
-                    ],
-                    "secondary_admission": "catalog_admitted",
-                    "runtime_parity": "not_inferred_from_catalog"
-                },
-                {
-                    "method": "index",
                     "line": 21,
                     "secondary_catalog_verbs": [
                         "GET",
@@ -3044,8 +3010,70 @@
                     "runtime_parity": "not_inferred_from_catalog"
                 },
                 {
+                    "method": "hr_file",
+                    "line": 22,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_pdf",
+                    "line": 23,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_export",
+                    "line": 24,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_mine",
+                    "line": 25,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_mine_file",
+                    "line": 26,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 27,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
                     "method": "member",
-                    "line": 43,
+                    "line": 51,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -3056,7 +3084,7 @@
                 },
                 {
                     "method": "role_changed",
-                    "line": 166,
+                    "line": 176,
                     "secondary_catalog_verbs": [
                         "GET"
                     ],
@@ -3065,7 +3093,7 @@
                 },
                 {
                     "method": "save_dashboard_widgets_order",
-                    "line": 196,
+                    "line": 206,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3074,7 +3102,7 @@
                 },
                 {
                     "method": "save_dashboard_widgets_visibility",
-                    "line": 210,
+                    "line": 220,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3083,7 +3111,7 @@
                 },
                 {
                     "method": "reset_dashboard",
-                    "line": 219,
+                    "line": 229,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3092,7 +3120,7 @@
                 },
                 {
                     "method": "save_hidden_table_columns",
-                    "line": 228,
+                    "line": 238,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3101,7 +3129,7 @@
                 },
                 {
                     "method": "change_language",
-                    "line": 240,
+                    "line": 250,
                     "secondary_catalog_verbs": [],
                     "secondary_admission": "not_admitted",
                     "runtime_parity": "not_inferred_from_catalog",
@@ -3117,7 +3145,7 @@
                 },
                 {
                     "method": "timesheets",
-                    "line": 251,
+                    "line": 261,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -3127,7 +3155,7 @@
                 },
                 {
                     "method": "delete",
-                    "line": 281,
+                    "line": 291,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3136,7 +3164,7 @@
                 },
                 {
                     "method": "edit_profile",
-                    "line": 310,
+                    "line": 322,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD",
@@ -3147,7 +3175,7 @@
                 },
                 {
                     "method": "remove_staff_profile_image",
-                    "line": 375,
+                    "line": 387,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3156,7 +3184,7 @@
                 },
                 {
                     "method": "change_password_profile",
-                    "line": 404,
+                    "line": 416,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3165,7 +3193,7 @@
                 },
                 {
                     "method": "profile",
-                    "line": 429,
+                    "line": 441,
                     "secondary_catalog_verbs": [
                         "GET",
                         "HEAD"
@@ -3175,7 +3203,7 @@
                 },
                 {
                     "method": "change_staff_status",
-                    "line": 461,
+                    "line": 473,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3184,7 +3212,7 @@
                 },
                 {
                     "method": "notifications",
-                    "line": 477,
+                    "line": 489,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3193,7 +3221,7 @@
                 },
                 {
                     "method": "update_two_factor",
-                    "line": 533,
+                    "line": 545,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3202,7 +3230,7 @@
                 },
                 {
                     "method": "verify_google_two_factor",
-                    "line": 576,
+                    "line": 588,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3211,7 +3239,7 @@
                 },
                 {
                     "method": "save_completed_checklist_visibility",
-                    "line": 611,
+                    "line": 623,
                     "secondary_catalog_verbs": [
                         "POST"
                     ],
@@ -3232,7 +3260,7 @@
         {
             "controller": "Tasks",
             "path": "application/controllers/admin/Tasks.php",
-            "source_sha256": "aca8965bfcee0d89cb79eb820d842711f12f2d441a2b347c0b83547deb8d7881",
+            "source_sha256": "750f46022e197f5f74685f61f74993436adc5ccff6406b182bcd5dc03a19631e",
             "methods": [
                 {
                     "method": "copies",
@@ -4174,7 +4202,7 @@
         {
             "controller": "Tickets",
             "path": "application/controllers/admin/Tickets.php",
-            "source_sha256": "b6fc050ec4a84b5212cc185d7b17e3d8117d5d00b87c5d67b21f062989e56270",
+            "source_sha256": "9f9a50bcb86f8993cbac92592088f6dc3ea2d982f4a362322642793de1e5463e",
             "methods": [
                 {
                     "method": "ai",

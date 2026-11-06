@@ -28,7 +28,15 @@ $ownedExpense=NativeCompanyResourceId::encode('company_expense',42);
 foreach(['index','list_expenses','expense','pdf'] as $action){$expenseInput->gets=['expense'=>$ownedExpense];$expenseCheck(true,$action);foreach(['42','0','',[],NativeCompanyResourceId::encode('company_ticket',42)] as $bad){$expenseInput->gets=['expense'=>$bad];$expenseCheck(false,$action);}}
 $expenseInput->gets=['source'=>'company'];$expenseCheck(true,'index');$expenseInput->gets=['source'=>'company','expense'=>'42'];$expenseCheck(false,'index');
 $expenseInput->verb='POST';$expenseInput->posts=['expense_id'=>$ownedExpense];foreach(['expense','delete','convert_to_invoice','add_expense_attachment'] as $action)$expenseCheck(true,$action);
-$expenseCheck(false,'unknown');$expenseCheck(false,'expense','settings');$expenseInput->verb='DELETE';$expenseCheck(false,'expense');
+$expenseCheck(false,'unknown');$expenseCheck(false,'expense','settings');
+// Ownership selects the bounded denial path even for an invalid verb; it does
+// not admit that verb. Unknown actions never select an owned adapter.
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
+ $expenseInput->verb=$verb;$expenseCheck(false,'unknown');
+ foreach(['category','bulk_action','copy'] as $known)$expenseCheck(false,$known.'-unknown');
+}
+$expenseInput->verb='DELETE';$expenseCheck(true,'expense');
+if(NativeCompanyRoutes::admits('admin','','expenses','expense','DELETE'))throw new RuntimeException('invalid expense verb admitted');
 $expenseInput->posts=[];
 foreach(['GET','POST'] as $verb){$expenseInput->verb=$verb;$expenseUri->segments=[];$expenseInput->gets=['source'=>'company'];$expenseCheck(true,'copy');$expenseInput->gets=['expense'=>$ownedExpense];$expenseCheck(true,'copy');$expenseUri->segments=[3=>'42'];$expenseInput->gets=[];$expenseCheck(false,'copy');$expenseInput->gets=['source'=>'company'];$expenseCheck(false,'copy');}
 $expenseUri->segments=[];$expenseInput->gets=[];$expenseInput->verb='POST';$expenseInput->posts=['source_expense_id'=>$ownedExpense];$expenseCheck(true,'copy');$expenseCheck(false,'index');

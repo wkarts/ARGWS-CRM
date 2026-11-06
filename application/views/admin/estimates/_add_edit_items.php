@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $scopedSales=!empty($native_sales_form)&&isset($native_sales_editor_items); ?>
 <div class="panel-body">
     <div class="row">
         <div class="col-md-4">
@@ -46,7 +47,7 @@
                         <?= _l('estimate_table_item_description'); ?>
                     </th>
                     <?php
-                  $custom_fields = get_custom_fields('items');
+                  $custom_fields = $scopedSales?$native_sales_editor_items->definitions():get_custom_fields('items');
 
 foreach ($custom_fields as $cf) {
     echo '<th width="15%" align="left" class="custom_field">' . e($cf['name']) . '</th>';
@@ -97,7 +98,7 @@ if (isset($estimate) && $estimate->show_quantity_as == 2) {
                         <textarea name="long_description" rows="4" class="form-control"
                             placeholder="<?= _l('item_long_description_placeholder'); ?>"></textarea>
                     </td>
-                    <?= render_custom_fields_items_table_add_edit_preview(); ?>
+                    <?= render_custom_fields_items_table_add_edit_preview($scopedSales?$native_sales_editor_items:null); ?>
                     <td>
                         <input type="number" name="quantity" min="0" value="1" class="form-control"
                             placeholder="<?= _l('item_quantity_placeholder'); ?>">
@@ -112,7 +113,7 @@ if (isset($estimate) && $estimate->show_quantity_as == 2) {
                     </td>
                     <td>
                         <?php
-   $default_tax = unserialize(get_option('default_tax'));
+   $default_tax = unserialize($scopedSales?$native_sales_options['default_tax']:get_option('default_tax'),['allowed_classes'=>false]);
 $select         = '<select class="selectpicker display-block tax main-tax" data-width="100%" name="taxname" multiple data-none-selected-text="' . _l('no_tax') . '">';
 
 foreach ($taxes as $tax) {
@@ -122,7 +123,8 @@ foreach ($taxes as $tax) {
             $selected = ' selected ';
         }
     }
-    $select .= '<option value="' . $tax['name'] . '|' . $tax['taxrate'] . '"' . $selected . 'data-taxrate="' . $tax['taxrate'] . '" data-taxname="' . $tax['name'] . '" data-subtext="' . $tax['name'] . '">' . $tax['taxrate'] . '%</option>';
+    $taxName=$scopedSales?e($tax['name']):$tax['name'];$taxRate=$scopedSales?e($tax['taxrate']):$tax['taxrate'];
+    $select .= '<option value="' . $taxName . '|' . $taxRate . '"' . $selected . 'data-taxrate="' . $taxRate . '" data-taxname="' . $taxName . '" data-subtext="' . $taxName . '">' . $taxRate . '%</option>';
 }
 $select .= '</select>';
 echo $select;
@@ -146,32 +148,33 @@ if (isset($estimate)) {
                     $items_indicator = 'newitems';
                     if (isset($estimate)) {
                         $add_items       = $estimate->items;
-                        $items_indicator = 'items';
+                        $items_indicator = $scopedSales?'newitems':'items';
                     }
 
                     foreach ($add_items as $item) {
                         $manual    = false;
                         $table_row = '<tr class="sortable item">';
                         $table_row .= '<td class="dragger">';
-                        if ($item['qty'] == '' || $item['qty'] == 0) {
+                        if (!$scopedSales&&($item['qty'] == '' || $item['qty'] == 0)) {
                             $item['qty'] = 1;
                         }
-                        if (! isset($is_proposal)) {
+                        if($scopedSales){$native_sales_editor_items->assertItem($item);$estimate_item_taxes=$item['taxname'];}
+                        elseif (! isset($is_proposal)) {
                             $estimate_item_taxes = get_estimate_item_taxes($item['id']);
                         } else {
                             $estimate_item_taxes = get_proposal_item_taxes($item['id']);
                         }
-                        if ($item['id'] == 0) {
+                        if (!$scopedSales&&$item['id'] == 0) {
                             $estimate_item_taxes = $item['taxname'];
                             $manual              = true;
                         }
-                        $table_row .= form_hidden('' . $items_indicator . '[' . $i . '][itemid]', $item['id']);
+                        if(!$scopedSales)$table_row .= form_hidden('' . $items_indicator . '[' . $i . '][itemid]', $item['id']);
                         $amount = $item['rate'] * $item['qty'];
                         $amount = app_format_number($amount);
                         // order input
-                        $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]">';
+                        $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]"' . ($scopedSales ? ' value="' . $i . '"' : '') . '>';
                         $table_row .= '</td>';
-                        $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . clear_textarea_breaks($item['description']) . '</textarea>';
+                        $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . ($scopedSales?e($item['description']):clear_textarea_breaks($item['description'])) . '</textarea>';
 
                         $table_row .= '<div class="tw-mt-1.5">';
                         $table_row .= '<div class="checkbox checkbox-info">';
@@ -188,20 +191,20 @@ if (isset($estimate)) {
                         $table_row .= '</div>';
 
                         $table_row .= '</td>';
-                        $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . clear_textarea_breaks($item['long_description']) . '</textarea></td>';
-                        $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']');
+                        $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . ($scopedSales?e($item['long_description']):clear_textarea_breaks($item['long_description'])) . '</textarea></td>';
+                        $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']', $scopedSales?$native_sales_editor_items:null);
                         $table_row .= '<td><input type="number" min="0" onblur="calculate_total();" onchange="calculate_total();" data-quantity name="' . $items_indicator . '[' . $i . '][qty]" value="' . $item['qty'] . '" class="form-control">';
                         $unit_placeholder = '';
                         if (! $item['unit']) {
                             $unit_placeholder = _l('unit');
                             $item['unit']     = '';
                         }
-                        $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . $item['unit'] . '">';
+                        $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . e($item['unit']) . '">';
                         $table_row .= '</td>';
                         $table_row .= '<td class="rate"><input type="number" data-toggle="tooltip" title="' . _l('numbers_not_formatted_while_editing') . '" onblur="calculate_total();" onchange="calculate_total();" name="' . $items_indicator . '[' . $i . '][rate]" value="' . $item['rate'] . '" class="form-control"></td>';
-                        $table_row .= '<td class="taxrate">' . $this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $estimate_item_taxes, (isset($is_proposal) ? 'proposal' : 'estimate'), $item['id'], true, $manual) . '</td>';
+                        $table_row .= '<td class="taxrate">' . ($scopedSales?$native_sales_editor_items->taxDropdown($items_indicator.'['.$i.'][taxname][]',$item):$this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $estimate_item_taxes, (isset($is_proposal) ? 'proposal' : 'estimate'), $item['id'], true, $manual)) . '</td>';
                         $table_row .= '<td class="amount" align="right">' . $amount . '</td>';
-                        $table_row .= '<td><a href="#" class="btn btn-danger pull-left !tw-px-3" onclick="delete_item(this,' . $item['id'] . '); return false;"><i class="fa fa-times"></i></a></td>';
+                        $table_row .= '<td><a href="#" class="btn btn-danger pull-left !tw-px-3" onclick="delete_item(this' . ($scopedSales?'':','.$item['id']) . '); return false;"><i class="fa fa-times"></i></a></td>';
                         $table_row .= '</tr>';
                         echo $table_row;
                         $i++;

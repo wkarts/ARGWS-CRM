@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
-<div id="wrapper">
+<div id="wrapper"<?php if(!empty($native_company_sales_manage)){ ?> data-native-sales-kind="estimates" data-native-sales-pipeline="1"<?php } ?>>
     <div class="content">
         <div class="row">
             <div class="col-md-12">

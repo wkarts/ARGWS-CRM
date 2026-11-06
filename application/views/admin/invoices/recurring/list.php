@@ -10,14 +10,14 @@
         </div>
     </div>
 </div>
-<?php $this->load->view('admin/includes/modals/sales_attach_file'); ?>
+<?php if(!($native_recurring??false))$this->load->view('admin/includes/modals/sales_attach_file'); ?>
 <script>
-var hidden_columns = [5, 7, 8, 9];
+var hidden_columns = <?= ($native_recurring??false)?'[4, 5, 6, 7]':'[5, 7, 8, 9]'; ?>;
 </script>
 <?php init_tail(); ?>
 <script>
 $(function() {
-    init_invoice();
+    <?= ($native_recurring??false)?'init_recurring_schedule':'init_invoice'; ?>();
 });
 </script>
 </body>

@@ -2,10 +2,14 @@
 require __DIR__.'/native_identity_transaction.php';
 require_once APPPATH.'services/issuers/IssuerRegistry.php';
 $registry=new IssuerRegistry($db,$p);
-essentialCheck(!$registry->canCreate(13),'ordinary administrator cannot create companies implicitly');
+// 4.8.8 restored creation for an active administrator without making that actor
+// the installation master or granting access to existing companies.
+essentialCheck($registry->canCreate(13),'active administrator retains the 4.8.8 company creation capability');
+essentialCheck(!$registry->canCreate(12),'company settings permission does not grant global administrator creation');
 essentialCheck($registry->catalog(13)===[],'ordinary administrator cannot list foreign identities');
 essentialCheck(array_column($registry->catalog(12),'id')===[41],'catalog constrained to active memberships');
-settingThrows(fn()=>$registry->saveIssuer(13,['legal_name'=>'Denied','tax_id'=>'11222333000181']),'issuer_access_denied','global administrator cannot create across tenant boundary');
+settingThrows(fn()=>$registry->saveIssuer(12,['legal_name'=>'Denied','tax_id'=>'11222333000181']),'issuer_access_denied','non-administrator cannot create another company');
+settingThrows(fn()=>$registry->saveIssuer(13,['legal_name'=>'Denied foreign edit','tax_id'=>'12345678000195'],41),'issuer_access_denied','creation capability cannot edit an existing foreign company');
 $new=$registry->saveIssuer(7,['legal_name'=>'Wizard company','tax_id'=>'11222333000181','profile'=>['invoice_company_city'=>'Wizard city']]);
 essentialCheck($identity->get($new,'invoice_company_city')==='Wizard city','registration saves canonical profile');
 essentialCheck($store->get($new,'smtp_password')==='','new company still inherits no SMTP secret');

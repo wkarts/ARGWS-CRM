@@ -26,10 +26,11 @@ abstract class CompanyContractsStorage
     {
         return function()use($work){if($this->originGuard!==null&&($this->originGuard)()===false)throw new DomainException('company_api_scope_denied');$result=$work();if($this->originGuard!==null&&($this->originGuard)()===false)throw new DomainException('company_api_scope_denied');return $result;};
     }
+    protected function extraTables():array{return [];}
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','options','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables(),$this->feature==='contracts'&&$this->db->table_exists($this->p.'currencies')?['currencies']:[],$this->feature==='tickets'?NativeCompanyTicketVisibility::tables($this->db,$this->p):[]),$this->guardedWork($work));
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','options','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables(),$this->feature==='contracts'&&$this->db->table_exists($this->p.'currencies')?['currencies']:[],$this->feature==='tickets'?NativeCompanyTicketVisibility::tables($this->db,$this->p):[],$this->extraTables()),$this->guardedWork($work));
     }
     protected static function text($value,int $max,bool $required=true):string
     {
@@ -54,16 +55,18 @@ abstract class CompanyContractsStorage
         if($audit<=$previous||!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND created_at=?',[$audit,$issuer,$actor,$id,$event,$now]))throw new RuntimeException('issuer_operation_write_unconfirmed');
     }
     private function receiptTable():string{return $this->feature==='tickets'?'company_ticket_requests':'company_contract_requests';}
+    /** A concrete writer may attest its complete result again after the final audit and receipt. */
+    protected function operationConfirmation(int $issuer,int $actor,int $id):?callable{return null;}
     protected function operation(int $issuer,int $actor,string $cap,string $key,string $op,array $payload,callable $work):int
     {
         if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_operation_invalid_input');$this->authorize($issuer,$actor,$cap);$hash=hash('sha256',json_encode($payload,JSON_THROW_ON_ERROR));
         return $this->transaction(function()use($issuer,$actor,$cap,$key,$op,$hash,$work):int{
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);
             $receipt=$this->rows('SELECT issuer_id,actor_id,operation,input_hash,result_id FROM '.$this->p.$this->receiptTable().' WHERE request_key=? FOR UPDATE',[$key])[0]??null;
-            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_operation_request_conflict');$table=$this->feature==='tickets'?'company_tickets':'company_contracts';if($this->feature==='tickets')NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,(int)$receipt['result_id']);if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_operation_write_unconfirmed');return (int)$receipt['result_id'];}
-            $id=$work();if($id<1||$id>2147483647)throw new RuntimeException('issuer_operation_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_'.$op);
+            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_operation_request_conflict');$table=$this->feature==='tickets'?'company_tickets':'company_contracts';if($this->feature==='tickets')NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,(int)$receipt['result_id']);if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_operation_write_unconfirmed');$confirmation=$this->operationConfirmation($issuer,$actor,(int)$receipt['result_id']);if($confirmation)$confirmation();return (int)$receipt['result_id'];}
+            $id=$work();if($id<1||$id>2147483647)throw new RuntimeException('issuer_operation_write_unconfirmed');$confirmation=$this->operationConfirmation($issuer,$actor,$id);$this->audit($issuer,$actor,$id,'company_'.$op);
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$this->receiptTable().'(request_key,issuer_id,actor_id,input_hash,operation,result_id,created_at) VALUES(?,?,?,?,?,?,?)',[$key,$issuer,$actor,$hash,$op,$id,date('Y-m-d H:i:s')]);
-            if(!$this->rows('SELECT result_id FROM '.$this->p.$this->receiptTable().' WHERE request_key=? AND issuer_id=? AND actor_id=? AND input_hash=? AND operation=? AND result_id=?',[$key,$issuer,$actor,$hash,$op,$id]))throw new RuntimeException('issuer_operation_write_unconfirmed');$this->authorize($issuer,$actor,$cap);return $id;
+            if(!$this->rows('SELECT result_id FROM '.$this->p.$this->receiptTable().' WHERE request_key=? AND issuer_id=? AND actor_id=? AND input_hash=? AND operation=? AND result_id=?',[$key,$issuer,$actor,$hash,$op,$id]))throw new RuntimeException('issuer_operation_write_unconfirmed');$this->authorize($issuer,$actor,$cap);if($confirmation)$confirmation();return $id;
         });
     }
     protected static function revision($revision):int{$v=IssuerPolicy::id($revision);if($v>2147483646)throw new DomainException('company_operation_stale');return $v;}

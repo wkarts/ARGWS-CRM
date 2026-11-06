@@ -32,3 +32,45 @@ essentialThrows(fn()=>$connections->save('school',$scope,str_repeat('third-synth
 $connections->save('school',$scope,null,false,4,7);essentialCheck($connections->active([])===[],'revocation remains possible after delegated permissions expired');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'invoices')->row()->n===$beforeInvoices,'configuration creates no invoice or financial effect');
 echo "PIGE native configuration integration: encryption, scope, ACL/delegation, rotation, revocation; no bank calls.\n";
+
+// Actual disable action with synthetic framework I/O and the real transactional writer.
+$uiScope=$scope;$uiScope['account_id']='disable-ui';
+$connections->save('disable-ui',$uiScope,str_repeat('ui-synthetic-secret-',3),true,0,7);
+$connections->saveMapping('disable-ui',1,$mapping,7);
+$otherScope=$uiScope;$otherScope['issuer_id']=(string)$b;
+$connections->save('other-ui',$otherScope,str_repeat('other-ui-secret-',3),true,0,7);
+$uiAdmin=true;$uiActor=7;$uiErrors=[];$uiAlerts=[];
+function is_admin(){return $GLOBALS['uiAdmin'];}
+function get_staff_user_id(){return $GLOBALS['uiActor'];}
+function access_denied($name){$GLOBALS['uiErrors'][]=403;}
+function show_error($message,$status){$GLOBALS['uiErrors'][]=$status;}
+function admin_url($path){return '/admin/'.$path;}
+function redirect($path){}
+function set_alert($level,$message){$GLOBALS['uiAlerts'][]=$level;}
+class AdminController {
+    public $db,$encryption,$input,$session,$output,$load;
+    public function __construct(){
+        $this->db=$GLOBALS['db'];$this->encryption=$GLOBALS['cipher'];
+        $this->input=new class{public $verb='POST',$values=[];function method($upper=false){return $this->verb;}function post($key,$filter=false){return $this->values[$key]??null;}};
+        $this->session=new class{function userdata($key){return str_repeat('a',64);}};
+        $this->output=new class{function set_header($header){return $this;}};
+        $this->load=new class{function library($name){}};
+    }
+}
+require __DIR__.'/../modules/pige_bridge/controllers/Settings.php';
+$ui=new Settings();$ui->input->values=['connection_key'=>'disable-ui','revision'=>'2','pige_csrf'=>str_repeat('a',64),'issuer_id'=>(string)$b];
+$row=fn($key)=>$db->query('SELECT * FROM '.$p.'pige_bridge_connections WHERE connection_key=?',[$key])->row_array();
+$before=$row('disable-ui');$otherBefore=$row('other-ui');
+$ui->input->verb='GET';$ui->disable();essentialCheck(end($uiErrors)===405&&$row('disable-ui')===$before,'disable GET does not write');
+$ui->input->verb='POST';$ui->input->values['pige_csrf']='wrong';$ui->disable();essentialCheck(end($uiErrors)===403&&$row('disable-ui')===$before,'disable rejects invalid CSRF');
+$ui->input->values['pige_csrf']=str_repeat('a',64);$uiAdmin=false;$ui->disable();essentialCheck(end($uiErrors)===403&&$row('disable-ui')===$before,'disable rejects nonadmin');$uiAdmin=true;
+$uiActor=12;$db->query('DELETE FROM '.$p.'issuers_resource_permissions WHERE issuer_id=? AND staff_id=12 AND feature=?',[$a,'settings']);
+$ui->disable();essentialCheck(end($uiAlerts)==='danger'&&$row('disable-ui')===$before,'revoked company permission rejects disable');$uiActor=7;
+$ui->input->values['revision']='1';$ui->disable();essentialCheck(end($uiAlerts)==='danger'&&$row('disable-ui')===$before,'disable rejects obsolete revision');
+$ui->input->values['revision']='2';$ui->disable();$after=$row('disable-ui');
+essentialCheck(end($uiAlerts)==='success'&&(int)$after['revision']===3&&(int)$after['enabled']===0,'valid disable updates once');
+foreach(['scope_json','scope_hash','secret_cipher','secret_hash','created_at'] as $field)essentialCheck($after[$field]===$before[$field],'disable preserves '.$field);
+essentialCheck(json_decode($after['mapping_json'],true)['enabled']===false,'disable revokes delegated consent');
+essentialCheck($row('other-ui')===$otherBefore,'request issuer cannot select another company or alter its data');
+$ui->disable();essentialCheck(end($uiAlerts)==='danger'&&$row('disable-ui')===$after,'replayed disable is stale');
+echo "PIGE disable HTTP boundary: actual controller and writer, GET/CSRF/ACL/revision, server-owned scope, secret preservation and other-company isolation passed.\n";

@@ -1,4 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $scopedSales=!empty($native_sales_form)&&isset($native_sales_editor_items);
+$salesOption=static fn($key)=>$scopedSales?($native_sales_options[$key]??throw new DomainException('native_sales_editor_options_invalid')):get_option($key); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content accounting-template proposal">
@@ -7,9 +9,9 @@
          if (isset($proposal)) {
              echo form_hidden('isedit', $proposal->id);
          }
-$rel_type = '';
-$rel_id   = '';
-if (isset($proposal) || ($this->input->get('rel_id') && $this->input->get('rel_type'))) {
+$rel_type = $scopedSales?'customer':'';
+$rel_id = $scopedSales?($native_sales_customer['id']??''):'';
+if (!$scopedSales&&(isset($proposal) || ($this->input->get('rel_id') && $this->input->get('rel_type')))) {
     if ($this->input->get('rel_id')) {
         $rel_id   = $this->input->get('rel_id');
         $rel_type = $this->input->get('rel_type');
@@ -21,6 +23,7 @@ if (isset($proposal) || ($this->input->get('rel_id') && $this->input->get('rel_t
 ?>
             <?= form_open($this->uri->uri_string(), ['id' => 'proposal-form', 'class' => '_transaction_form proposal-form']);
 
+if($scopedSales){$this->load->view('admin/includes/native_sales/form_context');echo form_hidden('content',isset($proposal)?$proposal->content:'{proposal_items}');}
 if ($this->input->get('estimate_request_id')) {
     echo form_hidden('estimate_request_id', $this->input->get('estimate_request_id'));
 }
@@ -29,7 +32,7 @@ if ($this->input->get('estimate_request_id')) {
             <div class="col-md-12">
                 <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 tw-flex tw-items-center tw-space-x-2">
                     <span>
-                        <?= e(isset($proposal) ? format_proposal_number($proposal->id) : _l('new_proposal')); ?>
+                        <?= e(isset($proposal) ? ($native_sales_formatted_number??format_proposal_number($proposal->id)) : _l('new_proposal')); ?>
                     </span>
                     <?= isset($proposal) ? format_proposal_status($proposal->status) : ''; ?>
                 </h4>
@@ -46,7 +49,7 @@ if ($this->input->get('estimate_request_id')) {
                                     <select name="rel_type" id="rel_type" class="selectpicker" data-width="100%"
                                         data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                                         <option value=""></option>
-                                        <option value="lead" <?php if ((isset($proposal) && $proposal->rel_type == 'lead') || $this->input->get('rel_type')) {
+                                        <option value="lead" <?php if($scopedSales)echo 'disabled'; ?> <?php if ((isset($proposal) && $proposal->rel_type == 'lead') || $this->input->get('rel_type')) {
                                             if ($rel_type == 'lead') {
                                                 echo 'selected';
                                             }
@@ -69,9 +72,8 @@ if ($this->input->get('estimate_request_id')) {
                                             data-live-search="true"
                                             data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
                                             <?php if ($rel_id != '' && $rel_type != '') {
-                                                $rel_data = get_relation_data($rel_type, $rel_id);
-                                                $rel_val  = get_relation_values($rel_data, $rel_type);
-                                                echo '<option value="' . $rel_val['id'] . '" selected>' . $rel_val['name'] . '</option>';
+                                                if($scopedSales)$rel_val=$native_sales_customer;else{$rel_data=get_relation_data($rel_type,$rel_id);$rel_val=get_relation_values($rel_data,$rel_type);}
+                                                echo '<option value="' . e($rel_val['id']) . '" selected>' . e($rel_val['name']) . '</option>';
                                             } ?>
                                         </select>
                                     </div>
@@ -87,7 +89,7 @@ if ($this->input->get('estimate_request_id')) {
                                             <?php
 
                                                                         if (isset($proposal) && $proposal->project_id) {
-                                                                            echo '<option value="' . $proposal->project_id . '" selected>' . e(get_project_name_by_id($proposal->project_id)) . '</option>';
+                                                                            echo '<option value="' . $proposal->project_id . '" selected>' . e(($scopedSales?$native_sales_project_name:get_project_name_by_id($proposal->project_id))) . '</option>';
                                                                         }
 ?>
                                         </select>
@@ -104,8 +106,8 @@ if ($this->input->get('estimate_request_id')) {
 if (isset($proposal)) {
     $value = _d($proposal->open_till);
 } else {
-    if (get_option('proposal_due_after') != 0) {
-        $value = _d(date('Y-m-d', strtotime('+' . get_option('proposal_due_after') . ' DAY', strtotime(date('Y-m-d')))));
+    if ($salesOption('proposal_due_after') != 0) {
+        $value = _d(date('Y-m-d', strtotime('+' . $salesOption('proposal_due_after') . ' DAY', strtotime(date('Y-m-d')))));
     }
 }
 echo render_date_input('open_till', 'proposal_open_till', $value); ?>
@@ -128,7 +130,7 @@ foreach ($currencies as $currency) {
         }
     } else {
         if ($rel_type == 'customer') {
-            $customer_currency = $this->clients_model->get_customer_default_currency($rel_id);
+            $customer_currency = $scopedSales?0:$this->clients_model->get_customer_default_currency($rel_id);
             if ($customer_currency != 0) {
                 $selected = $customer_currency;
             } else {
@@ -144,8 +146,8 @@ foreach ($currencies as $currency) {
         }
     }
 }
-$currency_attr = apply_filters_deprecated('proposal_currency_disabled', [$currency_attr], '2.3.0', 'proposal_currency_attributes');
-$currency_attr = hooks()->apply_filters('proposal_currency_attributes', $currency_attr);
+if(!$scopedSales)$currency_attr = apply_filters_deprecated('proposal_currency_disabled', [$currency_attr], '2.3.0', 'proposal_currency_attributes');
+if(!$scopedSales)$currency_attr = hooks()->apply_filters('proposal_currency_attributes', $currency_attr);
 ?>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -179,12 +181,12 @@ $currency_attr = hooks()->apply_filters('proposal_currency_attributes', $currenc
                                     </div>
                                 </div>
                                 <?php $fc_rel_id = (isset($proposal) ? $proposal->id : false); ?>
-                                <?= render_custom_fields('proposal', $fc_rel_id); ?>
+                                <?= render_custom_fields('proposal',$fc_rel_id,[],$scopedSales?['native_purpose'=>isset($proposal)?'edit':'create']:[]); ?>
                                 <div class="form-group no-mbot">
                                     <label for="tags" class="control-label"><i class="fa fa-tag" aria-hidden="true"></i>
                                         <?= _l('tags'); ?></label>
                                     <input type="text" class="tagsinput" id="tags" name="tags"
-                                        value="<?= isset($proposal) ? prep_tags_input(get_tags_in($proposal->id, 'proposal')) : ''; ?>"
+                                        value="<?= $scopedSales?e($native_sales_tags):(isset($proposal)?prep_tags_input(get_tags_in($proposal->id,'proposal')):''); ?>"
                                         data-role="tagsinput">
                                 </div>
                                 <div class="form-group mtop10 no-mbot">
@@ -229,7 +231,7 @@ if (isset($proposal)) {
                                     </div>
                                     <div class="col-md-6">
                                         <?php
-                                                            $selected = ! isset($proposal) && get_option('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '';
+                                                            $selected = ! isset($proposal) && $salesOption('automatically_set_logged_in_staff_sales_agent') == '1' ? get_staff_user_id() : '';
 
 foreach ($staff as $member) {
     if (isset($proposal)) {
@@ -293,16 +295,19 @@ echo render_select('assigned', $staff, ['staffid', ['firstname', 'lastname']], '
                         </div>
                     </div>
                     <hr class="hr-panel-separator" />
-                    <?php $this->load->view('admin/estimates/_add_edit_items'); ?>
+                    <?php $this->load->view('admin/estimates/_add_edit_items');if($scopedSales)$this->load->view('admin/includes/native_sales/form_review'); ?>
                 </div>
             </div>
             <?= form_close(); ?>
-            <?php $this->load->view('admin/invoice_items/item'); ?>
+            <?php if(!$scopedSales||$native_sales_can_create_item)$this->load->view('admin/invoice_items/item'); ?>
         </div>
         <div class="btn-bottom-pusher"></div>
     </div>
 </div>
 <?php init_tail(); ?>
+<?php if($scopedSales){ ?>
+<script>$(function(){native_sales_original_init('proposals');});</script>
+<?php }else{ ?>
 <script>
     var _rel_id = $('#rel_id'),
         _rel_type = $('#rel_type'),
@@ -436,6 +441,7 @@ echo render_select('assigned', $staff, ['staffid', ['firstname', 'lastname']], '
         });
     }
 </script>
+<?php } ?>
 </body>
 
 </html>

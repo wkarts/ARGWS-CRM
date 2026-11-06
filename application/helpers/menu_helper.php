@@ -178,15 +178,12 @@ function app_init_admin_sidebar_menu_items()
 
         $modulesNeedsUpgrade = $CI->app_modules->number_of_modules_that_require_database_upgrade();
 
-        $CI->app_menu->add_setup_menu_item('modules', [
-            'href'     => admin_url('modules'),
-            'name'     => _l('modules'),
-            'position' => 35,
-            'badge'    => [
-                'value' => $modulesNeedsUpgrade > 0 ? $modulesNeedsUpgrade : null,
-                'type' => 'warning',
-            ],
-        ]);
+        $modulesMenu = NativeAdminMenuCatalog::legacy('setup_menu:modules');
+        $modulesMenu['badge'] = [
+            'value' => $modulesNeedsUpgrade > 0 ? $modulesNeedsUpgrade : null,
+            'type' => 'warning',
+        ];
+        $CI->app_menu->add_setup_menu_item('modules', $modulesMenu);
 
         $CI->app_menu->add_setup_menu_item('custom-fields', NativeAdminMenuCatalog::legacy('setup_menu:custom-fields'));
 

@@ -51,7 +51,33 @@ final class CompanyInvoiceRecurring extends CompanyInvoiceRecurringStorage
     }
     public function document($issuer,$actor,$schedule):array
     {
-        $i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);$id=IssuerPolicy::id($schedule);return$this->scheduleTx($i,$a,function()use($i,$a,$id){$r=$this->schedule($i,$id);foreach(['payload','config','context','transport']as$k)$r[$k]=$this->decode($r[$k.'_json']);$modes=new CompanyInvoiceRecurringModes($this->db,$this->prefix);$mode=$modes->row($r);$isDraft=($mode['mode']??'issue')==='draft';$r['mode']=$mode?['mode'=>$mode['mode'],'principal_invoice_id'=>$mode['principal_invoice_id']]:['mode'=>'issue','principal_invoice_id'=>null];$r['principal_paid']=$modes->principalPaid($i,$a,$r,$mode);$runs=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_schedule_runs WHERE issuer_id=? AND schedule_id=? ORDER BY run_date',[$i,$id]);$completed=0;$seenPending=false;$out=[];
+        $i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);$id=IssuerPolicy::id($schedule);
+        return $this->scheduleTx($i,$a,fn()=>$this->readDocument($i,$a,$id),false);
+    }
+    /** Complete directory snapshot. The existing page() contract retains its bounded summary. */
+    public function directory($issuer,$actor):array
+    {
+        $i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);
+        return $this->scheduleTx($i,$a,function()use($i,$a){
+            $rows=$this->rows('SELECT id FROM '.$this->prefix.'company_invoice_schedules WHERE issuer_id=? ORDER BY id',[$i]);$documents=[];
+            foreach($rows as$row){
+                $document=$this->readDocument($i,$a,(int)$row['id']);
+                foreach($document['runs']as&$run){
+                    $run['canonical_invoice_date']=null;
+                    if($run['canonical_invoice_id']===null)continue;
+                    $invoice=$this->rows('SELECT n.date FROM '.$this->prefix.'invoices n JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=n.id AND d.issuer_id=n.issuer_id WHERE n.id=? AND n.issuer_id=? AND n.clientid=? AND n.currency=?',[$run['canonical_invoice_id'],$i,$document['payload']['client_id'],$document['payload']['currency']])[0]??null;
+                    if(!$invoice)throw new DomainException('company_invoice_recurring_changed');
+                    $run['canonical_invoice_date']=CompanyInvoiceRecurringDates::date($invoice['date']);
+                }
+                unset($run);$documents[]=$document;
+            }
+            return $documents;
+        },false);
+    }
+    private function readDocument(int $i,int $a,int $id):array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables());
+        $r=$this->schedule($i,$id);foreach(['payload','config','context','transport']as$k)$r[$k]=$this->decode($r[$k.'_json']);$modes=new CompanyInvoiceRecurringModes($this->db,$this->prefix);$mode=$modes->row($r);$isDraft=($mode['mode']??'issue')==='draft';$r['mode']=$mode?['mode'=>$mode['mode'],'principal_invoice_id'=>$mode['principal_invoice_id']]:['mode'=>'issue','principal_invoice_id'=>null];$r['principal_paid']=$modes->principalPaid($i,$a,$r,$mode);$runs=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_schedule_runs WHERE issuer_id=? AND schedule_id=? ORDER BY run_date',[$i,$id]);$completed=0;$seenPending=false;$out=[];
             foreach($runs as$index=>$run){$expected=CompanyInvoiceRecurringDates::occurrence($r['payload']['date'],$r['config'],$index);if($expected!==$run['run_date']||(int)$run['actor_id']!==(int)$r['actor_id']||$run['request_key']!==self::runKey($i,$id,$run['run_date'])||$run['delivery_key']!==self::deliveryKey($i,$id,$run['run_date'])||!in_array($run['state'],['processing','invoiced','queued','completed'],true)||$seenPending)throw new RuntimeException('issuer_invoice_recurring_corrupt');if($run['state']==='completed')$completed++;else$seenPending=true;
                 if($isDraft){
                     if(!in_array($run['state'],['processing','completed'],true)||$run['invoice_id']!==null||$run['queue_id']!==null)throw new RuntimeException('issuer_invoice_recurring_drafts_corrupt');
@@ -59,7 +85,7 @@ final class CompanyInvoiceRecurring extends CompanyInvoiceRecurringStorage
                     $out[]=['run_date'=>$run['run_date'],'state'=>$run['state'],'invoice_id'=>null,'canonical_invoice_id'=>$draft['invoice_id']??null,'draft_id'=>$draft?(int)$draft['id']:null,'draft_linked'=>$draft['_linked']??false,'draft_state'=>$draft['state']??null,'queue_id'=>null,'canonical_queue_id'=>null];continue;
                 }
                 $receipt=$this->rows('SELECT q.invoice_id,q.actor_id FROM '.$this->prefix.'company_invoice_requests q JOIN '.$this->prefix.'invoices n ON n.id=q.invoice_id AND n.issuer_id=q.issuer_id JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=n.id AND d.issuer_id=n.issuer_id WHERE q.issuer_id=? AND q.request_key=? FOR UPDATE',[$i,$run['request_key']])[0]??null;if($receipt&&(int)$receipt['actor_id']!==(int)$r['actor_id']||$run['invoice_id']!==null&&(!$receipt||(int)$run['invoice_id']!==(int)$receipt['invoice_id'])||in_array($run['state'],['invoiced','queued','completed'],true)&&$run['invoice_id']===null)throw new RuntimeException('issuer_invoice_recurring_corrupt');$delivery=$this->db->table_exists($this->prefix.'company_invoice_deliveries')?($this->rows('SELECT queue_id,invoice_id,actor_id FROM '.$this->prefix.'company_invoice_deliveries WHERE issuer_id=? AND request_key=? FOR UPDATE',[$i,$run['delivery_key']])[0]??null):null;if($delivery&&(!$receipt||(int)$delivery['invoice_id']!==(int)$receipt['invoice_id']||(int)$delivery['actor_id']!==(int)$r['actor_id'])||$run['queue_id']!==null&&(!$delivery||(int)$run['queue_id']!==(int)$delivery['queue_id']))throw new RuntimeException('issuer_invoice_recurring_corrupt');$out[]=['run_date'=>$run['run_date'],'state'=>$run['state'],'invoice_id'=>$run['invoice_id'],'canonical_invoice_id'=>$receipt?(int)$receipt['invoice_id']:null,'queue_id'=>$run['queue_id'],'canonical_queue_id'=>$delivery?(int)$delivery['queue_id']:null];
-            }if($completed!==(int)$r['completed_cycles'])throw new RuntimeException('issuer_invoice_recurring_corrupt');foreach(['payload','config','context','transport']as$k)unset($r[$k.'_json'],$r[$k.'_hash']);unset($r['input_hash'],$r['request_key']);$r['runs']=$out;return$r;},false);
+            }if($completed!==(int)$r['completed_cycles'])throw new RuntimeException('issuer_invoice_recurring_corrupt');foreach(['payload','config','context','transport']as$k)unset($r[$k.'_json'],$r[$k.'_hash']);unset($r['input_hash'],$r['request_key']);$r['runs']=$out;return$r;
     }
     public function page($issuer,$actor):array{$i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);return$this->scheduleTx($i,$a,fn()=>$this->rows('SELECT id,actor_id,next_date,state,revision,completed_cycles,last_error FROM '.$this->prefix.'company_invoice_schedules WHERE issuer_id=? ORDER BY id DESC LIMIT 100',[$i]),false);}
     public function contactOptions($issuer,$actor):array{$i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);return$this->scheduleTx($i,$a,fn()=>$this->rows('SELECT c.id,c.userid,c.firstname,c.lastname,c.email,x.company FROM '.$this->prefix.'contacts c JOIN '.$this->prefix.'clients x ON x.userid=c.userid AND x.active=1 JOIN '.$this->prefix.'issuers_clients o ON o.client_id=x.userid AND o.owner_issuer_id=? WHERE c.active=1 AND (SELECT COUNT(*) FROM '.$this->prefix.'contact_permissions n WHERE n.userid=c.id AND n.permission_id=1)=1 ORDER BY c.id LIMIT 100',[$i]));}

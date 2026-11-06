@@ -139,7 +139,7 @@ class Proposals extends AdminController
 
     public function proposal($id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id); return; }
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php'; (new NativeCompanySalesOriginalHttp($this))->form('proposals',$id); return; }
         if ($this->input->post()) {
             $proposal_data = $this->input->post();
             if ($id == '') {
@@ -290,6 +290,7 @@ class Proposals extends AdminController
 
     public function get_proposal_data_ajax($id, $to_return = false)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id,false,'preview'); return; }
         if (staff_cant('view', 'proposals') && staff_cant('view_own', 'proposals') && get_option('allow_staff_view_proposals_assigned') == 0) {
             echo _l('access_denied');
             die;
@@ -330,6 +331,7 @@ class Proposals extends AdminController
 
     public function add_note($rel_id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->notes('proposals',$rel_id,true); return; }
         if ($this->input->post() && user_can_view_proposal($rel_id)) {
             $this->misc_model->add_note($this->input->post(), 'proposal', $rel_id);
             echo $rel_id;
@@ -338,6 +340,7 @@ class Proposals extends AdminController
 
     public function get_notes($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->notes('proposals',$id,false); return; }
         if (user_can_view_proposal($id)) {
             $data['notes'] = $this->misc_model->get_notes($id, 'proposal');
             $this->load->view('admin/includes/sales_notes_template', $data);
@@ -598,6 +601,7 @@ class Proposals extends AdminController
 
     public function get_relation_data_values($rel_id, $rel_type)
     {
+        if(CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySalesOriginalHttp.php';(new NativeCompanySalesOriginalHttp($this))->clientData('proposals',$rel_id,$rel_type);return;}
         echo json_encode($this->proposals_model->get_relation_data_values($rel_id, $rel_type));
     }
 
@@ -677,6 +681,7 @@ class Proposals extends AdminController
     // Pipeline
     public function pipeline($set = 0, $manual = false)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipelineSelection('proposals',$set); return; }
         if ($set == 1) {
             $set = 'true';
         } else {

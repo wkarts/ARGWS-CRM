@@ -35,6 +35,12 @@ class Contracts extends AdminController
         }
     }
 
+    public function client_change_data(): void
+    {
+        if(!CompanyRequestScope::nativeFor($this)){show_404();return;}
+        $this->nativeContractAction(static fn($native)=>$native->clientChangeData());
+    }
+
     /** Add owned contract records to the primary legacy directory without rewriting either ID space. */
     private function primaryOwnedContracts(): ?array
     {

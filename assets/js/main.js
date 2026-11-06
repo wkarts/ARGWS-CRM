@@ -1037,27 +1037,6 @@ $(function () {
     }
   );
 
-  $('body').on('change', '#main-optional', function(e){
-    if(e.target.checked){
-      $('#main-optional-choosen').parent().css('display', "block");
-    } else {
-      $('#main-optional-choosen').parent().css('display', "none");
-    }
-  });
-
-  $('body').on('change', '.optional-item-checkbox', function(e){
-    if(e.target.checked){
-      $(e.target).parent().next().css('display', "block")
-    } else {
-       $(e.target).parent().next().css('display', "none")
-    }
-    calculate_total();
-  });
-
-  $('body').on('change', '.optional-choose-item-checkbox', function(e){
-    calculate_total();
-  });
-
   $("body").on(
     "change blur",
     ".apply-credits-from-invoice .apply-credits-field",

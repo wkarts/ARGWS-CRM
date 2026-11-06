@@ -1,7 +1,7 @@
 <div class="quick-top-stats tw-mb-6">
     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-5 tw-mb-0 tw-gap-2">
         <?php foreach ($estimate_statuses as $status) {
-            $percent_data = get_estimates_percent_by_status(
+            $percent_data = $native_sales_statistics[$status] ?? get_estimates_percent_by_status(
                 $status,
                 (isset($project) ? $project->id : null)
             ); ?>
@@ -11,7 +11,7 @@
             <div class="tw-flex tw-items-center">
                 <span
                     class="tw-font-normal tw-text-base tw-inline-flex tw-items-center text-<?= estimate_status_color_class($status); ?>">
-                    <?= format_estimate_status($status, '', false); ?>
+                    <?= !empty($native_company_sales_manage)?NativeCompanySalesTable::statusLabel('estimates',(int)$status):format_estimate_status($status, '', false); ?>
                 </span>
                 <span class="tw-ml-2 rtl:tw-mr-2 tw-text-xs tw-text-neutral-500 tw-mt-px">
                     (<?= e($percent_data['percent']); ?>%)

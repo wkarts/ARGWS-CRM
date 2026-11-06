@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
+if(!empty($native_original_leads)){require __DIR__.'/native_board.php';return;}
 $is_admin = is_admin();
 $i        = 0;
 foreach ($statuses as $status) {

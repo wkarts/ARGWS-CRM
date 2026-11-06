@@ -113,6 +113,7 @@ class RegistryShardsTest(unittest.TestCase):
                 ['php', 'tests/companies/efi_adoption_mysql.php'],
                 ['php', 'tests/companies/efi_operational_mysql.php'],
                 ['php', 'tests/companies/efi_company_checkout.php'],
+                ['php', 'tests/settings/efi_primary_configuration_mysql.php'],
             ],
         }
         external = []
@@ -130,8 +131,8 @@ class RegistryShardsTest(unittest.TestCase):
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
         self.assertEqual(len(manifest_php), 471)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 500)
-        self.assertEqual(len(set(map(tuple, combined))), 500)
+        self.assertEqual(len(combined), 501)
+        self.assertEqual(len(set(map(tuple, combined))), 501)
 
     def test_operational_inventory_runs_once_for_the_matrix(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
