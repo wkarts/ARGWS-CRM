@@ -72,7 +72,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | BB11 Menus | `NativeCompanyAdminPresentation`, catálogo seguro | Relato não reproduzido em sessão real | Sem correção especulativa | Presentation já testa sequência BB/Painel/Settings e Recursos |
 | PIGE01 Configurações | Settings e registro nativo107 | Acesso em empresas secundárias depende do contrato atual | Preservado | Browser PIGE atual, resultado abaixo |
 | PIGE02 Múltiplas conexões | Connections::listed/save por chave/escopo | Validar instalação alvo | Preservado | Fixture com12 conexões A/B |
-| PIGE03 Modais/guias | `views/settings.php`, `assets/settings.js` | Seletores administrativos ainda são IDs | Preservado | Browser desktop/mobile e formulário real |
+| PIGE03 Modais/guias | views/settings.php e settings.js | Autoconfiguração bilateral continua separada | Seletores de funcionário, moeda, conta e perfil por escopo; revisão e consentimento preservados | MySQL100 verificações cumulativas + Chromium desktop/mobile |
 | PIGE04 URL/credencial | Não existe descoberta bilateral | URL/token não autoconfigura | Não implementado | Inspeção do contrato remoto, não conexão real |
 | PIGE05 Bilateral | PIGE GET/PUT configuration e connection-test | Contrato mínimo de descoberta e credencial específica faltam | Não inventado; nenhum push PIGE | Referência remota abaixo |
 | PIGE06 Empresa/navegação | Administração primária; ACL por empresa | Abrir configuração secundária não autorizado por inferência | Preservado | Browser não prova ACL de servidor |

@@ -10227,6 +10227,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/pige_bridge/libraries/PigeBridgeSettingsChoices.php": {
+      "sha256": "149f6773884b142165c6efbff86e49633a13c88b4a02af0167333e23ccfeed5d",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        18
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/products/controllers/Staff_order.php": {
       "sha256": "e16f0bc83e5f3f2f28418664e59b68c8cf3806c7e9cbdd4ec394050d00545877",
       "categories": [

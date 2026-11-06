@@ -38,6 +38,17 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   await page.locator('#pige-connections_filter input').fill('school-00');await page.locator('.pige-edit').click();
   await page.locator('a[href="#pige-tab-external"]').click();
   assert.equal(await page.locator('[name=external_enabled]').isChecked(),false,'obsolete external consent stays unchecked');
+  assert.equal(await page.locator('#pige-ext-account_row').inputValue(),'4');
+  assert.equal(await page.locator('#pige-map-actor_id option:checked').textContent(),'Synthetic actor7');
+  assert.equal(await page.locator('#pige-ext-profile').isDisabled(),true);
+  await page.locator('#pige-ext-provider').selectOption('banco_brasil');
+  assert.equal(await page.locator('#pige-ext-account_row').inputValue(),'','changing provider requires explicit account');
+  assert.equal(await page.locator('#pige-ext-account_row option[value="4"]').count(),0,'Asaas ID cannot survive BB selection');
+  await page.locator('#pige-ext-account_row').selectOption('5');
+  assert.equal(await page.locator('#pige-ext-profile').isDisabled(),false);
+  assert.equal(await page.locator('#pige-ext-profile').inputValue(),'','no automatic financial profile selection');
+  await page.locator('#pige-ext-profile').selectOption('8');
+  assert.equal(await page.locator('[name=external_enabled]').isChecked(),false,'selector does not activate consent');
   await page.locator('#pige-editor .modal-footer button').click();await page.waitForSelector('#pige-editor.in',{state:'hidden'});
   const dialog=page.waitForEvent('dialog').then(d=>d.dismiss());await page.locator('.pige-disable button').click();await dialog;
   assert.equal(await page.locator('#pige-connections').count(),1,'cancel keeps list');

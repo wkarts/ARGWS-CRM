@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Integração opcional PIGE
 Description: Conexões PIGE por empresa com HMAC protegido e configuração explícita de fatura local; recursos financeiros dependem de gates próprios.
-Version: 1.0.7
+Version: 1.0.8
 Requires at least: 4.7.3
 Author: ARGWS
 */

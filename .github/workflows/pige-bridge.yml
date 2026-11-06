@@ -55,6 +55,7 @@ jobs:
         run: |
           php tests/pige_bridge_mysql.php
           php tests/pige_bridge_connections_mysql.php
+          php tests/pige_bridge_settings_choices_mysql.php
           php tests/pige_bridge_invoices_mysql.php
           php tests/pige_bridge_charges_mysql.php
           php tests/pige_bridge_bb_mysql.php

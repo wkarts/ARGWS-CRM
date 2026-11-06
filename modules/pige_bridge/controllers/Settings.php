@@ -32,7 +32,8 @@ class Settings extends AdminController
         try{$caller=(int)get_staff_user_id();$acl=new IssuerResourceAccess($this->db,db_prefix());$issuers=array_values(array_filter((new IssuerRegistry($this->db,db_prefix()))->available($caller),fn($issuer)=>$acl->can((int)$issuer['id'],$caller,'settings','edit')));$connections=$this->service()->listed($caller);}
         catch(Throwable $e){show_error('Configuração PIGE indisponível. Confirme a atualização nativa do módulo.',503);return;}
         $external=[];try{require_once __DIR__.'/../libraries/PigeBridgeExternalConfiguration.php';$ext=new PigeBridgeExternalConfiguration($this->db,$this->encryption,db_prefix());foreach($connections as $connection)$external[$connection['connection_key']]=$ext->get($connection['connection_key']);}catch(Throwable $e){$external=[];}
-        $this->load->view('pige_bridge/settings',['title'=>'Integração PIGE — ponte CRM','issuers'=>$issuers,'connections'=>$connections,'external'=>$external,'pige_csrf'=>$token,'company_context_token'=>CompanyRequestScope::token()]);
+        $choices=[];try{require_once __DIR__.'/../libraries/PigeBridgeSettingsChoices.php';$selector=new PigeBridgeSettingsChoices($this->db,db_prefix());foreach($connections as $connection)$choices[$connection['connection_key']]=$selector->forScope($caller,$connection['scope']);}catch(Throwable $e){$choices=[];}
+        $this->load->view('pige_bridge/settings',['title'=>'Integração PIGE — ponte CRM','issuers'=>$issuers,'connections'=>$connections,'external'=>$external,'choices'=>$choices,'pige_csrf'=>$token,'company_context_token'=>CompanyRequestScope::token()]);
     }
     public function save()
     {

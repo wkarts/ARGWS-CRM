@@ -9,10 +9,11 @@ function form_open($action,$attributes=[]){$html='<form method="post" action="'.
 function form_close(){return '</form>';}
 $title='Synthetic PIGE settings';$pige_csrf=str_repeat('a',64);$company_context_token='synthetic-context';
 $issuers=[['id'=>7,'legal_name'=>'Company A'],['id'=>8,'legal_name'=>'Company B </script><script>window.leaked=true</script>']];
-$connections=[];$external=[];
+$connections=[];$external=[];$choices=[];
 for($i=0;$i<12;$i++){
     $key='school-'.str_pad((string)$i,2,'0',STR_PAD_LEFT);
     $connections[]=['connection_key'=>$key,'scope'=>['school_id'=>'11111111-1111-4111-8111-111111111111','issuer_id'=>$i%2?'8':'7','account_id'=>'account-'.$i,'environment'=>'sandbox'],'revision'=>3,'enabled'=>true,'mapping'=>['enabled'=>true,'actor_id'=>7,'currency_id'=>1]];
+    $choices[$key]=['actors'=>[['id'=>7,'label'=>'Synthetic actor7']],'currencies'=>[['id'=>1,'label'=>'BRL']],'accounts'=>[['id'=>4,'provider'=>'asaas','label'=>'Asaas account-'.$i],['id'=>5,'provider'=>'banco_brasil','label'=>'BB account-'.$i]],'profiles'=>[['id'=>8,'account_id'=>5,'label'=>'Perfil BB8']]];
     $external[$key]=['revision'=>2,'connection_revision'=>$i===0?2:3,'mapping'=>['provider'=>'asaas','account_row'=>4,'actor_id'=>7,'enabled'=>true,'allow_reconcile'=>false]];
 }
 require __DIR__.'/../modules/pige_bridge/views/settings.php';

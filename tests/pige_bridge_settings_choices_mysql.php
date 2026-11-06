@@ -1,0 +1,24 @@
+<?php
+require __DIR__.'/pige_bridge_connections_mysql.php';
+require_once __DIR__.'/../modules/pige_bridge/libraries/PigeBridgeSettingsChoices.php';
+$db->query('ALTER TABLE '.$p."staff ADD firstname VARCHAR(100) NOT NULL DEFAULT 'Synthetic', ADD lastname VARCHAR(100) NOT NULL DEFAULT 'Staff'");
+$db->query('CREATE TABLE '.$p.'asaas_company_accounts(id INT PRIMARY KEY,issuer_id INT,account_id VARCHAR(128),environment VARCHAR(20),enabled INT,verified_at DATETIME) ENGINE=InnoDB');
+$db->query('CREATE TABLE '.$p.'bb_connections(id INT PRIMARY KEY,issuer_id INT,account_id VARCHAR(128),environment VARCHAR(20),provider VARCHAR(32)) ENGINE=InnoDB');
+$db->query('CREATE TABLE '.$p.'bb_api_profiles(id INT PRIMARY KEY,issuer_id INT,connection_id INT,api_stage VARCHAR(32)) ENGINE=InnoDB');
+foreach([[1,$a,'fixture-wallet','sandbox',1,'2026-01-01'],[2,$b,'fixture-wallet','sandbox',1,'2026-01-01'],[3,$a,'fixture-wallet','production',1,'2026-01-01'],[4,$a,'other-wallet','sandbox',1,'2026-01-01'],[5,$a,'fixture-wallet','sandbox',0,'2026-01-01'],[6,$a,'fixture-wallet','sandbox',1,null]] as $row)$db->query('INSERT INTO '.$p.'asaas_company_accounts VALUES(?,?,?,?,?,?)',$row);
+$db->query('INSERT INTO '.$p.'bb_connections VALUES(1,?,?,?,?),(2,?,?,?,?)',[$a,'fixture-wallet','sandbox','banco_brasil',$b,'fixture-wallet','sandbox','banco_brasil']);
+$db->query('INSERT INTO '.$p.'bb_api_profiles VALUES(1,?,1,?),(2,?,2,?)',[$a,'sandbox',$b,'sandbox']);
+unset($db->data_cache['table_names']);
+$selector=new PigeBridgeSettingsChoices($db,$p);$choices=$selector->forScope(7,$scope);
+essentialCheck(array_column($choices['accounts'],'id')===[1,1],'account selectors exclude foreign issuer/environment/wallet, disabled and unverified accounts');
+essentialCheck(array_column($choices['profiles'],'id')===[1],'BB profiles belong only to selected scoped account');
+essentialCheck(array_column($choices['currencies'],'id')===[1],'currency selector offers actual BRL row only');
+essentialCheck(in_array(7,array_column($choices['actors'],'id'),true)&&!in_array(12,array_column($choices['actors'],'id'),true),'actor selectors honor revoked customer permission');
+essentialCheck(!preg_match('/secret|cipher|token|revision/',json_encode($choices)),'selector data contains public labels and IDs only');
+$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,?,?)',[$a,'customers','view']);
+$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,?,?)',[$a,'settings','edit']);
+$limited=$selector->forScope(12,$scope);
+essentialCheck(array_column($limited['actors'],'id')===[12],'nonmaster only selects self, not more privileged actor');
+$db->query('DELETE FROM '.$p.'issuers_resource_permissions WHERE issuer_id=? AND staff_id=12 AND feature=?',[$a,'settings']);
+essentialThrows(fn()=>$selector->forScope(12,$scope),'pige_configuration_access_denied','revoked settings permission blocks selector data');
+echo 'PIGE scoped selectors: '.$GLOBALS['essentialChecks'].' cumulative real MySQL checks; no credentials/provider calls.'.PHP_EOL;

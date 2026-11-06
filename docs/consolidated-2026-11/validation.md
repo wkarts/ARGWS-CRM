@@ -124,3 +124,10 @@ nome do schema não estava na lista segura do harness. O workflow passou a usar
 - MySQL8.4: `banco_brasil_origination_concurrency.php` —260 verificações cumulativas; dois processos com espera observada no lock, emissão/download e revogação.
 - PHP: module_version54; admin98, com codec118/store56 como pré-requisitos.
 - Não é homologação bancária; CNAB400 e boleto não são validados por esses resultados.
+
+## Seletores PIGE / módulo108
+
+- `pige_bridge_settings_choices_mysql.php`:100 verificações cumulativas em MySQL8.4, incluindo writer anterior e controller disable; seleção exclui empresa/ambiente/conta incompatível, wallet não verificada e funcionário sem ACL.
+- `pige_bridge_settings.browser.cjs`: view PHP e JS reais em Chromium, desktop/mobile, pesquisa/paginação, revisão, limpeza de token, troca explícita de provedor/conta/perfil e consentimento não ativado. Framework sintético, sem chamadas HTTP autenticadas.
+- `pige_bridge_migration.php`:33 checks com runner nativo e adaptador de metadados. Não equivale ao MySQL de instalação.
+- Descoberta bilateral por URL/credencial ainda não implementada; os seletores não são descoberta nem consentimento financeiro.
