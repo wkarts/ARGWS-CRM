@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "2e0f9807c5eb59e93c7bebbd2537e39581fd683c92af96dcf4c1fba152de3607",
+      "sha256": "46b9a1a7adf3449ecc84decff28dd11b2ba8893bc8bd14e01cc5a773fb6c7a7b",
       "categories": [
         "customer_privacy",
         "invoice_model",

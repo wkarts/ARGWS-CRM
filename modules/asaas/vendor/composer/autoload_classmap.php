@@ -88,6 +88,7 @@ return array(
     'Asaas\\Sdk\\Util\\Path' => $vendorDir . '/argws/asaas-sdk-php/src/Util/Path.php',
     'Asaas\\Sdk\\Util\\Query' => $vendorDir . '/argws/asaas-sdk-php/src/Util/Query.php',
     'Asaas\\Sdk\\Util\\Serializer' => $vendorDir . '/argws/asaas-sdk-php/src/Util/Serializer.php',
+    'Asaas\\Sdk\\Webhook\\WebhookToken' => $vendorDir . '/argws/asaas-sdk-php/src/Webhook/WebhookToken.php',
     'BaconQrCode\\Common\\BitArray' => $vendorDir . '/bacon/bacon-qr-code/src/Common/BitArray.php',
     'BaconQrCode\\Common\\BitMatrix' => $vendorDir . '/bacon/bacon-qr-code/src/Common/BitMatrix.php',
     'BaconQrCode\\Common\\BitUtils' => $vendorDir . '/bacon/bacon-qr-code/src/Common/BitUtils.php',

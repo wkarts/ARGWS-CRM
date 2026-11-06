@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => 'cc33f7e38551fbacd5a18ea205bdff7c4078f829',
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
+        'reference' => null,
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,18 +11,18 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => 'cc33f7e38551fbacd5a18ea205bdff7c4078f829',
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => null,
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
         'argws/asaas-sdk-php' => array(
-            'pretty_version' => 'v0.2.61',
-            'version' => '0.2.61.0',
-            'reference' => 'b45ec5cabbe5b918fc590781a10ddbd7406d564b',
+            'pretty_version' => 'v0.2.64',
+            'version' => '0.2.64.0',
+            'reference' => '170831639665082c3bf50422877942b04a4a5315',
             'type' => 'library',
             'install_path' => __DIR__ . '/../argws/asaas-sdk-php',
             'aliases' => array(),

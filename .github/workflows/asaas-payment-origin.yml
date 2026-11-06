@@ -87,6 +87,7 @@ jobs:
           php tests/asaas_webhook_route.php
           php tests/asaas_callback_route.php
           php tests/asaas_callback_version.php
+          php tests/asaas_sdk_reference.php
           php tests/asaas_webhook_admin.php
           php tests/asaas_remote_webhook.php
           php tests/asaas_hosted_card.php

@@ -278,8 +278,12 @@ $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('
 verify((string)(new App_module_migration('asaas'))->version('170')==='170','170 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('170')===true,'170 replay no-op');
 \Asaas\CompanyInvoiceEditSchema::ensure($db,db_prefix(),false);
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_invoice_edits')->fetchColumn()===0,'170 creates no edit command');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'171 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('171')===false,'171 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.0','171 failed tracking preserves170');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='171','171 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'171 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('171')==='171','171 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('171')===true,'171 replay no-op');
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_manual_settlements')->fetchColumn()===0,'171 creates no manual financial command');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'172 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.1','172 failed tracking preserves171');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='172','172 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'172 replay no-op');
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()===0,'172 does not create card attempts');
 echo "OK: {$n} native module migration MySQL assertions.\n";

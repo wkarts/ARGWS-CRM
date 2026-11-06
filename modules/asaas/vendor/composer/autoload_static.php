@@ -175,6 +175,7 @@ class ComposerStaticInitfbd52cefabbd50d40506188e4ff222d3
         'Asaas\\Sdk\\Util\\Path' => __DIR__ . '/..' . '/argws/asaas-sdk-php/src/Util/Path.php',
         'Asaas\\Sdk\\Util\\Query' => __DIR__ . '/..' . '/argws/asaas-sdk-php/src/Util/Query.php',
         'Asaas\\Sdk\\Util\\Serializer' => __DIR__ . '/..' . '/argws/asaas-sdk-php/src/Util/Serializer.php',
+        'Asaas\\Sdk\\Webhook\\WebhookToken' => __DIR__ . '/..' . '/argws/asaas-sdk-php/src/Webhook/WebhookToken.php',
         'BaconQrCode\\Common\\BitArray' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/Common/BitArray.php',
         'BaconQrCode\\Common\\BitMatrix' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/Common/BitMatrix.php',
         'BaconQrCode\\Common\\BitUtils' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/Common/BitUtils.php',

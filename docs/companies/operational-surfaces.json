@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "b757a61e697e5a35ea2075aa34297d3957a1359a5081d4d55e7008fce209e30e",
+    "source_manifest_sha256": "c09c5956a59e38dc5db5a22ad17493f91dc8ccf115ff3429957b79444c7c0b4c",
     "counts": {
         "modules": 38,
-        "source_files": 4855,
+        "source_files": 4856,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.7.1",
+            "version": "1.7.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
