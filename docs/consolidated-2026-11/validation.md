@@ -138,3 +138,13 @@ Resultados novos e sua natureza em [asaas-direct-card.md](asaas-direct-card.md).
 MySQL: 227 assertions migration; 177 checks cumulativos serviços/concorrência.
 Controller SQLite: 198; transporte: 19; Chromium view real aprovado.
 Sem sandbox nem HTTP autenticado completo para pagamento direto.
+
+## Inventário operacional após cartão e reajustes
+
+O CI do SHA `0b17ec4f2fbf524e069014cd8d028f8aea509b3a` detectou inventário
+operacional desatualizado no job `registry-shards (8.1, 1)` do run
+42159425927. O gerador oficial reproduziu exatamente o hash esperado pelo CI:
+`f74bee8a898c01c2571fe453f4739db64f67e573a4fe19280c9f0415fcbcd060`.
+O inventário foi regenerado a partir do código atual (4808 arquivos, 38 módulos).
+Estados `not_verified` e `operational_ready: false` foram preservados; atualizar
+esse artefato não comprova isolamento, homologação ou prontidão operacional.

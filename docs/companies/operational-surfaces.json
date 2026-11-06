@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "79a78e99dee9a295708f9625c5d74d969b26ed399fe1e38e07165ddf05eda1cd",
+    "source_manifest_sha256": "f74bee8a898c01c2571fe453f4739db64f67e573a4fe19280c9f0415fcbcd060",
     "counts": {
         "modules": 38,
-        "source_files": 4783,
+        "source_files": 4808,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 304,
-        "table_name_candidates": 926,
+        "table_name_candidates": 931,
         "database_call_candidates": 12540
     },
     "infrastructure_options": [
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.6.1",
+            "version": "1.6.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -500,6 +500,7 @@
             "table_candidates": [
                 "asaas_company_",
                 "asaas_company_accounts",
+                "asaas_company_card_payments",
                 "asaas_company_events",
                 "asaas_company_fee_expenses",
                 "asaas_company_hosted_links",
@@ -575,7 +576,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.3.6",
+            "version": "1.3.8",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -605,6 +606,7 @@
                 "bb_audit",
                 "bb_batch_actions",
                 "bb_batch_origins",
+                "bb_batch_requests",
                 "bb_batches",
                 "bb_checkout_publications",
                 "bb_cnab_preparations",
@@ -1719,7 +1721,7 @@
         {
             "name": "pige_bridge",
             "entry": "modules/pige_bridge/pige_bridge.php",
-            "version": "1.0.7",
+            "version": "1.0.8",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1760,7 +1762,8 @@
                 "pige_bridge_connections",
                 "pige_bridge_external_config",
                 "pige_bridge_invoice_origins",
-                "pige_bridge_requests"
+                "pige_bridge_requests",
+                "staff"
             ]
         },
         {
@@ -8784,7 +8787,7 @@
         },
         {
             "path": "application/controllers/Recurring_worker.php",
-            "source_sha256": "c190c36ac213da0638516911abf313a68fe29f683922b99d1c06687e2a0c6891",
+            "source_sha256": "85f2803da76631e434b162a0e426df3c182ea732640ff486fdb0007b43269cb2",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -16301,7 +16304,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "6145b1e3b0a99f339bb0668adf8477280a273a835ce46bb1290c52d78cf26984",
+            "source_sha256": "9d4b52abb4998e0235ef996d84f21b532fce98d90f2221a0aee258e453b73b08",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21541,7 +21544,7 @@
         },
         {
             "path": "modules/pige_bridge/controllers/Settings.php",
-            "source_sha256": "34f53fe05c4523937630ac6c04d03d5d2df580fca7d8a704dffd98286e42f8a7",
+            "source_sha256": "aa7ac321ae4746ffcc614b54a3cf92820d016549f60cea0656366c364ceb0e11",
             "module": "pige_bridge",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21558,22 +21561,22 @@
                 },
                 {
                     "method": "save",
-                    "line": 37,
+                    "line": 38,
                     "visibility": "public"
                 },
                 {
                     "method": "disable",
-                    "line": 48,
+                    "line": 49,
                     "visibility": "public"
                 },
                 {
                     "method": "mapping",
-                    "line": 61,
+                    "line": 62,
                     "visibility": "public"
                 },
                 {
                     "method": "external",
-                    "line": 68,
+                    "line": 69,
                     "visibility": "public"
                 }
             ],
@@ -26205,7 +26208,12 @@
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 22
+            "reference_count": 24
+        },
+        {
+            "name": "asaas_company_card_payments",
+            "state": "not_verified",
+            "reference_count": 2
         },
         {
             "name": "asaas_company_events",
@@ -26260,7 +26268,7 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 11
         },
         {
             "name": "asaas_company_receipts",
@@ -26380,7 +26388,7 @@
         {
             "name": "bb_api_profiles",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 8
         },
         {
             "name": "bb_api_receipts",
@@ -26405,12 +26413,17 @@
         {
             "name": "bb_batch_origins",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 11
+        },
+        {
+            "name": "bb_batch_requests",
+            "state": "not_verified",
+            "reference_count": 5
         },
         {
             "name": "bb_batches",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 22
         },
         {
             "name": "bb_checkout_publications",
@@ -26425,7 +26438,7 @@
         {
             "name": "bb_connections",
             "state": "not_verified",
-            "reference_count": 24
+            "reference_count": 26
         },
         {
             "name": "bb_contract_declarations",
@@ -26465,7 +26478,7 @@
         {
             "name": "bb_origins",
             "state": "not_verified",
-            "reference_count": 70
+            "reference_count": 71
         },
         {
             "name": "bb_return_events",
@@ -26983,6 +26996,11 @@
             "reference_count": 1
         },
         {
+            "name": "company_invoice_reprice_proposals",
+            "state": "not_verified",
+            "reference_count": 10
+        },
+        {
             "name": "company_invoice_requests",
             "state": "not_verified",
             "reference_count": 55
@@ -26998,9 +27016,19 @@
             "reference_count": 3
         },
         {
+            "name": "company_invoice_schedule_item_links",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
             "name": "company_invoice_schedule_modes",
             "state": "not_verified",
             "reference_count": 10
+        },
+        {
+            "name": "company_invoice_schedule_prices",
+            "state": "not_verified",
+            "reference_count": 1
         },
         {
             "name": "company_invoice_schedule_requests",
@@ -27015,7 +27043,7 @@
         {
             "name": "company_invoice_schedules",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 17
         },
         {
             "name": "company_item_groups",
@@ -28065,7 +28093,7 @@
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 119
+            "reference_count": 120
         },
         {
             "name": "currency_rate_logs",
@@ -28945,7 +28973,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 276
+            "reference_count": 282
         },
         {
             "name": "issuers_client_links",
@@ -28980,7 +29008,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 273
+            "reference_count": 274
         },
         {
             "name": "issuers_resource_permissions",
@@ -29395,7 +29423,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 107
+            "reference_count": 109
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -30100,7 +30128,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 510
+            "reference_count": 511
         },
         {
             "name": "staff_contract",
