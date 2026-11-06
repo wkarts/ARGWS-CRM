@@ -735,3 +735,25 @@ Vendas: o waiter do callback passa a capturar rejeição imediatamente para não
 encobrir uma falha inicial do formulário ao fechar o navegador; nenhuma
 verificação de resposta, autorização ou valores foi removida. Causa original
 do formulário autenticado permanece em investigação.
+
+### Contrato histórico BB143 e regressões finais locais
+
+O unit8.1 do run42242247269 recusou o header143 porque o mapa explícito
+do teste de retomada ainda terminava em142. Acrescentado143→1.4.3/core4.9.2
+sem substituir o runtime ou alterar as expectativas históricas. Os17 comandos
+PHP da suite unitária passaram em PHP8.3, incluindo195 checks de retomada.
+Três handshakes TLS locais com certificados sintéticos também passaram usando
+runtime PHP já iniciado; a tentativa anterior com inicialização de um container
+por chamada excedeu o timeout5s, que foi preservado. Nenhuma conexão bancária.
+
+Vendas:53 verificações adicionais controller/view/POST em MySQL passaram, após
+36 de formulário e52 de views. As bordas de framework são simuladas; não resolve
+por si só a falha autenticada anterior. Os41 testes Node de transporte,
+preferências e navegação passaram no runtime com PHP.
+
+CI do SHAfb51040f: BB shard0 passou em MySQL (job127976973837) e
+MariaDB (job127976973868), run42242247269. Ambos executaram os30 checks
+novos do portal e o upgrade real120/121/122→143. O workflow agregado ainda
+falha pela expectativa de versão unitária corrigida neste commit, não por
+esses shards. Localmente, transferência canônica de itens Propostas/Orçamentos
+passou10 checks adicionais de falha/recuperação em MySQL após36 do formulário.
