@@ -11,6 +11,35 @@ try {
         $path=$directory.'/'.$name;
         $file=fopen($path,'x'); chmod($path,0600); fwrite($file,$bytes); fclose($file);
     }
+    require_once APPPATH.'services/issuers/IssuerCertificateLegacyImport.php';
+    $expected=IssuerCertificateParser::inspect($fixture['pfx'],$fixture['password'],'11222333000181');
+    foreach (['AES-128-CBC','AES-192-CBC','AES-256-CBC','DES-EDE3-CBC',
+        'PBE-SHA1-3DES','PBE-SHA1-2DES','PBE-SHA1-RC2-40','PBE-SHA1-RC2-128',
+        'PBE-SHA1-RC4-40','PBE-SHA1-RC4-128','CAMELLIA-256-CBC','ARIA-256-CBC','SEED-CBC'] as $algorithm) {
+        $process=proc_open(['/usr/bin/openssl','pkcs12','-export','-legacy','-keypbe',$algorithm,'-certpbe',$algorithm,
+            '-inkey',$directory.'/key.pem','-in',$directory.'/cert.pem','-passout','stdin'],
+            [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,['OPENSSL_CONF'=>'/dev/null']);
+        fwrite($pipes[0],$fixture['password']."\n"); fclose($pipes[0]);
+        $encoded=stream_get_contents($pipes[1]); fclose($pipes[1]);
+        stream_get_contents($pipes[2]); fclose($pipes[2]);
+        if (proc_close($process)!==0) { throw new RuntimeException('synthetic_algorithm_unavailable: '.$algorithm); }
+        a1check(IssuerCertificateParser::inspect($encoded,$fixture['password'],'11222333000181')===$expected,$algorithm.' parser metadata');
+        $parts=IssuerCertificateLegacyImport::read($encoded,$fixture['password']);
+        a1check(openssl_x509_fingerprint($parts['cert'],'sha256')===$expected['fingerprint_sha256'],$algorithm.' isolated CLI');
+        a1reject(fn()=>IssuerCertificateLegacyImport::read($encoded,'wrong'),'issuer_certificate_authentication_failed',$algorithm.' CLI rejects wrong password');
+        $tampered=$encoded; $tampered[strlen($tampered)-1]=chr(ord($tampered[strlen($tampered)-1])^1);
+        a1reject(fn()=>IssuerCertificateLegacyImport::read($tampered,$fixture['password']),'issuer_certificate_authentication_failed',$algorithm.' CLI rejects modified MAC input');
+    }
+    // Simulate missing modules in the test subprocess only. Production clears this variable.
+    $exchange=new ReflectionMethod(IssuerCertificateLegacyImport::class,'exchange');
+    $commandMethod=new ReflectionMethod(IssuerCertificateLegacyImport::class,'command');
+    $standard=$commandMethod->invoke(null);
+    a1check(!in_array('-legacy',$standard,true),'default CLI does not require legacy provider');
+    $offset=array_search('/usr/bin/openssl',$standard,true);
+    array_splice($standard,$offset,0,['/usr/bin/env','OPENSSL_MODULES='.$directory.'/missing']);
+    a1check(strpos($exchange->invoke(null,$standard,$fixture['pfx'],$fixture['password']),'BEGIN CERTIFICATE')!==false,'modern CLI succeeds without legacy module');
+    $standard[]='-legacy';
+    a1reject(fn()=>$exchange->invoke(null,$standard,$fixture['pfx'],$fixture['password']),'issuer_certificate_legacy_unavailable','forced legacy fails without module');
     // Only this fixture generation process enables legacy; the PHP parser does not.
     $process=proc_open(['openssl','pkcs12','-export','-legacy','-inkey',$directory.'/key.pem','-in',$directory.'/cert.pem','-out',$directory.'/legacy.p12','-passout','stdin'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
     if (!is_resource($process)) { throw new RuntimeException('synthetic_cli_unavailable'); }
@@ -48,6 +77,9 @@ try {
     a1check($manager->page(10,2)['revision']===1&&$saved['pfx_cipher']!==$legacy,'revision-zero legacy import stores encrypted credential');
     a1reject(fn()=>$manager->replace(10,2,1,$legacy,'wrong'),'issuer_certificate_authentication_failed','failed replacement stays atomic');
     a1check(a1row($db,10)===$saved,'failed replacement preserves cipher and revision');
+    $corrupt=$legacy; $corrupt[strlen($corrupt)-1]=chr(ord($corrupt[strlen($corrupt)-1])^1);
+    a1reject(fn()=>$manager->replace(10,2,1,$corrupt,$fixture['password']),'issuer_certificate_authentication_failed','modified MAC replacement rejected');
+    a1check(a1row($db,10)===$saved,'modified MAC preserves cipher and revision');
     putenv('ARGWS_CERTIFICATE_LEGACY_IMPORT=0');
     a1reject(fn()=>IssuerCertificateParser::inspect($legacy,$fixture['password'],'11222333000181'),'issuer_certificate_algorithm_unsupported','explicit opt-out restores rejection without provider leak');
     a1check($manager->page(10,2)['revision']===1,'stored metadata remains readable without legacy subprocess');

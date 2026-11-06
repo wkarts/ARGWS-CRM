@@ -135,7 +135,7 @@ final class NativeCompanySettingsController
             'issuer_certificate_stale'=>'Este cadastro mudou em outra aba. Recarregue antes de enviar novamente.',
             'issuer_certificate_invalid_upload'=>'Envie um arquivo .pfx ou .p12 de até 2 MiB e confira a senha.',
             'issuer_certificate_parse_failed'=>'Não foi possível interpretar o PFX/P12. Confira se o arquivo está completo e foi exportado com o certificado e sua chave privada. O cadastro anterior foi preservado.',
-            'issuer_certificate_algorithm_unsupported'=>'O PFX/P12 usa um algoritmo indisponível neste servidor. Solicite uma nova exportação com AES-256 e PBKDF2, incluindo a chave privada. O cadastro anterior foi preservado.',
+            'issuer_certificate_algorithm_unsupported'=>'Não foi possível ler a criptografia do PFX/P12 com a configuração atual do servidor. Verifique com o administrador a compatibilidade de importação ou solicite nova exportação com AES-256 e PBKDF2, incluindo a chave privada. O cadastro anterior foi preservado.',
             'issuer_certificate_authentication_failed'=>'Não foi possível verificar a senha e a integridade do PFX/P12. Confira a senha localmente e, se persistir, solicite uma nova exportação. O cadastro anterior foi preservado.',
             'issuer_certificate_legacy_unavailable'=>'A importação compatível não pôde ser concluída com os limites de segurança. Solicite uma nova exportação com AES-256 e PBKDF2. O cadastro anterior foi preservado.',
             'issuer_certificate_key_required'=>'O arquivo precisa conter o certificado e sua chave privada correspondente.',
