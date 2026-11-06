@@ -244,3 +244,33 @@ nenhum gate foi retirado. O CI remoto conseguiu construir a imagem de smoke de
 A rodada bee529da foi interrompida pelo inventário de isolamento desatualizado.
 Os geradores oficiais foram executados novamente e seus resultados serão incluídos
 integralmente, sem alterar estados conservadores de prontidão.
+
+
+## Leads e continuidade dos menus — correção posterior a968f6eea
+
+O focused MySQL8.1 de968f6eea falhou no teste de metadados de leads. Reproduzido
+em MySQL8.4: o fixture substituía o shell e não carregava a classe de tradução
+usada pelo helper real. Ao repor essa dependência, foi encontrado um defeito de
+produção: busca com acento comparava o padrão Unicode à coluna fiscal ascii_bin,
+produzindo erro1270. A consulta agora converte somente essa comparação para
+utf8mb4_bin, sem alterar schema, dados, escopo ou significado dos identificadores.
+
+`native_lead_metadata.php` aprovado em MySQL8.4:53 verificações adicionais, mais
+28 de diretório/filtro/board e31 do controlador original. Inclui busca por etiqueta
+com acento e pelo identificador fiscal, criação/edição, replay, revisão obsoleta,
+revogação, rollback, corrupção por trigger e isolamento. Shell/sessão são spies;
+não é homologação autenticada. Diagnósticos SQL usados apenas em cópias temporárias
+com dados sintéticos; não foram adicionados ao logging do produto.
+
+O grupo HTTP banking ganhou uma verificação de menus nas empresas A/B, usando
+login e shell reais da instalação descartável: Painel → BB operação → BB configuração
+→ Definições → Painel → Definições. Compara a árvore autorizada antes/depois de
+abrir o menu e entre rotas, preservando empresa. O JSON de evidência contém apenas
+slugs e identificadores sintéticos, sem URLs com tokens nem valores de formulário.
+Sintaxe Node e plano de104 invocações/11 grupos aprovados; execução autenticada
+deste novo caso ainda pendente no CI. Não foi aplicada correção especulativa de menu.
+
+A alternativa oficial de baixar a imagem968f6eea também ficou bloqueada: o
+conector limita artefatos a512MiB (imagem aproximadamente1GiB), e `gh run download`
+recebeu Forbidden. Nenhuma imagem foi obtida nem houve contorno da restrição.
+A construção remota dessa imagem passou; isso não comprova os testes HTTP locais.
