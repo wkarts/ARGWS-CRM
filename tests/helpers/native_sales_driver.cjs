@@ -14,12 +14,14 @@ async function reveal(page,control){
 }
 async function createForm(page,url,kind,client){
   const resource=type(kind),callback='/admin/'+kind+'/'+(kind==='estimates'?'client_change_data/':'get_relation_data_values/')+client+(kind==='proposals'?'/customer':'');
-  const selected=page.waitForResponse(response=>new URL(response.url()).pathname===callback);
+  // Observe rejection immediately so a failed navigation/assertion cannot be masked
+  // by an unhandled callback waiter when the browser closes.
+  const selected=page.waitForResponse(response=>new URL(response.url()).pathname===callback).then(response=>({response}),error=>({error}));
   const response=await page.goto(url+'/admin/'+kind+'/'+resource+(kind==='estimates'?'?customer_id=':'?rel_type=customer&rel_id=')+client);
   assert.equal(response.status(),200,'original '+kind+' form opens');
   const form=page.locator('#'+resource+'-form');await form.locator('tr.main textarea[name=description]').waitFor({state:'visible'});
   await page.waitForFunction(()=>typeof calculate_total==='function'&&typeof native_sales_original_init==='function');
-  const customerResponse=await selected;assert.equal(customerResponse.status(),200,'original customer callback is scoped and available');
+  const selection=await selected;if(selection.error)throw selection.error;const customerResponse=selection.response;assert.equal(customerResponse.status(),200,'original customer callback is scoped and available');
   const currency=await form.locator('#currency option').evaluateAll(xs=>xs.find(x=>x.textContent.trim()==='BRL')?.value);assert(currency,'original '+kind+' form offers BRL');await picker(page,'#'+resource+'-form #currency',currency);
   if(kind==='proposals'){
     await form.locator('[name=subject]').fill('Synthetic original proposal');

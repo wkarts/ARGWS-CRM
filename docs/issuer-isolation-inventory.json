@@ -5014,7 +5014,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyExpensesController.php": {
-      "sha256": "5134a70048f02c3cf05af48b0fe31cc985cbb3bcda1799d4a353ec05daf79971",
+      "sha256": "1fb7a8788c91d5247f027514cdd9fbd4ef57559a27e25a7eda0e0cabdba70cb3",
       "categories": [
         "customer_privacy",
         "invoice_table"

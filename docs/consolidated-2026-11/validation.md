@@ -719,3 +719,19 @@ valores; conserva todas as verificações. O percurso de credenciais, webhook,
 transações e automação também abre as guias correspondentes, e o teste checkout
 usa o identificador atual da lista de guias. Os20 testes do contrato do harness
 passaram; a execução autenticada corrigida ainda depende do próximo CI.
+
+### Continuação do CI após80d64d28
+
+O gate native-ui detectou o novo navegador público do boleto sem classificação
+no inventário de aliases. Classificado explicitamente como portal, mantendo
+administração com o driver nativo e sem inserir navegação administrativa no
+contato. Os9 testes do driver passaram.
+
+Despesas: o redirect após categoria perdia workspace=1, levando à lista sem
+formulário de criação. Corrigido no controlador; duas verificações adicionais
+POST/GET passaram em MySQL após125 verificações da cadeia existente. O fixture
+aplica a migration real de descrição de categoria antes desse caso novo.
+Vendas: o waiter do callback passa a capturar rejeição imediatamente para não
+encobrir uma falha inicial do formulário ao fechar o navegador; nenhuma
+verificação de resposta, autorização ou valores foi removida. Causa original
+do formulário autenticado permanece em investigação.
