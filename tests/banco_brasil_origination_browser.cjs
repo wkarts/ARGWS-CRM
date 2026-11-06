@@ -167,7 +167,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal((await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields})).status(),409,'old original download form is rejected after switching company');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   // Complete positive UI credit path for B, with a distinct account/agreement/profile.
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('[href="#bb-settings-account"]').click();
+  await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');await page.locator('[href="#bb-settings-account"]').click();
   await page.locator('#bb_account_id').fill('001:00452-3:000000223873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('7654321');
   await page.locator('input[name=variation]').fill('019');await navigate(page,page.locator('input[name=variation]').locator('xpath=ancestor::form').locator('button'));
   const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('[href="#bb-settings-api"]').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
