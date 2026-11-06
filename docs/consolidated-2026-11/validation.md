@@ -676,3 +676,6 @@ Correção R07 do preview: `native_credit_preview_helpers.browser.cjs` passou co
 
 
 CI92278fa6: node-contracts e preflight Chromium8.1/8.5 passaram. O contrato remoto Asaas ainda esperava erro genérico ao rejeitar PUT de cobrança; atualizado para a rejeição específica de payload inválido, mantendo caminho/escopo restritos e acrescentando Pix válido, cartão recusado, data impossível, valor inválido e cliente extra. Os19 scripts do job `contracts` passaram localmente sem rede, incluindo contato2316, retry847, webhook171 e escritores84/44. Versão mínima do módulo170 ajustada para núcleo4.9.2; callback13 passou. A nova rodada precisa confirmar o SHA posterior, sem tratar922 como verde.
+
+
+Ajuste do teste histórico154 após o mínimo170: o método nativo de compatibilidade rejeita457/458/491 e aceita492. Migração154 preservada:48 checks MySQL; migração155:101. CIdffaccad passou contratos8.1/8.5 e settings-ui, mas parou nesse assert antigo, corrigido sem alterar migrations publicadas. Download local oficial por Git (`--prefer-source`) obteve Mustache no commit do lockfile com CA do ambiente via secret de build; TLS e proxy mantidos. Build completo/HTTP ainda em andamento, sem declarar homologação.
