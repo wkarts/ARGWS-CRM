@@ -63,7 +63,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | BB02 API/240/400 | Perfis e codecs separados | Perfis bancários não suportados continuam recusados | Guias API/CNAB240/CNAB400 com contratos reais e vínculo comum | Chromium: guias, campos e declarações explícitas |
 | BB03 Parâmetros reais | Conta, convênio7, carteira17, variação, faixa e perfis existentes | Outros convênios/carteiras exigem contrato/codec verificado; não foram inventados campos | Configuração de conta/layout/faixas/API na mesma tela | Módulo137 tracking/upgrade em MySQL; sem homologação bancária |
 | BB04 Operação | Remessa/retorno, arquivos e conciliação existentes | Novo ciclo de lotes ainda pendente | Menu operacional preservado; configuração movida e linkada | Admin PHP mantém formulários operacionais e CSRF |
-| BB05 Boleto antes transmissão | Origination/artefatos vinculados | Integração automática com emissão/recorrência não demonstrada | Não implementado | Não homologado |
+| BB05 Boleto antes transmissão | Origination + CnabBoleto139 | Emissão automática/recorrência e portal do cliente pendentes | Impressão CNAB240 no lote, snapshot e saldo conferidos; não fecha lote nem declara registro | MySQL277, concorrência274, Chromium físico; não homologado |
 | BB06 Lote aberto compatível | Origination + ledger de comandos138 | CNAB400 e ligação automática com emissão nativa pendentes | CNAB240 acumula emissões compatíveis até100 títulos; separa contrato/conta/empresa/ambiente/perfil | MySQL: datas distintas, retry e isolamento |
 | BB07 Primeiro download fecha | Origination::download sob mutex financeiro | CNAB400 permanece separado | CNAB240 codifica e congela na primeira retirada; falha preserva lote aberto | Dois processos MySQL com espera observada no lock |
 | BB08 Download idêntico/estados | Conteúdo persistido e hash | Homologação bancária continua necessária | Redownload de lote novo/legado preserva bytes; não marca transmissão/baixa | MySQL: hash congelado, retry e falha do encoder |
@@ -150,3 +150,10 @@ preservando snapshots, auditoria e marcadores. Nenhuma implantação executada.
 
 [Operação direta por token, evidências e limites](asaas-direct-card.md). O SDK remoto
 foi integrado pelo usuário; nesta etapa não há alteração de SDK/vendor/Perfex.
+
+## Boleto local CNAB240 /139
+
+[Contrato, implementação e evidências](bb-boleto-contract.md). Impressão no lote
+antes do download/transmissão, sem alterar arquivo ou gerar pagamento. BB05 passa
+a parcial: emissão automática pelo meio de pagamento/recorrência e publicação ao
+cliente ainda não foram integradas; CNAB400 e homologação bancária seguem pendentes.

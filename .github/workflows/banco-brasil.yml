@@ -194,9 +194,9 @@ jobs:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: root
-      - name: Validate new open-batch contract beyond preserved SQL plan
+      - name: Validate open batches and printable boleto beyond preserved SQL plan
         if: ${{ matrix.shard == 0 }}
-        run: php tests/banco_brasil_open_batches_mysql.php
+        run: php tests/banco_brasil_cnab_boleto_mysql.php
         env:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root
@@ -329,9 +329,9 @@ jobs:
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php
           BB_SQL_COMMANDS
-      - name: Validate new open-batch contract beyond preserved SQL plan
+      - name: Validate open batches and printable boleto beyond preserved SQL plan
         if: ${{ matrix.shard == 0 }}
-        run: php tests/banco_brasil_open_batches_mysql.php
+        run: php tests/banco_brasil_cnab_boleto_mysql.php
         env:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root

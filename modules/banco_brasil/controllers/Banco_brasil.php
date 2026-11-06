@@ -156,6 +156,17 @@ class Banco_brasil extends AdminController
             $this->output->set_header('Cache-Control: no-store');$this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Content-Disposition: attachment; filename="'.$file['filename'].'"');$this->output->set_content_type('application/octet-stream')->set_output($file['content']);
         }catch(Throwable $e){show_error('Arquivo indisponível ou download não confirmado. Nenhum envio bancário foi realizado.',403);}
     }
+    public function print_cnab_boleto()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');
+        try{
+            $boleto=$this->origination()->boleto($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')),$this->positiveId($this->input->post('invoice_id')));
+            $boleto['barcode_svg']=\BancoBrasil\CnabBoleto::svg($boleto['barcode']);
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_header('X-Content-Type-Options: nosniff');
+            $this->output->set_header('Referrer-Policy: no-referrer');
+            $this->load->view('banco_brasil/cnab_boleto',['boleto'=>$boleto]);
+        }catch(Throwable $e){show_error('Boleto indisponível. Confira origem, saldo, empresa e permissões. Nenhum registro bancário foi confirmado.',403);}
+    }
     public function download_return()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');

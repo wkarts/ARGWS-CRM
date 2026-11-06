@@ -95,3 +95,16 @@ test('O CRM opera notificações apenas pelo Conector, sem remover dados legados
   assert.match(connector, /CONNECT_API_CONNECTOR_TRIGGER_PAYMENT_RECORDED/);
   assert.match(connector, /connect_api_connector_ensure_sms_takeover/);
 });
+
+test('bundles distribuídos carregam o banner da versão nativa atual', () => {
+  const version = require('../scripts/native-build-version.cjs')(root);
+  for (const asset of [
+    'assets/js/main.min.js', 'assets/js/map.min.js',
+    'assets/js/projects.min.js', 'assets/js/tickets.min.js',
+    'assets/themes/perfex/js/clients.min.js',
+    'assets/themes/perfex/js/global.min.js',
+  ]) {
+    assert.equal(file(asset).split('\n', 1)[0], `/* ${version} */`,
+      `${asset}: regenere e versione o bundle com a versão canônica antes de publicar`);
+  }
+});

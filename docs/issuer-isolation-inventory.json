@@ -4279,7 +4279,7 @@
       "evidence": ""
     },
     "application/services/CompanyRequestScope.php": {
-      "sha256": "d6cd7e04825edd9db680a98c307bb2afafa1de08abc782d14068dbda9db03185",
+      "sha256": "f36d23374770ae468529f72aaba9d41f180da364016b8e677347c55f8cbf2302",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -8813,7 +8813,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "9d4b52abb4998e0235ef996d84f21b532fce98d90f2221a0aee258e453b73b08",
+      "sha256": "1cb38e1688a8942429f9ffed17880b00221f0041cdbf1e0201f1f7c705faceb7",
       "categories": [
         "invoice_table"
       ],
@@ -8959,7 +8959,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "46da710373d69b2a3d9519c197046e52a7cec100ea977dc6e0f6a180b5ee6083",
+      "sha256": "b2e948651b2b503435f2b1960c7ab74b6dcd7d9be5e7dab6c1c6bb11b124c33c",
       "categories": [
         "invoice_table",
         "payments"
@@ -8969,7 +8969,10 @@
         47,
         142,
         144,
-        148
+        148,
+        205,
+        210,
+        212
       ],
       "state": "unreviewed",
       "evidence": ""

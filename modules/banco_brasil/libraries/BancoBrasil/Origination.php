@@ -192,6 +192,33 @@ final class Origination
         }
         return [$b,$snapshots];
     }
+    /** Read-only instrument. Printing never freezes a remittance or reserves another number. */
+    public function boleto($issuer,$actor,$batch,$invoice):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$batch=\IssuerPolicy::id($batch);$invoice=\IssuerPolicy::id($invoice);
+        return $this->transaction(function()use($issuer,$actor,$batch,$invoice):array{
+            $this->authorize($issuer,$actor,'download',true);[$b,$snapshots]=$this->load($issuer,$batch);
+            $snapshot=null;foreach($snapshots as $candidate)if((int)$candidate['invoice']['id']===$invoice)$snapshot=$candidate;
+            if(!$snapshot)throw new \DomainException('bb_boleto_unavailable');
+            $origin=$this->rows('SELECT state,active_slot FROM '.$this->prefix.'bb_origins WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer])[0]??[];
+            if((int)($origin['active_slot']??0)!==1||!in_array($origin['state']??null,['reserved','generated_not_submitted'],true))throw new \DomainException('bb_boleto_unavailable');
+            $record=$this->rows('SELECT total,status,date,duedate,clientid,currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??[];
+            if(!in_array((int)($record['status']??0),[1,4],true)||self::money($record['total']??'0')!==$snapshot['title']['amount'])throw new \DomainException('bb_boleto_unavailable');
+            foreach(['date','duedate','clientid'] as $field)if((string)$record[$field]!== (string)$snapshot['invoice'][$field])throw new \DomainException('bb_boleto_unavailable');
+            if((int)$record['currency']!==(int)$snapshot['invoice']['currency_id'])throw new \DomainException('bb_boleto_unavailable');
+            (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);
+            foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=?',[$invoice]))throw new \DomainException('bb_boleto_unavailable');
+            $acl=new \IssuerResourceAccess($this->db,$this->prefix);
+            $docs=new \InvoiceIssuerDocuments($this->db,$this->prefix,$actor,static fn($id,$staff,$cap)=>$id===$issuer&&$staff===$actor&&$acl->can($issuer,$actor,'invoices','view'));
+            $document=$docs->get($invoice,$issuer);$c=$snapshot['connection'];
+            if($document['identity']['tax_id']!==$c['issuer_tax_id']||$document['formatted_number']!==$snapshot['invoice_document']||$document['recipient']['tax_id']!==$snapshot['title']['payer_tax_id'])throw new \DomainException('bb_boleto_unavailable');
+            $agreement=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$snapshot['beneficiary_name']??$c['issuer_name'],$c['variation'],$c['wallet']);
+            require_once __DIR__.'/CnabBoleto.php';
+            $codes=CnabBoleto::codes($agreement,$snapshot['title']['sequence'],$snapshot['title']['due_date'],$snapshot['title']['amount']);
+            $this->authorize($issuer,$actor,'download',true);
+            return $codes+['snapshot'=>$snapshot,'document'=>$document,'environment'=>$c['environment'],'bank_state'=>'generated_registration_not_confirmed','batch_id'=>$batch];
+        });
+    }
     public function finish($issuer,$actor,$batch):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$batch=\IssuerPolicy::id($batch);$this->authorize($issuer,$actor,'generate',true);

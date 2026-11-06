@@ -183,3 +183,11 @@ simulado; não representam HTTP autenticado completo ou homologação bancária.
 Os27 testes Python dos planos de CI registry/focused passaram.
 `banco_brasil_api_window_discount_controller.php` também passou:1233 verificações
 cumulativas em MySQL8.4, incluindo o ponto que falhava nos dois bancos do CI.
+
+## Boleto CNAB240 /139 e banners core4.9.2
+
+- MySQL8.4: `banco_brasil_cnab_boleto_mysql.php`277 checks cumulativos, incluindo instalação/upgrade/replay/falha de tracking até139.
+- Concorrência MySQL: `banco_brasil_origination_concurrency.php`274 checks, processos reais aguardando lock para impressão/download e revogação.
+- Admin100 e module_version54 checks PHP;5 verificações estáticas bridge125.
+- Chromium renderiza HTML produzido pela suíte SQL: dimensões físicas, escala de todas as barras, zona de silêncio, linha sem corte, controles ocultos na impressão e nenhum recurso externo. Não é HTTP autenticado nem homologação bancária.
+- `npm run production` recompilou sem diff nos assets; main/tickets e os outros quatro banners já eram4.9.2. Acrescentado gate de banner em `crm_integrations_contract.test.cjs`, incluído no node-contracts existente.8 testes Node passaram, sem afrouxar o gate.

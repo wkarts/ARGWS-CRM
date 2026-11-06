@@ -57,7 +57,9 @@ $GLOBALS['issuerGrant']=false;$controller->index();check($ci->load->viewData['ca
 $ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'=>'1','csrf_bb'=>$csrf];rejects(fn()=>$controller->register_connection(),'admin without issuer grant blocked');check(!$ci->db->tables,'no write without grant');
 $GLOBALS['issuerGrant']=true;$GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'contextual grant not vetoed by global deny');check(!$ci->db->tables,'GET remains read only');$GLOBALS['permissions']['manage']=true;
 $ci->input->verb='GET';try{$controller->register_connection();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','POST only');}
+$ci->input->verb='GET';try{$controller->print_cnab_boleto();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','boleto print requires POST before hydration');}
 $ci->input->verb='POST';$ci->input->posts['csrf_bb']='wrong';try{$controller->register_connection();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','constant time own CSRF enforced');}
+try{$controller->print_cnab_boleto();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','boleto print requires valid CSRF before hydration');}
 $ci->input->posts['csrf_bb']=[$csrf];rejects(fn()=>$controller->register_connection(),'array token refused');
 $ci->input->posts['csrf_bb']=$csrf;$ci->input->posts['tax_id']='99999999999999';try{$controller->register_connection();}catch(BbRedirect $e){}
 check(!$ci->db->tables,'cannot replace issuer CNPJ in form');unset($ci->input->posts['tax_id']);
