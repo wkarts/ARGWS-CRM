@@ -315,3 +315,24 @@ A sequência de20 comandos SQLite desde o ponto de falha até o fim do manifesto
 também passou, com CI=true. O entrypoint MySQL foi executado deliberadamente sem
 DSN e recusou a fase incorreta, conforme esperado. Os três inventários oficiais
 foram regenerados; continuam declarando rollout operacional bloqueado.
+
+## Monitor de CI — resposta incerta do GitHub
+
+O run42170292011 de fb7e74b1 falhou com HTTP502 do GitHub no POST de cancelamento
+de uma rodada antiga. O monitor agora consulta o estado do run sem repetir esse
+POST: conclusão confirmada encerra o caso; estado ativo segue a espera e a
+revalidação de PR/HEAD já existentes antes de eventual force-cancel. Falha de
+transporte nesse último passo com estado ainda ativo continua sendo erro explícito,
+não sucesso. GET tem até três tentativas apenas para falhas transitórias;
+401/403 continuam erros sem retry. Nenhum escopo de cancelamento foi ampliado.
+
+20 testes Python aprovados, incluindo sete de transporte/resultado incerto e os
+limites existentes para outra PR, fork, push, release e dispatch. APIs simuladas;
+nenhum cancelamento manual foi efetuado nesta verificação.
+
+O CI PIGE109 passou em fb7e74b1. O gate de interface desse SHA detectou o inventário
+estático de controles/rotas desatualizado: dois inputs, dois botões e um select
+adicionados ao modal existente, mais a ação JSON discover. O delta foi conferido
+contra a view e os testes Chromium já executados; inventário atualizado sem
+afrouxar a comparação. Gate local aprovado:16 views/6 controllers. Um fragmento
+sem proprietário resolvido continua explicitamente registrado como lacuna.

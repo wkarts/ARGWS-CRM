@@ -48,4 +48,46 @@ class RoundTests(unittest.TestCase):
     self.assertEqual(m.main(),1)
   self.assertTrue(any('/actions/runs/1/jobs?' in path for path,_ in FakeApi.calls))
   self.assertFalse(any(method=='POST' for _,method in FakeApi.calls),'failed queued diagnostic matrix must finish without cancellation')
+
+class TransportTests(unittest.TestCase):
+ def error(self,code=502):return m.urllib.error.HTTPError('https://api.github.com/synthetic',code,'synthetic',{},None)
+ def test_get_transient_retry_is_bounded(self):
+  with patch.object(m.urllib.request,'urlopen',side_effect=self.error()) as call,patch.object(m.time,'sleep') as sleep:
+   with self.assertRaises(m.urllib.error.HTTPError):m.Api('synthetic/repo','synthetic').call('/pulls/1')
+   self.assertEqual(call.call_count,3);self.assertEqual(sleep.call_count,2)
+ def test_get_recovers_after_one_transient_error(self):
+  from unittest.mock import MagicMock
+  response=MagicMock();response.__enter__.return_value.read.return_value=b'{"id":1}'
+  with patch.object(m.urllib.request,'urlopen',side_effect=[self.error(),response]) as call,patch.object(m.time,'sleep'):
+   self.assertEqual(m.Api('synthetic/repo','synthetic').call('/actions/runs/1'),{'id':1})
+   self.assertEqual(call.call_count,2)
+ def test_post_and_access_denial_are_not_retried(self):
+  for method,code in [('POST',502),('GET',403),('POST',403)]:
+   with patch.object(m.urllib.request,'urlopen',side_effect=self.error(code)) as call,patch.object(m.time,'sleep') as sleep:
+    with self.assertRaises(m.urllib.error.HTTPError):m.Api('synthetic/repo','synthetic').call('/actions/runs/1/cancel',method)
+    self.assertEqual(call.call_count,1);sleep.assert_not_called()
+ def api(self,status='completed',code=502,identity=1):
+  error=self.error(code)
+  class Fake:
+   calls=[]
+   def call(self,path,method='GET'):
+    self.calls.append((path,method))
+    if method=='POST':raise error
+    return {'id':identity,'status':status}
+  return Fake()
+ def test_lost_cancel_response_checks_result_without_second_post(self):
+  api=self.api()
+  self.assertEqual(m.request_cancellation(api,1),'completed')
+  self.assertEqual(api.calls,[('/actions/runs/1/cancel','POST'),('/actions/runs/1','GET')])
+ def test_active_after_lost_response_requires_normal_wait_and_revalidation(self):
+  api=self.api('in_progress')
+  self.assertEqual(m.request_cancellation(api,1),'pending_confirmation')
+  self.assertEqual(sum(method=='POST' for _,method in api.calls),1)
+ def test_uncertain_force_cancel_cannot_be_recorded_as_completed(self):
+  with self.assertRaisesRegex(RuntimeError,'unconfirmed'):m.request_cancellation(self.api('in_progress'),1,force=True)
+ def test_denial_or_wrong_status_identity_fails_closed(self):
+  api=self.api(code=403)
+  with self.assertRaises(m.urllib.error.HTTPError):m.request_cancellation(api,1)
+  self.assertEqual(len(api.calls),1)
+  with self.assertRaisesRegex(RuntimeError,'identity mismatch'):m.request_cancellation(self.api(identity=2),1)
 if __name__=='__main__':unittest.main()

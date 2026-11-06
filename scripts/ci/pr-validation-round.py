@@ -23,13 +23,17 @@ class Api:
     def __init__(self,repo,token): self.base='https://api.github.com/repos/'+repo; self.token=token
     def call(self,path,method='GET'):
         req=urllib.request.Request(self.base+path,method=method,headers={'Authorization':'Bearer '+self.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},data=b'' if method=='POST' else None)
-        try:
-            with urllib.request.urlopen(req,timeout=30) as response:
-                data=response.read();return json.loads(data) if data else {}
-        except urllib.error.HTTPError as error:
-            # A run can finish between list and cancel; no other errors are hidden.
-            if method=='POST' and error.code==409:return {}
-            raise
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(req,timeout=30) as response:
+                    data=response.read();return json.loads(data) if data else {}
+            except urllib.error.HTTPError as error:
+                # A run can finish between list and cancel; authorization failures remain errors.
+                if method=='POST' and error.code==409:return {}
+                if method!='GET' or error.code not in {502,503,504} or attempt==2:raise
+            except (urllib.error.URLError,TimeoutError):
+                if method!='GET' or attempt==2:raise
+            time.sleep(attempt+1)
     def runs(self,branch,head=None,status=None):
         from urllib.parse import quote
         rows=[]
@@ -40,6 +44,23 @@ class Api:
             batch=self.call(query)['workflow_runs'];rows+=batch
             if len(batch)<100:break
         return rows
+
+def request_cancellation(api,run_id,force=False):
+    path='/actions/runs/'+str(run_id)
+    try:
+        api.call(path+('/force-cancel' if force else '/cancel'),'POST')
+        return 'accepted'
+    except urllib.error.HTTPError as error:
+        if error.code not in {502,503,504}:raise
+    except (urllib.error.URLError,TimeoutError):
+        pass
+    # The POST may already have executed. Never repeat it blindly or claim completion.
+    remaining=api.call(path)
+    if remaining.get('id')!=run_id:raise RuntimeError('Cancellation status identity mismatch')
+    if remaining.get('status')=='completed':return 'completed'
+    if remaining.get('status') not in ACTIVE:raise RuntimeError('Cancellation status unknown')
+    if force:raise RuntimeError('Force cancellation remains unconfirmed after transport failure')
+    return 'pending_confirmation'
 
 def main():
     repo=os.environ['GITHUB_REPOSITORY'];own=int(os.environ['GITHUB_RUN_ID'])
@@ -80,8 +101,8 @@ def main():
         targets=[rid for rid in cancellation_plan(runs,pr,repo,own,bool(failures),diagnostic_runs) if rid not in canceled]
         for run_id in targets:
             if api.call('/pulls/'+str(number))['head']['sha']!=expected:return 0
-            api.call('/actions/runs/'+str(run_id)+'/cancel','POST')
-            print('Cancellation requested:',run_id,flush=True)
+            outcome=request_cancellation(api,run_id)
+            print('Cancellation state:',run_id,outcome,flush=True)
         if targets:
             # Allow normal termination first. always() jobs can otherwise keep
             # the concurrency slot despite an accepted cancellation request.
@@ -90,8 +111,8 @@ def main():
                 if api.call('/pulls/'+str(number))['head']['sha']!=expected:return 0
                 remaining=api.call('/actions/runs/'+str(run_id))
                 if remaining['status'] in ACTIVE and same_pr(remaining,pr,repo):
-                    api.call('/actions/runs/'+str(run_id)+'/force-cancel','POST')
-                    print('Unresponsive cancellation forced:',run_id,flush=True)
+                    outcome=request_cancellation(api,run_id,force=True)
+                    print('Force cancellation state:',run_id,outcome,flush=True)
                 canceled.add(run_id)
         if failures:
             print('First failing validation(s):',json.dumps([{'name':r['name'],'url':r.get('html_url'),'conclusion':r['conclusion']} for r in failures]),flush=True)

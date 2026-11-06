@@ -95,3 +95,23 @@ Deploy não executado. Antes de atualização: backup consistente e runner nativ
 falha de tracking mantém a capacidade indisponível. Rollback de código não pode
 apagar tentativas nem diminuir marcadores; pagamentos já enviados exigem consulta
 e conciliação, nunca reenvio baseado apenas no rollback.
+
+## Revisão da documentação oficial em6/11/2026
+
+As referências atuais confirmam que
+[payWithCard](https://docs.asaas.com/reference/pagar-uma-cobranca-com-cartao)
+aceita CREDIT ou VOUCHER; não define DEBIT. O
+[guia de cartão](https://docs.asaas.com/docs/cobrancas-via-cartao-de-credito)
+explicita que débito não é recebido diretamente pela API e orienta invoiceUrl.
+Portanto, não foi inventado um tipo de débito na operação direta nem apresentado
+o checkout rejeitado como atendimento ao requisito obrigatório.
+
+[payWithCreditCard](https://docs.asaas.com/reference/pagar-uma-cobranca-com-cartao-de-credito)
+exige token do mesmo cliente e alerta que o pagamento imediato não é idempotente.
+O contrato oferece threeDSecure/deviceInfo; mera inclusão de campos sem concluir
+a autenticação do titular não comprova suporte a3DS.
+A [orientação PCI](https://docs.asaas.com/docs/pci-dss-1) distingue tokenização
+server-side de coleta externa: não guardar PAN/CVV não elimina o processamento
+transitório nem demonstra conformidade da infraestrutura. O fluxo atual aceita
+somente token transitório; coleta/tokenização própria ainda não foi implementada.
+Nenhum dado de cartão foi usado nesta consulta documental, e o SDK permanece pausado.
