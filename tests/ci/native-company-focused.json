@@ -3090,7 +3090,7 @@
     ],
     [
       "php",
-      "tests/companies/asaas_recreation_intents.php"
+      "tests/companies/asaas_origin_generations.php"
     ]
   ],
   "browser": [

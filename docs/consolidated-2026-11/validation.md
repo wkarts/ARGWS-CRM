@@ -503,3 +503,31 @@ Concorrência de intenções: cinco checks adicionais com dois processos MySQL,
 bloqueio observado, resultado idêntico e uma única linha; nenhum arquivo de
 chamada externa foi produzido. Incluído como filho da suíte de cancelamento no
 manifesto focused, preservando seus testes anteriores.
+
+## Recriação Asaas165
+
+Executado `php tests/companies/asaas_origin_generations.php` em PHP8.3/MySQL8.4:
+64 verificações adicionais de evolução de schema, rollback do sucessor,
+preservação de histórico, recuperação de POST aceito cuja resposta se perdeu,
+rollback do diário, envio único com dois processos MySQL reais e dois ciclos
+completos cancelar/recriar. A API é simulada; não há homologação nem cobrança real.
+`php tests/asaas_module_migrations.php`:277 verificações no runner nativo/MySQL,
+incluindo165 interrompida na DDL/tracking e repetição. `native_invoice_reopen.php`
+SQLite:170 cumulativas de writer/controller com doubles, preservando a reabertura
+sem provider. Callback version:13 verificações; inventário UI16 views/6 controllers.
+
+O CI de a5794fa9 passou nos workflows rápidos Asaas/PIGE/native-ui/recorrências e
+containers, mas o monitor identificou falha real em `http (settings)` do run
+42185070943, job127786957610: clique no input transparente do checkbox de crédito
+interceptado por outra opção/toolbar. O teste agora usa o label nativo visível e
+verifica o checked do input correspondente, mantendo actionability (sem force,
+JS click ou alteração do DOM). A reprodução isolada com CSS real não reproduziu
+a sobreposição; portanto esta alteração do driver ainda requer o CI autenticado
+para confirmar, e não é apresentada como causa raiz ou correção de CSS.
+O artefato4,6MB foi obtido como referência pelo conector, mas sua materialização
+local falhou com URLError; não foi inspecionado visualmente.
+
+O mesmo log HTTP comprovou instalação/upgrade e execução real do recurring_worker
+no núcleo492 (223 checks) antes da falha de créditos. Isso amplia a evidência do
+núcleo para aquele SHA, sem converter o shard inteiro nem a nova recriação165 em
+homologação HTTP aprovada.

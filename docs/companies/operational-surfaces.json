@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "dc699784cca28a5b4b0848d93ae5bdd77648ddab0d2ade39d5cc06d5d47ea01b",
+    "source_manifest_sha256": "cc6b1f88863797e54d20e85ca6c55cf0d52c21634ab41592d90f5876ca29dd77",
     "counts": {
         "modules": 38,
-        "source_files": 4831,
+        "source_files": 4836,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 304,
-        "table_name_candidates": 934,
+        "table_name_candidates": 935,
         "database_call_candidates": 12540
     },
     "infrastructure_options": [
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.6.4",
+            "version": "1.6.5",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -513,6 +513,7 @@
                 "asaas_company_profiles",
                 "asaas_company_proofs",
                 "asaas_company_receipts",
+                "asaas_company_recreations",
                 "asaas_company_refund_grants",
                 "asaas_company_refund_observations",
                 "asaas_company_refund_requests",
@@ -10480,7 +10481,7 @@
         },
         {
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "898b3b0c8220b525504203f7d9b48ba987621d57e92add4384cba4859eff926d",
+            "source_sha256": "dcc724c93682841cd6ca998d8d7f6531eea555ec76a05dc677bbfee251c54d07",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10567,92 +10568,92 @@
                 },
                 {
                     "method": "copy",
-                    "line": 448,
+                    "line": 449,
                     "visibility": "public"
                 },
                 {
                     "method": "drafts",
-                    "line": 472,
+                    "line": 473,
                     "visibility": "public"
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 483,
+                    "line": 484,
                     "visibility": "public"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 519,
+                    "line": 520,
                     "visibility": "public"
                 },
                 {
                     "method": "invoice",
-                    "line": 539,
+                    "line": 540,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 687,
+                    "line": 688,
                     "visibility": "public"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 785,
+                    "line": 786,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 807,
+                    "line": 808,
                     "visibility": "public"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 844,
+                    "line": 845,
                     "visibility": "public"
                 },
                 {
                     "method": "record_payment",
-                    "line": 872,
+                    "line": 873,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 908,
+                    "line": 909,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 967,
+                    "line": 968,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 999,
+                    "line": 1000,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1018,
+                    "line": 1019,
                     "visibility": "public"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1046,
+                    "line": 1047,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 1068,
+                    "line": 1069,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1137,
+                    "line": 1138,
                     "visibility": "public"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1158,
+                    "line": 1159,
                     "visibility": "public"
                 }
             ],
@@ -26246,7 +26247,7 @@
         {
             "name": "asaas_company_events",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 22
         },
         {
             "name": "asaas_company_fee_expenses",
@@ -26266,7 +26267,7 @@
         {
             "name": "asaas_company_origin_meta",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 14
         },
         {
             "name": "asaas_company_origin_policy",
@@ -26296,12 +26297,17 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 15
         },
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
             "reference_count": 11
+        },
+        {
+            "name": "asaas_company_recreations",
+            "state": "not_verified",
+            "reference_count": 8
         },
         {
             "name": "asaas_company_refund_grants",
@@ -26341,7 +26347,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 57
+            "reference_count": 66
         },
         {
             "name": "asaas_payments_map",
@@ -28996,7 +29002,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 649
+            "reference_count": 650
         },
         {
             "name": "issuer_certificate_audit",
@@ -29466,7 +29472,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 116
+            "reference_count": 118
         },
         {
             "name": "mrp_manufacturing_orders",

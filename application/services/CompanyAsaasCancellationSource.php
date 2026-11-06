@@ -19,6 +19,7 @@ final class CompanyAsaasCancellationSource
         if(version_compare($module['installed_version']??'0','1.6.3','<'))throw new DomainException('asaas_invoice_cancellation_module_required');
         $row=$this->rows('SELECT status FROM '.$p.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
         $receipts=$this->rows('SELECT actor_id,metadata_json FROM '.$p.'issuers_audit WHERE issuer_id=? AND subject_id=? AND event=? FOR UPDATE',[$issuer,$invoice,'company_asaas_invoice_cancelled']);
+        $receipts=array_values(array_filter($receipts,fn($r)=>(json_decode($r['metadata_json'],true,16,JSON_THROW_ON_ERROR)['origin_id']??null)===$this->originId));
         if($receipts){if(count($receipts)!==1||(int)$receipts[0]['actor_id']!==$actor||$receipts[0]['metadata_json']!==$this->metadata()||(int)($row['status']??0)!==5)throw new DomainException('asaas_invoice_cancellation_conflict');return true;}
         if(!in_array((int)($row['status']??0),[1,4],true))throw new DomainException('asaas_invoice_cancellation_state');
         if(!hash_equals($revision,(new CompanyInvoices($db,$p))->revision($issuer,$actor,$invoice)))throw new DomainException('company_invoice_stale');

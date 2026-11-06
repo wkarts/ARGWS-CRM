@@ -22,6 +22,7 @@ final class CompanyRecreationIntents
             $row=$this->rows('SELECT status FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$row||(int)$row['status']!==5||!hash_equals($revision,$writer->revision($issuer,$actor,$invoice)))throw new \DomainException('asaas_recreation_stale');
             $receipts=$this->rows('SELECT metadata_json FROM '.$this->p.'issuers_audit WHERE issuer_id=? AND subject_id=? AND event=? FOR UPDATE',[$issuer,$invoice,'company_asaas_invoice_cancelled']);
+            $receipts=array_values(array_filter($receipts,static fn($r)=>(json_decode($r['metadata_json'],true,16,JSON_THROW_ON_ERROR)['origin_id']??null)===$origin));
             if(count($receipts)!==1)throw new \DomainException('asaas_recreation_cancellation_required');
             $receipt=json_decode($receipts[0]['metadata_json'],true,16,JSON_THROW_ON_ERROR);
             if(($receipt['invoice_id']??null)!==$invoice||($receipt['origin_id']??null)!==$origin)throw new \DomainException('asaas_recreation_cancellation_required');

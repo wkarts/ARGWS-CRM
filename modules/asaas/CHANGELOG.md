@@ -1,5 +1,11 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.5 — 2026-11-06
+
+- Recriação PIX/BOLETO na reabertura nativa: sucessor ativo distinto, POST com claim durável, recuperação por GET e reabertura atômica com diário.
+- Migration165 preserva identidades e substitui unicidade por fatura por uma única posição ativa; histórico continua imutável.
+- Concorrência real MySQL, perda de resposta, falhas locais e ciclos repetidos cobertos com provedor simulado. Cartão e ponte manual permanecem sujeitos a revisão.
+
 ## 1.6.4 — 2026-11-06
 
 - Registro durável interno de intenção de recriação após cancelamento nativo e prova recente de exclusão.

@@ -410,7 +410,7 @@ final class CompanyInvoices
             $documentBefore=$this->documents($issuer,$actor)->get($invoice,$issuer);
             $before=['date'=>$row['date'],'total'=>self::decimal(self::cents($row['total'])),'status'=>(int)$row['status'],'revision'=>$revision];
             $providerTables=CompanyInvoiceProviderTables::current($this->db,$this->prefix);IssuerTransaction::assertOwned($this->db,$this->prefix,$providerTables);
-            foreach($providerTables as $table){$origins=$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]);if($origins&&($cancellation===null||$table!=='asaas_payment_origins'||count($origins)!==1||(int)$origins[0]['id']!==$cancellation->origin()))throw new DomainException('company_invoice_provider_review_required');}
+            foreach($providerTables as $table){$origins=$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=?'.($cancellation!==null&&$table==='asaas_payment_origins'?\Asaas\CompanyOriginGenerations::predicate($this->db,$this->prefix):'').' FOR UPDATE',[$invoice]);if($origins&&($cancellation===null||$table!=='asaas_payment_origins'||count($origins)!==1||(int)$origins[0]['id']!==$cancellation->origin()))throw new DomainException('company_invoice_provider_review_required');}
             if((new CompanyBankReceiptComponents($this->db,$this->prefix))->forInvoiceInOwned($issuer,$actor,$invoice))throw new DomainException('company_invoice_immutable');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_immutable');
             if($data===null){IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE id=? AND issuer_id=?',[$invoice,$issuer]);}
@@ -501,16 +501,17 @@ final class CompanyInvoices
     }
 
     /** Undo only a proven canonical local cancellation; all provider/receipt history stays fenced. */
-    public function reopen($issuer,$actor,$invoice,string $revision):void
+    public function reopen($issuer,$actor,$invoice,string $revision,?CompanyAsaasRecreationSource $recreation=null):void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('company_invoice_stale');
-        $this->transaction(function()use($issuer,$actor,$invoice,$revision):void{
+        $this->transaction(function()use($issuer,$actor,$invoice,$revision,$recreation):void{
             $this->authorize($issuer,$actor,'edit');$this->authorize($issuer,$actor,'view');
             $row=$this->rows('SELECT id,currency,status,date,total FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$row)throw new DomainException('company_invoice_access_denied');
+            if($recreation!==null)$recreation->assertCurrent($this->db,$this->prefix,$issuer,$actor,$invoice,$revision);
             $providerTables=CompanyInvoiceProviderTables::current($this->db,$this->prefix);IssuerTransaction::assertOwned($this->db,$this->prefix,$providerTables);
-            foreach($providerTables as $table)if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
+            foreach($providerTables as $table)if(($table!=='asaas_payment_origins'||$recreation===null)&&$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
             if((new CompanyBankReceiptComponents($this->db,$this->prefix))->forInvoiceInOwned($issuer,$actor,$invoice))throw new DomainException('company_invoice_immutable');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_immutable');
             (new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($row['currency']);
@@ -538,10 +539,11 @@ final class CompanyInvoices
             $stored=$this->rows('SELECT status,total,date FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??[];
             if((int)($stored['status']??0)!==$status||self::cents($stored['total']??'')!==self::cents($row['total'])||($stored['date']??null)!==$row['date'])throw new RuntimeException('issuer_invoice_write_unconfirmed');
             $after=['date'=>$row['date'],'total'=>$snapshot['total'],'status'=>$status,'revision'=>$this->fingerprint($issuer,$invoice)];
-            $this->journal($issuer,$actor,$invoice,(int)$row['currency'],'invoice_reopened',$snapshot+['cancellation_key'=>$cancel['evidence_key']],$after,gmdate('Y-m-d'),$key);
+            $this->journal($issuer,$actor,$invoice,(int)$row['currency'],'invoice_reopened',$snapshot+['cancellation_key'=>$cancel['evidence_key']],$after,gmdate('Y-m-d'),$key,$recreation);
+            if($recreation!==null)$recreation->confirmed();
             if($this->documents($issuer,$actor)->get($invoice,$issuer)!==$document)throw new RuntimeException('issuer_invoice_write_unconfirmed');
             $this->authorize($issuer,$actor,'edit');$this->authorize($issuer,$actor,'view');
-        });
+        },$recreation===null?[]:$recreation->tables());
     }
     /** Explicit local-only cancellation; ordinary provider/history guards remain unchanged. */
     public function cancelAfterAsaasFullRefund($issuer,$actor,$invoice,string $revision,CompanyPostRefundAsaasSource $source):void
@@ -553,9 +555,9 @@ final class CompanyInvoices
             (new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($row['currency']);$before=['date'=>$row['date'],'total'=>self::decimal(self::cents($row['total'])),'status'=>(int)$row['status'],'revision'=>$revision];IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE issuer_id=? AND id=?',[$issuer,$invoice]);$this->audit($issuer,$actor,$invoice,'company_invoice_cancelled');$this->authorize($issuer,$actor,'edit');$stored=$this->rows('SELECT status,total FROM '.$this->prefix.'invoices WHERE issuer_id=? AND id=?',[$issuer,$invoice])[0]??null;if(!$stored||(int)$stored['status']!==5||self::cents($stored['total'])!==self::cents($row['total']))throw new RuntimeException('issuer_invoice_write_unconfirmed');$after=['date'=>$row['date'],'total'=>$before['total'],'status'=>5,'revision'=>$this->fingerprint($issuer,$invoice)];$this->journal($issuer,$actor,$invoice,(int)$row['currency'],'invoice_cancelled',$before,$after,gmdate('Y-m-d'),hash('sha256','company-journal:invoice-cancelled:'.$issuer.':'.$invoice.':'.$revision));$source->confirmed($this->db,$this->prefix,$issuer,$actor,$invoice,$revision);$this->authorize($issuer,$actor,'view');
         },$source->tables());
     }
-    private function journal(int $issuer,int $actor,int $invoice,int $currency,string $kind,array $before,array $after,string $bookDate,string $key):void
+    private function journal(int $issuer,int $actor,int $invoice,int $currency,string $kind,array $before,array $after,string $bookDate,string $key,?CompanyAsaasRecreationSource $recreation=null):void
     {
-        $unit=(new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($currency);(new CompanyFinancialJournal($this->db,$this->prefix))->recordInOwned($issuer,$actor,['kind'=>$kind,'source_type'=>'invoice','source_id'=>$invoice,'book_date'=>$bookDate,'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$after['total'],'before'=>$before,'after'=>$after],$key);
+        $unit=(new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($currency);(new CompanyFinancialJournal($this->db,$this->prefix))->recordInOwned($issuer,$actor,['kind'=>$kind,'source_type'=>'invoice','source_id'=>$invoice,'book_date'=>$bookDate,'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$after['total'],'before'=>$before,'after'=>$after],$key,$recreation);
     }
     private function audit(int $issuer,int $actor,int $invoice,string $event):void
     {

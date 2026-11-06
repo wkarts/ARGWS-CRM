@@ -453,7 +453,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Invoices.php": {
-      "sha256": "898b3b0c8220b525504203f7d9b48ba987621d57e92add4384cba4859eff926d",
+      "sha256": "dcc724c93682841cd6ca998d8d7f6531eea555ec76a05dc677bbfee251c54d07",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -500,64 +500,64 @@
         402,
         403,
         406,
-        438,
         439,
-        441,
-        456,
-        458,
+        440,
+        442,
+        457,
         459,
-        461,
-        485,
+        460,
+        462,
         486,
-        571,
+        487,
         572,
-        577,
+        573,
         578,
-        581,
-        589,
-        606,
+        579,
+        582,
+        590,
         607,
-        613,
+        608,
         614,
-        617,
-        625,
-        637,
-        643,
+        615,
+        618,
+        626,
+        638,
         644,
-        650,
-        698,
-        715,
+        645,
+        651,
+        699,
         716,
-        726,
-        743,
-        746,
-        748,
-        759,
-        787,
+        717,
+        727,
+        744,
+        747,
+        749,
+        760,
         788,
-        860,
-        866,
-        924,
-        926,
+        789,
+        861,
+        867,
+        925,
         927,
-        939,
-        1001,
+        928,
+        940,
         1002,
         1003,
-        1008,
-        1037,
-        1048,
-        1051,
-        1053,
+        1004,
+        1009,
+        1038,
+        1049,
+        1052,
         1054,
-        1058,
-        1080,
-        1082,
+        1055,
+        1059,
+        1081,
         1083,
-        1087,
-        1089,
-        1092,
-        1147
+        1084,
+        1088,
+        1090,
+        1093,
+        1148
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2852,7 +2852,7 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasCancellationSource.php": {
-      "sha256": "dc4b76c612667ce21889aa9961f9a0f5fac8ef72c9d1e6c26000bc86f08546d8",
+      "sha256": "ed9d0559a03435a3e73c2e8bfeffa6cf5982a1b32d91152e7715ce9fbe8c0667",
       "categories": [
         "invoice_table"
       ],
@@ -2863,12 +2863,12 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasInvoiceCancellation.php": {
-      "sha256": "f163e656556eb2dcca5ad76f561b8e782f540eaebc0600966029879edab30566",
+      "sha256": "f5fe69dd67e44bd16462321d1031d77974cb8eda92efbc4b75919fad0a6bc5ab",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        28
+        29
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3466,7 +3466,7 @@
       "evidence": ""
     },
     "application/services/CompanyFinancialJournal.php": {
-      "sha256": "cc8fe784f8bef23979ee96ec7642f863e8467ce8cda5e54bed8729b9f2c9dc89",
+      "sha256": "295a513fec482acc05ff61fd6221880dc99b10467b4f64cde7d7cb38e99755b6",
       "categories": [
         "invoice_table",
         "payments"
@@ -3478,13 +3478,13 @@
         23,
         51,
         54,
-        58,
-        62,
-        75,
-        78,
-        81,
-        88,
-        101
+        59,
+        63,
+        76,
+        79,
+        82,
+        89,
+        102
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3744,7 +3744,7 @@
       "evidence": ""
     },
     "application/services/CompanyInvoices.php": {
-      "sha256": "521e974ec3ef8c8fa542d66e0a3919b2b12ba0469952ba4b84e27e14128681e2",
+      "sha256": "dca7ea503db862f94f6a5b295635602c4ea899c2690e119eaadaaa4037070ce1",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -3790,11 +3790,11 @@
         481,
         497,
         510,
-        515,
-        534,
-        538,
-        551,
-        553
+        516,
+        535,
+        539,
+        553,
+        555
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8584,7 +8584,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "ecc27078391874924e655db861d1865c5d2c26675a8f379d1d066e63a0297781",
+      "sha256": "c4ac098eb741c7a7d05ab555ae90b89fc8e8efd5f7748e28804761bd3b9437bf",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8685,7 +8685,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyHostedLinks.php": {
-      "sha256": "3bd81602bb96a3ab1e445c2f10271fa1d9f0ad2bd9851b31cebc6bf63b253287",
+      "sha256": "6714b38c70f078e5309ead7745aa9d0187ce9e436010dd3cd5a25bae9d013beb",
       "categories": [
         "invoice_table",
         "payments"
@@ -8709,12 +8709,23 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRecreationIntents.php": {
-      "sha256": "2c0d142852180698eb9183ef017b120929aa3d7ef9c7f4f07b05695eaa825f64",
+      "sha256": "fb484f3d96e2f3a3714663a617444fdf71732e88da0c52e068b2f221551d3894",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         22
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyRecreationSuccessors.php": {
+      "sha256": "08fffe38182efee31bbc1f3f2e68bc3330555ff2335e6accde90ac3795d6403a",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        26
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8735,7 +8746,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRemoteOperations.php": {
-      "sha256": "3ab32f9907212aeca5ba4f625e9cdb3ef1d452953d0aa95633979f58cc69ef31",
+      "sha256": "382e73563f2e9d3530eb2127f825c5501a18aab39dbd28eab201296da6381706",
       "categories": [
         "payments"
       ],
@@ -8758,24 +8769,24 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "377bdb44c28b754ce34fe43c890710799229e9ea811642cf531636c5da42a230",
+      "sha256": "b5c5a145924a91414316634ba9e29ade45eeb7e74fbe2546907b50bfd94330a5",
       "categories": [
         "customer_privacy",
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        39,
-        58,
-        60,
+        40,
+        59,
         61,
         62,
-        262,
-        277,
-        342,
-        383,
-        536,
-        604
+        63,
+        263,
+        279,
+        344,
+        422,
+        575,
+        643
       ],
       "state": "unreviewed",
       "evidence": ""

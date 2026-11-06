@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Asaas;
 require_once APPPATH.'services/CompanyInvoiceBalance.php';
 require_once __DIR__.'/CompanySchema.php';
+require_once __DIR__.'/CompanyOriginGenerations.php';
 require_once __DIR__.'/CompanyOriginPolicy.php';
 require_once __DIR__.'/CompanyInstruments.php';
 require_once __DIR__.'/CompanyRemoteOperationsSchema.php';
@@ -260,6 +261,7 @@ final class CompanyService
         \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());
         if($account['automation_actor']===null||(int)$account['automation_actor']<1||(int)$account['enabled']!==1||$account['verified_at']===null||(int)$event['account_row']!==(int)$account['id']||$event['event_type']!=='PAYMENT_RECEIVED'||$event['state']!=='observed')return false;
         $origin=$this->rows('SELECT o.id FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id JOIN '.$this->p.'invoices i ON i.id=o.invoice_id AND i.issuer_id=o.issuer_id JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE o.issuer_id=? AND o.account_id=? AND o.environment=? AND o.remote_id=? AND m.account_row=? AND o.provider=\'asaas\' AND o.channel=\'api\' AND o.state IN (\'issued\',\'received_observed\',\'issuing\',\'uncertain\') FOR UPDATE',[$account['issuer_id'],$account['account_id'],$account['environment'],$event['remote_id'],$account['id']])[0]??null;
+        if($origin&&$this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE id=?'.CompanyOriginGenerations::predicate($this->db,$this->p).' FOR UPDATE',[$origin['id']])===[])return false;
         if($origin&&CompanyOriginPolicy::isManual($this->db,$this->p,(int)$origin['id']))return false;
         if(!$origin||$this->rows('SELECT event_id FROM '.$this->p.'asaas_company_jobs WHERE event_id=? FOR UPDATE',[$event['id']]))return false;
         $now=gmdate('Y-m-d H:i:s');\IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_jobs(event_id,issuer_id,origin_id,actor_id,state,attempts,lease_token,lease_until,next_attempt_at,last_code,created_at,updated_at) VALUES(?,?,?,?,?,0,NULL,NULL,?,?,?,?)',[$event['id'],$account['issuer_id'],$origin['id'],$account['automation_actor'],'pending',$now,'received_event',$now,$now]);
@@ -354,9 +356,42 @@ final class CompanyService
         catch(\Throwable $e){if($manualOnly){try{$this->retainDispatchedResult($issuer,$actor,$dispatchedOrigin,$dispatchedMeta,$config,$parent,$originReference,$response??null,$remote??null,'issue');}catch(\Throwable $ignored){}throw new \RuntimeException('asaas_company_post_unconfirmed');}$this->transaction(function()use($issuer,$actor,$origin):void{$this->authorize($issuer,$actor,'issue');\IssuerStorage::query($this->db,"UPDATE {$this->p}asaas_payment_origins SET state='uncertain',last_code='company_post_unconfirmed',updated_at=? WHERE id=? AND issuer_id=? AND state='issuing'",[gmdate('Y-m-d H:i:s'),$origin,$issuer]);$this->audit($issuer,$actor,'company_asaas_post_unconfirmed',$origin);});throw new \RuntimeException('asaas_company_post_unconfirmed');}
         return $origin;
     }
+    /** One durable POST claim per prepared successor; recovery only observes a canonical ID. */
+    public function dispatchRecreation(int $issuer,int $actor,int $oldOrigin,string $key,callable $decrypt,?callable $transport=null,string $recoveryId=''):int
+    {
+        require_once __DIR__.'/CompanyRecreationSuccessors.php';
+        $recreation=new CompanyRecreationSuccessors($this->db,$this->p);$tables=$recreation->tables();
+        $read=function()use($recreation,$issuer,$actor,$oldOrigin,$key):array{return $recreation->assertPreparedInOwned($issuer,$actor,$oldOrigin,$key);};
+        [$intent,$row,$meta,$account,$parent]=$this->guardedTransaction(null,$tables,$read);
+        $origin=(int)$row['id'];
+        if($intent['state']==='prepared'){
+            $client=$this->client($account,$decrypt,$transport);self::wallet($client,$account);
+            $this->guardedTransaction(null,$tables,$read);self::customer($client,$meta['customer_id'],$parent);
+            $send=$this->guardedTransaction(null,$tables,function()use($read,$oldOrigin):bool{
+                [$current]=$read();if($current['state']!=='prepared')return false;
+                \IssuerStorage::query($this->db,"UPDATE {$this->p}asaas_company_recreations SET state='sending',updated_at=? WHERE origin_id=? AND state='prepared'",[gmdate('Y-m-d H:i:s'),$oldOrigin]);
+                if(($this->rows('SELECT state FROM '.$this->p.'asaas_company_recreations WHERE origin_id=?',[$oldOrigin])[0]['state']??'')!=='sending')throw new \RuntimeException('asaas_recreation_unconfirmed');return true;
+            });
+            if($send){
+                $payload=['customer'=>$meta['customer_id'],'billingType'=>$meta['billing_type'],'value'=>\CompanyInvoiceAmounts::decimal(\app\services\InvoicePaymentWriter::minorUnits($parent['total'])),'dueDate'=>$parent['duedate'],'externalReference'=>$parent['hash'],'description'=>$meta['profile']['description'],'fine'=>['value'=>0],'interest'=>['value'=>0],'discount'=>['value'=>0]];
+                try{
+                    $response=$client->request('POST','payments',$payload);$remote=self::opaque($response['id']??null,64);
+                    $this->storeProof($issuer,$actor,$origin,$account,$parent,$response,$remote,'issue',$read,$tables,false);
+                }catch(\Throwable $error){
+                    // The sending claim itself is durable. Even if this best-effort marker fails, no retry POST is possible.
+                    try{$this->guardedTransaction(null,$tables,function()use($read,$oldOrigin):void{$read();\IssuerStorage::query($this->db,"UPDATE {$this->p}asaas_company_recreations SET state='uncertain',updated_at=? WHERE origin_id=? AND state='sending'",[gmdate('Y-m-d H:i:s'),$oldOrigin]);});}catch(\Throwable $ignored){}
+                    throw new \RuntimeException('asaas_recreation_post_unconfirmed');
+                }
+            }
+        }
+        [$intent,$row]=$this->guardedTransaction(null,$tables,$read);
+        if($row['remote_id']===null&&$recoveryId==='')throw new \DomainException('asaas_recreation_recovery_required');
+        $this->observe($issuer,$actor,$origin,$decrypt,$transport,$recoveryId,$read,$tables);
+        return $origin;
+    }
     private function existingIssuance(int $invoice,int $account,string $requestKey,string $customer,string $billingType,array $parent):?int
     {
-        $old=$this->rows('SELECT o.id,o.issuer_id,o.environment,m.request_key,m.account_row,m.customer_id,m.billing_type,m.snapshot_hash,m.snapshot_json FROM '.$this->p.'asaas_payment_origins o LEFT JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.invoice_id=? FOR UPDATE',[$invoice])[0]??null;
+        $old=$this->rows('SELECT o.id,o.issuer_id,o.environment,m.request_key,m.account_row,m.customer_id,m.billing_type,m.snapshot_hash,m.snapshot_json FROM '.$this->p.'asaas_payment_origins o LEFT JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.invoice_id=?'.CompanyOriginGenerations::predicate($this->db,$this->p,'o.').' FOR UPDATE',[$invoice])[0]??null;
         if(!$old)return null;
         if((int)$old['issuer_id']!==(int)$parent['issuer_id']||(int)$old['account_row']!==$account||$old['request_key']!==$requestKey||$old['customer_id']!==$customer||$old['billing_type']!==$billingType)throw new \DomainException('asaas_company_origin_conflict');
         $this->unchanged($old,$parent);(new CompanyPreferences($this->db,$this->p))->originSnapshot($old,$old);
@@ -366,8 +401,12 @@ final class CompanyService
     {
         $row=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND provider=? AND channel=? FOR UPDATE',[$origin,$issuer,'asaas','api'])[0]??null;
         $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$origin])[0]??null;
-        if(!$row||!$meta)throw new \DomainException('asaas_company_origin_denied');$account=$this->account($issuer,(int)$meta['account_row']);
+        if(!$row||!$meta)throw new \DomainException('asaas_company_origin_denied');CompanyOriginGenerations::assertActive($row);$account=$this->account($issuer,(int)$meta['account_row']);
         if($row['account_id']!==$account['account_id']||$row['environment']!==$account['environment']||(int)$account['enabled']!==1||$account['verified_at']===null)throw new \DomainException('asaas_company_account_unverified');
+        if(array_key_exists('active_slot',$row)){
+            foreach($this->rows('SELECT e.event_type,e.state FROM '.$this->p.'asaas_payment_origins old JOIN '.$this->p.'asaas_company_origin_meta om ON om.origin_id=old.id JOIN '.$this->p.'asaas_company_events e ON e.account_row=om.account_row AND e.remote_id=old.remote_id WHERE old.invoice_id=? AND old.issuer_id=? AND old.active_slot IS NULL FOR UPDATE',[$row['invoice_id'],$issuer]) as $historical)
+                if(!in_array($historical['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true)||$historical['state']==='conflict')throw new \DomainException('asaas_recreation_historical_event_review');
+        }
         $parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);$meta['profile']=(new CompanyPreferences($this->db,$this->p))->originSnapshot($row,$meta);return [$row,$meta,$account,$parent];
     }
     /** Internal composition: private credentials never leave a transaction-owning service. */

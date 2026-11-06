@@ -88,3 +88,52 @@ canônica da nova cobrança e transação local confirmada.
 
 Migration164 é aditiva e sem backfill. Reversão de código não pode apagar intenções,
 origens ou provas, nem reduzir marcadores. O fluxo integral ASA04 segue pendente.
+
+## Recriação165 — sucessor, envio único e reabertura nativa
+
+A etapa165 substitui a limitação funcional descrita no checkpoint164 acima. A ação
+nativa de reabrir uma fatura de empresa com cobrança Asaas cancelada usa agora a
+intenção durável, reserva um sucessor para PIX/BOLETO e mantém a fatura cancelada
+até consultar a nova cobrança canônica como não paga, não excluída e sem eventos
+adversos. Cartão e origens de ponte com política manual continuam bloqueados para
+revisão específica; não há captura de cartão ou alteração do SDK.
+
+`active_slot` é nullable, com default1 e UNIQUE(invoice_id,active_slot). A migration
+adiciona essa unicidade antes de remover a unicidade antiga por invoice_id; não
+altera IDs, dados documentais, remote_id, provas, eventos ou recebimentos. Retirar
+uma origem da posição ativa (`NULL`), inserir o sucessor com snapshot/perfil e
+vincular a intenção ocorre numa única transação. Origens substituídas continuam
+consultáveis como histórico, mas são recusadas por operações financeiras atuais;
+seleção nativa, callbacks e links usam a origem ativa.
+
+A transição prepared→sending é persistida sob o lock financeiro antes do POST.
+Concorrentes não reenviam. Timeout/HTTP não confirmado permanece incerto; só GET
+com ID canônico pode recuperar. `externalReference` não é tratado como garantia de
+idempotência. Se a resposta se perdeu antes de guardar o ID, a identificação remota
+exige revisão: a guia operacional Asaas existente aceita o ID remoto na consulta
+canônica do sucessor. Depois dessa consulta, repetir a reabertura nativa apenas
+consulta o ID já vinculado e conclui o diário; não repete POST. O formulário de
+reabertura não recebe um ID arbitrário nem declara sucesso antes da confirmação.
+Interrupção depois do claim e antes do envio também exige revisão, sem reset cego.
+Uma preparação sem envio cuja prova ultrapassou cinco minutos bloqueia para revisão.
+
+A reabertura valida uma autoridade tipada também no diário financeiro. Status,
+auditoria, evento contábil e estado reopened da intenção são atômicos. Falha no
+diário mantém a fatura cancelada e preserva o resultado remoto para recuperação.
+Novo ciclo de cancelar/recriar acrescenta outra identidade, sem reutilizar recibos
+antigos. Replay revalida ACL e conta/ambiente; eventos tardios da origem antiga ou
+pagamento/rejeição da nova bloqueiam reabertura automática.
+
+Validação: MySQL8.4/PHP8.3, 64 checks adicionais de gerações/fluxo sobre suites
+anteriores; inclui rollback de metadata e diário, resposta perdida após aceite
+simulado, recuperação sem segundo POST, dois processos reais concorrentes, duas
+recriações sequenciais e revogação. Runner nativo de módulo: 277 verificações,
+incluindo falhas de DDL/tracking e replay165. Provedor simulado; não homologação
+Asaas. Fluxo HTTP autenticado integral da nova reabertura ainda depende do CI.
+
+Rollout requer pausa de writers durante DDL e runner nativo até165. DDL MySQL pode
+adquirir metadata locks; o ensaio não mede o volume de produção. Após gravar mais de
+uma origem por fatura, código anterior à165 não é compatível: rollback deve
+preservar dados/marcadores e usar correção progressiva ou restauração consistente
+anterior a qualquer novo efeito remoto, com conciliação. Nunca apagar gerações nem
+recriar a constraint antiga sobre dados novos para simular reversão.

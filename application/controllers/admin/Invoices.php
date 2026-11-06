@@ -429,7 +429,8 @@ class Invoices extends AdminController
                 if($reference['source_kind']==='company_invoice_draft')throw new DomainException('company_invoice_reopen_review_required');
                 $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
                 if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
-                (new CompanyInvoices($this->db,db_prefix()))->reopen($issuer,$actor,$reference['source_id'],$input['revision']);
+                require_once APPPATH.'services/CompanyAsaasInvoiceRecreation.php';
+                (new CompanyAsaasInvoiceRecreation($this->db,db_prefix()))->reopen($issuer,$actor,$reference['source_id'],$input['revision'],function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                 $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
             }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível reabrir esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
             catch(Throwable$error){show_error('Não foi possível confirmar a reabertura.',503);}
