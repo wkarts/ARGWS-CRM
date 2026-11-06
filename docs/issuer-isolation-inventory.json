@@ -453,7 +453,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Invoices.php": {
-      "sha256": "90106b02a09b29563ae9776553e5e35e1fb0ee48ecf420a52aa22d28ab65b84c",
+      "sha256": "c1fe04f3743e414ab432d8ec9d3824d8f9fe9f3bca588d7b23ba3203305eb7e7",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -9035,7 +9035,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/InvoiceIssuance.php": {
-      "sha256": "c7e4cab51fa140a6b055a35bb2203e273c717fe09e900e2806fe9a0b8ae7a7d6",
+      "sha256": "59f1b8018ace0fa8460dee27d7a2a0dc2ec44c51ef05bd089f2db17cca89018c",
       "categories": [
         "invoice_table"
       ],

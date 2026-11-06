@@ -162,3 +162,7 @@ e impressão sob CSP em Chromium; ver [contrato e limites](bb-cnab-portal.md).
 Validação HTTP autenticada dessa emissão/publicação e homologação bancária continuam pendentes.
 
 PIGE111 acrescenta diagnóstico explícito de conexão já habilitada pelo contrato remoto existente, com revisão/ACL antes e depois do HTTP. Não ativa conexão desativada nem substitui homologação bilateral real. Ver [contrato](pige-discovery.md).
+
+### Correções verificadas após75fb7ac4
+
+Banco do Brasil1.4.4/144 preserva143 e trata a espécie CNAB não suportada como rejeição422 com rollback integral, em vez de erro503. MySQL real:32 checks de emissão automática após276 de origem e35 de retorno; HTTP autenticado local: rejeição sem consumir número e emissão válida com replay. Aceite de orçamento usa o menu nativo no driver; guia Transações é aberta antes da remoção Asaas. CI A/B e demais falhas de tarefas/contratos continuam pendentes.

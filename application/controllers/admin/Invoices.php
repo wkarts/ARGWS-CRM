@@ -561,7 +561,7 @@ class Invoices extends AdminController
                     $this->load->view('admin/invoices/invoice',$data);
                 } else { show_error('Método não permitido.',405); }
             } catch (DomainException $error) {
-                $key=$error->getMessage();$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
+                $key=$error->getMessage();if($key==='bb_invoice_issuance_invalid'){show_error('Confira os parâmetros do título para o perfil CNAB selecionado. A fatura e o título não foram emitidos.',422);return;}$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
                 show_error('Não foi possível confirmar esta operação da fatura nesta empresa.',$status);
             } catch (Throwable $error) {  show_error('Não foi possível confirmar a fatura.',503); }
             return;

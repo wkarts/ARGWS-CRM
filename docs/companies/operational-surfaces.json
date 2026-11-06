@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "04846b2886ab296c5bf46beb86f85bd1781896c9788c15bd88b0123f1084f1d0",
+    "source_manifest_sha256": "dfc5467e558dcda5abab9381fc50cbbe3b401c88c0f638386a9310b56fd057e2",
     "counts": {
         "modules": 38,
-        "source_files": 4854,
+        "source_files": 4855,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -580,7 +580,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.4.3",
+            "version": "1.4.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -10484,7 +10484,7 @@
         },
         {
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "90106b02a09b29563ae9776553e5e35e1fb0ee48ecf420a52aa22d28ab65b84c",
+            "source_sha256": "c1fe04f3743e414ab432d8ec9d3824d8f9fe9f3bca588d7b23ba3203305eb7e7",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",

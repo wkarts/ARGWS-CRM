@@ -1,3 +1,8 @@
+# 1.4.4
+
+- Emissão CNAB automática: espécie recusada pelo perfil gera erro de entrada com rollback integral, em vez de erro genérico de armazenamento. Os códigos aceitos pelo gerador permanecem inalterados.
+- Migration144 NOOP; nenhum backfill, transmissão, publicação ou pagamento automático.
+
 # 1.4.3
 
 - Publicação explícita de boletos CNAB240/400 no portal, usando contato nativo e revisão do instrumento; revalida o responsável, saldo e origem.

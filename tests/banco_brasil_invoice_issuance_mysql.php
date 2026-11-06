@@ -19,7 +19,11 @@ essentialCheck($s->create($a,7,$auto240,$autoKey)===$invoiceAuto&&(int)$db->quer
 $snapshotAtomic=static function()use($db,$p):array{
     $out=[];foreach(['invoices','itemable','item_tax','issuers_sequences','company_invoice_requests','bb_number_reservations','bb_origins','bb_origin_snapshots','bb_batches','bb_batch_requests','bb_invoice_issuances','issuers_audit','bb_audit'] as $table)$out[$table]=$db->query('SELECT * FROM '.$p.$table)->result_array();return $out;
 };
-$beforeAtomic=$snapshotAtomic();$db->failOn='INSERT INTO '.$p.'bb_invoice_issuances';
+$beforeAtomic=$snapshotAtomic();
+$invalidProfile=$auto240;$invalidProfile['native_preferences']['bank_issuance']['payer']['species']='01';
+essentialThrows(fn()=>$s->create($a,7,$invalidProfile,hash('sha256','invalid-cnab240-species')),'bb_invoice_issuance_invalid','unsupported240 species is an input rejection, not storage failure');
+essentialCheck($snapshotAtomic()===$beforeAtomic,'invalid title rolls back invoice, items, number reservation, bank origin, batch and audit');
+$db->failOn='INSERT INTO '.$p.'bb_invoice_issuances';
 essentialThrows(fn()=>$s->create($a,7,$auto240,hash('sha256','atomic-fail-ledger')),'issuer_storage_failed','bank linkage failure cannot report successful canonical issue');$db->failOn=null;
 essentialCheck($snapshotAtomic()===$beforeAtomic,'bank failure rolls back invoice, lines, sequence, number, origin, batch and audit together');
 $badBank=$auto240;$badBank['native_preferences']['bank_issuance']['contract_id']=2147483647;

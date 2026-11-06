@@ -39,6 +39,7 @@ final class InvoiceIssuance
         $row=$this->rows('SELECT date FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$row)throw new \DomainException('bb_invoice_issuance_denied');
         $date=(new \DateTimeImmutable('now',new \DateTimeZone($instruction['timezone'])))->format('Y-m-d');
         $connection=(int)$contract['connection_id'];$binding=(int)$contract['layout_binding_id'];$key=hash('sha256','canonical-bb-invoice:'.$issuer.':'.$invoice);
+        try {
         if($contract['layout_id']===Agreement::LAYOUT_ID){
             if(isset($instruction['approval400']))throw new \DomainException('bb_invoice_issuance_invalid');
             (new Origination($this->db,$this->p))->generateInvoiceInOwned($issuer,$actor,$connection,$binding,$date,[['invoice_id'=>$invoice]+$instruction['payer']],$key);
@@ -47,6 +48,11 @@ final class InvoiceIssuance
             // Approval remains the operator's explicit instruction, scoped to each new immutable invoice.
             (new Cnab400Preparation($this->db,$this->p))->generateInvoiceInOwned($issuer,$actor,$connection,$binding,$invoice,$date,$instruction['payer'],$instruction['approval400'],$key);
         }else throw new \DomainException('bb_invoice_issuance_invalid');
+        } catch (\InvalidArgumentException $error) {
+            if($error->getMessage()!=='bb_title_profile_unsupported')throw $error;
+            // A rejected title remains an input failure; the owner rolls back invoice and bank state.
+            throw new \DomainException('bb_invoice_issuance_invalid',0,$error);
+        }
         $origin=$this->rows('SELECT id FROM '.$this->p.'bb_origins WHERE invoice_id=? AND issuer_id=? AND connection_id=? AND layout_binding_id=?',[$invoice,$issuer,$connection,$binding])[0]??null;
         if(!$origin)throw new \RuntimeException('issuer_bb_write_unconfirmed');
         $json=json_encode($instruction,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);

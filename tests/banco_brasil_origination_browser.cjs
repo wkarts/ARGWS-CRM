@@ -209,7 +209,16 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(await page.locator('#bank-issue-enabled').isChecked(),false,'bank issuance never inferred from payment mode');
   await page.locator('#bank-issue-enabled').check();await page.locator('#bank-issue-contract').selectOption(contract240);
   await page.locator('#bank-issue-timezone').fill('America/Sao_Paulo');
-  for(const [field,value]of Object.entries({payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA',species:'01',acceptance:'N'}))await page.locator('#bank-issue-'+field).fill(value);
+  for(const [field,value]of Object.entries({payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA',species:'02',acceptance:'N'}))await page.locator('#bank-issue-'+field).fill(value);
+  const beforeInvalidTitle=sql('SELECT COUNT(*) FROM tblinvoices WHERE issuer_id='+a);
+  const beforeInvalidRange=sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+a);
+  const invalidTitle=await page.locator('#invoice-form').evaluate(form=>new URLSearchParams(new FormData(form)).toString());
+  // The native submit handler enables the currency selector before serialization.
+  const invalidParams=new URLSearchParams(invalidTitle);invalidParams.set('currency',await page.locator('#invoice-form select[name=currency]').inputValue());for(const [key,value] of Object.entries(await native.security(page)))invalidParams.set(key,value);invalidParams.set('bank_issuance[payer][species]','01');
+  const invalidResponse=await context.request.post(url+'/admin/invoices/invoice',{data:invalidParams.toString(),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+  assert.equal(invalidResponse.status(),422,'unsupported CNAB240 species is rejected as input, never a storage success/failure ambiguity');
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoices WHERE issuer_id='+a),beforeInvalidTitle,'rejected title does not leave an invoice');
+  assert.equal(sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+a),beforeInvalidRange,'rejected title does not consume a bank number');
   const {id:automaticInvoice}=await native.save(page,url);
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_invoice_issuances WHERE invoice_id='+automaticInvoice+' AND issuer_id='+a),'1','actual native save and idempotent retry create one bank linkage');
   const automaticBatch=sql('SELECT m.batch_id FROM tblbb_batch_origins m JOIN tblbb_origins o ON o.id=m.origin_id WHERE o.invoice_id='+automaticInvoice+' AND o.issuer_id='+a);
