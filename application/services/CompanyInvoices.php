@@ -387,20 +387,22 @@ final class CompanyInvoices
         if($lifecycle)$frame[]=['reopen_audit_id'=>(int)$lifecycle[0]['id']];
         return hash('sha256',json_encode($frame,JSON_THROW_ON_ERROR));
     }
-    public function change($issuer,$actor,$invoice,string $revision,?array $input=null,?callable $mutationGuard=null,array $guardTables=[],?array $lineMapping=null):void
+    public function change($issuer,$actor,$invoice,string $revision,?array $input=null,?callable $mutationGuard=null,array $guardTables=[],?array $lineMapping=null,?CompanyAsaasCancellationSource $cancellation=null):void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$data=$input===null?null:self::input($input);
+        if($cancellation!==null){if($data!==null)throw new DomainException('asaas_invoice_cancellation_only');$guardTables=array_merge($guardTables,$cancellation->tables());}
         $preferences=$data['native_preferences']??null;
         if($preferences!==null&&$mutationGuard===null)throw new DomainException('company_invoice_native_preferences_creation_only');
         if($preferences!==null){require_once __DIR__.'/NativeCompanyInvoicePaymentChoices.php';$guardTables=array_values(array_unique(array_merge($guardTables,NativeCompanyInvoicePaymentChoices::validationTables($preferences['allowed_payment_modes']??[]))));}
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('company_invoice_stale');
-        $this->transaction(function()use($issuer,$actor,$invoice,$revision,$data,$preferences,$mutationGuard,$lineMapping):void{
+        $this->transaction(function()use($issuer,$actor,$invoice,$revision,$data,$preferences,$mutationGuard,$lineMapping,$cancellation):void{
             $this->authorize($issuer,$actor,'edit');$this->authorize($issuer,$actor,'view');
             $row=$this->rows('SELECT id,clientid,currency,status,date,total FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$row)throw new DomainException('company_invoice_access_denied');
             if($mutationGuard!==null&&$mutationGuard('before')===false)return;
             if($data!==null&&array_intersect_key($data,['calculation_contract'=>true])!==$this->calculationOptions($issuer,$actor,$invoice))throw new DomainException('company_invoice_calculation_contract_immutable');
             if(!$this->rows('SELECT invoice_id FROM '.$this->prefix.'company_invoice_requests WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new DomainException('company_invoice_immutable');
+            if($cancellation!==null&&$cancellation->assertCurrent($this->db,$this->prefix,$issuer,$actor,$invoice,$revision))return;
             if($data===null&&(int)$row['status']===5)return; // Repeated cancellation does not erase history.
             if(!hash_equals($revision,$this->fingerprint($issuer,$invoice)))throw new DomainException('company_invoice_stale');
             if(!in_array((int)$row['status'],[1,4],true))throw new DomainException('company_invoice_immutable');
@@ -408,7 +410,7 @@ final class CompanyInvoices
             $documentBefore=$this->documents($issuer,$actor)->get($invoice,$issuer);
             $before=['date'=>$row['date'],'total'=>self::decimal(self::cents($row['total'])),'status'=>(int)$row['status'],'revision'=>$revision];
             $providerTables=CompanyInvoiceProviderTables::current($this->db,$this->prefix);IssuerTransaction::assertOwned($this->db,$this->prefix,$providerTables);
-            foreach($providerTables as $table)if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
+            foreach($providerTables as $table){$origins=$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]);if($origins&&($cancellation===null||$table!=='asaas_payment_origins'||count($origins)!==1||(int)$origins[0]['id']!==$cancellation->origin()))throw new DomainException('company_invoice_provider_review_required');}
             if((new CompanyBankReceiptComponents($this->db,$this->prefix))->forInvoiceInOwned($issuer,$actor,$invoice))throw new DomainException('company_invoice_immutable');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_immutable');
             if($data===null){IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE id=? AND issuer_id=?',[$invoice,$issuer]);}
@@ -432,6 +434,7 @@ final class CompanyInvoices
             if($data!==null)$this->confirmLines($invoice,$data['items'],$data['calculation_contract']??null);
             $after=['date'=>$data===null?$row['date']:$data['date'],'total'=>self::decimal(self::cents($stored['total'])),'status'=>(int)$stored['status'],'revision'=>$this->fingerprint($issuer,$invoice)];
             $this->journal($issuer,$actor,$invoice,(int)$row['currency'],$data===null?'invoice_cancelled':'invoice_updated',$before,$after,$data===null?gmdate('Y-m-d'):$data['date'],hash('sha256','company-journal:invoice-'.($data===null?'cancelled':'updated').':'.$issuer.':'.$invoice.':'.$revision));
+            if($cancellation!==null)$cancellation->confirmed();
             if($data!==null&&isset($data['native_fields']))$this->confirmNativeFields($issuer,$actor,$invoice,$data['native_fields']);
             if($data!==null&&array_key_exists('native_project',$data))$this->confirmNativeProject($issuer,$actor,$invoice,(int)$row['clientid'],$data['native_project']);
             if($mutationGuard!==null)$mutationGuard('after');

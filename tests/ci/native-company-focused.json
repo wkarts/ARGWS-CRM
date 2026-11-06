@@ -3087,6 +3087,10 @@
     [
       "php",
       "tests/companies/native_portal_proposals_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_invoice_cancellation.php"
     ]
   ],
   "browser": [

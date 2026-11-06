@@ -391,10 +391,11 @@ class Invoices extends AdminController
                     require_once APPPATH.'services/NativeCompanyInvoiceIdentity.php';
                     $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
                     if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
-                    (new CompanyInvoices($this->db,db_prefix()))->change($issuer,$actor,$reference['source_id'],$input['revision']);
+                    require_once APPPATH.'services/CompanyAsaasInvoiceCancellation.php';
+                    (new CompanyAsaasInvoiceCancellation($this->db,db_prefix()))->cancel($issuer,$actor,$reference['source_id'],$input['revision'],function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                 }
                 $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
-            }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível cancelar esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
+            }catch(DomainException$error){$reason=$error->getMessage();if($reason==='asaas_invoice_cancellation_pending')show_error('Cancelamento pendente de confirmação no Asaas. A fatura local continua ativa; uma nova consulta não repetirá a exclusão.',409);else show_error('Não foi possível cancelar esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
             catch(Throwable$error){show_error('Não foi possível confirmar o cancelamento.',503);}
             return;
         }

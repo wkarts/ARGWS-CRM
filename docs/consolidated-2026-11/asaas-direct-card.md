@@ -115,3 +115,18 @@ server-side de coleta externa: não guardar PAN/CVV não elimina o processamento
 transitório nem demonstra conformidade da infraestrutura. O fluxo atual aceita
 somente token transitório; coleta/tokenização própria ainda não foi implementada.
 Nenhum dado de cartão foi usado nesta consulta documental, e o SDK permanece pausado.
+
+## Decisão ainda pendente sobre coleta
+
+O endpoint de tokenização documentado recebe cartão/titular/IP pelo backend.
+Coleta própria significa navegador → HTTPS CRM → memória PHP → HTTPS Asaas, com
+retorno de token do mesmo cliente. PAN/CVV nunca poderão ir para banco, sessão,
+cookies, logs, armazenamento do navegador ou arquivos. A infraestrutura ainda
+processaria esses dados transitoriamente. Portal e operador podem ser opções
+independentes por empresa; essa escolha não obriga um único modelo fixo.
+
+Alternativa documentada: coleta no domínio Asaas. Ela foi rejeitada como solução
+suficiente para este requisito. Não foi comprovado componente oficial de
+tokenização no navegador que contorne o servidor CRM. Nenhuma captura foi
+implementada por inferência; não são necessários dados reais ou credenciais para
+definir o fluxo. As demais frentes seguem independentes dessa decisão.

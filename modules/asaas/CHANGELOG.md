@@ -1,5 +1,13 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.3 — 2026-11-06
+
+- Cancelamento nativo de fatura após exclusão canônica de cobrança não paga, preservando origem e histórico.
+- Timeout permanece pendente; recuperação por GET, sem repetir DELETE. Falha local não apaga sucesso remoto.
+- Recibo e journal locais atômicos; ACL, revisão, módulo, estado financeiro e concorrência revalidados.
+- Migration163 NOOP; sem reativação automática, exclusão histórica, baixa manual ou mudança do SDK.
+- Contrato e evidências: `docs/consolidated-2026-11/asaas-invoice-lifecycle.md` no CRM.
+
 ## 1.6.2 — 2026-11-06
 
 - Pagamento direto por token de cobrança CREDIT_CARD existente, com seleção dos contratos payWithCreditCard/payWithCard na guia Cartão.

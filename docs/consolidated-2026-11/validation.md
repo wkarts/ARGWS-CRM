@@ -430,3 +430,13 @@ SQLite: listagem/ACL de propostas, decisão de orçamento e conversão automáti
 passaram, incluindo assinatura, PDF, corrupção, recuperação e corrida de grant.
 Esses testes executam serviços/controllers com banco real e fronteiras sintéticas;
 não equivalem a navegador autenticado nem comprovam toda a paridade com4.0.2.
+
+## Cancelamento nativo Asaas163
+
+`companies/asaas_invoice_cancellation.php`:22 verificações adicionais MySQL após167
+cumulativas; corrida real entre dois processos:6 checks. Um DELETE e um recibo
+local, sem repetir chamada em timeout ou rollback. Provedor simulado. Controller
+nativo de cancelamento:145 cumulativas SQLite, incluindo fluxo manual e rascunho.
+`asaas_module_migrations.php`:243 assertions no runner MySQL; `asaas_callback_version.php`:13.
+A tentativa inicial do runner foi recusada por nome de schema fora da allowlist;
+reexecutada em `asaas_test`, sem alterar guard. [Contrato e limites](asaas-invoice-lifecycle.md).

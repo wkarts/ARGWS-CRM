@@ -15,7 +15,13 @@ if(($argv[1]??'')==='worker'){
         $deleted=in_array($remote,is_file($in['evidence'])?file($in['evidence'],FILE_IGNORE_NEW_LINES):[],true);
         return asaasOriginDescriptionFixture($db,$p,$row)+['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$row['invoice_total'],'dueDate'=>$row['invoice_due_date'],'status'=>'PENDING','netValue'=>$row['invoice_total'],'paymentDate'=>'','creditDate'=>'','deleted'=>$deleted];
     };
-    try{echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false,$transport),JSON_THROW_ON_ERROR);}catch(DomainException $e){if($e->getMessage()!=='asaas_company_access_denied')throw $e;echo 'denied';}exit(0);
+    try{
+        $decrypt=fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false;
+        if(($in['operation']??'')==='cancel'){
+            require_once APPPATH.'services/CompanyAsaasInvoiceCancellation.php';
+            (new CompanyAsaasInvoiceCancellation($db,$p))->cancel($in['issuer'],7,$in['invoice'],$in['revision'],$decrypt,$transport);echo 'cancelled';
+        }else echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],$decrypt,$transport),JSON_THROW_ON_ERROR);
+    }catch(DomainException $e){if($e->getMessage()==='asaas_company_access_denied')echo 'denied';elseif(($in['operation']??'')==='cancel'&&$e->getMessage()==='asaas_invoice_cancellation_pending')echo 'pending';else throw $e;}exit(0);
 }
 require __DIR__.'/asaas_remote_operations.php';$observer=asaasRemoteConnection($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
 foreach(['normal','revocation'] as $mode){

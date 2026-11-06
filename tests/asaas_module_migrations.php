@@ -225,15 +225,21 @@ verify((string)(new App_module_migration('asaas'))->version('161')==='161','late
 verify((new App_module_migration('asaas'))->version('161')===true,'161 replay is no-op');
 foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'161 preserves data: '.$table);
 $db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_card_payments`';
-$failed=false;try{(new App_module_migration('asaas'))->to_latest();}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+$failed=false;try{(new App_module_migration('asaas'))->version('162');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
 verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.1','162 DDL failure preserves161');
 $db->failQuery='UPDATE `module_test_modules`';
-verify((new App_module_migration('asaas'))->to_latest()===false,'162 tracking failure rejected after additive DDL');
+verify((new App_module_migration('asaas'))->version('162')===false,'162 tracking failure rejected after additive DDL');
 verify($db->table_exists('module_test_asaas_company_card_payments'),'162 complete table remains for safe retry');
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.1','162 failed tracking retains161');$db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='162','162 native retry confirms marker');
-verify((new App_module_migration('asaas'))->to_latest()===true,'162 native replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('162')==='162','162 native retry confirms marker');
+verify((new App_module_migration('asaas'))->version('162')===true,'162 native replay no-op');
 \Asaas\CompanyCardPaymentsSchema::ensure($db,db_prefix(),false);
 verify($pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()==0,'162 never creates payment commands');
 foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'162 preserves data: '.$table);
+$db->failQuery='UPDATE `module_test_modules`';
+verify((new App_module_migration('asaas'))->to_latest()===false,'163 tracking failure rejected');
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.2','163 failed tracking preserves162');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->to_latest()==='163','163 native tracking confirmed');
+verify((new App_module_migration('asaas'))->to_latest()===true,'163 replay no-op');
+foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'163 preserves data: '.$table);
 echo "OK: {$n} native module migration MySQL assertions.\n";
