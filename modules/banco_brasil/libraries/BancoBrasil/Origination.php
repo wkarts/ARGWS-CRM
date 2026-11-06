@@ -210,6 +210,14 @@ final class Origination
         }
         return [$b,$snapshots];
     }
+    /** Composition for explicit portal publication; staff authority is still checked by boleto(). */
+    public function boletoInOwnedTransaction(int $issuer,int $actor,int $batch,int $invoice):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,$this->issuanceTables());
+        if($this->invoiceOwned)throw new \LogicException('bb_recursive_invoice_issue');
+        $this->invoiceOwned=true;
+        try{return $this->boleto($issuer,$actor,$batch,$invoice);}finally{$this->invoiceOwned=false;}
+    }
     /** Read-only instrument. Printing never freezes a remittance or reserves another number. */
     public function boleto($issuer,$actor,$batch,$invoice):array
     {

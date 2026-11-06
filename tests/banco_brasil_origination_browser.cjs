@@ -222,6 +222,49 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(printResponse.status(),200,'invoice-issued title is printable before remittance download');assert.match(printResponse.headers()['cache-control'],/no-store/);
   assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+automaticBatch),'open','printing leaves group open');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+automaticInvoice),'0','printing never settles the invoice');
+  // Explicit CNAB publication uses real staff review and an independently authenticated contact.
+  await page.goto(url+'/admin/clients/client/'+client+'?group=contacts');
+  const grantInvoiceAccess=page.getByRole('button',{name:'Permitir acesso a faturas',exact:true});
+  const grantedForCnab=await grantInvoiceAccess.count()===1;
+  if(grantedForCnab)await navigate(page,grantInvoiceAccess);
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
+  const publicContext=await browser.newContext();
+  try{
+   await publicContext.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
+   await publicContext.addInitScript(()=>{window.print=()=>{window.__printedCnab=true;};});
+   const publicPage=await publicContext.newPage();publicPage.on('pageerror',e=>errors.push(e.message));
+   await publicPage.goto(url+'/company_portal/index/'+a);
+   await publicPage.locator('#login-email').fill('changed-portal@example.invalid');
+   await publicPage.locator('#login-password').fill('synthetic-password-a');
+   await navigate(publicPage,publicPage.locator('#portal-login button[type=submit]'));
+   const logout=publicPage.locator('form').filter({has:publicPage.locator('input[name=action][value=logout]')});
+   assert.equal(await logout.count(),1,'real contact login required before portal test');
+   const portalFields=await logout.evaluate(form=>Object.fromEntries(new FormData(form).entries()));
+   const request={...portalFields,action:'invoice_bb_checkout',invoice_id:automaticInvoice};
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+a,{form:request})).status(),404,'unpublished CNAB is denied through the real portal controller');
+   const reviewForm=()=>page.locator('form[action*="preview_checkout"]').filter({has:page.locator('input[name=invoice_id]')});
+   await reviewForm().locator('input[name=invoice_id]').fill(automaticInvoice);await navigate(page,reviewForm().locator('button'));
+   await page.locator('#bb-tab-billing').click();
+   const automaticOrigin=sql('SELECT id FROM tblbb_origins WHERE invoice_id='+automaticInvoice+' AND issuer_id='+a);
+   const publication=value=>page.locator('form[action*="publish_checkout"]').filter({has:page.locator('input[name=origin_id][value="'+automaticOrigin+'"]')}).filter({has:page.locator('input[name=enabled][value="'+value+'"]')});
+   await navigate(page,publication('1').locator('button'));
+   await publicPage.goto(url+'/company_portal/index/'+a);
+   const instrumentForm=publicPage.locator('form').filter({has:publicPage.locator('input[name=action][value=invoice_bb_checkout]')}).filter({has:publicPage.locator('input[name=invoice_id][value="'+automaticInvoice+'"]')});
+   assert.equal(await instrumentForm.count(),1,'published CNAB appears only on its own invoice');
+   await navigate(publicPage,instrumentForm.locator('button'));
+   assert.equal(await publicPage.getByText('HOMOLOGAÇÃO — NÃO PAGAR',{exact:true}).count(),1);
+   assert.equal(await publicPage.locator('.barcode svg').count(),1);
+   await publicPage.locator('#bb-print-boleto').click();assert.equal(await publicPage.evaluate(()=>window.__printedCnab),true,'nonce-bound print handler works under actual portal CSP');
+   assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+automaticBatch),'open','portal printing never freezes an open remittance');
+   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+automaticInvoice),'0');
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+b,{form:request})).status(),404,'A contact cannot disclose an A boleto under B context');
+   await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
+   await reviewForm().locator('input[name=invoice_id]').fill(automaticInvoice);await navigate(page,reviewForm().locator('button'));
+   await page.locator('#bb-tab-billing').click();await navigate(page,publication('0').locator('button'));
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+a,{form:request})).status(),404,'saved portal form cannot disclose a hidden instrument');
+   if(grantedForCnab){await page.goto(url+'/admin/clients/client/'+client+'?group=contacts');await navigate(page,page.getByRole('button',{name:'Revogar acesso a faturas',exact:true}));}
+
+  }finally{await publicContext.close();}
   assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
  }catch(error){const logs=spawnSync('docker',['logs','--tail','80',app],{encoding:'utf8'});console.error('Disposable BB HTTP server diagnostic:',(logs.stdout||'')+(logs.stderr||''));throw error;}finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

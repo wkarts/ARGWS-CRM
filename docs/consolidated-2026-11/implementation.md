@@ -63,7 +63,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | BB02 API/240/400 | Perfis e codecs separados | Perfis bancários não suportados continuam recusados | Guias API/CNAB240/CNAB400 com contratos reais e vínculo comum | Chromium: guias, campos e declarações explícitas |
 | BB03 Parâmetros reais | Conta, convênio7, carteira17, variação, faixa e perfis existentes | Outros convênios/carteiras exigem contrato/codec verificado; não foram inventados campos | Configuração de conta/layout/faixas/API na mesma tela | Módulo137 tracking/upgrade em MySQL; sem homologação bancária |
 | BB04 Operação | Remessa/retorno, arquivos e conciliação existentes | Homologação bancária pendente | Menu operacional preservado; configuração movida e linkada | Admin PHP mantém formulários operacionais e CSRF |
-| BB05 Boleto antes transmissão | Origination + CnabBoleto139 + preparação400/140 | Portal do cliente e HTTP autenticado pendentes | Emissão canônica e recorrente240/400 atômica142 com instrução explícita; boleto por snapshot antes da transmissão; [contrato](bb-invoice-issuance.md) | MySQL277, concorrência274, Chromium físico; não homologado |
+| BB05 Boleto antes transmissão | Origination + CnabBoleto139 + preparação400/140 | HTTP autenticado e homologação bancária pendentes | Emissão canônica e recorrente240/400 atômica142 com instrução explícita; boleto por snapshot antes da transmissão e publicação explícita no portal143; [contrato](bb-invoice-issuance.md) | MySQL277, concorrência274, Chromium físico; não homologado |
 | BB06 Lote aberto compatível | Origination138 + grupos CNAB400/141 | HTTP autenticado da emissão pendente | CNAB240 e CNAB400 acumulam títulos compatíveis até100, inclusive pela emissão canônica142; origens históricas preservadas | MySQL: datas distintas, retry, conta/convênio distintos e corrida emissão/download; [contrato](bb-cnab400-groups.md) |
 | BB07 Primeiro download fecha | Origination::download e Cnab400Groups141 sob mutex financeiro | Homologação bancária pendente | CNAB240 e CNAB400 congelam bytes na primeira retirada; falha de auditoria reverte congelamento | Dois processos MySQL com espera observada no lock |
 | BB08 Download idêntico/estados | Conteúdo persistido e hash | Homologação bancária continua necessária | Redownload de lote novo/legado preserva bytes; não marca transmissão/baixa | MySQL: hash congelado, retry e falha do encoder |
@@ -157,7 +157,8 @@ foi integrado pelo usuário; nesta etapa não há alteração de SDK/vendor/Perf
 antes do download/transmissão, sem alterar arquivo ou gerar pagamento. O checkpoint139
 foi ampliado por140–142: CNAB400 e emissão canônica/recorrente agora estão
 implementados e testados em MySQL, conforme as linhas BB05–BB07 acima.
-Publicação do boleto no portal, validação HTTP autenticada dessa emissão e
-homologação bancária continuam pendentes.
+Publicação explícita no portal acrescentada por143, com30 verificações SQL novas
+e impressão sob CSP em Chromium; ver [contrato e limites](bb-cnab-portal.md).
+Validação HTTP autenticada dessa emissão/publicação e homologação bancária continuam pendentes.
 
 PIGE111 acrescenta diagnóstico explícito de conexão já habilitada pelo contrato remoto existente, com revisão/ACL antes e depois do HTTP. Não ativa conexão desativada nem substitui homologação bilateral real. Ver [contrato](pige-discovery.md).

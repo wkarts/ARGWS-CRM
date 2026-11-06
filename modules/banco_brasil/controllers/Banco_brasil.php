@@ -349,7 +349,13 @@ class Banco_brasil extends AdminController
         $this->post();$issuer=$this->positiveId($this->input->post('issuer_id'));$this->issuer($issuer,'manage');
         try{
             require_once dirname(__DIR__).'/libraries/BancoBrasil/Checkout.php';
-            $this->checkoutPreview=(new \BancoBrasil\Checkout($this->db,db_prefix()))->staffInstrument($issuer,$this->staffId(),$this->positiveId($this->input->post('origin_id')));
+            $origin=$this->input->post('origin_id',false);
+            if($origin===null){
+                $invoice=$this->positiveId($this->input->post('invoice_id',false));
+                $rows=IssuerStorage::query($this->db,"SELECT id FROM ".db_prefix()."bb_origins WHERE issuer_id=? AND invoice_id=? AND active_slot=1 AND channel IN ('cnab240','cnab400')",[$issuer,$invoice])->result_array();
+                if(count($rows)!==1)throw new DomainException('bb_checkout_unavailable');$origin=$rows[0]['id'];
+            }
+            $this->checkoutPreview=(new \BancoBrasil\Checkout($this->db,db_prefix()))->staffInstrument($issuer,$this->staffId(),$this->positiveId($origin));
             $this->checkoutPreview['issuer_id']=$issuer;
         }catch(Throwable $error){$this->flash('warning','Instrumento indisponível ou precisa de revisão. Nenhuma chamada bancária foi feita.');}
         $this->index();

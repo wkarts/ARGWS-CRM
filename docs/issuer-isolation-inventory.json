@@ -199,14 +199,14 @@
       "evidence": ""
     },
     "application/controllers/Portal.php": {
-      "sha256": "24f89338d778bfd7a01ba1ace0f704cc78f940418e356c981d8d0263a37473ec",
+      "sha256": "bdd2a2c1cc83d74c4ff5917f2fed239bb65010f8237da2df1332bfe77b64fec7",
       "categories": [
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        99,
-        179
+        106,
+        186
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8883,7 +8883,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "feac907e0dc8d448d62056328ceb65fcf1f68e4afe2efc259fbf7a2371834bc0",
+      "sha256": "3eb55bb91a424bcfb2729b71938f3a5baeefa3b41f1d84befe7bcdd166e19cf0",
       "categories": [
         "invoice_table"
       ],
@@ -8973,20 +8973,20 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Checkout.php": {
-      "sha256": "04abf288d450ce50159c7edb282ab8c6dc09e090843f2d8be13e2c2d5f4674fb",
+      "sha256": "f66dd965664cca1602471167857b32246d3e501b31cc64088efdad307a027591",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        21,
-        62
+        29,
+        72
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Cnab400Preparation.php": {
-      "sha256": "67f25d9b590c8e924a72359d521d266d7f131fb45b163a9af2aaf63f405c0095",
+      "sha256": "0bee868fa53ffc5b30cd3e4051554bb102932b47cb2aea6df1411950953faa71",
       "categories": [
         "invoice_table",
         "payments"
@@ -9000,8 +9000,8 @@
         220,
         233,
         323,
-        347,
-        361
+        355,
+        369
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -9016,6 +9016,20 @@
         61,
         89,
         133
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/CnabPortal.php": {
+      "sha256": "a99720c2658c6463cd8507e460783e7999406a9ff5032503b0169c490b8dfc89",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        39,
+        86
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -9045,7 +9059,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "3e8a466da2292ed6f538f9f04ef2df767ebe8d4ca99066baef0f4e45a5cb8bbc",
+      "sha256": "50b9c96eb87ce06ec412d41767e66eb6f730ed2b66d0cc6050dc6fda4b4cfd37",
       "categories": [
         "invoice_table",
         "payments"
@@ -9056,9 +9070,9 @@
         160,
         162,
         166,
-        223,
-        228,
-        230
+        231,
+        236,
+        238
       ],
       "state": "unreviewed",
       "evidence": ""

@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "a2634b22d7a0c472eb270384bcd6a9ba60305a9f78b96b914a234c80a3946a1f",
+    "source_manifest_sha256": "f6f2db594788a4e5129d00d2b9bed016f143644774026374451b741e4a4bde00",
     "counts": {
         "modules": 38,
-        "source_files": 4851,
+        "source_files": 4853,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -580,7 +580,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.4.2",
+            "version": "1.4.3",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -8699,7 +8699,7 @@
         },
         {
             "path": "application/controllers/Portal.php",
-            "source_sha256": "24f89338d778bfd7a01ba1ace0f704cc78f940418e356c981d8d0263a37473ec",
+            "source_sha256": "bdd2a2c1cc83d74c4ff5917f2fed239bb65010f8237da2df1332bfe77b64fec7",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -16311,7 +16311,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "feac907e0dc8d448d62056328ceb65fcf1f68e4afe2efc259fbf7a2371834bc0",
+            "source_sha256": "3eb55bb91a424bcfb2729b71938f3a5baeefa3b41f1d84befe7bcdd166e19cf0",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16473,97 +16473,97 @@
                 },
                 {
                     "method": "publish_checkout",
-                    "line": 357,
+                    "line": 363,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_api_profile",
-                    "line": 369,
+                    "line": 375,
                     "visibility": "public"
                 },
                 {
                     "method": "save_api_credentials",
-                    "line": 376,
+                    "line": 382,
                     "visibility": "public"
                 },
                 {
                     "method": "issue_api",
-                    "line": 383,
+                    "line": 389,
                     "visibility": "public"
                 },
                 {
                     "method": "resume_api_issue",
-                    "line": 390,
+                    "line": 396,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api",
-                    "line": 397,
+                    "line": 403,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api_movements",
-                    "line": 404,
+                    "line": 410,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api",
-                    "line": 411,
+                    "line": 417,
                     "visibility": "public"
                 },
                 {
                     "method": "configure_api_webhook",
-                    "line": 418,
+                    "line": 424,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_due",
-                    "line": 425,
+                    "line": 431,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_abatement",
-                    "line": 432,
+                    "line": 438,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_reference",
-                    "line": 439,
+                    "line": 445,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_address",
-                    "line": 446,
+                    "line": 452,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_discount",
-                    "line": 453,
+                    "line": 459,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_receipt_window",
-                    "line": 460,
+                    "line": 466,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api_discount",
-                    "line": 467,
+                    "line": 473,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_api_discount",
-                    "line": 474,
+                    "line": 480,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_api",
-                    "line": 481,
+                    "line": 487,
                     "visibility": "public"
                 },
                 {
                     "method": "local_noncash",
-                    "line": 499,
+                    "line": 505,
                     "visibility": "public"
                 }
             ],
@@ -26465,7 +26465,7 @@
         {
             "name": "bb_batch_origins",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 12
         },
         {
             "name": "bb_batch_requests",
@@ -26480,7 +26480,7 @@
         {
             "name": "bb_checkout_publications",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 15
         },
         {
             "name": "bb_cnab_group_members",
@@ -26495,7 +26495,7 @@
         {
             "name": "bb_cnab_preparations",
             "state": "not_verified",
-            "reference_count": 25
+            "reference_count": 26
         },
         {
             "name": "bb_connections",
@@ -26545,7 +26545,7 @@
         {
             "name": "bb_origins",
             "state": "not_verified",
-            "reference_count": 76
+            "reference_count": 82
         },
         {
             "name": "bb_return_events",
@@ -28075,7 +28075,7 @@
         {
             "name": "contact_permissions",
             "state": "not_verified",
-            "reference_count": 58
+            "reference_count": 59
         },
         {
             "name": "contactpermissions",
@@ -29020,7 +29020,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 650
+            "reference_count": 652
         },
         {
             "name": "issuer_certificate_audit",
@@ -29040,7 +29040,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 289
+            "reference_count": 290
         },
         {
             "name": "issuers_client_links",

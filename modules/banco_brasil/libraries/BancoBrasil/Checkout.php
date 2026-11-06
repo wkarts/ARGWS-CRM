@@ -15,6 +15,14 @@ final class Checkout
         $this->api=new ApiService($db,$p);
     }
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
+    private function cnabOrigin(int $issuer,int $origin):bool
+    {
+        return count($this->rows("SELECT id FROM {$this->p}bb_origins WHERE issuer_id=? AND id=? AND channel IN ('cnab240','cnab400')",[$issuer,$origin]))===1;
+    }
+    private function cnab():CnabPortal
+    {
+        require_once __DIR__.'/CnabPortal.php';return new CnabPortal($this->db,$this->p);
+    }
     private function run(callable $work)
     {
         CheckoutSchema::ensure($this->db,$this->p,false);
@@ -24,6 +32,7 @@ final class Checkout
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$origin=\IssuerPolicy::id($origin);
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new \DomainException('bb_checkout_revision_invalid');
+        if($enabled&&$this->cnabOrigin($issuer,$origin)){$this->cnab()->publish($issuer,$actor,$origin,$revision);return;}
         $this->run(function()use($issuer,$actor,$origin,$revision,$enabled){
             $acl=new \IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);
             if(!$acl->can($issuer,$actor,'banco_brasil','manage'))throw new \DomainException('bb_checkout_access_denied');
@@ -52,6 +61,7 @@ final class Checkout
     public function staffInstrument($issuer,$actor,$origin):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$origin=\IssuerPolicy::id($origin);
+        if($this->cnabOrigin($issuer,$origin))return $this->cnab()->staffInstrument($issuer,$actor,$origin);
         return $this->run(fn()=>$this->api->checkoutInstrumentInOwnedTransaction($issuer,$actor,$origin));
     }
     private function portalOwned(\CompanyPortal $portal,array $session,int $issuer,int $invoice):array
@@ -69,11 +79,16 @@ final class Checkout
     public function portalInstrument(\CompanyPortal $portal,array $session,$issuer,$invoice):array
     {
         $issuer=\IssuerPolicy::id($issuer);$invoice=\IssuerPolicy::id($invoice);
+        if($this->rows("SELECT id FROM {$this->p}bb_origins WHERE issuer_id=? AND invoice_id=? AND active_slot=1 AND channel IN ('cnab240','cnab400')",[$issuer,$invoice]))return $this->cnab()->portalInstrument($portal,$session,$issuer,$invoice);
         return $this->run(fn()=>$this->portalOwned($portal,$session,$issuer,$invoice));
     }
     public function portalPage(\CompanyPortal $portal,array $session,$issuer,array $invoices):array
     {
         $issuer=\IssuerPolicy::id($issuer);if(count($invoices)>50)throw new \DomainException('bb_checkout_limit');
-        return $this->run(function()use($portal,$session,$issuer,$invoices){$available=[];foreach($invoices as $invoice){$id=\IssuerPolicy::id($invoice);try{$this->portalOwned($portal,$session,$issuer,$id);$available[$id]=true;}catch(\DomainException $denied){}}return $available;});
+        $ids=array_map(static fn($id)=>\IssuerPolicy::id($id),$invoices);$cnab=[];
+        if($ids)$cnab=array_map('intval',array_column($this->rows("SELECT invoice_id FROM {$this->p}bb_origins WHERE issuer_id=? AND invoice_id IN (".implode(',',array_fill(0,count($ids),'?')).") AND active_slot=1 AND channel IN ('cnab240','cnab400')",array_merge([$issuer],$ids)),'invoice_id'));
+        $available=$this->run(function()use($portal,$session,$issuer,$ids,$cnab){$available=[];foreach(array_diff($ids,$cnab) as $id){try{$this->portalOwned($portal,$session,$issuer,$id);$available[$id]=true;}catch(\DomainException $denied){}}return $available;});
+        if($cnab)$available+=$this->cnab()->portalPage($portal,$session,$issuer,$cnab);
+        return $available;
     }
 }

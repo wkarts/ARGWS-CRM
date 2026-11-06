@@ -199,6 +199,7 @@ jobs:
         run: |
           php tests/banco_brasil_cnab_boleto_mysql.php
           php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab_portal_mysql.php
           php tests/banco_brasil_cnab400_groups_mysql.php
           php tests/banco_brasil_invoice_issuance_mysql.php
         env:
@@ -338,6 +339,7 @@ jobs:
         run: |
           php tests/banco_brasil_cnab_boleto_mysql.php
           php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab_portal_mysql.php
           php tests/banco_brasil_cnab400_groups_mysql.php
           php tests/banco_brasil_invoice_issuance_mysql.php
         env:

@@ -149,3 +149,14 @@ remoto; preparação110 não passa a significar autenticação ou ativação aut
 
 Testes:51 verificações adicionais de contrato e11 de controller/MySQL, sobre as
 cadeias anteriores; transportes remotos simulados. Sem execução contra PIGE real.
+
+## Revalidação remota em 6/11/2026
+
+`git ls-remote` confirmou main PIGE360-self ainda em
+`f47b8916b92231ac29b56862b133c9d2b2eec851`. A leitura de
+`backend/app/crm_bridge.py` confirmou GET/PUT com JWT administrativo,
+`integrations.manage`, revisão e uma configuração por escola.
+`connection-test` continua exigindo conexão habilitada (409 caso contrário).
+Preparação desativada110 e diagnóstico111 do CRM permanecem compatíveis.
+Diagnóstico prévio desativado e ativação bilateral atômica não estão implementados
+por esse contrato; não foi alterado o repositório PIGE nem o SDK.

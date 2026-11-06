@@ -233,6 +233,8 @@ async function run(env = process.env) {
           check(nativeAssets.stylesheet, 'actual native vendor stylesheet is loaded and readable');
           check(nativeAssets.tabStyles, 'actual native vendor stylesheet contains Bootstrap tab visibility rules');
           check(nativeAssets.plugin, 'actual Bootstrap script and jQuery tab plugin load');
+          await page.locator('#asaas-tab-preferences').click();
+          check(await page.locator('#preferences').isVisible(), 'configuration tab exposes the real preferences before profile inspection');
           const preferences = page.locator('#preferences');
           const tabs = preferences.locator('[role=tab]');
           check(JSON.stringify((await tabs.allTextContents()).map(text => text.trim())) === JSON.stringify(['Produção', 'Homologação']), 'two native environment tabs use real PT-BR labels');

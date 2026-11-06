@@ -1,3 +1,9 @@
+# 1.4.3
+
+- Publicação explícita de boletos CNAB240/400 no portal, usando contato nativo e revisão do instrumento; revalida o responsável, saldo e origem.
+- Revisar/publicar/ocultar sem congelar remessa, criar cobrança ou registrar pagamento. Impressão com nonce sob a CSP do portal.
+- Migration143 NOOP preserva101–142 e usa o ledger124 sem backfill. Requer núcleo4.9.2 para a entrega pelo portal.
+
 # 1.4.0
 
 - Boleto CNAB400 imprimível a partir da preparação e do arquivo validados antes da transmissão.

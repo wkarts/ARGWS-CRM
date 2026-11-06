@@ -328,6 +328,14 @@ final class Cnab400Preparation
         if($source['generation_state']!=='generated')throw new \DomainException('bb_batch_unavailable');
         return $source;
     }
+    /** Composition retains the original staff, source, balance and reservation guards. */
+    public function boletoInOwnedTransaction(int $issuer,int $actor,int $preparation):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,$this->issuanceTables());
+        if($this->invoiceOwned)throw new \LogicException('bb_recursive_invoice_issue');
+        $this->invoiceOwned=true;
+        try{return $this->boleto($issuer,$actor,$preparation);}finally{$this->invoiceOwned=false;}
+    }
     /** Read-only printable instrument from the validated 400 origin, before any transmission. */
     public function boleto($issuer,$actor,$preparation):array
     {

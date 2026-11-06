@@ -694,3 +694,28 @@ do tracking170, leitura real do journal após instalação, CSRF, confirmação,
 recusa de chave sem comando e ausência de intenção criada por essa recusa.
 A fixture agora instala também a tabela nativa de comandos exigida pela
 transação; não há relaxamento do guard de produção nem chamada ao provedor.
+
+## Continuação BB143 — publicação CNAB no portal
+
+`banco_brasil_cnab_portal_mysql.php`:30 verificações adicionais após354,
+PHP8.3/MySQL8.4 sob128MiB. Duas sessões reais aguardam o lock e são recusadas
+após revogação da permissão do contato. Publicar/ler/ocultar preserva bytes,
+estados, números, faturas e pagamentos. A view PHP gerada nessa execução passou
+em Chromium/HTTP sob CSP com nonce e clique real de impressão. Isso não equivale
+a login HTTP no CRM. A extensão autenticada está no teste existente de emissão.
+
+Regressão `banco_brasil_checkout_mysql.php` passou: cadeia API até679 checks e
+publicação/isolamento existentes, transporte remoto simulado. Runner143 percorre
+os passos anteriores e testa falha de tracking, retry e replay. Unitários:
+54 checks de versão,118 CNAB240,56 store/transaction e107 administrativos.
+[Contrato, alterações e limitações](bb-cnab-portal.md).
+
+### Correção do percurso HTTP das guias Asaas
+
+O run42237032492/job127961115223 do SHA5e981ecb falhou na inspeção de
+preferências porque o teste não abria a guia Configuração introduzida na PR.
+O teste agora clica a guia real antes de verificar visibilidade, ARIA, teclado e
+valores; conserva todas as verificações. O percurso de credenciais, webhook,
+transações e automação também abre as guias correspondentes, e o teste checkout
+usa o identificador atual da lista de guias. Os20 testes do contrato do harness
+passaram; a execução autenticada corrigida ainda depende do próximo CI.

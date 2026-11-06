@@ -69,6 +69,13 @@ class Portal extends CI_Controller
                     require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';
                     try{$bbInstrument=(new \BancoBrasil\Checkout($this->db,db_prefix()))->portalInstrument($portal,$identity,$issuer,$this->input->post('invoice_id',false));}
                     catch(DomainException $denied){show_404();return;}
+                    if(isset($bbInstrument['cnab_boleto'])){
+                        // Revalidate contact, publisher, exact origin and balance immediately before output.
+                        try{$bbInstrument=(new \BancoBrasil\Checkout($this->db,db_prefix()))->portalInstrument($portal,$identity,$issuer,$bbInstrument['invoice_id']);}
+                        catch(Throwable $denied){show_404();return;}
+                        $boleto=$bbInstrument['cnab_boleto'];$boleto['barcode_svg']=\BancoBrasil\CnabBoleto::svg($boleto['barcode']);
+                        $this->load->view('banco_brasil/cnab_boleto',['boleto'=>$boleto,'script_nonce'=>$nonce]);return;
+                    }
                 }
                 if($action==='invoice_checkout'){
                     if(!$current||!is_array($identity)){show_404();return;}
