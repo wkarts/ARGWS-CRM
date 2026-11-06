@@ -10,6 +10,7 @@ require_once __DIR__.'/Fields400.php';
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/Cnab400Generator.php';
 require_once __DIR__.'/Cnab400GeneratedSource.php';
+require_once __DIR__.'/Cnab400Groups.php';
 require_once APPPATH.'services/CompanyInvoiceBalance.php';
 require_once __DIR__.'/Cnab400PreparationSchema.php';
 require_once APPPATH.'services/InvoicePaymentWriter.php';
@@ -17,7 +18,7 @@ require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
 require_once APPPATH.'services/issuers/InvoiceIssuerDocuments.php';
 
-/** Immutable invoice preparation with optional shared-number reservation; never emits a file or records payment. */
+/** Immutable invoice preparation, number reservation and grouped export; never records payment. */
 final class Cnab400Preparation
 {
     public function __construct(private $db,private string $prefix)
@@ -32,13 +33,13 @@ final class Cnab400Preparation
             'issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents',
             'currencies','company_currency_units','bb_connections','bb_layout_bindings',
             'bb_cnab_preparations','bb_contract_declarations','bb_batch_actions','bb_origins','bb_origin_snapshots','bb_batches','bb_batch_origins','bb_audit',
-        ],$extraTables))),$work);
+        ],Cnab400Groups::TABLES,['invoicepaymentrecords','credits'],$extraTables))),$work);
     }
     private function authorize(int $issuer,int $actor,string $cap='generate'):\IssuerResourceAccess
     {
         $acl=new \IssuerResourceAccess($this->db,$this->prefix);$acl->lockFinancialIdentity($issuer,$actor);
         $pdo=$this->db->conn_id??$this->db->pdo??null;
-        if(!($pdo instanceof \PDO&&$pdo->getAttribute(\PDO::ATTR_DRIVER_NAME)==='sqlite'))SchemaValidator::assertCompatible($this->db,$this->prefix,Cnab400PreparationSchema::requirements());
+        if(!($pdo instanceof \PDO&&$pdo->getAttribute(\PDO::ATTR_DRIVER_NAME)==='sqlite')){SchemaValidator::assertCompatible($this->db,$this->prefix,Cnab400PreparationSchema::requirements());Cnab400GroupSchema::assertValid($this->db,$this->prefix);}
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=? FOR UPDATE',['banco_brasil'])[0]??[];
         if((int)($module['active']??0)!==1||($module['installed_version']??null)!==ModuleRelease::VERSION
             ||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)
@@ -196,7 +197,7 @@ final class Cnab400Preparation
         $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_cnab_preparations','bb_number_reservations','bb_contract_declarations','bb_origins','bb_batches','bb_origin_snapshots','bb_batch_origins','bb_audit'];
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
-        $tables=array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables())));
+        $tables=array_values(array_unique(array_merge($tables,Cnab400Groups::TABLES,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables())));
         return \IssuerTransaction::run($this->db,$this->prefix,$tables,function()use($issuer,$actor,$preparation):array{
             $acl=$this->authorize($issuer,$actor);(new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'cnab');
             $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;
@@ -281,8 +282,28 @@ final class Cnab400Preparation
             $acl=$this->authorize($issuer,$actor);$this->approval($row);
             $final=$this->source($issuer,$actor,(int)$row['connection_id'],(int)$row['layout_binding_id'],(int)$row['invoice_id'],$acl);
             if(!hash_equals($row['source_hash'],self::digest($final)))throw new \RuntimeException('issuer_bb_write_unconfirmed');
+            // Only newly generated sources join envelopes; published individual history is never backfilled.
+            $grouping=new Cnab400Groups($this->db,$this->prefix);
+            $grouping->attach($issuer,$actor,$preparation,$this->verifyReservation($issuer,$row),
+                fn(int $id)=>$this->groupSource($issuer,$actor,$id,'generate'));
             return $this->recoverProjection($issuer,$row,$final);
         });
+    }
+    private function groupSource(int $issuer,int $actor,int $preparation,string $cap,bool $currentRequired=true):array
+    {
+        $acl=$this->authorize($issuer,$actor,$cap);
+        $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;
+        if(!$row)throw new \DomainException('bb400_preparation_unavailable');
+        if($currentRequired){
+        $current=$this->currentOrStale($issuer,$actor,(int)$row['connection_id'],(int)$row['layout_binding_id'],(int)$row['invoice_id'],$acl);
+        if($this->projection($row,$current)['stale'])throw new \DomainException('bb400_preparation_stale');
+        foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])
+            if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[(int)$row['invoice_id']]))throw new \DomainException('bb_invoice_not_eligible');
+        }
+        if($this->approval($row)===null)throw new \DomainException('bb400_homologation_required');
+        $source=$this->verifyReservation($issuer,$row);
+        if($source['generation_state']!=='generated')throw new \DomainException('bb_batch_unavailable');
+        return $source;
     }
     /** Read-only printable instrument from the validated 400 origin, before any transmission. */
     public function boleto($issuer,$actor,$preparation):array
@@ -322,9 +343,27 @@ final class Cnab400Preparation
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$preparation=\IssuerPolicy::id($preparation);
         return $this->transaction(function()use($issuer,$actor,$preparation):array{
             $acl=$this->authorize($issuer,$actor,'download');$row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;if(!$row)throw new \DomainException('bb400_preparation_unavailable');
+            $groups=new Cnab400Groups($this->db,$this->prefix);$group=$groups->find($issuer,$preparation);
+            if($group===null||$group['state']==='open'){
             $source=$this->currentOrStale($issuer,$actor,(int)$row['connection_id'],(int)$row['layout_binding_id'],(int)$row['invoice_id'],$acl);if($this->projection($row,$source)['stale'])throw new \DomainException('bb400_preparation_stale');
+            }
             $policy=$this->approval($row);if($policy===null)throw new \DomainException('bb400_homologation_required');
             $batch=$this->verifyReservation($issuer,$row);if($batch['generation_state']!=='generated')throw new \DomainException('bb_batch_unavailable');
+            if($group!==null){
+                $download=$groups->download($group,fn(int $id)=>$this->groupSource($issuer,$actor,$id,'download',$group['state']==='open'));
+                foreach($groups->members((int)$group['id'])as$member){
+                    $owned=$this->groupSource($issuer,$actor,(int)$member['preparation_id'],'download',$group['state']==='open');
+                    if($owned['delivery_state']==='not_submitted')\IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_batches SET delivery_state='downloaded' WHERE id=? AND issuer_id=?",[$owned['batch_id'],$issuer]);
+                    $after=$this->groupSource($issuer,$actor,(int)$member['preparation_id'],'download',$group['state']==='open');
+                    if(!in_array($after['delivery_state'],['downloaded','reported_submitted'],true))throw new \RuntimeException('issuer_bb_write_unconfirmed');
+                }
+                \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_audit(issuer_id,connection_id,actor_id,action,resource_type,resource_id,created_at) VALUES(?,?,?,?,?,?,?)',[$issuer,(int)$row['connection_id'],$actor,'cnab400_group_downloaded','export_group',(int)$group['id'],gmdate('Y-m-d H:i:s')]);
+                $audit=(int)$this->db->insert_id();
+                if($audit<1||count($this->rows('SELECT id FROM '.$this->prefix.'bb_audit WHERE id=? AND issuer_id=? AND actor_id=? AND resource_id=?',[$audit,$issuer,$actor,(int)$group['id']]))!==1)throw new \RuntimeException('issuer_bb_write_unconfirmed');
+                $this->authorize($issuer,$actor,'download');
+                if($groups->download($groups->find($issuer,$preparation),fn(int $id)=>$this->groupSource($issuer,$actor,$id,'download',$group['state']==='open'))!==$download)throw new \RuntimeException('issuer_bb_write_unconfirmed');
+                return $download;
+            }
             if($batch['delivery_state']==='not_submitted')\IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_batches SET delivery_state='downloaded' WHERE id=? AND issuer_id=?",[(int)$row['batch_id'],$issuer]);
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_audit(issuer_id,connection_id,actor_id,action,resource_type,resource_id,created_at) VALUES(?,?,?,?,?,?,?)',[$issuer,(int)$row['connection_id'],$actor,'cnab400_remittance_downloaded','preparation',$preparation,gmdate('Y-m-d H:i:s')]);
             $id=(int)$this->db->insert_id();if($id<1||count($this->rows('SELECT id FROM '.$this->prefix.'bb_audit WHERE id=? AND issuer_id=? AND actor_id=? AND resource_id=?',[$id,$issuer,$actor,$preparation]))!==1)throw new \RuntimeException('issuer_bb_write_unconfirmed');
@@ -338,10 +377,21 @@ final class Cnab400Preparation
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$preparation=\IssuerPolicy::id($preparation);$reference=self::reference($reference);
         $this->transaction(function()use($issuer,$actor,$preparation,$reference):void{
             $this->authorize($issuer,$actor);$row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;if(!$row)throw new \DomainException('bb400_preparation_unavailable');
+            $groups=new Cnab400Groups($this->db,$this->prefix);$group=$groups->find($issuer,$preparation);
+            $ids=[$preparation];
+            if($group!==null){
+                if($group['state']!=='downloaded')throw new \DomainException('bb_batch_unavailable');
+                $groups->download($group,fn(int $id)=>$this->groupSource($issuer,$actor,$id,'generate',false));
+                $ids=array_column($groups->members((int)$group['id']),'preparation_id');
+            }
+            foreach($ids as $preparation){
+            $preparation=(int)$preparation;
+            $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;
+            if(!$row)throw new \DomainException('bb400_preparation_unavailable');
             if($this->approval($row)===null)throw new \DomainException('bb400_homologation_required');$batch=$this->verifyReservation($issuer,$row);
             if($batch['generation_state']!=='generated'||!in_array($batch['delivery_state'],['downloaded','reported_submitted'],true))throw new \DomainException('bb_batch_unavailable');
             $old=$this->rows("SELECT reference FROM {$this->prefix}bb_batch_actions WHERE batch_id=? AND issuer_id=? AND action='manual_submission_reported' FOR UPDATE",[(int)$row['batch_id'],$issuer]);
-            if($old){if(count($old)!==1||$old[0]['reference']!==$reference)throw new \DomainException('bb_submission_report_conflict');return;}
+            if($old){if(count($old)!==1||$old[0]['reference']!==$reference)throw new \DomainException('bb_submission_report_conflict');continue;}
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_batch_actions(batch_id,issuer_id,actor_id,action,reference,created_at) VALUES(?,?,?,?,?,?)',[(int)$row['batch_id'],$issuer,$actor,'manual_submission_reported',$reference,gmdate('Y-m-d H:i:s')]);
             \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_batches SET delivery_state='reported_submitted' WHERE id=? AND issuer_id=?",[(int)$row['batch_id'],$issuer]);
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_audit(issuer_id,connection_id,actor_id,action,resource_type,resource_id,created_at) VALUES(?,?,?,?,?,?,?)',[$issuer,(int)$row['connection_id'],$actor,'cnab400_submission_declared','preparation',$preparation,gmdate('Y-m-d H:i:s')]);
@@ -349,6 +399,22 @@ final class Cnab400Preparation
             $this->authorize($issuer,$actor);$after=$this->verifyReservation($issuer,$row);$this->approval($row);
             $reported=$this->rows("SELECT reference FROM {$this->prefix}bb_batch_actions WHERE batch_id=? AND issuer_id=? AND action='manual_submission_reported'",[(int)$row['batch_id'],$issuer]);
             if($after['delivery_state']!=='reported_submitted'||count($reported)!==1||$reported[0]['reference']!==$reference)throw new \RuntimeException('issuer_bb_write_unconfirmed');
+            }
+        });
+    }
+    /** Native operational overview; never returns source or frozen file contents. */
+    public function groups($issuer,$actor):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);
+        return $this->transaction(function()use($issuer,$actor):array{
+            $this->authorize($issuer,$actor,'view');
+            $rows=$this->rows("SELECT g.id,g.state,g.created_at,g.frozen_at,x.title_count,x.preparation_id,c.account_id,c.environment,c.agreement_number
+                FROM {$this->prefix}bb_cnab_groups g
+                JOIN (SELECT group_id,COUNT(*) title_count,MIN(preparation_id) preparation_id FROM {$this->prefix}bb_cnab_group_members GROUP BY group_id) x ON x.group_id=g.id
+                JOIN {$this->prefix}bb_cnab_preparations p ON p.id=x.preparation_id AND p.issuer_id=g.issuer_id
+                JOIN {$this->prefix}bb_connections c ON c.id=p.connection_id AND c.issuer_id=g.issuer_id
+                WHERE g.issuer_id=? ORDER BY g.id DESC LIMIT 100",[$issuer]);
+            $this->authorize($issuer,$actor,'view');return $rows;
         });
     }
     /** Structural policy lookup for a caller already owning and authorizing its transaction. */
@@ -423,6 +489,9 @@ final class Cnab400Preparation
         if($state['bank_number_reserved']){
             $reservation=$this->verifyReservation($issuer,$row);
             if($reservation['generation_state']==='generated'){$state['state']='generated';$state['remittance_generated']=true;}
+            $groups=new Cnab400Groups($this->db,$this->prefix);$group=$groups->find($issuer,(int)$row['id']);
+            if($group!==null)$state['export_group']=['id'=>(int)$group['id'],'state'=>$group['state'],'title_count'=>count($groups->members((int)$group['id']))];
+
         }
         return $state;
     }

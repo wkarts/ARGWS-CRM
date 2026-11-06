@@ -11,6 +11,7 @@ try{
     $service=new \BancoBrasil\Cnab400Preparation($db,$prefix);
     if(($payload['action']??null)==='print'){echo $service->boleto($payload['issuer'],$payload['actor'],$payload['preparation'])['barcode'];exit(0);}
     if(($payload['action']??null)==='download'){echo $service->download($payload['issuer'],$payload['actor'],$payload['preparation'])['hash'];exit(0);}
+    if(($payload['action']??null)==='generate'){echo $service->generate($payload['issuer'],$payload['actor'],$payload['preparation'],$payload['date'],$payload['payer'])['export_group']['id'];exit(0);}
     $result=(new \BancoBrasil\Cnab400Preparation($db,$prefix))->prepare($payload['issuer'],$payload['actor'],$payload['connection'],$payload['binding'],$payload['invoice'],$payload['key']);
     echo (string)$result['id'];
 }catch(DomainException $error){

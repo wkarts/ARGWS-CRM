@@ -336,3 +336,28 @@ adicionados ao modal existente, mais a ação JSON discover. O delta foi conferi
 contra a view e os testes Chromium já executados; inventário atualizado sem
 afrouxar a comparação. Gate local aprovado:16 views/6 controllers. Um fragmento
 sem proprietário resolvido continua explicitamente registrado como lacuna.
+
+## CNAB400 agrupado — módulo141
+
+Implementado agrupamento automático durante geração CNAB400, preservando o vínculo
+individual de origem e arquivo-fonte. Primeiro download congela o arquivo conjunto;
+novas emissões seguem para outro grupo. Declaração manual abrange todos os membros.
+Detalhes e limites: [bb-cnab400-groups.md](bb-cnab400-groups.md).
+
+MySQL8.4/PHP8.3:32 verificações adicionais do fluxo de grupos aprovadas, além dos
+pré-requisitos reais de fatura/origem/migration/retorno. Cobrem emissões em datas
+diferentes, arquivo com cabeçalho/trailer únicos, sequências, replay, nova emissão
+após download, conta/convênio distintos, corrupção, ACL/empresa, rollback por
+falha de auditoria, origem/snapshot/bytes individuais preservados e dois processos
+concorrendo por geração/download com espera observada no mutex.
+
+Regressão de boleto400:340 checks cumulativos aprovados, incluindo impressão
+concorrente com download. Adaptador financeiro CNAB400 existente também passou;
+não houve chamada bancária, autenticação de retorno real ou baixa de produção.
+Migration141 passou pelo runner, com falhas de DDL/outer transaction/tracking,
+retry e repetição, sem backfill.
+
+Uma execução paralela inicial conflitou no nome fixo de trigger de um fixture
+anterior; grupos foram reexecutados em outro schema descartável e passaram.
+O conflito não foi apresentado como defeito do produto nem escondido por remoção
+do teste. Inventários oficiais regenerados, mantendo rollout bloqueado.

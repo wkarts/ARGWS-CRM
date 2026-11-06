@@ -90,6 +90,14 @@ $view400['connections']=[['id'=>10,'account_id'=>'001:00452-3:000000123873-X','e
 $view400['layout_bindings']=[['id'=>17,'connection_id'=>10,'layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400]];$view400['batches']=[];
 $render400=static function(array $d){extract($d);ob_start();try{include __DIR__.'/../modules/banco_brasil/views/index.php';return ob_get_clean();}catch(Throwable $error){ob_end_clean();throw $error;}};
 $html400=$render400($view400);
+$groupView400=$view400;$groupView400['cnab400_groups']=[['id'=>23,'state'=>'open','created_at'=>'2026-11-06 00:00:00','frozen_at'=>null,'title_count'=>2,'preparation_id'=>47,'account_id'=>'<script>account</script>','agreement_number'=>'1234567','environment'=>'sandbox']];
+$groupHtml400=$render400($groupView400);
+check(str_contains($groupHtml400,'&lt;script&gt;account&lt;/script&gt;')&&!str_contains($groupHtml400,'<script>account</script>'),'group table escapes bank account presentation');
+$groupForms400=[];preg_match_all('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/download_cnab400"[^>]*>(.*?)</form>~s',$groupHtml400,$groupForms400);
+$groupForm400=end($groupForms400[1]);
+check(str_contains($groupForm400,'name="preparation_id" value="47"')&&str_contains($groupForm400,'name="csrf_bb"')&&substr_count($groupForm400,'name="_company_context"')===1,'group download retains exact representative identity, native CSRF and company context');
+$groupView400['can_download']=false;check(!str_contains($render400($groupView400),'/download_cnab400'),'group overview cannot expose download form without capability');
+
 foreach(['prepare_cnab400','reserve_cnab400','candidate_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','print_cnab400_boleto','report_cnab400','recover_cnab400'] as $action){$m=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/'.$action.'"[^>]*>(.*?)</form>~s',$html400,$m),'actual 400 form '.$action.' rendered');check(str_contains($m[1],'name="csrf_bb"')&&substr_count($m[1],'name="_company_context"')===1,'400 form '.$action.' carries CSRF and company context');}
 check(!preg_match('/name="approval400\[(?:currency_confirmed|interest_confirmed|homologation_confirmed)\]"[^>]*checked/',$html400),'external bank declarations are not preselected');
 check(!str_contains($html400,'name="currency_candidate"')&&!str_contains($html400,'name="approval400[currency_field]"'),'BRL wire bytes are fixed by the profile rather than accepted from the operator');

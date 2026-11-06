@@ -8813,13 +8813,13 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "286df48269a4a1d82d38c789d829cc4a818ca5cb749e4cabdd8d22c6789755b8",
+      "sha256": "feac907e0dc8d448d62056328ceb65fcf1f68e4afe2efc259fbf7a2371834bc0",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        48,
-        49
+        50,
+        51
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8916,20 +8916,22 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Cnab400Preparation.php": {
-      "sha256": "b82ee3971f43dfebeb698ddf11118b65d558372a044c372d4a638c955689aa14",
+      "sha256": "054f98bc06f4eaa02689fbb9b337a84d0d205031214de9147dc42f41801c5b90",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        32,
-        45,
-        63,
-        70,
-        196,
-        209,
-        303,
-        317
+        33,
+        36,
+        46,
+        64,
+        71,
+        197,
+        210,
+        300,
+        324,
+        338
       ],
       "state": "unreviewed",
       "evidence": ""

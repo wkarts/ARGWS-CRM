@@ -199,6 +199,7 @@ jobs:
         run: |
           php tests/banco_brasil_cnab_boleto_mysql.php
           php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab400_groups_mysql.php
         env:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root
@@ -336,6 +337,7 @@ jobs:
         run: |
           php tests/banco_brasil_cnab_boleto_mysql.php
           php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab400_groups_mysql.php
         env:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root

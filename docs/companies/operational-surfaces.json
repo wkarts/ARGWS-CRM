@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "ff996db1cd60a564c68def9ccd9c84af5646f9015f1baf3b9b46332734568a14",
+    "source_manifest_sha256": "f71360de311a3f1e0cba4b9b9d9326e763fef2f75e6b1d18ef5b832ec5200f6e",
     "counts": {
         "modules": 38,
-        "source_files": 4814,
+        "source_files": 4817,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 304,
-        "table_name_candidates": 931,
+        "table_name_candidates": 933,
         "database_call_candidates": 12540
     },
     "infrastructure_options": [
@@ -576,7 +576,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.4.0",
+            "version": "1.4.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -609,6 +609,8 @@
                 "bb_batch_requests",
                 "bb_batches",
                 "bb_checkout_publications",
+                "bb_cnab_group_members",
+                "bb_cnab_groups",
                 "bb_cnab_preparations",
                 "bb_connections",
                 "bb_contract_declarations",
@@ -16304,7 +16306,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "286df48269a4a1d82d38c789d829cc4a818ca5cb749e4cabdd8d22c6789755b8",
+            "source_sha256": "feac907e0dc8d448d62056328ceb65fcf1f68e4afe2efc259fbf7a2371834bc0",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16321,242 +16323,242 @@
                 },
                 {
                     "method": "save_channel_preferences",
-                    "line": 61,
+                    "line": 63,
                     "visibility": "public"
                 },
                 {
                     "method": "register_connection",
-                    "line": 73,
+                    "line": 75,
                     "visibility": "public"
                 },
                 {
                     "method": "register_layout",
-                    "line": 87,
+                    "line": 89,
                     "visibility": "public"
                 },
                 {
                     "method": "import_return",
-                    "line": 101,
+                    "line": 103,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_contract",
-                    "line": 123,
+                    "line": 125,
                     "visibility": "public"
                 },
                 {
                     "method": "generate_remittance",
-                    "line": 133,
+                    "line": 135,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_remittance",
-                    "line": 144,
+                    "line": 146,
                     "visibility": "public"
                 },
                 {
                     "method": "download_remittance",
-                    "line": 151,
+                    "line": 153,
                     "visibility": "public"
                 },
                 {
                     "method": "print_cnab_boleto",
-                    "line": 159,
+                    "line": 161,
                     "visibility": "public"
                 },
                 {
                     "method": "download_return",
-                    "line": 170,
+                    "line": 172,
                     "visibility": "public"
                 },
                 {
                     "method": "report_transmission",
-                    "line": 181,
+                    "line": 183,
                     "visibility": "public"
                 },
                 {
                     "method": "link_event",
-                    "line": 188,
+                    "line": 190,
                     "visibility": "public"
                 },
                 {
                     "method": "prepare_cnab400",
-                    "line": 195,
+                    "line": 197,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_cnab400_approval",
-                    "line": 206,
+                    "line": 208,
                     "visibility": "public"
                 },
                 {
                     "method": "generate_cnab400",
-                    "line": 213,
+                    "line": 215,
                     "visibility": "public"
                 },
                 {
                     "method": "download_cnab400",
-                    "line": 220,
+                    "line": 222,
                     "visibility": "public"
                 },
                 {
                     "method": "print_cnab400_boleto",
-                    "line": 226,
+                    "line": 228,
                     "visibility": "public"
                 },
                 {
                     "method": "report_cnab400",
-                    "line": 238,
+                    "line": 240,
                     "visibility": "public"
                 },
                 {
                     "method": "candidate_cnab400",
-                    "line": 245,
+                    "line": 247,
                     "visibility": "public"
                 },
                 {
                     "method": "reserve_cnab400",
-                    "line": 257,
+                    "line": 259,
                     "visibility": "public"
                 },
                 {
                     "method": "recover_cnab400",
-                    "line": 268,
+                    "line": 270,
                     "visibility": "public"
                 },
                 {
                     "method": "compare_cnab400",
-                    "line": 278,
+                    "line": 280,
                     "visibility": "public"
                 },
                 {
                     "method": "review_event",
-                    "line": 293,
+                    "line": 295,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_cnab400",
-                    "line": 300,
+                    "line": 302,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_event",
-                    "line": 312,
+                    "line": 314,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_components_event",
-                    "line": 319,
+                    "line": 321,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_tariff_event",
-                    "line": 326,
+                    "line": 328,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_external_reversal",
-                    "line": 333,
+                    "line": 335,
                     "visibility": "public"
                 },
                 {
                     "method": "preview_checkout",
-                    "line": 345,
+                    "line": 347,
                     "visibility": "public"
                 },
                 {
                     "method": "publish_checkout",
-                    "line": 355,
+                    "line": 357,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_api_profile",
-                    "line": 367,
+                    "line": 369,
                     "visibility": "public"
                 },
                 {
                     "method": "save_api_credentials",
-                    "line": 374,
+                    "line": 376,
                     "visibility": "public"
                 },
                 {
                     "method": "issue_api",
-                    "line": 381,
+                    "line": 383,
                     "visibility": "public"
                 },
                 {
                     "method": "resume_api_issue",
-                    "line": 388,
+                    "line": 390,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api",
-                    "line": 395,
+                    "line": 397,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api_movements",
-                    "line": 402,
+                    "line": 404,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api",
-                    "line": 409,
+                    "line": 411,
                     "visibility": "public"
                 },
                 {
                     "method": "configure_api_webhook",
-                    "line": 416,
+                    "line": 418,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_due",
-                    "line": 423,
+                    "line": 425,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_abatement",
-                    "line": 430,
+                    "line": 432,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_reference",
-                    "line": 437,
+                    "line": 439,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_address",
-                    "line": 444,
+                    "line": 446,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_discount",
-                    "line": 451,
+                    "line": 453,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_receipt_window",
-                    "line": 458,
+                    "line": 460,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api_discount",
-                    "line": 465,
+                    "line": 467,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_api_discount",
-                    "line": 472,
+                    "line": 474,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_api",
-                    "line": 479,
+                    "line": 481,
                     "visibility": "public"
                 },
                 {
                     "method": "local_noncash",
-                    "line": 497,
+                    "line": 499,
                     "visibility": "public"
                 }
             ],
@@ -26418,7 +26420,7 @@
         {
             "name": "bb_audit",
             "state": "not_verified",
-            "reference_count": 25
+            "reference_count": 26
         },
         {
             "name": "bb_batch_actions",
@@ -26438,7 +26440,7 @@
         {
             "name": "bb_batches",
             "state": "not_verified",
-            "reference_count": 22
+            "reference_count": 23
         },
         {
             "name": "bb_checkout_publications",
@@ -26446,14 +26448,24 @@
             "reference_count": 11
         },
         {
+            "name": "bb_cnab_group_members",
+            "state": "not_verified",
+            "reference_count": 7
+        },
+        {
+            "name": "bb_cnab_groups",
+            "state": "not_verified",
+            "reference_count": 9
+        },
+        {
             "name": "bb_cnab_preparations",
             "state": "not_verified",
-            "reference_count": 21
+            "reference_count": 25
         },
         {
             "name": "bb_connections",
             "state": "not_verified",
-            "reference_count": 26
+            "reference_count": 27
         },
         {
             "name": "bb_contract_declarations",
