@@ -10,7 +10,7 @@
             class="tw-bg-white tw-border tw-border-solid tw-border-neutral-300/80 tw-shadow-sm tw-py-2 tw-px-3.5 tw-rounded-lg tw-text-sm hover:tw-bg-neutral-100 tw-text-neutral-600 hover:tw-text-neutral-600 focus:tw-text-neutral-600 text-left odd:last:tw-col-span-2 md:odd:last:tw-col-auto">
             <div class="tw-flex tw-items-center">
                 <span
-                    class="tw-font-normal tw-text-base tw-inline-flex tw-items-center text-<?= estimate_status_color_class($status); ?>">
+                    class="tw-font-normal tw-text-base tw-inline-flex tw-items-center text-<?= !empty($native_company_sales_manage)?NativeCompanySalesTable::statusColor('estimates',(int)$status):estimate_status_color_class($status); ?>">
                     <?= !empty($native_company_sales_manage)?NativeCompanySalesTable::statusLabel('estimates',(int)$status):format_estimate_status($status, '', false); ?>
                 </span>
                 <span class="tw-ml-2 rtl:tw-mr-2 tw-text-xs tw-text-neutral-500 tw-mt-px">

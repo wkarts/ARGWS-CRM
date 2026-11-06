@@ -6,7 +6,7 @@ $recurringTableSelector=$nativeRecurring?'.table-recurring-invoices':'.table-inv
     <div class="tw-mb-2">
         <div class="_buttons">
             <?php if(!$nativeRecurring){ ?><a href="<?= admin_url('recurring_rules'); ?>" class="btn btn-default pull-left mright5">Gerenciar recorrências</a><?php } ?>
-            <?php if($nativeRecurring&&$can_manage){ ?><a href="<?= admin_url('invoices/recurring?new=1'); ?>" class="btn btn-primary pull-left mright5"><i class="fa-regular fa-plus tw-mr-1"></i>Nova recorrência</a><?php } ?>
+            <?php if($nativeRecurring&&$can_manage){ ?><a href="<?= admin_url('invoices/recurring?new=1'); ?>" class="btn btn-primary pull-left mright5"><i class="fa-regular fa-plus tw-mr-1" aria-hidden="true"></i>Nova recorrência</a><?php } ?>
             <?php if ($nativeRecurring?$can_create_invoice:staff_can('create', 'invoices')) { ?>
             <a href="<?= admin_url('invoices/invoice'); ?>"
                 class="btn btn-primary pull-left new new-invoice-list">

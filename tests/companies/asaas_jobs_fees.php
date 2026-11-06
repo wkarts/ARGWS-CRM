@@ -3,6 +3,10 @@
 require __DIR__.'/asaas_positive.php';
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyReconciliation.php';
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyFeeExpense.php';
+// A current native install also has169; tariff posting must retain its manual-receipt veto.
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyManualSettlementSchema.php';
+\Asaas\CompanyManualSettlementSchema::ensure($db,$p);
+essentialCheck($db->table_exists($p.'asaas_company_manual_settlements'),'current-install manual receipt guard is present during tariff tests');
 $jobsStart=$GLOBALS['essentialChecks'];$worker=new \Asaas\CompanyReconciliation($db,$p);$fees=new \Asaas\CompanyFeeExpense($db,$p);$expenseService=new CompanyExpenses($db,$p);
 $categoryA=$expenseService->saveCategory($a,7,'Tarifas Asaas',hash('sha256','asaas-tariff-A'));$categoryB=$expenseService->saveCategory($b,7,'Tarifas Asaas',hash('sha256','asaas-tariff-B'));
 // Both owners receive a separately confirmed, opt-in automation policy.

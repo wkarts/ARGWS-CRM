@@ -76,8 +76,9 @@ async function save(page,url,kind){
   });
   try{
     await session.send('Fetch.enable',{patterns:[{urlPattern:new URL(endpoint,url).href,requestStage:'Response'}]});
-    const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('.transaction-submit:not(.save-and-send):not(.save-and-send-later)').first().click()]);
+    const [response,navigation]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('.transaction-submit:not(.save-and-send):not(.save-and-send-later)').first().click()]);
     assert.equal(response.status(),200,'original '+kind+' AJAX POST commits');
+    assert.equal(navigation.status(),200,'original '+kind+' destination page renders after commit');
     const observed=await captured;if(observed.error)throw observed.error;const result=observed.result;
     assert.equal(result.success,true);assert.match(result.id,/^[1-9][0-9]*$/);
     assert.equal(new URL(page.url()).pathname,'/admin/'+kind+'/list_'+kind+'/'+result.id);await page.locator('[data-native-sales-preview="'+result.id+'"]').waitFor({state:'visible'});

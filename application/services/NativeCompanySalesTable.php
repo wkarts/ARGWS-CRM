@@ -86,9 +86,14 @@ final class NativeCompanySalesTable
         $label=htmlspecialchars(self::statusLabel($kind,$status),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
         if(!$badge)return $label;
         $type=$kind==='estimates'?'estimate':'proposal';
-        $color=($kind==='estimates'?[1=>'default',2=>'info',3=>'danger',4=>'success',5=>'warning']:
-            [1=>'default',2=>'danger',3=>'success',4=>'info',5=>'info',6=>'default'])[$status];
+        $color=self::statusColor($kind,$status);
         return '<span class="label label-'.$color.' s-status '.$type.'-status-'.$status.'">'.$label.'</span>';
+    }
+    public static function statusColor(string $kind,int $status):string
+    {
+        self::statusLabel($kind,$status);
+        return ($kind==='estimates'?[1=>'default',2=>'info',3=>'danger',4=>'success',5=>'warning']:
+            [1=>'default',2=>'danger',3=>'success',4=>'info',5=>'info',6=>'default'])[$status];
     }
     public static function statusLabel(string $kind,int $status):string
     {

@@ -88,3 +88,14 @@ essentialCheck(count($totals['totals'])===5&&$totals['_currency']==1,'estimate s
 essentialThrows(fn()=>$reader->totals($a,7,['currency'=>[]]),'issuer_invalid_id','malformed currency does not coerce into a summary');
 essentialCheck($db->query('SELECT * FROM '.$p.'invoices WHERE id=42')->result_array()===$legacyBefore,'sales table, filters, projection and summary preserve historical invoice exactly');
 echo 'Original sales table/projection/filter/writer: '.($GLOBALS['essentialChecks']-$checks).' additional checks passed ('.$db->driver().').'.PHP_EOL;
+
+// Render the real overview, without loading the ambient Estimates helper.
+require_once APPPATH.'services/NativeCompanySalesManage.php';
+if(!function_exists('e')){function e($value){return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}}
+essentialCheck(!function_exists('estimate_status_color_class'),'scoped overview test does not hide a missing legacy status helper');
+$data=(new NativeCompanySalesManage($db,$p))->data($a,7,'estimates');
+$html=(static function(array $data){extract($data);ob_start();try{include APPPATH.'views/admin/estimates/quick_stats.php';return ob_get_clean();}catch(Throwable $error){ob_end_clean();throw$error;}})($data);
+essentialCheck(substr_count($html,'<button type="button"')===5,'real overview renders all five scoped status filters');
+foreach([1=>'default',2=>'info',3=>'danger',4=>'success',5=>'warning']as$status=>$color)essentialCheck(str_contains($html,'text-'.$color)&&NativeCompanySalesTable::statusColor('estimates',$status)===$color,'original status color preserved for '.$status);
+essentialThrows(fn()=>NativeCompanySalesTable::statusColor('estimates',99),'company_sales_invalid','unknown status is not silently assigned a valid color');
+echo 'Scoped original Sales quick statistics:8 checks passed; no legacy helper injected.'.PHP_EOL;

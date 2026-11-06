@@ -7142,7 +7142,7 @@
       "evidence": ""
     },
     "application/views/admin/invoices/recurring/list_template.php": {
-      "sha256": "06cba83904dfdafdcae1c9c4dc6e0243a5773331a5619ff8e85d43ee21f045cf",
+      "sha256": "642781f35705554876d4289ee5895f755a05560cebdc4e1fe1957488e9df944b",
       "categories": [
         "invoice_table"
       ],
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "fbc89c69c810599601622b16d7ba755f98928acf886d85ebe8d0deb196557214",
+      "sha256": "2e0f9807c5eb59e93c7bebbd2537e39581fd683c92af96dcf4c1fba152de3607",
       "categories": [
         "customer_privacy",
         "invoice_model",
