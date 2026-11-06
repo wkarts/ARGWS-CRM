@@ -26,10 +26,19 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   let payload=await page.locator('#pige-connection-form').evaluate(f=>Object.fromEntries(new FormData(f)));
   assert.equal(payload.issuer_id,'8');assert.equal(payload.revision,'3');assert.equal(payload.pige_csrf,'a'.repeat(64));assert.equal(payload._company_context,'synthetic-context');
   assert.equal(await page.locator('#pige-issuer').isDisabled(),true);
+  await page.locator('a[href="#pige-tab-prepare"]').click();
+  assert.equal(await page.locator('#pige-prepare-form button').isDisabled(),false,'disabled connection can be prepared explicitly');
+  const preparation=await page.locator('#pige-prepare-form').evaluate(f=>Object.fromEntries(new FormData(f)));
+  assert.equal(preparation.connection_key,'school-11');assert.equal(preparation.revision,'3');assert.equal(preparation.pige_csrf,'a'.repeat(64));assert.equal(preparation._company_context,'synthetic-context');
+  assert.equal(Object.hasOwn(preparation,'secret'),false,'stored HMAC never enters browser form');
+  assert.equal(await page.locator('#pige-prepare-form [name=confirm_transfer]').isChecked(),false);
+  await page.locator('#pige-prepare-credential').fill('synthetic-preparation-jwt');
+  await page.locator('a[href="#pige-tab-connection"]').click();
   await page.locator('#pige-secret').fill('synthetic-must-clear');
   await page.locator('#pige-editor .modal-footer button').click();await page.waitForSelector('#pige-editor.in',{state:'hidden'});
   await page.waitForFunction(()=>document.querySelector('#pige-secret').value==='');
   assert.equal(await page.locator('#pige-secret').inputValue(),'');
+  assert.equal(await page.locator('#pige-prepare-credential').inputValue(),'','closing modal clears preparation JWT');
   await page.locator('#pige-new').click();await page.waitForSelector('#pige-editor.in');
   assert.equal(await page.locator('#pige-issuer').isDisabled(),false);
   assert.equal(await page.locator('#pige-connection-form [name=connection_key]').inputValue(),'');
@@ -72,6 +81,7 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   await page.locator('#pige-connections_filter input').fill('school-00');await page.locator('.pige-edit').click();
   await page.locator('a[href="#pige-tab-external"]').click();
   assert.equal(await page.locator('#pige-discovery').isVisible(),false,'existing immutable connection cannot be overwritten by discovery');
+  assert.equal(await page.locator('#pige-prepare-form button').isDisabled(),true,'enabled connection cannot be prepared');
   await page.evaluate(()=>window.pendingDiscovery.resolve({success:true,configuration:{issuer_id:'7',school_id:'12345678-1234-1234-1234-123456789abc',account_id:'stale-must-not-apply',environment:'production',remote_revision:9}}));
   assert.equal(await page.locator('#pige-account_id').inputValue(),'account-0','late response from cancelled new form cannot overwrite another connection');
   assert.equal(await page.locator('#pige-discovery-status').textContent(),'');
@@ -95,5 +105,5 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   assert.equal(await page.evaluate(()=>window.leaked),undefined);assert.deepEqual(errors,[]);
   await page.close();
  }}finally{await browser.close();}
- console.log('PIGE browser: desktop/mobile real modal, search/pagination, A/B form ownership, revisions, token clearing, read-only discovery, stale HTTP response, stale consent, cancel and escaped labels passed; synthetic framework, no HTTP writes.');
+ console.log('PIGE browser: desktop/mobile real modal, search/pagination, A/B form ownership, revisions, token clearing, explicit disabled remote preparation form, read-only discovery, stale HTTP response, stale consent, cancel and escaped labels passed; synthetic framework, no HTTP writes.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

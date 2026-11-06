@@ -1,4 +1,4 @@
-# Descoberta PIGE — módulo1.0.9
+# Descoberta e preparação PIGE — módulo1.1.0
 
 Contrato verificado no PIGE360-self main `f47b8916b92231ac29b56862b133c9d2b2eec851`
 (revalidado via remoto em6/11/2026). Fontes: `backend/app/registry.py:schools` e
@@ -25,9 +25,9 @@ em andamento. Nenhum `enabled` remoto é importado.
 Continuam explícitos/manuais: identificador local da conexão, HMAC compartilhado,
 funcionário, moeda, conta/perfil financeiro e consentimentos. O GET remoto não retorna
 o segredo, e o CRM não pode recuperá-lo por inferência. PIGE sem configuração responde
-null: não é apresentado como autoconfiguração completa. Criar a outra ponta ainda
-exige o PUT administrativo e uma estratégia bilateral de revisão/segredo; não foi
-implementado nem simulado como sucesso nesta etapa. Não houve alteração no PIGE360.
+null: não é apresentado como autoconfiguração completa. O novo fluxo110 pode preparar uma configuração remota ausente e desativada a
+partir de uma conexão local desativada já cadastrada, com confirmação explícita
+do destino e transferência do HMAC. Não houve alteração no repositório PIGE360.
 
 Transporte: HTTPS na porta443, URL sem usuário/senha/caminho/query/fragmento,
 hostname DNS, IPv4 público validado e fixado por CURLOPT_RESOLVE com verificação TLS
@@ -78,5 +78,48 @@ Preparação remota desativada é tecnicamente possível, mas precisa de comando
 administrativo explícito, revisão local/remota, estado de resultado desconhecido,
 recuperação e indicação de que a autenticação continua não comprovada. Autoconfiguração
 com verificação antes da habilitação requer contrato adicional de diagnóstico
-sem consentimento financeiro. Esse fluxo de escrita ainda não foi implementado;
-não foi solicitado segredo real, gerada credencial, alterado PIGE360 ou feito PUT.
+sem consentimento financeiro. O fluxo110 abaixo implementa somente essa preparação desativada. Não foi
+solicitado segredo real, gerada credencial, alterado PIGE360 ou feito PUT real.
+
+
+## Preparação remota110 entregue
+
+Editar → Preparar PIGE usa o modal nativo. Exige conexão local desativada, revisão
+atual, settings.edit e permissões do ator de faturas/clientes, administrador, CSRF/contexto e entrada HTTPS. O servidor lê
+somente o HMAC cifrado da conexão autorizada; não o envia ao navegador. A interface
+pede confirmação explícita do destino e da transferência. Não gera novo segredo.
+
+GET confirma ausência de configuração remota. Somente `configuration:null` permite
+um PUT, com `version:null`, `enabled:false`, URL confiável do CRM e escopo local.
+Configuração existente nunca é sobrescrita, mesmo quando seus campos coincidem.
+O PIGE exige CAS para conexão existente; criação concorrente resulta em conflito.
+ACL, módulo, revisão, estado desativado e segredo local são revalidados antes/depois
+de cada transporte. DNS é validado novamente e fixado por requisição, sem redirects.
+
+Não há retry automático de PUT. Timeout, resposta inválida, mudança local ou
+revogação depois do envio são resultado não confirmado: consultar a outra ponta
+antes de tentar de novo. Um GET posterior de configuração existente bloqueia novo
+PUT; não é convertido em prova de igualdade de segredo. Não existe compensação
+por exclusão ou habilitação. Resultado positivo significa somente
+`prepared_disabled`, `authenticated:false`; nenhuma delegação ou permissão financeira
+é habilitada. A lista local e seus segredos/revisões/históricos ficam intactos.
+
+JWT trafega formulário HTTPS→memória CRM→Authorization Bearer PIGE; HMAC salvo é
+decifrado somente no servidor e enviado no JSON PUT ao PIGE autorizado. O próprio
+PIGE cifra o HMAC conforme seu contrato. Essa é uma transferência explícita de
+credencial existente, sem exportação ao navegador, logs, sessão ou cookies locais.
+O PIGE persiste a configuração remota desativada apenas quando o operador executar
+o comando; os testes usam exclusivamente segredos sintéticos e transporte simulado.
+
+Evidências110:37 verificações adicionais de contrato após71 da descoberta;13 do
+controller com MySQL após as cadeias de configuração/descoberta. Chromium em desktop
+e mobile verifica formulário, escopo/revisão/CSRF, confirmação inicialmente vazia,
+bloqueio para conexão habilitada, HMAC ausente do formulário e limpeza do JWT.
+Runner nativo com metadados simulados:37 checks. Migration110 NOOP preserva109.
+Verificação HMAC com conexão desativada, ativação bilateral coordenada e homologação
+HTTP/TLS continuam pendentes; preparação não é autoconfiguração financeira completa.
+
+O contrato remoto atual mantém uma configuração administrativa por escola. Várias
+conexões locais na mesma empresa continuam possíveis, mas preparar outra conexão
+para uma escola já configurada será recusado; não se sobrescreve sua conta/ambiente
+nem se afirma que o PIGE oferece várias configurações para aquela mesma escola.

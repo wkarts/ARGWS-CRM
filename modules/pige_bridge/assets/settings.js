@@ -111,6 +111,9 @@
             connection.find('[name="confirm_rotation"]').closest('.checkbox').toggle(!!record);
             $('.pige-existing-tab').toggle(!!record);
             [mapping, external].forEach(function (form) { value(form, 'connection_key', record ? record.connection_key : ''); });
+            value($('#pige-prepare-form'), 'connection_key', record ? record.connection_key : '');
+            value($('#pige-prepare-form'), 'revision', record ? record.revision : '');
+            $('#pige-prepare-form button[type=submit]').prop('disabled', !record || record.enabled);
             value(mapping, 'revision', record ? record.revision : '');
             value(external, 'connection_revision', record ? record.revision : '');
             value(external, 'external_revision', record && record.external ? record.external.revision : 0);

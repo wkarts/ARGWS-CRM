@@ -1448,97 +1448,97 @@
                 },
                 {
                     "method": "unmark_as_cancelled",
-                    "line": 414,
+                    "line": 415,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 447,
+                    "line": 448,
                     "classification": "review_required"
                 },
                 {
                     "method": "drafts",
-                    "line": 471,
+                    "line": 472,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 482,
+                    "line": 483,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 518,
+                    "line": 519,
                     "classification": "review_required"
                 },
                 {
                     "method": "invoice",
-                    "line": 538,
+                    "line": 539,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 686,
+                    "line": 687,
                     "classification": "review_required"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 784,
+                    "line": 785,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 806,
+                    "line": 807,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 843,
+                    "line": 844,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_payment",
-                    "line": 871,
+                    "line": 872,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 907,
+                    "line": 908,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 966,
+                    "line": 967,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 998,
+                    "line": 999,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1017,
+                    "line": 1018,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1045,
+                    "line": 1046,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 1067,
+                    "line": 1068,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1136,
+                    "line": 1137,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1157,
+                    "line": 1158,
                     "classification": "review_required"
                 }
             ]

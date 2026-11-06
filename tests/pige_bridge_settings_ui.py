@@ -20,7 +20,7 @@ class SettingsUI(unittest.TestCase):
   for needle in ['this.reset()','hidden.bs.modal',"input[type=\"password\"]",'connection_revision === record.revision',"'readOnly'",'window.confirm','pige-fixed-scope']:
    self.assertIn(needle,s)
  def test_migration_noop_and_version(self):
-  s=(R/'modules/pige_bridge/migrations/109_version_109.php').read_text()
+  s=(R/'modules/pige_bridge/migrations/110_version_110.php').read_text()
   self.assertIn('extends App_module_migration',s);self.assertIn('NOOP',s);self.assertNotIn('query(',s)
-  self.assertIn('Version: 1.0.9',(R/'modules/pige_bridge/pige_bridge.php').read_text())
+  self.assertIn('Version: 1.1.0',(R/'modules/pige_bridge/pige_bridge.php').read_text())
 if __name__=='__main__':unittest.main()

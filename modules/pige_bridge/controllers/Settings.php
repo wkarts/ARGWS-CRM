@@ -47,7 +47,7 @@ class Settings extends AdminController
             $authorize=function()use($issuer,$caller):void{
                 if(!is_admin()||(int)get_staff_user_id()!==$caller||!(new IssuerResourceAccess($this->db,db_prefix()))->can($issuer,$caller,'settings','edit'))throw new DomainException('pige_discovery_access');
                 $module=IssuerStorage::query($this->db,'SELECT active,installed_version FROM '.db_prefix().'modules WHERE module_name=?',['pige_bridge'])->row_array();
-                if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.0.9')throw new DomainException('pige_discovery_upgrade');
+                if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.0')throw new DomainException('pige_discovery_upgrade');
             };
             $service=$this->discoveryService($authorize);$action=$this->value('discovery_action');
             if($action==='schools')$data=['schools'=>$service->schools($this->value('pige_url'),$this->value('admin_credential'))];
@@ -58,6 +58,28 @@ class Settings extends AdminController
             // Do not echo remote bodies, URLs, JWTs or exception messages.
             $this->output->set_status_header(422)->set_content_type('application/json')->set_output(json_encode(['success'=>false,'message'=>'Consulta não confirmada. Confira a URL HTTPS pública, credencial administrativa, permissões, empresa e configuração existente no PIGE. Nenhuma configuração foi salva.']));
         }
+    }
+    public function prepare_remote()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            require_once __DIR__.'/../libraries/PigeBridgeDiscovery.php';
+            if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443')||!$this->checked('confirm_transfer'))throw new DomainException('pige_preparation_confirmation');
+            $caller=(int)get_staff_user_id();$key=$this->value('connection_key');$revision=$this->integer('revision');
+            $store=$this->service();$snapshot=$store->preparationSnapshot($key,$revision,$caller);
+            $authorize=function()use($store,$key,$revision,$caller,$snapshot):void{
+                if(!is_admin()||(int)get_staff_user_id()!==$caller)throw new DomainException('pige_discovery_access');
+                $current=$store->preparationSnapshot($key,$revision,$caller);
+                if($current['scope']!==$snapshot['scope']||!hash_equals($current['secret'],$snapshot['secret']))throw new DomainException('pige_configuration_changed_reload');
+            };
+            $result=$this->discoveryService($authorize)->prepareRemote($this->value('pige_url'),$this->value('admin_credential'),$snapshot['scope'],$snapshot['secret'],(string)$this->config->item('base_url'));
+            unset($snapshot,$_POST['admin_credential']);
+            set_alert('success','Configuração preparada no PIGE, desativada. Autenticação HMAC não verificada. Nenhuma permissão financeira foi habilitada.');
+        }catch(Throwable $error){
+            unset($snapshot,$_POST['admin_credential']);
+            set_alert('danger','Preparação não confirmada. Não repita sem consultar o PIGE: a conexão pode ter sido criada desativada. Configuração existente nunca é sobrescrita; confira URL, revisões, permissões e estado desativado.');
+        }
+        redirect(admin_url('pige_bridge/settings'));
     }
     public function save()
     {

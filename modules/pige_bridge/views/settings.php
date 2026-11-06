@@ -34,6 +34,7 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 <li role="presentation" class="active"><a href="#pige-tab-connection" aria-controls="pige-tab-connection" role="tab" data-toggle="tab">Conexão</a></li>
 <li role="presentation" class="pige-existing-tab"><a href="#pige-tab-mapping" aria-controls="pige-tab-mapping" role="tab" data-toggle="tab">Fatura local</a></li>
 <li role="presentation" class="pige-existing-tab"><a href="#pige-tab-external" aria-controls="pige-tab-external" role="tab" data-toggle="tab">Cobrança externa</a></li>
+<li role="presentation" class="pige-existing-tab"><a href="#pige-tab-prepare" aria-controls="pige-tab-prepare" role="tab" data-toggle="tab">Preparar PIGE</a></li>
 <li role="presentation"><a href="#pige-tab-setup" aria-controls="pige-tab-setup" role="tab" data-toggle="tab">Como conectar</a></li>
 </ul><div class="tab-content mtop20">
 <div role="tabpanel" class="tab-pane active" id="pige-tab-connection">
@@ -81,6 +82,18 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 <p>As opções respeitam a empresa, conta e ambiente da conexão. A seleção é revalidada ao salvar; não ativa consentimentos automaticamente. Se uma opção histórica estiver indisponível, revise a configuração antes de habilitar.</p>
 <p>Parcial, estorno, juros e desconto permanecem em revisão. Nenhum efeito acadêmico é aplicado. BB exige espécie, aceite e endereço explícitos por cobrança; não há Pix BB, juros, desconto, cessão ou recebimento parcial neste contrato.</p>
 <button class="btn btn-default" type="submit">Validar consentimento sem efeito financeiro</button><?=form_close();?></div>
+<div role="tabpanel" class="tab-pane" id="pige-tab-prepare">
+<h5>Preparar uma nova conexão remota desativada</h5>
+<p>Desative e salve esta conexão local antes de preparar a outra ponta. O servidor enviará o HMAC já cadastrado à URL informada, usando uma credencial administrativa temporária. Nenhuma conexão existente no PIGE será sobrescrita.</p>
+<?=form_open(admin_url('pige_bridge/settings/prepare_remote'),['id'=>'pige-prepare-form','autocomplete'=>'off']);?>
+<input type="hidden" name="connection_key"><input type="hidden" name="revision">
+<input type="hidden" name="pige_csrf" value="<?=html_escape($pige_csrf);?>"><input type="hidden" name="_company_context" value="<?=html_escape($company_context_token??'');?>">
+<div class="form-group"><label for="pige-prepare-url">URL HTTPS pública do PIGE</label><input id="pige-prepare-url" type="url" name="pige_url" class="form-control" required autocomplete="off"></div>
+<div class="form-group"><label for="pige-prepare-credential">JWT administrativo temporário com integrations.manage</label><input id="pige-prepare-credential" type="password" name="admin_credential" class="form-control" required autocomplete="new-password" maxlength="16386"></div>
+<div class="checkbox"><label><input type="checkbox" name="confirm_transfer" value="1" required> Confirmo o destino e o envio do HMAC desta conexão para preparar o PIGE desativado.</label></div>
+<p>Preparação não comprova autenticação HMAC. O teste atual do PIGE exige habilitação explícita posterior. Se houver erro ou timeout, consulte a outra ponta antes de tentar novamente. Não há retry automático nem alteração de consentimentos financeiros.</p>
+<button type="submit" class="btn btn-default">Preparar sem habilitar</button><?=form_close();?>
+</div>
 <div role="tabpanel" class="tab-pane" id="pige-tab-setup">
 <p>Cadastre no PIGE a URL HTTPS deste CRM, o mesmo identificador, escola, empresa, conta, ambiente e token. A consulta acima pode preencher escola, conta e ambiente de uma configuração existente destinada a este CRM e à empresa selecionada. Não cria a configuração na outra ponta.</p>
 <p>O teste autenticado existente é enviado pelo PIGE para o endpoint de diagnóstico do CRM e confirma o escopo e as capacidades disponíveis. Ele não cadastra a outra ponta nem ativa permissões financeiras.</p>
@@ -89,4 +102,4 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 </div></div></div>
 <script type="application/json" id="pige-settings-data"><?=json_encode($publicConnections,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR);?></script>
 <?php init_tail(); ?>
-<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=109"></script>
+<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=110"></script>

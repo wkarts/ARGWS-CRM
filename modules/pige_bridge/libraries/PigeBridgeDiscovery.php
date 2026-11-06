@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Read-only adapter for verified PIGE360 configuration APIs. Never consumes the bridge HMAC. */
+/** Verified PIGE360 administrative contracts. JWT authorization remains distinct from bridge HMAC. */
 final class PigeBridgeDiscovery
 {
     public function __construct(private $authorize, private $transport=null, private $resolver=null) {}
@@ -31,12 +31,12 @@ final class PigeBridgeDiscovery
         foreach($addresses as $address)if(!is_string($address)||!self::publicAddress($address))throw new DomainException('pige_discovery_destination');
         return $addresses[0];
     }
-    private function request(string $origin,string $path,string $credential,bool $list=false):array
+    private function request(string $origin,string $path,string $credential,bool $list=false,string $method='GET',array $payload=[]):array
     {
         ($this->authorize)();
         if(!preg_match('/^[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,8192}\.[A-Za-z0-9_-]{1,4096}$/D',$credential))throw new DomainException('pige_discovery_admin_credential');
         $host=(string)parse_url($origin,PHP_URL_HOST);$address=$this->address($host);
-        try{$response=$this->transport!==null?($this->transport)($origin.$path,$credential,$host,$address):self::https($origin.$path,$credential,$host,$address);}
+        try{$response=$this->transport!==null?($this->transport)($origin.$path,$credential,$host,$address,$method,$payload):self::https($origin.$path,$credential,$host,$address,$method,$payload);}
         catch(Throwable $error){throw new DomainException('pige_discovery_transport');}
         ($this->authorize)();
         if(!is_array($response)||!isset($response['status'],$response['body'])||!is_int($response['status'])||!is_string($response['body'])||strlen($response['body'])>262144)throw new DomainException('pige_discovery_response');
@@ -45,7 +45,7 @@ final class PigeBridgeDiscovery
         try{$parsed=json_decode($response['body'],false,32,JSON_THROW_ON_ERROR);$data=json_decode($response['body'],true,32,JSON_THROW_ON_ERROR);}catch(Throwable $error){throw new DomainException('pige_discovery_response');}
         if(($list?!is_array($parsed):!$parsed instanceof stdClass)||!is_array($data))throw new DomainException('pige_discovery_response');return $data;
     }
-    private static function https(string $url,string $credential,string $host,string $address):array
+    private static function https(string $url,string $credential,string $host,string $address,string $method='GET',array $payload=[]):array
     {
         if(!function_exists('curl_init'))throw new RuntimeException('pige_discovery_transport');
         $ch=curl_init($url);$body='';
@@ -54,14 +54,31 @@ final class PigeBridgeDiscovery
                 CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>15,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,
                 // Pin the validated address and keep TLS hostname verification. A proxy would bypass this DNS boundary.
                 CURLOPT_PROXY=>'',CURLOPT_RESOLVE=>[$host.':443:'.$address],CURLOPT_HTTPGET=>true,
-                CURLOPT_HTTPHEADER=>['Accept: application/json','Authorization: Bearer '.$credential],
+                CURLOPT_HTTPHEADER=>['Accept: application/json','Content-Type: application/json','Authorization: Bearer '.$credential],
                 CURLOPT_WRITEFUNCTION=>static function($ch,string $chunk)use(&$body):int{if(strlen($body)+strlen($chunk)>262144)return 0;$body.=$chunk;return strlen($chunk);}]);
+            if($method==='PUT'){curl_setopt($ch,CURLOPT_CUSTOMREQUEST,'PUT');curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($payload,JSON_THROW_ON_ERROR));}
+            elseif($method!=='GET'||$payload!==[])throw new RuntimeException('pige_discovery_transport');
             if(curl_exec($ch)!==true)throw new RuntimeException('pige_discovery_transport');
             return ['status'=>(int)curl_getinfo($ch,CURLINFO_RESPONSE_CODE),'body'=>$body];
         }finally{curl_close($ch);}
     }
     private static function school(string $id):string
     {if(!preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D',$id))throw new DomainException('pige_discovery_school');return $id;}
+    /** Explicit new remote preparation only; existing configurations are never overwritten. */
+    public function prepareRemote(string $url,string $credential,array $scope,string $secret,string $crmUrl):array
+    {
+        $origin=self::origin($url);$crm=self::origin($crmUrl);$school=self::school($scope['school_id']??'');
+        if(array_keys($scope)!==['school_id','issuer_id','account_id','environment']||!is_string($scope['issuer_id'])||!preg_match('/^[1-9][0-9]{0,18}$/D',$scope['issuer_id'])||!is_string($scope['account_id'])||!preg_match('/^[A-Za-z0-9_.:-]{1,128}$/D',$scope['account_id'])||!in_array($scope['environment'],['sandbox','production'],true)||!preg_match('/^[!-~]{32,512}$/D',$secret))throw new DomainException('pige_preparation_scope');
+        $path='/api/v1/schools/'.$school.'/crm-bridge/configuration';
+        $before=$this->request($origin,$path,$credential);
+        if(!array_key_exists('configuration',$before))throw new DomainException('pige_discovery_response');
+        if($before['configuration']!==null)throw new DomainException('pige_preparation_already_configured');
+        $payload=['version'=>null,'enabled'=>false,'base_url'=>$crm,'issuer_id'=>$scope['issuer_id'],'account_id'=>$scope['account_id'],'environment'=>$scope['environment'],'secret'=>$secret];
+        // PUT carries the expected absent revision. A concurrent creator is rejected by the PIGE CAS.
+        try{$row=$this->request($origin,$path,$credential,false,'PUT',$payload);}finally{unset($payload,$secret);}
+        if(($row['base_url']??null)!==$crm||($row['issuer_id']??null)!==$scope['issuer_id']||($row['account_id']??null)!==$scope['account_id']||($row['environment']??null)!==$scope['environment']||($row['enabled']??null)!==false||($row['secret_configured']??null)!==true||!is_int($row['version']??null)||$row['version']<1)throw new DomainException('pige_preparation_unconfirmed');
+        return ['state'=>'prepared_disabled','remote_revision'=>$row['version'],'authenticated'=>false];
+    }
     public function schools(string $url,string $credential):array
     {
         $rows=$this->request(self::origin($url),'/api/v1/schools',$credential,true);

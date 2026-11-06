@@ -10244,7 +10244,7 @@
       "evidence": ""
     },
     "modules/pige_bridge/libraries/PigeBridgeConnections.php": {
-      "sha256": "2246324cf8bd3d9d236b3c0906ff254b8d1e599bcbd7c54837498ea8b9de12fa",
+      "sha256": "caf342d7ef024c88af0a4c6fe308ead85a8010bf542fedfab6cdcc0da64986b3",
       "categories": [
         "invoice_table"
       ],

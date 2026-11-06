@@ -440,3 +440,20 @@ nativo de cancelamento:145 cumulativas SQLite, incluindo fluxo manual e rascunho
 `asaas_module_migrations.php`:243 assertions no runner MySQL; `asaas_callback_version.php`:13.
 A tentativa inicial do runner foi recusada por nome de schema fora da allowlist;
 reexecutada em `asaas_test`, sem alterar guard. [Contrato e limites](asaas-invoice-lifecycle.md).
+
+## Preparação bilateral PIGE110
+
+Contrato:37 checks adicionais após71 da descoberta. Controller com MySQL:13
+adicionais, preservando conexão local e empresa vizinha; CSRF/GET/confirmação/revisão
+e resultado não confirmado cobertos. Provedor/DNS são simulados. Chromium desktop
+e mobile aprovou formulário nativo, confirmação vazia, ausência do HMAC na view,
+restrição da conexão habilitada e limpeza do JWT. Runner com metadados simulados:37.
+Runner MySQL real passou instalação/repetição/upgrade e preservação na falha de schema.
+Nenhuma credencial real, criação remota ou habilitação financeira. [Limites](pige-discovery.md).
+
+CI204d: a suíte histórica155 ainda fixava o header162; atualizada para163 sem
+alterar as migrations nem retirar comparações. MySQL155 reexecutado:101 checks
+além dos46 de154. O census de ações nativas também foi regenerado pelo gerador
+oficial após a mudança no controller; esse inventário é separado dos outros três.
+O wrapper único local não rodou por ausência de Python no container PHP; suas
+etapas foram executadas com Python no host e PHP no container, sem omitir o diff.
