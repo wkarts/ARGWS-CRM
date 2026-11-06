@@ -5886,7 +5886,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "55cc4d4117456f226dd315f67cee369cc9c86f10864fdedfe1cf05e4632394ce",
+      "sha256": "47b15a55d08b4b4b8fd1ae170e714e00f55c61a7ba840705723781dc09269bca",
       "categories": [
         "invoice_table"
       ],
@@ -5903,10 +5903,10 @@
         579,
         776,
         779,
-        787
+        791
       ],
       "state": "unreviewed",
-      "evidence": ""
+      "evidence": "Revisão limitada ao delta Efí da PR61: efi_company_module_required passa de 403 a 503, sem alteração de ACL, schema ou chamadas ao provedor. tests/settings/efi_primary_configuration_mysql.php e tests/efi/native_controller_contract.php; docs/companies/pr61-settings-regression.md. O trait completo continua unreviewed; não há fechamento operacional."
     },
     "application/services/NativeCompanyStaffInviteMail.php": {
       "sha256": "e72bf68cadf5a0c338f3e2d7707e4d85c60bcf8968acfa8e7369322fa46deb2c",
@@ -6400,6 +6400,17 @@
       ],
       "state": "unreviewed",
       "evidence": ""
+    },
+    "application/services/NativeSettingsCompatibility.php": {
+      "sha256": "82504b8d658bb0b12c86cffa5a833230fa6b5ba815a62697141b9c132ea73ad5",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        9
+      ],
+      "state": "unreviewed",
+      "evidence": "Revisão limitada ao despacho principal de email/invoices da PR61: usesInstallationForm exige primary e grupo string da allowlist; secundárias mantêm os adapters e guards. tests/settings/primary_settings_dispatch.php e tests/settings/primary_settings_scope.php; docs/companies/pr61-settings-regression.md. Não equivale a revisão integral dos escritores legados; permanece unreviewed."
     },
     "application/services/NativeSettingsSections.php": {
       "sha256": "5819070a15a8dbac46316d832416e768ed56fb888c58db66094f9ad37a2328e0",

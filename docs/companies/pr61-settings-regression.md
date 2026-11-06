@@ -178,3 +178,46 @@ sem remover o escopo da outra implementação.
 Commit: `fix(settings): restore primary forms and recover incomplete configuration`.
 Merge sugerido: nenhum nesta execução; aguardar revisão da PR existente.
 Versão: 4.8.9/489, sem novo incremento arbitrário.
+
+## Follow-up do inventário após CI de 1d8dad50
+
+O workflow [Barreiras de escopo de faturas, run 42135235219](https://github.com/wkarts/ARGWS-CRM/actions/runs/42135235219)
+falhou no job inventory 127621577403: hash antigo de
+`NativeCompanySpecializedOperations.php` e fronteira nova
+`NativeSettingsCompatibility.php` ainda não inventariada. O resultado foi
+comunicado pela conversa coordenadora, que também verificou os 11 unittests e
+os jobs core MySQL PHP 8.1/8.5 aprovados nesse run; isso não significa aprovação
+integral da PR nem de um SHA posterior.
+
+Procedimento seguido: `docs/invoice-issuer-core-scope.md` e
+`docs/companies/core-transition.md`. O gerador oficial
+`python3 scripts/audit-issuer-isolation.py --write` atualiza hashes/linhas e
+reinicia arquivos alterados como `unreviewed`. Registrada evidência da revisão
+limitada nas duas entradas, **mantendo ambas unreviewed**: despacho restrito à
+principal, manutenção dos guards de secundárias e alteração exclusivamente do
+diagnóstico de módulo Efí. Não se declarou revisão completa dos escritores
+legados nem de todo o trait de operações especializadas.
+
+Também regenerado pelo comando oficial
+`python3 scripts/inventory-company-boundaries.py`, sem editar exclusões, regras,
+gates ou estados de aprovação: 15.239 arquivos continuam não revisados,
+`operational_ready=false`; somente o fingerprint da árvore muda.
+
+A tentativa `python3 scripts/register-company-consumers.py` falhou por evidência
+órfã preexistente: `application/controllers/admin/Settings.php::isolated_index`.
+Foi comprovado por `git show` que o método já não existia em `c6ec9da0`, antes
+deste incremento. `consumer-register.json` e `consumer-evidence.json` foram
+preservados: remover ou transferir aquela evidência exigiria revisar a migração
+anterior do consumidor, não simplesmente apagar o bloqueio. Essa limitação
+não foi apresentada como geração aprovada.
+
+Validação do follow-up: os 11 testes de
+`python3 -m unittest tests/test_issuer_isolation_inventory.py tests/test_invoice_attachment_storage.py`
+passaram. O audit normal retorna 684 arquivos, 655 unreviewed, 29 partial,
+zero erros e `operational_rollout=blocked`; `--assert-ready` foi executado e
+continuou falhando com a mensagem de bloqueio operacional. Os cinco testes de
+`test_company_boundary_inventory.py` e `test_company_consumer_register.py` também
+passaram. Reexecutados os testes `primary_settings_dispatch.php`,
+`primary_settings_scope.php` e `efi/native_controller_contract.php`, aprovados.
+Nenhum código funcional, schema, versão, tag ou configuração de produção mudou
+neste follow-up. A aprovação remota do novo SHA precisa ser observada separadamente.
