@@ -476,3 +476,17 @@ tracking e preservação na falha. Chromium desktop/mobile passou o modal com
 botão habilitado somente na conexão ativa e JWT limpo no fechamento. A primeira
 execução do teste consultava o campo antes do evento hidden.bs.modal; corrigido
 para aguardar a limpeza, mantendo a asserção. Não é HTTP autenticado de produção.
+
+CI4aa5: focused SQLite falhou em `banco_brasil_cnab400_preparation_sqlite.php`.
+Reproduzido localmente: o fixture anterior à141 não criava envelopes/membros CNAB400;
+após acrescentar as tabelas, a geração alcançou a validação information_schema,
+indisponível no SQLite. O fixture agora declara os metadados desses dois objetos
+pelo mecanismo opt-in de doubles já existente. O adaptador de teste respeita o
+filtro COLUMN_NAME da consulta de FK. Não houve mudança no serviço/validador de
+produção nem remoção das asserções de conteúdo, idempotência e rollback. O teste
+SQLite completo passou; isso não comprova schema InnoDB. A suíte MySQL permanece
+a evidência separada da instalação/agrupamento reais.
+Reexecução MySQL: preparação/concorrência e32 verificações adicionais de agrupamento
+passaram, após266 cumulativas da emissão e35 de rejeições de retorno. A cadeia
+SQLite de `companies/contracts_controller.php`, que compartilha o adaptador de
+metadados, passou. Sem transmissão ou homologação bancária.

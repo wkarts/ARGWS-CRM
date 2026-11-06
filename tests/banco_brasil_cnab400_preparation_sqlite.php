@@ -52,8 +52,23 @@ foreach([
  "CREATE TABLE {$p}bb_batches(id INTEGER PRIMARY KEY AUTOINCREMENT,issuer_id INTEGER,connection_id INTEGER,scope_key TEXT,idempotency_key TEXT,payload_hash TEXT,layout_id TEXT,layout_source_hash TEXT,layout_binding_id INTEGER,file_sequence INTEGER,content_hash TEXT,content BLOB,generation_state TEXT,delivery_state TEXT,financial_state TEXT,created_by INTEGER,created_at TEXT,UNIQUE(scope_key,idempotency_key),UNIQUE(scope_key,file_sequence))",
  "CREATE TABLE {$p}bb_batch_actions(id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER,issuer_id INTEGER,actor_id INTEGER,action TEXT,reference TEXT,created_at TEXT,UNIQUE(batch_id,action))",
  "CREATE TABLE {$p}bb_origin_snapshots(origin_id INTEGER PRIMARY KEY,layout_binding_id INTEGER,contract_id INTEGER,snapshot_json TEXT)",
- "CREATE TABLE {$p}bb_batch_origins(batch_id INTEGER,origin_id INTEGER UNIQUE,PRIMARY KEY(batch_id,origin_id))"
+ "CREATE TABLE {$p}bb_batch_origins(batch_id INTEGER,origin_id INTEGER UNIQUE,PRIMARY KEY(batch_id,origin_id))",
+ // Migration141 export envelopes are part of the current preparation contract.
+ "CREATE TABLE {$p}bb_cnab_groups(id INTEGER PRIMARY KEY AUTOINCREMENT,issuer_id INTEGER NOT NULL,compatibility_hash TEXT NOT NULL,state TEXT NOT NULL,content BLOB NOT NULL,content_hash TEXT NOT NULL,created_by INTEGER NOT NULL,created_at TEXT NOT NULL,frozen_at TEXT)",
+ "CREATE TABLE {$p}bb_cnab_group_members(id INTEGER PRIMARY KEY AUTOINCREMENT,preparation_id INTEGER NOT NULL UNIQUE REFERENCES {$p}bb_cnab_preparations(id),group_id INTEGER NOT NULL REFERENCES {$p}bb_cnab_groups(id),source_hash TEXT NOT NULL)"
 ] as $ddl)if(!$db->query($ddl))throw new RuntimeException('reservation fixture DDL failed');
+// SQLite exercises transaction/data behavior, not the MySQL information_schema contract.
+// Declare only these two metadata doubles; real schema validation runs in the MySQL suite.
+foreach(\BancoBrasil\Cnab400GroupSchema::requirements() as $table=>$definition){
+ $meta=['engine'=>[['ENGINE'=>'InnoDB','TABLE_COLLATION'=>'utf8mb4_bin']],'columns'=>[],'indexes'=>[],'foreign'=>[]];
+ foreach($definition['columns'] as $column=>$type)$meta['columns'][]=['COLUMN_NAME'=>$column,'COLUMN_TYPE'=>rtrim($type,'?'),'IS_NULLABLE'=>str_ends_with($type,'?')?'YES':'NO','EXTRA'=>$column==='id'?'auto_increment':'','COLUMN_DEFAULT'=>null,'CHARACTER_SET_NAME'=>'utf8mb4','COLLATION_NAME'=>'utf8mb4_bin'];
+ foreach(array_merge([['id']],$definition['unique']) as $i=>$columns)foreach($columns as $j=>$column)$meta['indexes'][]=['INDEX_NAME'=>$i===0?'PRIMARY':'unique'.$i,'NON_UNIQUE'=>0,'SEQ_IN_INDEX'=>$j+1,'COLUMN_NAME'=>$column,'SUB_PART'=>null];
+ if($table==='bb_cnab_group_members')foreach(['preparation_id'=>'bb_cnab_preparations','group_id'=>'bb_cnab_groups'] as $column=>$parent)$meta['foreign'][]=['COLUMN_NAME'=>$column,'REFERENCED_TABLE_NAME'=>$p.$parent,'REFERENCED_COLUMN_NAME'=>'id'];
+ $db->declaredMysqlMetadata[$p.$table]=$meta;
+}
+$fkQuery='SELECT REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=? AND REFERENCED_TABLE_SCHEMA=DATABASE()';
+essentialCheck($db->query($fkQuery,[$p.'bb_cnab_group_members','preparation_id'])->result_array()===[['COLUMN_NAME'=>'preparation_id','REFERENCED_TABLE_NAME'=>$p.'bb_cnab_preparations','REFERENCED_COLUMN_NAME'=>'id']],'metadata fixture keeps preparation FK separate from group FK');
+essentialCheck($db->query($fkQuery,[$p.'bb_cnab_group_members','missing_column'])->result_array()===[],'metadata fixture does not fabricate an unknown foreign key');
 $agreementObject=new \BancoBrasil\Agreement(new \BancoBrasil\Scope($a,10,$account,'sandbox',$agreement),$tax,$name,$variation,$wallet);
 $namespace=\BancoBrasil\Origination::bankNamespace($agreementObject);
 $db->query("INSERT INTO {$p}bb_number_reservations VALUES(?,?,?,?,?,?,?,?)",[$namespace,$a,$tax,100,199,100,1,1]);

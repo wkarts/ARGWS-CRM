@@ -128,7 +128,12 @@ final class EssentialTestDb
                 $exists=$this->pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?");$exists->execute([$params[0]]);
                 if(!$exists->fetch())return new EssentialTestResult([]);
                 foreach(['COLUMNS'=>'columns','STATISTICS'=>'indexes','KEY_COLUMN_USAGE'=>'foreign','REFERENTIAL_CONSTRAINTS'=>'rules','TABLES'=>'engine'] as $table=>$key)
-                    if(str_contains($sql,'information_schema.'.$table))return new EssentialTestResult($declaration[$key]);
+                    if(str_contains($sql,'information_schema.'.$table)){
+                        $rows=$declaration[$key];
+                        // Preserve a column-scoped FK query in the opt-in SQLite metadata double.
+                        if($key==='foreign'&&str_contains($sql,'AND COLUMN_NAME=?'))$rows=array_values(array_filter($rows,static fn($row)=>($row['COLUMN_NAME']??null)===($params[1]??null)));
+                        return new EssentialTestResult($rows);
+                    }
             }
             $metadata = issuerSqliteIntegrationColumn($this->pdo, $sql, $params);
             if ($metadata !== null) { return new EssentialTestResult($metadata); }
