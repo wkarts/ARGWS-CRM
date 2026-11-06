@@ -373,14 +373,7 @@ function fix_kanban_height(col_px, container_px) {
 /* The same native ready lifecycle is used by both admin bootstraps. */
 (function(root){
   var select_picker_validated_event=false,selectBound=false;
-  root.NativeAdminWidgets={
-    initTags:function(){init_tags_inputs();},
-    initTables:function(){init_color_pickers();initDataTableInline();},
-    initVisuals:function(){init_lightbox();init_progress_bars();},
-    initDates:function(){init_datepicker();},
-    initSelects:function(){
-      if(selectBound)return;
-      selectBound=true;
+  // Bind before Bootstrap window-load auto-initialization can render a picker.
   // Shared original picker lifecycle: reveal rendered groups in both admin shells.
 // On render select remove the placeholder
 $("body").on("rendered.bs.select", "select", function () {
@@ -405,6 +398,14 @@ $("body").on("loaded.bs.select", "._select_input_group", function (e) {
     .css("opacity", "1");
 });
 
+  root.NativeAdminWidgets={
+    initTags:function(){init_tags_inputs();},
+    initTables:function(){init_color_pickers();initDataTableInline();},
+    initVisuals:function(){init_lightbox();init_progress_bars();},
+    initDates:function(){init_datepicker();},
+    initSelects:function(){
+      if(selectBound)return;
+      selectBound=true;
   // jQuery validation fix for select, works only on required
   // Wrap it in another validate event because is throwing errors if the form is not yet validated
   $(document).on("app.form-validate", function (e, form) {

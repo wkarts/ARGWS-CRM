@@ -874,3 +874,11 @@ O run 42259518504 confirmou no Chromium fixado os regressivos de seletor/modal d
 O teste BB procurava `#allowed_payment_modes`, ID ausente no select original. Corrigido para `#invoice-form [name="allowed_payment_modes[]"]`, com assert de um único select antes de conferir opções. Não altera gateway, permissões ou o formulário de produção. Reexecução autenticada ainda necessária.
 
 Validação local desta instrumentação: seis testes Python de ambiente/redação passaram; regressão Chromium do POST com navegação passou usando Playwright 1.55.1 e Chromium instalado; sintaxe Node e diff sem erros. Nenhuma verificação de preview, idempotência ou segregação foi removida.
+
+### Ordem de inicialização dos seletores nativos
+
+O mesmo run ddc85e10 falhou em Contratos (botão do modal oculto) e Despesas (categoria oculta). Reproduzido localmente com a view PHP real de Contratos, CSS publicado e Bootstrap: se o auto-init de window.load antecede `NativeAdminWidgets.initSelects`, registrar `rendered.bs.select` dentro desse método perde o evento. O fixture imediato anterior não cobria essa ordem. Movidos os três handlers originais para o carregamento do script compartilhado, antes do auto-init. A inicialização/validação continua única; nenhum controle foi forçado a aparecer no teste.
+
+Regressão Chromium/PHP passou nas ordens imediata e tardia, com abertura do modal e viewport móvel. Quatro testes de lifecycle passaram; mais 23 testes Node com PHP 8.5 passaram sem skips. O teste autenticado ainda precisa ser repetido. Banco do Brasil e ausência do link de criação de recorrências continuam com verificações e diagnósticos explícitos, sem presumir causa comum.
+
+A tentativa local de HTTP completo usou cópia descartável e schema `argws_http_debug_ci`. MySQL 8.4 recusou FK histórica que o MySQL 8.0 do CI aceita; somente a conexão dessa cópia recebeu o modo de compatibilidade, sem alteração no repositório ou nas verificações. O provisionamento terminou, mas a tentativa HTTP retornou corpo vazio e não é evidência de fluxo autenticado. Ao faltar disco, foram removidos exclusivamente os containers debug criados nesta etapa, preservando cópia, schema e logs; os testes PHP posteriores usaram o runtime oficial Composer já disponível, menor. Não houve limpeza global ou alteração de dados de produção.

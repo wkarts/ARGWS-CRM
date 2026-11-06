@@ -32,6 +32,11 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
    assert.equal(columns.yearVisible,false,'original year column remains hidden by the native table policy');
    assert.equal(columns.yearClass,true,'hidden column is exactly the original year header, not a dropped field');
    const createLink=page.getByRole('link',{name:'Nova recorrência',exact:true});
+   if(await createLink.count()!==1){
+    const actual=page.locator('a[href]');
+    const state=await actual.evaluateAll(links=>{const matches=links.filter(link=>{const target=new URL(link.href);return target.pathname==='/admin/invoices/recurring'&&target.searchParams.get('new')==='1';});return{matchingTargets:matches.length,labelsMatch:matches.map(link=>link.textContent.trim()==='Nova recorrência'),visible:matches.map(link=>!!(link.offsetWidth||link.offsetHeight||link.getClientRects().length))};});
+    console.error('Recurring creation diagnostics '+JSON.stringify(state));
+   }
    assert.equal(await createLink.count(),1,'authorized recurring directory exposes one creation link for mode '+mode);
    await createLink.waitFor({state:'visible'});
    const target=new URL(await createLink.getAttribute('href'),page.url());assert.equal(target.pathname,'/admin/invoices/recurring');assert.equal(target.searchParams.get('new'),'1');
