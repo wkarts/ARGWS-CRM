@@ -98,8 +98,10 @@ final class CompanyInvoices
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);
         if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_invoice_invalid_input');
         $nativeModes=$data['native_preferences']['allowed_payment_modes']??null;if($nativeModes!==null){require_once __DIR__.'/NativeCompanyInvoicePaymentChoices.php';$guardTables=array_values(array_unique(array_merge($guardTables,NativeCompanyInvoicePaymentChoices::validationTables($nativeModes))));}
+        $bankInstruction=$data['native_preferences']['bank_issuance']??null;
+        if($bankInstruction!==null){require_once APPPATH.'../modules/banco_brasil/libraries/BancoBrasil/InvoiceIssuance.php';$guardTables=array_values(array_unique(array_merge($guardTables,(new \BancoBrasil\InvoiceIssuance($this->db,$this->prefix))->tables())));}
         $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));$legacyHash=$this->legacyRequestHash($data,$input);
-        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash,$originGuard,$nativeModes):int{
+        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash,$originGuard,$nativeModes,$bankInstruction):int{
             $this->authorize($issuer,$actor,'create');$this->authorize($issuer,$actor,'view');
             if($originGuard!==null)$originGuard();
             $receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
@@ -107,6 +109,7 @@ final class CompanyInvoices
                 if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||(!hash_equals($receipt['input_hash'],$hash)&&($legacyHash===null||!hash_equals($receipt['input_hash'],$legacyHash))))throw new DomainException('company_invoice_request_conflict');
                 $storedInvoice=$this->rows('SELECT id,currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$receipt['invoice_id'],$issuer])[0]??null;if(!$storedInvoice)throw new RuntimeException('issuer_invoice_write_unconfirmed');(new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($storedInvoice['currency']);
                 if($originGuard!==null)$originGuard();
+                if($bankInstruction!==null)(new \BancoBrasil\InvoiceIssuance($this->db,$this->prefix))->confirmInOwned($issuer,$actor,(int)$receipt['invoice_id'],$bankInstruction);
                 return (int)$receipt['invoice_id'];
             }
             $client=$data['client_id'];
@@ -148,6 +151,7 @@ final class CompanyInvoices
             if($nativeModes!==null){(new NativeCompanyInvoicePaymentChoices($this->db,$this->prefix))->validateInOwned($issuer,$actor,$nativeModes);$storedModes=$this->rows('SELECT allowed_payment_modes FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$id,$issuer])[0]??[];if(($storedModes['allowed_payment_modes']??null)!==serialize($nativeModes))throw new RuntimeException('issuer_native_invoice_payment_modes_unconfirmed');}
             if(isset($data['native_fields']))$this->confirmNativeFields($issuer,$actor,$id,$data['native_fields']);
             if(array_key_exists('native_project',$data))$this->confirmNativeProject($issuer,$actor,$id,$client,$data['native_project']);
+            if($bankInstruction!==null)(new \BancoBrasil\InvoiceIssuance($this->db,$this->prefix))->issueInOwned($issuer,$actor,$id,$bankInstruction);
             $this->confirmLines($id,$data['items'],$data['calculation_contract']??null);if($this->documents($issuer,$actor)->get($id,$issuer)!==$doc)throw new RuntimeException('issuer_invoice_write_unconfirmed');return $id;
         },$guardTables);
     }

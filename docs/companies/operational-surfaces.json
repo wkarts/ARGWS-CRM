@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "f71360de311a3f1e0cba4b9b9d9326e763fef2f75e6b1d18ef5b832ec5200f6e",
+    "source_manifest_sha256": "b8182e4424ec0d1267fbed82cdc550b145306fc9791ec08012c679ee6e0d47c5",
     "counts": {
         "modules": 38,
-        "source_files": 4817,
+        "source_files": 4823,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 304,
-        "table_name_candidates": 933,
+        "table_name_candidates": 934,
         "database_call_candidates": 12540
     },
     "infrastructure_options": [
@@ -576,7 +576,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.4.1",
+            "version": "1.4.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -617,6 +617,7 @@
                 "bb_event_links",
                 "bb_event_receipts",
                 "bb_event_reviews",
+                "bb_invoice_issuances",
                 "bb_layout_bindings",
                 "bb_number_reservations",
                 "bb_origin_snapshots",
@@ -26465,12 +26466,12 @@
         {
             "name": "bb_connections",
             "state": "not_verified",
-            "reference_count": 27
+            "reference_count": 28
         },
         {
             "name": "bb_contract_declarations",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 11
         },
         {
             "name": "bb_event_links",
@@ -26488,9 +26489,14 @@
             "reference_count": 7
         },
         {
+            "name": "bb_invoice_issuances",
+            "state": "not_verified",
+            "reference_count": 6
+        },
+        {
             "name": "bb_layout_bindings",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 17
         },
         {
             "name": "bb_number_reservations",
@@ -26500,12 +26506,12 @@
         {
             "name": "bb_origin_snapshots",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
         },
         {
             "name": "bb_origins",
             "state": "not_verified",
-            "reference_count": 73
+            "reference_count": 76
         },
         {
             "name": "bb_return_events",
@@ -28980,7 +28986,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 645
+            "reference_count": 646
         },
         {
             "name": "issuer_certificate_audit",
@@ -29450,7 +29456,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 110
+            "reference_count": 111
         },
         {
             "name": "mrp_manufacturing_orders",

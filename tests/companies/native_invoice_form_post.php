@@ -22,3 +22,12 @@ foreach(['invoices','issuers_sequences']as$table)essentialCheck($db->query('SELE
 echo 'Original invoice form POST actual writer: '.$GLOBALS['essentialChecks']." cumulative PASS; HTTP boundary/browser pending.\n";
 
 require __DIR__.'/native_invoice_frozen_tax_cases.php';
+
+$bankWire=$wire;$bankWire['allowed_payment_modes']=['banco_brasil_cnab'];
+$bankWire['bank_issuance']=['enabled'=>'1','contract_id'=>'12','timezone'=>'America/Sao_Paulo','payer'=>['payer_name'=>'Synthetic payer','payer_address'=>'Synthetic street','payer_district'=>'Centro','payer_zip'=>'04000000','payer_city'=>'Sao Paulo','payer_state'=>'SP','species'=>'01','acceptance'=>'N']];
+$bankParsed=NativeCompanyInvoiceFormInput::create($bankWire,array_key_first(CompanySettingsFormats::dates()));
+essentialCheck($bankParsed['payload']['native_preferences']['bank_issuance']['contract_id']===12&&$bankParsed['payload']['native_preferences']['allowed_payment_modes']===['banco_brasil_cnab'],'actual original POST parser carries explicit bank instruction to canonical payload');
+$bankOff=$bankWire;unset($bankOff['bank_issuance']['enabled']);essentialCheck(!isset(NativeCompanyInvoiceFormInput::create($bankOff,array_key_first(CompanySettingsFormats::dates()))['payload']['native_preferences']['bank_issuance']),'unchecked original form does not enable bank issuance from populated fields');
+$bankMissing=$bankWire;unset($bankMissing['bank_issuance']['timezone']);essentialThrows(fn()=>NativeCompanyInvoiceFormInput::create($bankMissing,array_key_first(CompanySettingsFormats::dates())),'company_invoice_bank_instruction_invalid','original form never infers company timezone');
+$bankMixed=$bankWire;$bankMixed['allowed_payment_modes'][]='asaas';essentialThrows(fn()=>NativeCompanyInvoiceFormInput::create($bankMixed,array_key_first(CompanySettingsFormats::dates())),'company_invoice_bank_instruction_invalid','original form refuses conflicting online billing instruction');
+echo "Original form explicit CNAB instruction: 4 additional parser checks; no bank calls.\n";

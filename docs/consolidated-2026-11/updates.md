@@ -18,3 +18,16 @@ execução de cobrança real. O delta SDK está restrito ao suporte de cartão.
 O usuário também informou que as PRs anteriores haviam sido publicadas. A
 consulta remota confirmou PR62 merged e main769840ad; a nova branch foi
 sincronizada mantendo o trabalho local e a sequência490→491.
+
+## BB142 — emissão atômica por fatura e recorrência
+
+Nova instrução opt-in nos formulários nativos: contrato declarado, fuso explícito,
+pagador e declarações400. O escritor canônico gera a origem, boleto e lote na
+mesma transação da fatura; a série reaproveita esse fluxo sem alterar faturas
+anteriores ou Produtos. A migration142 cria somente o ledger de vínculo e
+preserva141. Veja [contrato/evidências](bb-invoice-issuance.md).
+
+CIce2 confirmou interface nativa, PIGE, Asaas e reajustes, mas o monitor detectou
+falhas nas shardsSQL bancárias: a lista histórica de tabelas esperadas não
+contemplava os envelopes141. Corrigida e validada com upgrades reais até142.
+Não se declarou CI geral verde; a nova rodada deve validar o novo SHA.

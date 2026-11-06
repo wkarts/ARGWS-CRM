@@ -26,9 +26,32 @@ final class Cnab400Preparation
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix))throw new \InvalidArgumentException('bb_prefix_invalid');
     }
     private function rows(string $sql,array $bind=[]):array{return \IssuerStorage::query($this->db,$sql,$bind)->result_array();}
+    private bool $invoiceOwned=false;
+    public function issuanceTables():array
+    {
+        $tables=array_merge((new Origination($this->db,$this->prefix))->issuanceTables(),Cnab400Groups::TABLES,['bb_cnab_preparations']);
+        return array_values(array_unique($tables));
+    }
+    private function runTransaction(array $tables,callable $work)
+    {
+        if($this->invoiceOwned){\IssuerTransaction::assertOwned($this->db,$this->prefix,$tables);return $work();}
+        return \IssuerTransaction::run($this->db,$this->prefix,$tables,$work);
+    }
+    public function generateInvoiceInOwned(int $issuer,int $actor,int $connection,int $binding,int $invoice,string $date,array $payer,array $approval,string $key):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,$this->issuanceTables());
+        if($this->invoiceOwned)throw new \LogicException('bb_recursive_invoice_issue');
+        $this->invoiceOwned=true;
+        try{
+            $prepared=$this->prepare($issuer,$actor,$connection,$binding,$invoice,$key);
+            $this->reserve($issuer,$actor,$prepared['id'],'1');
+            $this->declareApproval($issuer,$actor,$prepared['id'],$approval);
+            return $this->generate($issuer,$actor,$prepared['id'],$date,$payer);
+        }finally{$this->invoiceOwned=false;}
+    }
     private function transaction(callable $work,array $extraTables=[])
     {
-        return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge([
+        return $this->runTransaction(array_values(array_unique(array_merge([
             'issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions',
             'issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents',
             'currencies','company_currency_units','bb_connections','bb_layout_bindings',
@@ -198,7 +221,7 @@ final class Cnab400Preparation
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
         $tables=array_values(array_unique(array_merge($tables,Cnab400Groups::TABLES,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables())));
-        return \IssuerTransaction::run($this->db,$this->prefix,$tables,function()use($issuer,$actor,$preparation):array{
+        return $this->runTransaction($tables,function()use($issuer,$actor,$preparation):array{
             $acl=$this->authorize($issuer,$actor);(new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'cnab');
             $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;
             if(!$row)throw new \DomainException('bb400_preparation_unavailable');

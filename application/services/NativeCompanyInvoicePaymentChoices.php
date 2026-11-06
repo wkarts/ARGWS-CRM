@@ -34,9 +34,12 @@ final class NativeCompanyInvoicePaymentChoices
   if($channel==='cnab'){
    if(!(new IssuerResourceAccess($this->db,$this->p))->can($i,$a,'banco_brasil','generate'))return false;
    require_once APPPATH.'../modules/banco_brasil/libraries/BancoBrasil/LayoutCatalog.php';
-   // A configured 240 origination candidate; selecting CNAB never loads API credentials.
-   $rows=IssuerStorage::query($this->db,'SELECT b.id FROM '.$this->p.'bb_layout_bindings b JOIN '.$this->p.'bb_connections c ON c.id=b.connection_id AND c.issuer_id=b.issuer_id JOIN '.$this->p.'bb_contract_declarations d ON d.layout_binding_id=b.id AND d.connection_id=c.id AND d.issuer_id=b.issuer_id WHERE b.issuer_id=? AND b.layout_id=? AND b.profile_hash=? AND b.connection_hash=c.configuration_hash LIMIT 1',[$i,BancoBrasil\Agreement::LAYOUT_ID,BancoBrasil\LayoutCatalog::fingerprint(BancoBrasil\Agreement::LAYOUT_ID)])->result_array();
-   return count($rows)===1;
+   // Selection still chooses no account. Actual issuance requires an explicit contract and payer instruction.
+   foreach([BancoBrasil\Agreement::LAYOUT_ID,BancoBrasil\LayoutCatalog::CNAB400] as $layout){
+    $rows=IssuerStorage::query($this->db,'SELECT b.id FROM '.$this->p.'bb_layout_bindings b JOIN '.$this->p.'bb_connections c ON c.id=b.connection_id AND c.issuer_id=b.issuer_id JOIN '.$this->p.'bb_contract_declarations d ON d.layout_binding_id=b.id AND d.connection_id=c.id AND d.issuer_id=b.issuer_id WHERE b.issuer_id=? AND b.layout_id=? AND b.profile_hash=? AND b.connection_hash=c.configuration_hash LIMIT 1',[$i,$layout,BancoBrasil\LayoutCatalog::fingerprint($layout)])->result_array();
+    if(count($rows)===1)return true;
+   }
+   return false;
   }
   require_once APPPATH.'../modules/banco_brasil/libraries/BancoBrasil/ApiService.php';
   $service=new BancoBrasil\ApiService($this->db,$this->p);$profiles=$owned?$service->permissionCandidatesInOwned($i,$a):$service->permissionCandidates($i,$a);

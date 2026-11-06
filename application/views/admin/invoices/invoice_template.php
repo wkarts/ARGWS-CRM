@@ -322,6 +322,7 @@ $data_original_number = isset($invoice) ? $invoice->number : 'false';
                         <?php } ?>
                     </div>
 
+                    <?php if(!empty($native_bank_contracts)&&isset($native_invoice_editor_items)&&!isset($invoice)){require APPPATH.'../modules/banco_brasil/views/invoice_issuance_fields.php';} ?>
                     <div class="row">
                         <div class="col-md-6">
                             <?php

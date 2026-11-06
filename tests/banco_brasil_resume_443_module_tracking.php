@@ -76,7 +76,7 @@ foreach($baseline===null?[]:[$baseline]as$from){
   $ddlSql=array_map(static fn($q)=>(string)$q[0],$ddl);
   // Every historical baseline here predates 124/125/130/133. The target may
   // evolve, so only require tables whose real migration is within this upgrade.
-  $introduced=['bb_checkout_publications'=>124,'bb_api_origin_policy'=>125,'bb_return_originals'=>130,'bb_return_rejections'=>133,'bb_cnab_preparations'=>135,'bb_batch_requests'=>138];
+  $introduced=['bb_checkout_publications'=>124,'bb_api_origin_policy'=>125,'bb_return_originals'=>130,'bb_return_rejections'=>133,'bb_cnab_preparations'=>135,'bb_batch_requests'=>138,'bb_cnab_groups'=>141,'bb_cnab_group_members'=>141,'bb_invoice_issuances'=>142];
   $expectedNewTables=[];foreach($introduced as$name=>$migration)if($migration>(int)str_replace('.','',$from)&&$migration<=$step)$expectedNewTables[]=$p.$name;sort($expectedNewTables,SORT_STRING);
   $newTableDdl=[];foreach($ddlSql as$sql){if(!preg_match('/^\s*CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+`([^`]+)`/i',$sql,$match))throw new RuntimeException('bb_historical_upgrade_unexpected_ddl');$newTableDdl[]=$match[1];}sort($newTableDdl,SORT_STRING);
   essentialCheck($newTableDdl===$expectedNewTables,$from.' first historical upgrade creates exactly the declared additive tables');

@@ -361,3 +361,44 @@ Uma execução paralela inicial conflitou no nome fixo de trigger de um fixture
 anterior; grupos foram reexecutados em outro schema descartável e passaram.
 O conflito não foi apresentado como defeito do produto nem escondido por remoção
 do teste. Inventários oficiais regenerados, mantendo rollout bloqueado.
+
+## Emissão nativa e recorrente — BB142
+
+MySQL8.4 descartável, PHP8.3: `banco_brasil_invoice_issuance_mysql.php`
+passou30 verificações adicionais sobre a cadeia de fixtures reais: emissão240/400,
+rollback integral por falha no ledger, retry, duas ocorrências por leiaute,
+CNAB400 agrupado, recusa sem declaração, marcador antigo, canal desabilitado,
+campos inválidos, operador restrito, revogação e concorrência de dois escritores
+com espera observada no mutex. Nenhuma chamada bancária.
+
+`banco_brasil_resume_443_module_tracking.php` passou os percursos reais de
+instalação e upgrade120/121/122→142 com dados históricos, DDL/replay/falhas de
+tracking. A falha do CIce2 era uma lista incompleta de tabelas adicionadas pela141;
+o teste agora exige exatamente as tabelas141 e142, sem remover comparação de
+schema, registros ou markers. Executado em MySQL8.4 (o rótulo antigo do teste
+menciona MariaDB; MariaDB permanece dependente do CI).
+
+Regressões: `banco_brasil_open_batches_mysql.php`276 cumulativas;
+`banco_brasil_cnab400_groups_mysql.php`32 adicionais;
+`banco_brasil_cnab400_boleto_mysql.php`349 cumulativas. O240 agora testa duas
+faturas com datas distintas, além de datas de geração distintas, preservando as
+datas individuais dos snapshots. A consulta inicial do teste usou uma coluna
+inexistente; foi corrigida para ler o campo do JSON real, mantendo a asserção.
+
+SQLite: `companies/native_invoice_form_post.php`239 cumulativas +4 verificações
+novas do parser; sintaxe PHP dos formulários passou. O primeiro teste do parser
+usou o formato curto em vez da chave pública do catálogo; corrigido para usar
+`CompanySettingsFormats::dates()`, sem relaxar a validação do produto.
+Módulo:54 checks; contratos194; inventário estático bridge125:5 testes.
+
+A extensão de ACL do fixture inicialmente herdou o vínculo empresarial revogado
+pelo teste anterior. O cenário passou a preparar explicitamente a associação do
+operador sintético antes de testar concessão e revogação bancárias. Isso não
+altera permissões de uma instalação real. Inventários oficiais regenerados;
+rollout continua bloqueado. HTTP autenticado/browser142 e homologação bancária
+não foram substituídos por esses testes locais.
+
+Após o lock explícito da identidade e do marcador do módulo, a suíte142 foi
+reexecutada:30 verificações adicionais aprovadas. Também passaram o controller
+real da recorrência com CSRF/ator atual (130 cumulativas, SQLite) e o renderizador
+da view original de fatura (217 cumulativas; shell sintético declarado).
