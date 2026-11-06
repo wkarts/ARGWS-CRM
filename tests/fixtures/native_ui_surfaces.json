@@ -273,7 +273,7 @@
     {
       "path": "modules/pige_bridge/views/settings.php",
       "kind": "native-shell",
-      "reason": "Painel HMVC administrativo com init_head/init_tail nativos, sem bypass CompanyRequestScope; contém somente empresas autorizadas e token mascarado.",
+      "reason": "Native shell, multiple-connection grid and Bootstrap modals; scoped staff/currency/provider selectors verified by rendered Chromium desktop/mobile tests and real MySQL ACL checks. No secret rendered or consent enabled by selection.",
       "owners": [
         "modules/pige_bridge/controllers/Settings.php"
       ],
@@ -287,11 +287,11 @@
           "classless_presentation_candidates": 0
         },
         "input": {
-          "literal_tags": 26,
+          "literal_tags": 23,
           "classless_presentation_candidates": 0
         },
         "select": {
-          "literal_tags": 3,
+          "literal_tags": 6,
           "classless_presentation_candidates": 0
         },
         "textarea": {
