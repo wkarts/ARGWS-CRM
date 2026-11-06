@@ -42,7 +42,7 @@ jobs:
           php tests/pige_bridge_diagnostics.php
           php tests/pige_bridge_connections.php
           php tests/pige_bridge_admin.php
-          php tests/pige_bridge_preparation.php
+          php tests/pige_bridge_diagnostic.php
           php tests/pige_bridge_invoices.php
           php tests/pige_bridge_charges.php
       - name: Schema e idempotência em MySQL real isolado
@@ -57,7 +57,7 @@ jobs:
           php tests/pige_bridge_mysql.php
           php tests/pige_bridge_connections_mysql.php
           php tests/pige_bridge_settings_choices_mysql.php
-          php tests/pige_bridge_preparation_mysql.php
+          php tests/pige_bridge_diagnostic_mysql.php
           php tests/pige_bridge_invoices_mysql.php
           php tests/pige_bridge_charges_mysql.php
           php tests/pige_bridge_bb_mysql.php

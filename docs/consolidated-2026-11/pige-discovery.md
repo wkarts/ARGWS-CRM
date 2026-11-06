@@ -123,3 +123,29 @@ O contrato remoto atual mantém uma configuração administrativa por escola. V�
 conexões locais na mesma empresa continuam possíveis, mas preparar outra conexão
 para uma escola já configurada será recusado; não se sobrescreve sua conta/ambiente
 nem se afirma que o PIGE oferece várias configurações para aquela mesma escola.
+
+## Diagnóstico de conexão habilitada111
+
+A guia Como conectar agora oferece teste nativo para uma conexão já habilitada nas
+duas pontas. Não habilita uma conexão para testar. Exige POST/CSRF, HTTPS, revisão
+local atual, administrador e settings.edit da empresa proprietária. O snapshot
+local contém somente o escopo; nenhum HMAC é decifrado ou exportado nesta ação.
+
+GET remoto confirma destino CRM, escola, empresa, conta, ambiente, enabled e segredo
+configurado; POST `/connection-test` solicita o diagnóstico já implementado no
+PIGE; outro GET exige a mesma revisão/identificador remoto. ACL/revisão/estado
+locais são revalidados antes e depois de cada requisição. Falha, timeout, alteração
+concorrente ou resposta não autenticada não produzem sucesso nem retry automático.
+A projeção ignora mensagens/capacidades arbitrárias do provedor. O resultado é uma
+confirmação pontual reportada pelo PIGE, não consentimento nem autorização financeira
+persistida. O PIGE audita seu teste e o CRM recebe o diagnóstico pelo contrato HMAC
+existente; não há nova emissão, alteração acadêmica ou chamada bancária.
+
+JWT temporário: navegador HTTPS → memória CRM → Bearer HTTPS PIGE. Sem persistência
+local, query string, logs, cookies ou sessão; fechamento do modal limpa o campo.
+Segredo HMAC permanece nas configurações existentes. Migration111 NOOP, histórico
+intacto. O diagnóstico de conexão desativada permanece indisponível no contrato
+remoto; preparação110 não passa a significar autenticação ou ativação automática.
+
+Testes:51 verificações adicionais de contrato e11 de controller/MySQL, sobre as
+cadeias anteriores; transportes remotos simulados. Sem execução contra PIGE real.

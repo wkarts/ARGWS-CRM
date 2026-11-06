@@ -463,3 +463,16 @@ rota de preparação110 ausentes no inventário revisado. Atualizados somente os
 controles literais e a rota pública do PIGE, com a evidência Chromium/MySQL acima;
 nenhuma asserção do gate foi alterada. Reexecução local aprovada:16 views e6
 controllers. Trata-se de inventário estático, não de homologação HTTP autenticada.
+
+## Diagnóstico PIGE111
+
+51 verificações adicionais de contrato e11 de controller com MySQL: escopo remoto
+incompatível bloqueia POST, revisão antes/depois, falha de HMAC, timeout sem retry,
+CSRF/GET/HTTPS, revisão local obsoleta, empresa sem permissão, conexão desativada,
+revogação e preservação de segredo/consentimento. Nenhum provedor real foi chamado.
+Runner111:39 verificações usando o executor real e metadados simulados; runner
+MySQL real em schema descartável novo passou instalação, repetição, upgrade,
+tracking e preservação na falha. Chromium desktop/mobile passou o modal com
+botão habilitado somente na conexão ativa e JWT limpo no fechamento. A primeira
+execução do teste consultava o campo antes do evento hidden.bs.modal; corrigido
+para aguardar a limpeza, mantendo a asserção. Não é HTTP autenticado de produção.

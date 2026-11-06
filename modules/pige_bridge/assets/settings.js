@@ -114,6 +114,9 @@
             value($('#pige-prepare-form'), 'connection_key', record ? record.connection_key : '');
             value($('#pige-prepare-form'), 'revision', record ? record.revision : '');
             $('#pige-prepare-form button[type=submit]').prop('disabled', !record || record.enabled);
+            value($('#pige-diagnostic-form'), 'connection_key', record ? record.connection_key : '');
+            value($('#pige-diagnostic-form'), 'revision', record ? record.revision : '');
+            $('#pige-diagnostic-form button[type=submit]').prop('disabled', !record || !record.enabled);
             value(mapping, 'revision', record ? record.revision : '');
             value(external, 'connection_revision', record ? record.revision : '');
             value(external, 'external_revision', record && record.external ? record.external.revision : 0);

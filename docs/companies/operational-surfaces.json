@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "f82d75e41718472ce300c1220f0e93fdf570f8758b1fe65ad43f71f7bcadba34",
+    "source_manifest_sha256": "43f7269b82c27abb07390d648d38f4ee4309517656d980e51045cd625eb19978",
     "counts": {
         "modules": 38,
-        "source_files": 4827,
+        "source_files": 4828,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -1724,7 +1724,7 @@
         {
             "name": "pige_bridge",
             "entry": "modules/pige_bridge/pige_bridge.php",
-            "version": "1.1.0",
+            "version": "1.1.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -21557,7 +21557,7 @@
         },
         {
             "path": "modules/pige_bridge/controllers/Settings.php",
-            "source_sha256": "362940092676544908cb78d84f2d81c868361c2c8e2330e4f411b4533364e3e0",
+            "source_sha256": "de96bb7b56b807605379e513c6d325039ca79c1c2cb0099478005862817f1a08",
             "module": "pige_bridge",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21583,23 +21583,28 @@
                     "visibility": "public"
                 },
                 {
-                    "method": "save",
+                    "method": "test_connection",
                     "line": 84,
                     "visibility": "public"
                 },
                 {
+                    "method": "save",
+                    "line": 100,
+                    "visibility": "public"
+                },
+                {
                     "method": "disable",
-                    "line": 95,
+                    "line": 111,
                     "visibility": "public"
                 },
                 {
                     "method": "mapping",
-                    "line": 108,
+                    "line": 124,
                     "visibility": "public"
                 },
                 {
                     "method": "external",
-                    "line": 115,
+                    "line": 131,
                     "visibility": "public"
                 }
             ],
@@ -29461,7 +29466,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 114
+            "reference_count": 115
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -29591,7 +29596,7 @@
         {
             "name": "pige_bridge_connections",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 16
         },
         {
             "name": "pige_bridge_external_config",

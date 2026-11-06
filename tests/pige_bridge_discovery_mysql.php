@@ -3,7 +3,7 @@
 require __DIR__.'/pige_bridge_connections_mysql.php';
 require_once __DIR__.'/../modules/pige_bridge/libraries/PigeBridgeDiscovery.php';
 $start=$GLOBALS['essentialChecks'];
-$db->query('INSERT INTO '.$p.'modules(module_name,installed_version,active) VALUES(?,?,1)',['pige_bridge','1.1.0']);
+$db->query('INSERT INTO '.$p.'modules(module_name,installed_version,active) VALUES(?,?,1)',['pige_bridge','1.1.1']);
 $db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,?,?)',[$a,'settings','edit']);
 $_SERVER['HTTPS']='on';$_SERVER['SERVER_PORT']='443';
 $uiActor=12;$uiAdmin=true;$discoveryCalls=0;$duringDiscovery=null;

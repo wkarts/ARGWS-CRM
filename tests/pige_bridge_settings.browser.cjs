@@ -27,6 +27,7 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   assert.equal(payload.issuer_id,'8');assert.equal(payload.revision,'3');assert.equal(payload.pige_csrf,'a'.repeat(64));assert.equal(payload._company_context,'synthetic-context');
   assert.equal(await page.locator('#pige-issuer').isDisabled(),true);
   await page.locator('a[href="#pige-tab-prepare"]').click();
+  assert.equal(await page.locator('#pige-diagnostic-form button').isDisabled(),true,'disabled connection cannot be tested');
   assert.equal(await page.locator('#pige-prepare-form button').isDisabled(),false,'disabled connection can be prepared explicitly');
   const preparation=await page.locator('#pige-prepare-form').evaluate(f=>Object.fromEntries(new FormData(f)));
   assert.equal(preparation.connection_key,'school-11');assert.equal(preparation.revision,'3');assert.equal(preparation.pige_csrf,'a'.repeat(64));assert.equal(preparation._company_context,'synthetic-context');
@@ -82,6 +83,12 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   await page.locator('a[href="#pige-tab-external"]').click();
   assert.equal(await page.locator('#pige-discovery').isVisible(),false,'existing immutable connection cannot be overwritten by discovery');
   assert.equal(await page.locator('#pige-prepare-form button').isDisabled(),true,'enabled connection cannot be prepared');
+  await page.locator('a[href="#pige-tab-setup"]').click();
+  assert.equal(await page.locator('#pige-diagnostic-form button').isDisabled(),false);
+  const diagnostic=await page.locator('#pige-diagnostic-form').evaluate(f=>Object.fromEntries(new FormData(f)));
+  assert.equal(diagnostic.connection_key,'school-00');assert.equal(diagnostic.revision,'3');assert.equal(Object.hasOwn(diagnostic,'secret'),false);
+  await page.locator('#pige-diagnostic-credential').fill('synthetic-diagnostic-jwt');
+  await page.locator('a[href="#pige-tab-external"]').click();
   await page.evaluate(()=>window.pendingDiscovery.resolve({success:true,configuration:{issuer_id:'7',school_id:'12345678-1234-1234-1234-123456789abc',account_id:'stale-must-not-apply',environment:'production',remote_revision:9}}));
   assert.equal(await page.locator('#pige-account_id').inputValue(),'account-0','late response from cancelled new form cannot overwrite another connection');
   assert.equal(await page.locator('#pige-discovery-status').textContent(),'');
@@ -100,6 +107,8 @@ const inline=app.slice(app.indexOf('function appDataTableInline('),app.indexOf('
   await page.locator('#pige-ext-profile').selectOption('8');
   assert.equal(await page.locator('[name=external_enabled]').isChecked(),false,'selector does not activate consent');
   await page.locator('#pige-editor .modal-footer button').click();await page.waitForSelector('#pige-editor.in',{state:'hidden'});
+  await page.waitForFunction(()=>document.querySelector('#pige-diagnostic-credential').value==='');
+  assert.equal(await page.locator('#pige-diagnostic-credential').inputValue(),'','closing modal clears diagnostic JWT');
   const dialog=page.waitForEvent('dialog').then(d=>d.dismiss());await page.locator('.pige-disable button').click();await dialog;
   assert.equal(await page.locator('#pige-connections').count(),1,'cancel keeps list');
   assert.equal(await page.evaluate(()=>window.leaked),undefined);assert.deepEqual(errors,[]);

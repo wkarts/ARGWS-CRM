@@ -157,3 +157,5 @@ foi integrado pelo usuário; nesta etapa não há alteração de SDK/vendor/Perf
 antes do download/transmissão, sem alterar arquivo ou gerar pagamento. BB05 passa
 a parcial: emissão automática pelo meio de pagamento/recorrência e publicação ao
 cliente ainda não foram integradas; CNAB400 e homologação bancária seguem pendentes.
+
+PIGE111 acrescenta diagnóstico explícito de conexão já habilitada pelo contrato remoto existente, com revisão/ACL antes e depois do HTTP. Não ativa conexão desativada nem substitui homologação bilateral real. Ver [contrato](pige-discovery.md).

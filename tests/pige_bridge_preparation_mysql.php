@@ -1,7 +1,7 @@
 <?php
 require __DIR__.'/pige_bridge_discovery_mysql.php';
 $start=$GLOBALS['essentialChecks'];$uiActor=7;$uiAdmin=true;$_SERVER['HTTPS']='on';$_SERVER['SERVER_PORT']='443';
-$db->query('UPDATE '.$p.'modules SET installed_version=?,active=1 WHERE module_name=?',['1.1.0','pige_bridge']);
+$db->query('UPDATE '.$p.'modules SET installed_version=?,active=1 WHERE module_name=?',['1.1.1','pige_bridge']);
 $before=$row('disable-ui');$snapshot=$connections->preparationSnapshot('disable-ui',3,7);
 essentialCheck($snapshot['scope']===$uiScope&&$snapshot['secret']===$cipher->decrypt($before['secret_cipher']),'server-only snapshot returns precisely the owned disabled connection');
 essentialThrows(fn()=>$connections->preparationSnapshot('other-ui',1,12),'pige_configuration_access_denied','another company permission denied before secret access');

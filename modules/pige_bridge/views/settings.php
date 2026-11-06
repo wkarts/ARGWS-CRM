@@ -95,11 +95,20 @@ $publicConnections=[]; foreach($connections as $connection){$ext=$external[$conn
 <button type="submit" class="btn btn-default">Preparar sem habilitar</button><?=form_close();?>
 </div>
 <div role="tabpanel" class="tab-pane" id="pige-tab-setup">
-<p>Cadastre no PIGE a URL HTTPS deste CRM, o mesmo identificador, escola, empresa, conta, ambiente e token. A consulta acima pode preencher escola, conta e ambiente de uma configuração existente destinada a este CRM e à empresa selecionada. Não cria a configuração na outra ponta.</p>
+<h5>Testar conexão já habilitada</h5>
+<p>O PIGE enviará um diagnóstico HMAC a este CRM. As duas conexões precisam estar habilitadas anteriormente. Esta ação não habilita conexões, não altera consentimentos e não cria cobrança.</p>
+<?=form_open(admin_url('pige_bridge/settings/test_connection'),['id'=>'pige-diagnostic-form','autocomplete'=>'off']);?>
+<input type="hidden" name="connection_key"><input type="hidden" name="revision">
+<input type="hidden" name="pige_csrf" value="<?=html_escape($pige_csrf);?>"><input type="hidden" name="_company_context" value="<?=html_escape($company_context_token??'');?>">
+<div class="form-group"><label for="pige-diagnostic-url">URL HTTPS pública do PIGE</label><input id="pige-diagnostic-url" type="url" name="pige_url" class="form-control" required autocomplete="off"></div>
+<div class="form-group"><label for="pige-diagnostic-credential">JWT administrativo temporário com integrations.manage</label><input id="pige-diagnostic-credential" type="password" name="admin_credential" class="form-control" required autocomplete="new-password" maxlength="16386"></div>
+<button type="submit" class="btn btn-default">Testar sem alterar configuração</button><?=form_close();?>
+
+<p>Cadastre no PIGE a URL HTTPS deste CRM, a mesma escola, empresa, conta, ambiente e segredo HMAC. A consulta acima pode preencher escola, conta e ambiente de uma configuração existente destinada a este CRM e à empresa selecionada. Não cria a configuração na outra ponta.</p>
 <p>O teste autenticado existente é enviado pelo PIGE para o endpoint de diagnóstico do CRM e confirma o escopo e as capacidades disponíveis. Ele não cadastra a outra ponta nem ativa permissões financeiras.</p>
 <p>Após salvar ou rotacionar a conexão, reabra Editar e revalide Fatura local; depois revalide Cobrança externa. Cada salvamento atualiza a revisão e fecha esta janela.</p>
 </div></div></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button></div>
 </div></div></div>
 <script type="application/json" id="pige-settings-data"><?=json_encode($publicConnections,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR);?></script>
 <?php init_tail(); ?>
-<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=110"></script>
+<script src="<?=html_escape(module_dir_url('pige_bridge','assets/settings.js'));?>?v=111"></script>

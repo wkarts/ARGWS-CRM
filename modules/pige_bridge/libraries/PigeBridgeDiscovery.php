@@ -56,7 +56,7 @@ final class PigeBridgeDiscovery
                 CURLOPT_PROXY=>'',CURLOPT_RESOLVE=>[$host.':443:'.$address],CURLOPT_HTTPGET=>true,
                 CURLOPT_HTTPHEADER=>['Accept: application/json','Content-Type: application/json','Authorization: Bearer '.$credential],
                 CURLOPT_WRITEFUNCTION=>static function($ch,string $chunk)use(&$body):int{if(strlen($body)+strlen($chunk)>262144)return 0;$body.=$chunk;return strlen($chunk);}]);
-            if($method==='PUT'){curl_setopt($ch,CURLOPT_CUSTOMREQUEST,'PUT');curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($payload,JSON_THROW_ON_ERROR));}
+            if(in_array($method,['PUT','POST'],true)){curl_setopt($ch,CURLOPT_CUSTOMREQUEST,$method);curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($payload,JSON_THROW_ON_ERROR));}
             elseif($method!=='GET'||$payload!==[])throw new RuntimeException('pige_discovery_transport');
             if(curl_exec($ch)!==true)throw new RuntimeException('pige_discovery_transport');
             return ['status'=>(int)curl_getinfo($ch,CURLINFO_RESPONSE_CODE),'body'=>$body];
@@ -78,6 +78,24 @@ final class PigeBridgeDiscovery
         try{$row=$this->request($origin,$path,$credential,false,'PUT',$payload);}finally{unset($payload,$secret);}
         if(($row['base_url']??null)!==$crm||($row['issuer_id']??null)!==$scope['issuer_id']||($row['account_id']??null)!==$scope['account_id']||($row['environment']??null)!==$scope['environment']||($row['enabled']??null)!==false||($row['secret_configured']??null)!==true||!is_int($row['version']??null)||$row['version']<1)throw new DomainException('pige_preparation_unconfirmed');
         return ['state'=>'prepared_disabled','remote_revision'=>$row['version'],'authenticated'=>false];
+    }
+    /** Existing enabled connection only: ask PIGE to execute its scoped HMAC diagnostic. */
+    public function testConnection(string $url,string $credential,array $scope,string $crmUrl):array
+    {
+        $origin=self::origin($url);$crm=self::origin($crmUrl);$school=self::school($scope['school_id']??'');
+        $path='/api/v1/schools/'.$school.'/crm-bridge';
+        $validate=static function(array $data)use($scope,$crm):array{
+            $row=$data['configuration']??null;
+            if(!is_array($row)||!is_string($row['id']??null)||$row['id']===''||strlen($row['id'])>128||($row['base_url']??null)!==$crm||($row['issuer_id']??null)!==($scope['issuer_id']??null)||($row['account_id']??null)!==($scope['account_id']??null)||($row['environment']??null)!==($scope['environment']??null)||($row['enabled']??null)!==true||($row['secret_configured']??null)!==true||!is_int($row['version']??null)||$row['version']<1)throw new DomainException('pige_diagnostic_scope');
+            return ['id'=>$row['id']??null,'version'=>$row['version']];
+        };
+        $before=$validate($this->request($origin,$path.'/configuration',$credential));
+        $result=$this->request($origin,$path.'/connection-test',$credential,false,'POST');
+        $after=$validate($this->request($origin,$path.'/configuration',$credential));
+        if($before!==$after)throw new DomainException('pige_diagnostic_changed');
+        if(($result['reachable']??null)!==true||($result['authenticated']??null)!==true||($result['charge_created']??null)!==false)throw new DomainException('pige_diagnostic_unconfirmed');
+        // Remote free text/capabilities are not HTML, grants or a persisted authorization.
+        return ['authenticated'=>true,'charge_created'=>false,'remote_revision'=>$after['version']];
     }
     public function schools(string $url,string $credential):array
     {
