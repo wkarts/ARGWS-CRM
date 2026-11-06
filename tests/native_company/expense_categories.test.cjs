@@ -27,3 +27,35 @@ test('Each opened command receives a 32-byte request key from browser crypto', (
   let calls = 0; const key = api.requestKey({ crypto: { getRandomValues(bytes) { calls++; bytes.fill(17); return bytes; } } });
   assert.equal(key, '11'.repeat(32)); assert.equal(calls, 1); assert.throws(() => api.requestKey({}));
 });
+
+test('Inline submit reaches the actual protected transport with one CSRF and active field', () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const calls = [], errors = []; let submit, prefilter;
+  const form = { elements: { active: { type: 'checkbox', checked: true } } };
+  const doc = { body: { classList: { contains: () => true } }, querySelector: () => null };
+  const chain = {
+    on(event, selector, handler) { if (event === 'submit.nativeExpenseCategories') submit = handler; return this; },
+    serializeArray: () => [{ name: 'name', value: 'Category + & literal' }, { name: 'description', value: '<img src=x>' }, { name: 'active', value: '0' }, { name: 'csrf_name', value: 'framework-token' }],
+    find() { return this; }, prop() { return this; }, removeClass() { return this; },
+    text(value) { errors.push(value); return this; }
+  };
+  function $(value) { if (typeof value === 'function') { value(); return; } return chain; }
+  $.param = fields => { const params = new URLSearchParams(); for (const field of fields) params.append(field.name, field.value); return params.toString(); };
+  $.ajaxPrefilter = handler => { prefilter = handler; };
+  const xhr = { done() { return this; }, fail() { return this; }, always() { return this; } };
+  $.ajax = options => { prefilter(options); calls.push(options); return xhr; };
+  const root = { document: doc, jQuery: $, URL, URLSearchParams, FormData,
+    location: { href: 'https://crm.test/admin/expenses/expense', origin: 'https://crm.test' },
+    NativeCompanyHeaderConfig: { root: 'https://crm.test/admin/', context: 'issuer2:r1', csrf: 'native-token', frameworkCsrf: { name: 'csrf_name', value: 'framework-token' } } };
+  root.window = root;
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../assets/js/native-company-transport.js'), 'utf8'), root);
+  api.mount(root, $); let prevented = false;
+  submit.call(form, { preventDefault() { prevented = true; } });
+  assert.equal(prevented, true); assert.deepEqual(errors, []); assert.equal(calls.length, 1);
+  const request = calls[0], fields = new URLSearchParams(request.data);
+  assert.equal(request.url, 'https://crm.test/admin/expenses/category?source=company');
+  assert.equal(request.headers['X-Company-Context'], 'issuer2:r1');
+  assert.equal(request.headers['X-Native-Company-CSRF'], 'native-token');
+  assert.deepEqual(fields.getAll('csrf_name'), ['framework-token']); assert.deepEqual(fields.getAll('active'), ['1']);
+  assert.equal(fields.get('name'), 'Category + & literal'); assert.equal(fields.get('description'), '<img src=x>');
+});

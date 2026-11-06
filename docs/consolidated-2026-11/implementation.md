@@ -166,3 +166,7 @@ PIGE111 acrescenta diagnóstico explícito de conexão já habilitada pelo contr
 ### Correções verificadas após75fb7ac4
 
 Banco do Brasil1.4.4/144 preserva143 e trata a espécie CNAB não suportada como rejeição422 com rollback integral, em vez de erro503. MySQL real:32 checks de emissão automática após276 de origem e35 de retorno; HTTP autenticado local: rejeição sem consumir número e emissão válida com replay. Aceite de orçamento usa o menu nativo no driver; guia Transações é aberta antes da remoção Asaas. CI A/B e demais falhas de tarefas/contratos continuam pendentes.
+
+### Correções verificadas após4ec09a47
+
+Portal de orçamento/proposta carrega explicitamente o validador de campos nativos, com renderer TCPDF em processo novo (3 checks) e suítes de portal SQLite/MySQL (171 cumulativos por motor). Impressão CNAB240/400 admitida somente por POST protegido, com172 checks de contexto e boleto240 aberto pelo botão original no navegador autenticado. Categoria inline de Despesas usa formulário serializado no transporte protegido;12 testes Node e POST200 autenticado com campos preservados. Reembolsos no driver abre a guia nativa antes das ações. Estas evidências locais não substituem o CI final A/B nem homologação bancária. A matriz de navegação local e seus limites está em [navigation-evidence.md](navigation-evidence.md).

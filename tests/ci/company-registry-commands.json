@@ -545,6 +545,10 @@
   ],
   [
     "php",
+    "tests/companies/sales_pdf_bootstrap.php"
+  ],
+  [
+    "php",
     "tests/companies/sales_pdf_preferences.php"
   ],
   [

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyInvoiceLines.php';
+require_once __DIR__.'/CompanyInvoiceNativeFields.php';
 require_once __DIR__.'/CompanySalesPreferences.php';
 require_once __DIR__.'/CompanyDocumentBranding.php';
 /** Renders only an authorized immutable DTO. Caller reauthorizes and audits before bytes. */

@@ -924,3 +924,21 @@ Banco do Brasil1.4.4/migration144 NOOP. A suíte MySQL real passou32 checks de e
 CRM local autenticado confirmou rejeição422 da espécie01 sem alteração na contagem de faturas nem na sequência bancária; espécie02 criou a fatura8 pelo formulário original com replay idempotente. A requisição negativa preserva a moeda selecionada, que o submit nativo habilita antes da serialização, e os tokens originais. Sem dados ou transmissão reais.
 
 O mesmo CI confirmou Asaas A/B: contas/credenciais, recebimento, tarifa como despesa nativa e worker opt-in. A etapa seguinte falhou porque o teste de remoção remota não abria a guia Transações; acrescentado clique na guia nativa. Tarefas recorrentes e cadastro inline de tipo de contrato ainda estão sob investigação; não declarar CI completo aprovado.
+
+### Portal de Orçamentos — rodada4ec09a47
+
+CI42279242212: projects/sales-pdf avançaram pelo aceite, conversão, recorrências e reajustes A/B, incluindo confirmação/replay e preservação SQL, e falharam somente no download privado do orçamento (HTTP500, CompanySalesPdf.php:13). Reproduzido em processo PHP novo carregando apenas TCPDF e o renderer: `CompanyInvoiceNativeFields` não era carregado pelo caminho do portal. O caminho administrativo e as suítes encadeadas mascaravam essa dependência. O renderer agora declara seu require próprio. Teste isolado produz PDFs reais de orçamento/proposta com campos nativos e recusa campo desconhecido:3 verificações, red antes/green depois. Incluído no manifesto de processos PHP independentes. ACL, sessão do contato, publicação, auditoria e revalidação antes da entrega não foram alteradas.
+
+Evidência adicional de navegação local: ver [navigation-evidence.md](navigation-evidence.md). PIGE autenticado também passou Novo→Cancelar→Novo com campos temporários limpos após o evento de fechamento, zero POST de configuração e nenhum marcador sintético persistido em local/sessionStorage. O teste não cria conexões nem credenciais e não consulta o PIGE remoto.
+
+A suíte de portal com publicação, ACL, sessão do contato, revogação e auditoria passou em SQLite e MySQL (171 verificações cumulativas por motor), com TCPDF real. O manifesto agora executa também o renderer em processo independente; plano de shards regenerado, entrada honestamente marcada sem medição pareada e14 testes do planner aprovados. O CI final ainda precisa repetir o download autenticado A/B.
+
+### Impressão BB e categoria inline — rodada4ec09a47
+
+Banking passou a emissão automática e encontrou403 ao imprimir. `CompanyRequestScope` conhecia os endpoints, mas `NativeCompanyRoutes` não admitia `print_cnab_boleto`/`print_cnab400_boleto`. Incluídos exclusivamente na lista POST protegida. Regressão real de admissão falhou antes e passou depois:172 verificações, incluindo as duas ações, CSRF ausente recusado, GET recusado e rota não revisada recusada. No CRM local autenticado, o formulário e o botão original retornaram200; o popup carregou o SVG do código de barras. Nenhuma transmissão, aceite ou pagamento foi criado.
+
+Expenses parou antes do POST: `serializeArray()` entregava uma lista ao transporte protegido que aceita formulário serializado. Reprodução local mostrou `native_transport_data_invalid`; corrigido somente o chamador com `$.param(data)`. O transporte mantém contexto e CSRF obrigatórios. Modal original autenticado passou POST200, selecionou a categoria criada e preservou o valor previamente preenchido na despesa. Regressão executa handler e transporte reais, exigindo contexto, ambos CSRF, um único token nativo e texto literal preservado;12 testes Node combinados passaram.
+
+Providers passou a remoção remota e alcançou Reembolsos; checkbox existia mas estava oculto pela guia. O driver abre explicitamente Reembolsos antes das três interações, mantendo asserts financeiros, de revogação e CSRF. Sintaxe verificada; percurso completo depende da próxima rodada CI. Não força visibilidade nem simula autorização pelo DOM.
+
+Reembolsos foi reproduzido no navegador autenticado local: checkbox inicialmente oculto; abertura pela guia original; revogação explícita de autorização local POST200; guia reaberta com formulário visível. Fixture CLI usou somente transporte simulado. Nenhum POST financeiro externo; teste completo A/B de reembolso continua reservado ao CI.

@@ -322,6 +322,14 @@ $ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->r
 CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'BB POST validates and strips company metadata before controller hydration');
 CompanyRequestScope::finish();
+// Printable CNAB documents retain POST-only company/CSRF admission before module ACL.
+foreach(['print_cnab_boleto','print_cnab400_boleto']as$printAction){
+ $ci=contextEnvironment($f,$s,'banco_brasil',$printAction,'POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken,'_native_company_csrf'=>$bbNativeCsrf];
+ CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54,'CNAB print is sealed to its selected issuer');CompanyRequestScope::finish();
+ $ci=contextEnvironment($f,$s,'banco_brasil',$printAction,'POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+ $ci=contextEnvironment($f,$s,'banco_brasil',$printAction,'GET');$ci->router->module='banco_brasil';expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+ essentialCheck(!NativeCompanyRoutes::admits('../../modules/banco_brasil/controllers/public','banco_brasil','banco_brasil',$printAction,'POST'),'unreviewed directory cannot print CNAB');
+}
 $ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$tokenA];
 expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
