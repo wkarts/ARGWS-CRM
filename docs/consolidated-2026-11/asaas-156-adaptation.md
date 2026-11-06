@@ -188,3 +188,31 @@ do escritor atual. Parcial remoto, CONFIRMED sem elegibilidade canônica,
 parcelamentos com encargos e descoberta/associação legada permanecem para revisão;
 não são convertidos em baixa integral. Não há captura de cartão, solicitação de
 antecipação, cobrança real ou homologação Asaas. Ampliação da SDK não realizada.
+
+## Observação explícita sem agendamento — módulo1.7.6/176
+
+A revisão encontrou que a fila175 chamava `query`, que pode criar jobs para
+webhooks PAYMENT_RECEIVED observados anteriormente. Um teste MySQL com esse
+evento e automação já habilitada reproduziu o defeito: Comparar agendava um job.
+Agora a fila usa `observe`, que preserva a prova canônica sem agendar. Conciliar
+continua aplicando exclusivamente pelo writer explícito. A consulta automática
+normal permanece inalterada; jobs previamente existentes não são cancelados.
+Não se deve interpretar Comparar como suspensão da automação previamente aceita.
+
+Teste antes/depois: a asserção de ausência de job falhou no175; no176 passaram11
+checks de itens e10 de concorrência com dois processos MySQL. O controle positivo
+verifica que `query` normal ainda agenda o evento. Runner nativo MySQL:325 checks,
+falha de tracking176 conserva175, retry/replay. Migration176 NOOP.
+
+O CI do f16e7077 também revelou fixture de view sem CompanySettingsRuntime ativo
+(job128159186834/run42295392597). A view real exige esse contexto. O fixture passa
+agora pelo runtime real da empresa sintética B, sem remover ACL da aplicação.
+
+Associação legada e recebimento parcial ainda não implementados: a referência
+AsaasReconciliation::discoverPayments exige hash único da fatura, conjunto remoto
+não ambíguo, identidade do cliente e valor compatível com saldo/recibos existentes.
+O CRM atual congela um total por origem e recebe uma cobrança nominal integral;
+permitir apenas `valor <= total` não comprovaria o principal nem distinguiria
+parcela, alteração remota ou baixa manual já existente. A adaptação exige journal
+de vinculação revisada e componentes de recebimento idempotentes por origem,
+sem modificar a origem histórica ou relaxar a normalização atual.

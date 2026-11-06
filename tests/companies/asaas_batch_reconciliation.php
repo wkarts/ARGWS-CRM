@@ -1,13 +1,18 @@
 <?php
 require __DIR__.'/asaas_invoice_edits.php';
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyBatchReconciliation.php';
-$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.7.5','asaas']);
+$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.7.6','asaas']);
 $batch=new \Asaas\CompanyBatchReconciliation($db,$p);
 $newInvoice=$s->create($b,7,array_replace($input,['client_id'=>$customerB]),hash('sha256','batch-fresh-invoice'));
 $newOrigin=asaasFixtureIssue($asaas,$b,7,$newInvoice,$accounts[$b],'cus_b','PIX',$s->revision($b,7,$newInvoice),hash('sha256','batch-fresh-origin'),$dec,$mock);
 $newRemote=$db->query('SELECT remote_id FROM '.$p.'asaas_payment_origins WHERE id=?',[$newOrigin])->row()->remote_id;
 $count=fn()=>(int)$db->query('SELECT COUNT(*) n FROM '.$p.'invoicepaymentrecords WHERE invoiceid=?',[$newInvoice])->row()->n;
+$db->query('UPDATE '.$p.'asaas_company_accounts SET automation_actor=7 WHERE id=?',[$accounts[$b]]);
+$db->query('INSERT INTO '.$p.'asaas_company_events(account_row,event_id,event_type,remote_id,payload_hash,state,created_at) VALUES(?,?,?,?,?,?,?)',[$accounts[$b],'batch-observed-event','PAYMENT_RECEIVED',$newRemote,hash('sha256','batch-event'),'observed',gmdate('Y-m-d H:i:s')]);
+$observedEvent=(int)$db->insert_id();
+$queued=fn()=>(int)$db->query('SELECT COUNT(*) n FROM '.$p.'asaas_company_jobs WHERE event_id=?',[$observedEvent])->row()->n;
 essentialCheck($batch->item($b,7,$newOrigin,false,$dec,$mock)['outcome']==='compared'&&$count()===0,'compare observes without recording receipt');
+essentialCheck($queued()===0,'compare must not schedule background financial reconciliation');
 essentialThrows(fn()=>$batch->item($b,7,$newOrigin,true,$dec,$mock),'asaas_company_receipt_requires_review','pending is not eligible to reconcile');
 $responses[$newRemote]['status']='RECEIVED';$responses[$newRemote]['paymentDate']=$input['date'];$responses[$newRemote]['creditDate']=$input['date'];
 $done=$batch->item($b,7,$newOrigin,true,$dec,$mock);
@@ -20,4 +25,7 @@ $db->query('INSERT INTO '.$p.'staff(staffid,active,admin) VALUES(30,1,0)');
 $db->query('INSERT INTO '.$p.'issuers_staff(issuer_id,staff_id,can_view) VALUES(?,30,1)',[$b]);
 foreach([['invoices','view'],['payments','create'],['customers','view']] as [$feature,$capability])$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,30,?,?)',[$b,$feature,$capability]);
 essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($b,30,\Asaas\CompanyReceivedReceipt::forMonitor($newOrigin,$done['proof_id'])),'asaas_company_access_denied','writer revalidates monitor settings ACL inside receipt transaction even on retry');
+essentialCheck($queued()===0,'explicit reconciliation does not create a second automatic job');
+$asaas->query($b,7,$newOrigin,$dec,$mock);
+essentialCheck($queued()===1,'ordinary authorized query retains existing automatic event scheduling');
 echo 'Batch reconciliation items: '.($GLOBALS['essentialChecks']-$start).' additional checks ('.$db->driver().'), provider simulated.'.PHP_EOL;

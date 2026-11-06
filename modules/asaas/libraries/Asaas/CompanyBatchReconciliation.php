@@ -14,9 +14,9 @@ final class CompanyBatchReconciliation
             if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
             $service->authorize($issuer,$actor,'configuration');$service->authorize($issuer,$actor,$apply?'settle':'query');
             $row=\IssuerStorage::query($this->db,'SELECT installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['asaas'])->row_array();
-            if(version_compare($row['installed_version']??'0','1.7.5','<'))throw new \DomainException('asaas_module_175_required');
+            if(version_compare($row['installed_version']??'0','1.7.6','<'))throw new \DomainException('asaas_module_176_required');
         };
-        $guard();$proof=$service->query($issuer,$actor,$origin,$decrypt,$transport);$guard();
+        $guard();$proof=$service->observe($issuer,$actor,$origin,$decrypt,$transport);$guard();
         $result=['origin_id'=>$origin,'proof_id'=>$proof,'outcome'=>'compared','payment_id'=>null];
         if($apply){
             // Native receipt claims enforce immutable origin, freshness, amount, status, ACL and idempotency.
