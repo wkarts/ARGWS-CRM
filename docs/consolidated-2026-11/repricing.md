@@ -47,3 +47,21 @@ permanece agendada; o contador do worker informa bloqueio, sem falso sucesso.
 Faltam teste HTTP autenticado, revogação concorrente específica, instalação e
 tracking pelo runner completo, aprovação visual e validação da instalação alvo.
 Sem chamada externa, cobrança, transmissão bancária ou uso de produção.
+
+
+## Bloqueio de agendamentos após revisão
+
+O worker registra `blocked` com auditoria quando a base/vínculo ou autorização
+mudou. A simulação original permanece verificável, nenhum alvo é aplicado
+parcialmente e a proposta sai da fila automática. A tela mostra o motivo, permite
+imprimir e cancelar; a aplicação exige uma nova simulação/revisão. Restaurar uma
+permissão não reativa silenciosamente a proposta bloqueada. A observação técnica
+do worker pode registrar a rejeição após revogação, mas não aplica preço nem
+concede acesso. Somente motivos enumerados são persistidos, sem mensagens SQL.
+Falhas transitórias de storage e séries momentaneamente em processamento continuam
+agendadas para nova execução. Não houve alteração de DDL ou da migration492.
+Código antigo que não reconheça `blocked` não deve substituir esta versão após uso.
+
+Testes adicionais: MySQL/SQLite verificam base alterada, preservação do journal,
+retirada da fila, cancelamento e revogação/restauração de permissão; Chromium mostra
+motivo, impressão e cancelamento sem botão de aplicação da revisão bloqueada.

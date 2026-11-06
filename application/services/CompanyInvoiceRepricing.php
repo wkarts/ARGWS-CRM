@@ -145,9 +145,15 @@ final class CompanyInvoiceRepricing extends CompanyInvoiceRecurringStorage
     {
         $r=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_reprice_proposals WHERE issuer_id=? AND request_key=? FOR UPDATE',[$i,$key])[0]??null;if(!$r)throw new DomainException('invoice_reprice_denied');
         foreach(['input','preview']as$field){$r[$field]=$this->decode($r[$field.'_json']);if(!hash_equals($r[$field.'_hash'],self::hash($r[$field])))throw new RuntimeException('invoice_reprice_proposal_corrupt');}
-        if(!hash_equals($r['revision'],self::hash([$key,$i,(int)$r['actor_id'],$r['input_hash'],$r['preview_hash']]))||$r['timezone']!==$r['input']['timezone']||$r['execute_at']!==self::timing($r['input']['timezone'],$r['input']['execute_local'])||!in_array($r['state'],['preview','scheduled','applied','cancelled'],true))throw new RuntimeException('invoice_reprice_proposal_corrupt');
+        if(!hash_equals($r['revision'],self::hash([$key,$i,(int)$r['actor_id'],$r['input_hash'],$r['preview_hash']]))||$r['timezone']!==$r['input']['timezone']||$r['execute_at']!==self::timing($r['input']['timezone'],$r['input']['execute_local'])||!in_array($r['state'],['preview','scheduled','blocked','applied','cancelled'],true))throw new RuntimeException('invoice_reprice_proposal_corrupt');
         $proof=$this->rows('SELECT id FROM '.$this->prefix.'issuers_audit WHERE issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=?',[$i,$r['actor_id'],0,'invoice_reprice_preview',self::encode(['request_key'=>$key,'revision'=>$r['revision'],'input_hash'=>$r['input_hash'],'preview_hash'=>$r['preview_hash']])]);
         if(count($proof)!==1)throw new RuntimeException('invoice_reprice_proposal_corrupt');
+        if($r['state']==='blocked'){
+            $expected=[];foreach(['source_changed','access_changed']as$reason)$expected[]=self::encode(['request_key'=>$key,'revision'=>$r['revision'],'reason'=>$reason]);
+            $events=$this->rows('SELECT metadata_json FROM '.$this->prefix.'issuers_audit WHERE issuer_id=? AND actor_id=? AND subject_id=0 AND event=? AND metadata_json IN (?,?)',[$i,$r['actor_id'],'invoice_reprice_blocked',...$expected]);
+            if(count($events)!==1)throw new RuntimeException('invoice_reprice_proposal_corrupt');
+            $r['block_reason']=$this->decode($events[0]['metadata_json'])['reason'];
+        }
         return$r;
     }
     public function proposal($issuer,$actor,string $key):array{$i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);self::key($key);return$this->transaction($i,$a,fn()=>$this->read($i,$key),false);}
@@ -183,13 +189,33 @@ final class CompanyInvoiceRepricing extends CompanyInvoiceRecurringStorage
     public function cancel($issuer,$actor,string $key,string $revision):void
     {
         $i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);self::key($key);self::key($revision);
-        $this->transaction($i,$a,function()use($i,$a,$key,$revision){$r=$this->read($i,$key);if(!hash_equals($r['revision'],$revision)||!in_array($r['state'],['preview','scheduled','cancelled'],true))throw new DomainException('invoice_reprice_stale');IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_invoice_reprice_proposals SET state=? WHERE issuer_id=? AND request_key=?',['cancelled',$i,$key]);});
+        $this->transaction($i,$a,function()use($i,$a,$key,$revision){$r=$this->read($i,$key);if(!hash_equals($r['revision'],$revision)||!in_array($r['state'],['preview','scheduled','blocked','cancelled'],true))throw new DomainException('invoice_reprice_stale');IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_invoice_reprice_proposals SET state=? WHERE issuer_id=? AND request_key=?',['cancelled',$i,$key]);});
+    }
+    /** Technical worker observation after rollback; cannot apply prices or grant financial access. */
+    private function blockDue(array $candidate,string $reason):void
+    {
+        IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($candidate,$reason){
+            $i=(int)$candidate['issuer_id'];$a=(int)$candidate['actor_id'];$key=$candidate['request_key'];$r=$this->read($i,$key);
+            if($r['state']!=='scheduled'||(int)$r['actor_id']!==$a||$r['execute_at']===null||$r['execute_at']>$this->now())return;
+            $this->scheduleAudit($i,$a,0,'invoice_reprice_blocked',['request_key'=>$key,'revision'=>$r['revision'],'reason'=>$reason]);
+            IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_invoice_reprice_proposals SET state=? WHERE issuer_id=? AND request_key=?',['blocked',$i,$key]);
+            if($this->read($i,$key)['state']!=='blocked')throw new RuntimeException('invoice_reprice_write_unconfirmed');
+        });
     }
     public function processDue():array
     {
         if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active())throw new DomainException('invoice_reprice_worker_context');CompanyInvoiceRepricingSchema::assertValid($this->db,$this->prefix);$out=['applied'=>0,'blocked'=>0];
         $rows=$this->rows('SELECT issuer_id,actor_id,request_key FROM '.$this->prefix.'company_invoice_reprice_proposals WHERE state=? AND execute_at<=? ORDER BY execute_at,request_key LIMIT 50',['scheduled',$this->now()]);
-        foreach($rows as$r){try{$this->execute((int)$r['issuer_id'],(int)$r['actor_id'],$r['request_key']);$out['applied']++;}catch(Throwable $error){$out['blocked']++;}}
+        foreach($rows as$r){try{$this->execute((int)$r['issuer_id'],(int)$r['actor_id'],$r['request_key']);$out['applied']++;}catch(Throwable $error){
+            $out['blocked']++;
+            // Persist only recognized business rejection. Storage/transient failures retain retry semantics.
+            $reason=match($error->getMessage()){
+                'invoice_reprice_stale','invoice_reprice_link_changed'=>'source_changed',
+                'company_sales_denied','company_invoice_recurring_denied','invoice_reprice_denied'=>'access_changed',
+                default=>null,
+            };
+            if($error instanceof DomainException&&$reason!==null)$this->blockDue($r,$reason);
+        }}
         return$out;
     }
 }

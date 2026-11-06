@@ -7,7 +7,7 @@
      if($key!==null)echo '<input type="hidden" name="request_key" value="'.$esc($key).'">';
      if($revision!==null)echo '<input type="hidden" name="revision" value="'.$esc($revision).'">';
  };
- $states=['preview'=>'Simulação aguardando revisão','scheduled'=>'Agendado; execução ainda não confirmada','applied'=>'Aplicado às bases futuras','cancelled'=>'Cancelado'];
+ $states=['preview'=>'Simulação aguardando revisão','scheduled'=>'Agendado; execução ainda não confirmada','blocked'=>'Bloqueado; exige nova revisão','applied'=>'Aplicado às bases futuras','cancelled'=>'Cancelado'];
  init_head();
 ?>
 <div id="wrapper"><div class="content" id="invoice-repricing">
@@ -18,6 +18,7 @@
 <?php if($error){?><div class="alert alert-danger" role="alert"><?= $esc($error); ?></div><?php } ?>
 <?php if($proposal){$report=$proposal['preview']; ?>
 <section id="reprice-report"><h2 class="h4">Simulação preservada</h2>
+<?php if($proposal['state']==='blocked'){ $reasons=['source_changed'=>'A base ou vínculo mudou desde a simulação.','access_changed'=>'A autorização do responsável mudou.']; ?><p class="alert alert-warning"><?= $esc($reasons[$proposal['block_reason']]??'Revisão necessária.'); ?> Nenhum alvo recebeu reajuste parcial. Cancele esta proposta e crie uma nova simulação após revisar as recorrências.</p><?php } ?>
 <p><?= $esc($states[$proposal['state']]); ?> · Criada em <?= $esc($proposal['created_at']); ?> UTC</p>
 <p>Revisão: <code><?= $esc($proposal['revision']); ?></code></p>
 <p><?= $proposal['execute_at']!==null?'Agendamento: '.$esc($report['execute_local'].' '.$report['timezone'].' ('.$proposal['execute_at'].' UTC)'):'Aplicação imediata após confirmação'; ?>.</p>
@@ -31,7 +32,7 @@
 <?php } ?>
 <div class="reprice-no-print"><button class="btn btn-default" type="button" id="reprice-print">Imprimir simulação</button>
 <?php if($can_manage&&(int)$proposal['actor_id']===$actor&&$proposal['state']==='preview'){echo form_open($base);$hidden('confirm',$proposal['request_key'],$proposal['revision']);?><p><label><input type="checkbox" name="reviewed" value="1" required> Revisei os alvos, itens, quantidades, valores e horário desta simulação.</label></p><button class="btn btn-primary" type="submit"><?= $proposal['execute_at']!==null?'Confirmar agendamento':'Aplicar esta revisão'; ?></button><?= form_close(); ?><?php } ?>
-<?php if($can_manage&&in_array($proposal['state'],['preview','scheduled'],true)){echo form_open($base);$hidden('cancel',$proposal['request_key'],$proposal['revision']);?><p><button class="btn btn-default" type="submit">Cancelar proposta</button></p><?= form_close(); } ?></div></section>
+<?php if($can_manage&&in_array($proposal['state'],['preview','scheduled','blocked'],true)){echo form_open($base);$hidden('cancel',$proposal['request_key'],$proposal['revision']);?><p><button class="btn btn-default" type="submit">Cancelar proposta</button></p><?= form_close(); } ?></div></section>
 <?php }elseif($can_manage&&!$error){ ?>
 <div id="reprice-editor" class="reprice-no-print">
 <p>Vínculos antigos exigem revisão explícita. Descrições parecidas nunca vinculam itens automaticamente. Use a busca no catálogo e depois selecione o item em cada regra ou vínculo.</p>
