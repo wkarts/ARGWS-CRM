@@ -48,8 +48,11 @@ try {
         $start=microtime(true);
         $code='stream_get_contents(fopen("php://fd/3","r"));stream_get_contents(STDIN);'.$code;
         $bounded=array_merge($prefix,[PHP_BINARY,'-n','-r',$code]);
-        a1reject(fn()=>$method->invoke(null,$bounded,'synthetic','synthetic'),'issuer_certificate_legacy_unavailable','real prlimit '.$label.' enforced');
-        a1check(microtime(true)-$start<4.8,'real prlimit '.$label.' terminates before wall deadline');
+        // CPU time excludes scheduler waits. Keep this resource-cap test independent
+        // of the production wall timeout, already exercised above.
+        $resourceDeadline=hrtime(true)+30000000000;
+        a1reject(fn()=>$method->invoke(null,$bounded,'synthetic','synthetic',$resourceDeadline),'issuer_certificate_legacy_unavailable','real prlimit '.$label.' enforced');
+        a1check(microtime(true)-$start<29,'real prlimit '.$label.' terminates before test wall deadline');
         if ($label==='CPU') { a1check(microtime(true)-$start>=2,'CPU budget actually exercised'); }
     }
     // Enough data to exceed pipe capacity; child consumes both channels while output grows.
