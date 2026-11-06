@@ -11,7 +11,7 @@ abstract class CompanyRefundStorage
     public function tables():array
     {
         $t=array_merge($this->service->tablesForRun(),array_keys(CompanyRefundSchema::definitions()));
-        foreach(['bb_origins','asaas_company_remote_operations'] as $table)if($this->db->table_exists($this->p.$table))$t[]=$table;
+        foreach(['bb_origins','asaas_company_remote_operations','asaas_company_recreations'] as $table)if($this->db->table_exists($this->p.$table))$t[]=$table;
         return array_values(array_unique($t));
     }
     protected function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}

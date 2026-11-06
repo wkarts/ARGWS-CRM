@@ -1,5 +1,10 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.7 — 2026-11-06
+
+- Cancelamento local e novo recebimento manual pós-reembolso aceitam sucessores somente após validar toda a cadeia de recriações concluídas, provas e ausência de fundos/eventos adversos nos predecessores.
+- Revisão e writers usam a mesma validação sob transação; mantém ACL, saldo, idempotência e histórico. Migration167 NOOP, sem DDL/backfill ou efeito remoto.
+
 ## 1.6.6 — 2026-11-06
 
 - Escritas do PaymentOriginStore legado limitadas à origem ativa; binding usa também o ID selecionado.

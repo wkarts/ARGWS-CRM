@@ -157,12 +157,25 @@ por empresa/ambiente, ledger da tentativa e recuperação canônica, composiçã
 recebimentos parciais e reversão/compensação sem tratar resultado incerto como
 falha definitiva. Nenhuma dessas políticas foi ativada por inferência nesta etapa.
 
-## Limite de composição com pós-reembolso
+## Pós-reembolso sobre sucessores — módulo167
 
-A auditoria dos leitores confirmou que CompanyPostRefundAsaasSource e
-CompanyPostRefundAsaasManualSource ainda exigem uma única origem histórica por
-fatura. Assim, cancelamento local pós-reembolso e recebimento manual específico
-pós-reembolso não são suportados sobre uma fatura que já tenha sucessores.
-Esses guards continuam recusando a composição; não foram reduzidos a um filtro
-de geração ativa que ignoraria fundos ou eventos históricos. A adaptação exige
-prova de toda a cadeia e testes próprios, e permanece pendente em ASA04.
+Cancelamento local e novo recebimento manual independente após reembolso integral
+agora aceitam uma cadeia de recriações concluídas. Revisão e execução usam a mesma
+validação sob transação nativa. Não basta filtrar active_slot: cada origem histórica
+precisa ser um predecessor da ativa, com vínculo reopened da mesma empresa/fatura,
+conta/ambiente/origem imutáveis, request_key do sucessor e prova canônica íntegra de
+exclusão sem pagamento. Ciclos, órfãos, mudança de empresa, prova alterada, eventos
+posteriores/adversos, recibo, intenção de reembolso ou job pendente de predecessor
+bloqueiam a operação. Múltiplas gerações exigem tracking167; caso legado com uma
+origem mantém o contrato existente.
+
+As exigências anteriores de reembolso integral declarado, evidência independente,
+revisão atual, grant/ACL, saldo, idempotência e integridade do diário continuam.
+Falha do recibo de auditoria reverte status/pagamento. O recebimento manual aqui é
+NOVO dinheiro independente depois da devolução integral, e não confirmação em
+dinheiro no Asaas ou implementação do recebimento manual geral/parcial.
+
+Migration167 NOOP: nenhuma DDL, adoção, apagamento, alteração de histórico ou ação
+remota. Downgrade para166 volta a recusar essa composição; não reverter pagamentos
+ou marcadores automaticamente. Permanece necessária a validação HTTP autenticada
+e a homologação da instalação. Os testes usam somente transporte simulado.

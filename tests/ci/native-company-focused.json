@@ -3090,7 +3090,7 @@
     ],
     [
       "php",
-      "tests/companies/asaas_origin_generations.php"
+      "tests/companies/asaas_post_refund_generations.php"
     ]
   ],
   "browser": [

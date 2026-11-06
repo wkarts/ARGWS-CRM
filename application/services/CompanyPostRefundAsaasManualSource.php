@@ -61,8 +61,8 @@ final class CompanyPostRefundAsaasManualSource extends \Asaas\CompanyRefundStora
             $safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);if(($safe['status']??null)!=='REFUNDED')throw new DomainException('company_post_refund_final_refunded_required');
             $fresh=$store->originalForStaffInOwned($i,$a,$id,(int)$s['payment_id'],$this->refundRequest,$this->observation);if($fresh['scope_hash']!==$d['scope_hash']||$fresh['amount']!==$d['returned_paid']||$fresh['remote_id']!==$d['remote_id'])throw new DomainException('company_post_refund_manual_source_denied');
         }
-        $origins=$this->rows('SELECT id,state,last_code FROM '.$p.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$id]);
-        if(count($origins)!==1||(int)$origins[0]['id']!==(int)$s['origin_id']||!in_array($origins[0]['state'],['issued','received_observed','review_required'],true))throw new DomainException('company_post_refund_adverse_history');
+        $origins=[\Asaas\CompanyOriginGenerations::postRefundOriginInOwned($db,$p,$i,$id,(int)$s['origin_id'])];
+        if(!in_array($origins[0]['state'],['issued','received_observed','review_required'],true))throw new DomainException('company_post_refund_adverse_history');
         $refundEvent=false;
         foreach($this->rows('SELECT event_type,state,created_at FROM '.$p.'asaas_company_events WHERE account_row=? AND remote_id=? FOR UPDATE',[$account['id'],$s['remote_id']])as$e){
             if(!in_array($e['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_CONFIRMED','PAYMENT_RECEIVED','PAYMENT_OVERDUE','PAYMENT_REFUNDED','PAYMENT_REFUND_IN_PROGRESS'],true)||!in_array($e['state'],['observed','review_required'],true)||($e['state']==='review_required'&&!in_array($e['event_type'],['PAYMENT_REFUNDED','PAYMENT_REFUND_IN_PROGRESS'],true)))throw new DomainException('company_post_refund_adverse_history');

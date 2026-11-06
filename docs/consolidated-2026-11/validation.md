@@ -552,3 +552,48 @@ passaram. Provedor simulado, sem cobrança real ou homologação externa.
 Ampliação de segurança166: a mesma suíte passou com69 checks após acrescentar
 revogação do operador durante o GET de cliente. Confirma zero POST, intenção
 continuando prepared e fatura cancelada. Não é teste HTTP contra o Asaas real.
+
+## Composição pós-reembolso167
+
+Runner nativo de módulo em MySQL:283 assertions passaram, incluindo tracking167
+com falha, retry e replay; nenhuma migration histórica foi alterada. Regressão
+legada `post_refund_manual_cycle_boundaries.php`:245 checks cumulativos SQLite
+passaram (não é homologação MySQL dessa suíte). Sintaxe dos arquivos alterados,
+callback13 e inventário UI16 views/6 controllers passaram.
+
+R01/R03/R06/R11: executados em MySQL os scripts
+`native_portal_proposals_controller.php`, `native_estimate_form_fields.php`,
+`native_sales_table.php` e `native_payments_table_http.php`; todos passaram.
+Incluem18 checks de controller de propostas,175 cumulativos de histórico/lista
+Vendas e16 de DataTables Pagamentos, mais a cadeia de campos/isolamento de
+Orçamentos. Contadores de suites reutilizadas não são somados. Handlers com
+fronteira de requisição simulada não comprovam browser/HTTP autenticado nem
+paridade visual integral com4.0.2.
+
+A primeira tentativa concorrente pós-reembolso falhou no bootstrap do worker:
+CompanyPostRefundManual era carregada duas vezes. A captura dos erros dos dois
+processos identificou a causa; require_once corrigiu o fixture sem alterar o
+assert de dois waiters reais no InnoDB. A rodada seguinte passou29 verificações
+adicionais de composição, sobre as69 de gerações: rollback do recibo de
+cancelamento/pagamento, replay, cadeia não confirmada/órfã/de outra empresa,
+prova adulterada, dois processos concorrentes e revogação durante espera.
+Provedor exclusivamente simulado, sem cobrança ou reembolso externo.
+
+Rodada final ampliada:30 checks adicionais pós-reembolso passaram em MySQL,
+incluindo duas recriações sucessivas antes do reembolso/cancelamento local,
+além das69 verificações de gerações. O manifesto focused executa essa composição
+completa; a suíte anterior continua sendo executada como pré-requisito.
+
+CI09369c1c:18 workflows passaram, inclusive Asaas. O monitor42192769035 encontrou
+falha em registry-shards(8.1,5), job127809956843: `_l()` ausente no fixture
+`sales_mutations_controller.php`, ao montar os rótulos nativos de Orçamentos.
+O fixture passa a carregar o catálogo PT-BR real e sua fronteira de tradução,
+com assert do rótulo de rascunho; produção e validações de ACL/CSRF não mudaram.
+Os shards HTTP independentes ainda estavam em execução na inspeção; não há
+aprovação agregada desse SHA.
+
+A reprodução corrigida de `sales_mutations_controller.php` passou em MySQL:
+294 checks cumulativos, incluindo controller oficial, renderer, revisão/cópia,
+CSRF e ACL; o assert de tradução utiliza o catálogo PT-BR real. Nenhum gate ou
+assert anterior foi removido. Inventários de isolamento e superfícies conferidos;
+operational_rollout continua blocked pelas lacunas gerais já registradas.
