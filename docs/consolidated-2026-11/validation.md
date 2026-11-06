@@ -942,3 +942,13 @@ Expenses parou antes do POST: `serializeArray()` entregava uma lista ao transpor
 Providers passou a remoção remota e alcançou Reembolsos; checkbox existia mas estava oculto pela guia. O driver abre explicitamente Reembolsos antes das três interações, mantendo asserts financeiros, de revogação e CSRF. Sintaxe verificada; percurso completo depende da próxima rodada CI. Não força visibilidade nem simula autorização pelo DOM.
 
 Reembolsos foi reproduzido no navegador autenticado local: checkbox inicialmente oculto; abertura pela guia original; revogação explícita de autorização local POST200; guia reaberta com formulário visível. Fixture CLI usou somente transporte simulado. Nenhum POST financeiro externo; teste completo A/B de reembolso continua reservado ao CI.
+
+### R01 — assunto e conteúdo de Proposta no PDF
+
+Inspeção do renderer mostrou que `native_proposal.subject/content`, preservados no snapshot e na prévia, eram ignorados pelo PDF. A regressão em processo independente falhou antes da correção por ausência do assunto no texto extraído pelo `pdftotext`. O PDF agora inclui assunto e conteúdo do próprio snapshot, insere a tabela na posição de `{proposal_items}` e conserva a tabela ao final quando não há marcador. Não altera o snapshot, estado, valores ou permissões.
+
+O conteúdo usa o mesmo HTMLPurifier do writer, com política específica de PDF que remove imagens e desabilita recursos externos. Links permitidos podem aparecer como anotações; não autorizam download. Imagens do conteúdo não são renderizadas; logo e assinatura já validados pelo pipeline existente permanecem separados. Não foi introduzido autosave, envio, coleta de assinatura ou edição de documento emitido.
+
+Teste real TCPDF+pdftotext passou: assunto, conteúdo anterior/posterior aos itens, ordem do marcador, fallback sem marcador, rejeição de script/elemento tcpdf/imagem/URI file e separação de metadados de Proposta em Orçamento. A ausência de conteúdo próprio em snapshots históricos conserva o renderer anterior. Isso fecha esta omissão específica, não a paridade integral R01.
+
+Suíte completa de preferências/PDF com fonte SQL real:436 verificações cumulativas SQLite e437 MySQL (129 específicas de PDF em cada motor), incluindo A/B/principal, formatos, orientação, replay/conversão e preservação de snapshots históricos. Regressão do sanitizador usado nas views nativas também passou. No CRM local autenticado, uma nova Proposta sintética criada pelo writer canônico retornou PDF200; o texto extraído confirmou assunto e corpo ordenado. Nenhum envio de email ou provedor. CI do próximo commit ainda pendente.

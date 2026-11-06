@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyInvoiceLines.php';
 require_once __DIR__.'/CompanyInvoiceNativeFields.php';
+require_once __DIR__.'/NativeCompanyContentHtml.php';
 require_once __DIR__.'/CompanySalesPreferences.php';
 require_once __DIR__.'/CompanyDocumentBranding.php';
 /** Renders only an authorized immutable DTO. Caller reauthorizes and audits before bytes. */
@@ -14,15 +15,23 @@ final class CompanySalesPdf
         $display=CompanySalesPreferences::presentation($document['kind'],$document['number'],$context,'',$document['payload']['date']??null);$native=isset($payload['native_fields'])?CompanyInvoiceNativeFields::input($payload['native_fields']):[];if(array_key_exists('terms',$native))$display['terms']=$native['terms'];$format=CompanyDocumentPdf::specification($context);$pdf=new TCPDF($format['orientation'],'mm',$format['format'],true,'UTF-8',false);$pdf->setPrintHeader(false);$pdf->setPrintFooter(false);$pdf->SetCreator('ARGWS CRM');$pdf->SetTitle($kind.' '.(isset($context['sales_preferences'])?$display['formatted_number']:(int)$document['number']));$typography=CompanyDocumentPdf::typography($context);$pdf->SetFont($typography['font'],'',$typography['size']);$pdf->AddPage();
         $layout=CompanyDocumentPdf::layout($context,$document['kind']);CompanyDocumentBranding::image($pdf,$context['identity'],'logo_inline',$layout['logo_width']*25.4/72);
         $stateLabel=match($document['state']){'open'=>'Em aberto','accepted'=>'Aceito','declined'=>'Recusado','cancelled'=>'Cancelado','converting'=>'Em conversão','converted'=>'Convertido',default=>throw new DomainException('company_sales_invalid')};
-        $html='<h1>'.$kind.' '.$e($display['formatted_number']).'</h1>'.CompanyPdfLayout::parties($e($context['identity']['legal_name']).' · '.$e($context['identity']['tax_id']).'<br>'.$e(CompanyDocumentBranding::address($context['identity'])),'Cliente: '.$e($context['recipient']['name']).'<br>'.$e($context['recipient']['tax_id']),$layout).'<p>Emissão: '.$e($payload['date']).' · Validade: '.$e($payload['due_date']).'</p><table border="1" cellpadding="4"><thead><tr style="background-color:'.$e($layout['heading_color']).';color:'.$e($layout['heading_text_color']).';"><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th></tr></thead><tbody>';
+        $html='<h1>'.$kind.' '.$e($display['formatted_number']).'</h1>'.CompanyPdfLayout::parties($e($context['identity']['legal_name']).' · '.$e($context['identity']['tax_id']).'<br>'.$e(CompanyDocumentBranding::address($context['identity'])),'Cliente: '.$e($context['recipient']['name']).'<br>'.$e($context['recipient']['tax_id']),$layout).'<p>Emissão: '.$e($payload['date']).' · Validade: '.$e($payload['due_date']).'</p>';
+        $table='<table border="1" cellpadding="4"><thead><tr style="background-color:'.$e($layout['heading_color']).';color:'.$e($layout['heading_text_color']).';"><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th></tr></thead><tbody>';
         if($document['kind']==='estimates'&&$layout['show_status'])$html='<p>Estado: '.$e($stateLabel).'</p>'.$html;
         foreach($amounts['items'] as $item){
             if(($item['is_optional']??0)===1&&($item['is_selected']??1)===0)continue;
             $taxes=[];foreach($item['taxes'] as $tax)$taxes[]=$e($tax['name'].' '.$tax['rate'].'%');
             $details=$item['long_description']??'';$unit=$item['unit']??'';
-            $html.='<tr><td>'.$e($item['description']).($details!==''?'<br>'.nl2br($e($details)):'').($taxes?'<br>'.implode(' · ',$taxes):'').'</td><td>'.$e($item['qty']).($unit!==''?' '.$e($unit):'').'</td><td>'.$e($item['rate']).'</td></tr>';
+            $table.='<tr><td>'.$e($item['description']).($details!==''?'<br>'.nl2br($e($details)):'').($taxes?'<br>'.implode(' · ',$taxes):'').'</td><td>'.$e($item['qty']).($unit!==''?' '.$e($unit):'').'</td><td>'.$e($item['rate']).'</td></tr>';
         }
-        $html.='</tbody></table>';
+        $table.='</tbody></table>';
+        if($document['kind']==='proposals'&&isset($payload['native_proposal'])){
+            $proposal=$payload['native_proposal'];
+            if(!is_array($proposal)||!is_string($proposal['subject']??null)||!is_string($proposal['content']??null)||strlen($proposal['subject'])>191)throw new DomainException('company_sales_invalid');
+            $content=NativeCompanyContentHtml::forPdf($proposal['content']);
+            $html.='<h2>'.$e($proposal['subject']).'</h2>';
+            $html.=str_contains($content,'{proposal_items}')?str_replace('{proposal_items}',$table,$content):$content.$table;
+        }else{$html.=$table;}
         if(($payload['native_reference']??'')!=='')$html.='<p>Referência: '.$e($payload['native_reference']).'</p>';
         if($native!==[]){
             $billing=array_values(array_filter([$native['billing_street']??'', $native['billing_city']??'', $native['billing_state']??'', $native['billing_zip']??''],static fn($v)=>$v!==''));

@@ -170,3 +170,7 @@ Banco do Brasil1.4.4/144 preserva143 e trata a espécie CNAB não suportada como
 ### Correções verificadas após4ec09a47
 
 Portal de orçamento/proposta carrega explicitamente o validador de campos nativos, com renderer TCPDF em processo novo (3 checks) e suítes de portal SQLite/MySQL (171 cumulativos por motor). Impressão CNAB240/400 admitida somente por POST protegido, com172 checks de contexto e boleto240 aberto pelo botão original no navegador autenticado. Categoria inline de Despesas usa formulário serializado no transporte protegido;12 testes Node e POST200 autenticado com campos preservados. Reembolsos no driver abre a guia nativa antes das ações. Estas evidências locais não substituem o CI final A/B nem homologação bancária. A matriz de navegação local e seus limites está em [navigation-evidence.md](navigation-evidence.md).
+
+### R01 — composição do conteúdo da Proposta no PDF
+
+`CompanySalesPdf` passa a incluir assunto e HTML do snapshot nativo, com tabela na posição de `{proposal_items}` ou ao final quando ausente. `NativeCompanyContentHtml::forPdf` aplica o sanitizador existente com imagens/recursos externos proibidos no PDF. Regressão de processo independente usa TCPDF e extração real de texto: reproduziu a omissão e passou após a correção. Imagens do corpo, autosave e demais conflitos de paridade continuam explicitamente fora deste delta; nenhuma alteração financeira ou de histórico.
