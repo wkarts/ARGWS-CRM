@@ -3100,6 +3100,10 @@
   "browser": [
     [
       "node",
+      "tests/companies/native_credit_checkbox.browser.cjs"
+    ],
+    [
+      "node",
       "tests/native_company/presentation.browser.cjs"
     ],
     [

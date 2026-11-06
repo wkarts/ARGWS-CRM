@@ -617,3 +617,19 @@ operational_rollout continua blocked pelas lacunas gerais já registradas.
 
 Sem merge, deploy, dados financeiros reais, SDK ou coleta de cartão.
 Integral manual, exclusão/edição remota e paridade R01–R11 seguem incompletos.
+
+
+## R07: opções de checkbox em linhas de crédito
+
+Os cinco grupos HTTP do run42218007134/177b5887 pararam no mesmo clique em
+`tests/companies_credits_browser.cjs`: opção de campo de item invisível. O CSS
+nativo `td.custom_field label:not(.cf-chk-label)` oculta rótulos de coluna, mas o
+renderer de Créditos não marcava as opções com a classe de exceção. Reproduzido
+localmente com o PHP real + CSS compilado em Chromium: assertion de visibilidade
+falhou antes da correção. Após acrescentar `cf-chk-label`, desktop1280 e mobile390
+passaram com clique real, associação label/input e valores literais de FormData.
+
+Teste novo: `tests/companies/native_credit_checkbox.browser.cjs`, incluído no CI
+focused. O teste HTTP original permanece sem alteração/force/evaluate/remoção de
+asserts. Componente visual comprovado; reexecução autenticada integral fica a
+cargo do novo CI. Não altera saldo, banco, schema ou permissões; core492 preservado.
