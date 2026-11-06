@@ -52,3 +52,31 @@ usa view/JS reais e respostas de transporte simuladas; verifica preenchimento,
 credencial limpa, flags financeiras intactas e ausência de adoção do ID remoto.
 Instalação/upgrade109 é NOOP: migrations anteriores preservadas. Execução HTTP/TLS
 bilateral autenticada com credencial de teste PIGE ainda pendente; não é homologação.
+
+## Revalidação do contrato bilateral
+
+Remoto `wkarts/PIGE360-self` main novamente conferido em6/11/2026: permanece
+`f47b8916b92231ac29b56862b133c9d2b2eec851`. O PUT `/configuration` aceita `version`,
+`enabled`, `base_url`, `issuer_id`, `account_id`, `environment` e `secret`.
+Criação exige segredo; atualização exige revisão; segredo vazio preserva o salvo.
+Uma conexão com solicitações não permite mudar destino/escopo. A resposta é
+`connection_output(row)`, diferente do GET que envolve `configuration`.
+
+O ID remoto é usado internamente no PIGE para selecionar a conexão. **Não precisa
+ser igual à chave local CRM:** o envelope assinado contém o escopo e o CRM escolhe
+exatamente uma conexão por escopo/HMAC (`PigeBridgeProtocol::authenticate`). Não
+renomear chaves locais nem históricos para igualar IDs sem necessidade.
+
+Limite comprovado para preparar/verificar sem habilitação: o endpoint remoto
+`POST /connection-test` exige `row.enabled` e consulta `configured`, sujeito ao
+master switch. GET retorna apenas `secret_configured`, não prova igualdade do
+segredo. Assim, após PUT incerto, um GET de campos iguais não pode ser apresentado
+como prova da autenticação bilateral. Também não se pode ativar a conexão apenas
+para obter um teste positivo por inferência.
+
+Preparação remota desativada é tecnicamente possível, mas precisa de comando
+administrativo explícito, revisão local/remota, estado de resultado desconhecido,
+recuperação e indicação de que a autenticação continua não comprovada. Autoconfiguração
+com verificação antes da habilitação requer contrato adicional de diagnóstico
+sem consentimento financeiro. Esse fluxo de escrita ainda não foi implementado;
+não foi solicitado segredo real, gerada credencial, alterado PIGE360 ou feito PUT.
