@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 async function picker(page, selector, values) {
   values = Array.isArray(values) ? values.map(String) : [String(values)];
   const select = page.locator(selector);
+  assert.equal(await select.count(),1,'original picker resolves exactly one select: '+selector);
   const options = await select.locator('option').evaluateAll(xs => xs.map((x, index) => ({index, value:x.value, selected:x.selected, text:x.textContent.trim()})));
   for (const value of values) assert(options.some(x=>x.value===value), 'original selector offers '+value);
   const wrapper = select.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," bootstrap-select ")][1]');

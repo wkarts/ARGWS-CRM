@@ -85,6 +85,8 @@ collect_smoke_failure() {
             $files=array_merge(["/tmp/issuer-http-error.log"],array_slice(glob("/app/application/logs/log-*.php")?:[],-3));
             foreach($files as $file){if(!is_file($file)||!is_readable($file))continue;$handle=fopen($file,"rb");if($handle===false)continue;$size=filesize($file);if($size>262144)fseek($handle,-262144,SEEK_END);echo PHP_EOL."--- ".basename($file)." (bounded tail) ---".PHP_EOL;echo stream_get_contents($handle,262144);fclose($handle);}
         ' 2>&1 | python3 tests/ci/classify_php_error_log.py > "$evidence/$container-application.log" || true
+        # Only classified code locations, never the raw application/container logs.
+        cat "$evidence/$container-application.log" >&2 || true
     done
 }
 cleanup() {

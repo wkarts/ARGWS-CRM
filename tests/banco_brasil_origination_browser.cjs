@@ -205,7 +205,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const dueDate=new Date(localToday+'T12:00:00Z');dueDate.setUTCDate(dueDate.getUTCDate()+30);
   await native.date(page,'#date',localToday);await native.date(page,'#duedate',dueDate.toISOString().slice(0,10));
   await native.line(page,{description:'SYNTHETIC AUTOMATIC CNAB',qty:'1',rate:'100.00'});
-  await native.picker(page,'#allowed_payment_modes',['banco_brasil_cnab']);
+  await native.picker(page,'#invoice-form [name="allowed_payment_modes[]"]',['banco_brasil_cnab']);
   assert.equal(await page.locator('#bank-issue-enabled').isChecked(),false,'bank issuance never inferred from payment mode');
   await page.locator('#bank-issue-enabled').check();await page.locator('#bank-issue-contract').selectOption(contract240);
   await page.locator('#bank-issue-timezone').fill('America/Sao_Paulo');

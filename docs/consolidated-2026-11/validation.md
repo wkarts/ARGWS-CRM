@@ -866,3 +866,11 @@ A verificação local usa essa biblioteca com `/usr/bin/chromium`; o binário ex
 permanece dependente do CI. Os 23 testes Node de lifecycle/assets/header/driver
 passaram no container com PHP (zero skips). Inventário de isolamento atualizado
 para o diagnóstico Asaas, mantendo estado unreviewed e rollout bloqueado.
+
+### Diagnóstico autenticado após ddc85e10
+
+O run 42259518504 confirmou no Chromium fixado os regressivos de seletor/modal de Contratos e captura do POST de Vendas. O grupo sales-pdf passou POST/JSON/ID/redirecionamento e falhou ao aguardar o preview; providers continua com HTTP 503 na criação explícita da tarifa. Não são fluxos homologados. O driver registra apenas status do preview e localização JS, e o coletor publica somente a classificação sanitizada de PHP, sem mensagens de exceção ou valores de requisição.
+
+O teste BB procurava `#allowed_payment_modes`, ID ausente no select original. Corrigido para `#invoice-form [name="allowed_payment_modes[]"]`, com assert de um único select antes de conferir opções. Não altera gateway, permissões ou o formulário de produção. Reexecução autenticada ainda necessária.
+
+Validação local desta instrumentação: seis testes Python de ambiente/redação passaram; regressão Chromium do POST com navegação passou usando Playwright 1.55.1 e Chromium instalado; sintaxe Node e diff sem erros. Nenhuma verificação de preview, idempotência ou segregação foi removida.

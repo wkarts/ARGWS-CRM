@@ -55,6 +55,10 @@ async function save(page,url,kind){
   // continueResponse preserves original status, headers and bytes; no fulfill,
   // request rewrite, DOM substitution or replacement response is used.
   const session=await page.context().newCDPSession(page);let finish,timer;
+  const diagnostics={previewStatus:null,pageErrors:[]};
+  const onResponse=response=>{if(new RegExp('^/admin/'+kind+'/get_'+resource+'_data_ajax/[0-9]+$').test(new URL(response.url()).pathname))diagnostics.previewStatus=response.status();};
+  const onError=error=>{const match=String(error.stack||'').match(/\/(assets\/[A-Za-z0-9_./-]+\.js)(?:\?[^\s:)]*)?:(\d+):(\d+)/);diagnostics.pageErrors.push(match?match[1]+':'+match[2]+':'+match[3]:'unavailable');};
+  page.on('response',onResponse);page.on('pageerror',onError);
   const captured=new Promise(resolve=>{finish=resolve;timer=setTimeout(()=>resolve({error:new Error('Original Sales POST body was not observed')}),30000);});
   session.on('Fetch.requestPaused',async event=>{
     let observed;
@@ -79,7 +83,7 @@ async function save(page,url,kind){
     assert.equal(new URL(page.url()).pathname,'/admin/'+kind+'/list_'+kind+'/'+result.id);await page.locator('[data-native-sales-preview="'+result.id+'"]').waitFor({state:'visible'});
     const replay=await postRecorded(page.context(),response.request());assert.equal(replay.status(),200,'original request supports durable replay');assert.equal((await replay.json()).id,result.id);
     return{id:result.id,request:response.request()};
-  }finally{clearTimeout(timer);await session.detach();}
+  }catch(error){console.error('Sales preview diagnostics '+JSON.stringify(diagnostics));throw error;}finally{page.off('response',onResponse);page.off('pageerror',onError);clearTimeout(timer);await session.detach();}
 }
 async function action(page,name){const button=page.getByRole('button',{name,exact:true});await reveal(page,button);await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 function command(page,action){assert(['convert','accepted','declined','cancelled'].includes(action));return page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')}).locator('button[type=submit]');}

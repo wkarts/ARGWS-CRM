@@ -95,12 +95,34 @@ class PhpErrorClassificationTest(unittest.TestCase):
         self.assertNotIn('not-present-secret', result.stdout)
         self.assertEqual(result.stderr, '')
 
+    def test_fixed_application_diagnostics_keep_only_known_code_locations(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (
+            'ERROR - 2026-11-06 17:00:00 --> native_asaas_operation_failure class=engine file=CompanyFeeExpense.php line=24\n'
+            'ERROR --> native_sales_form_failure kind=estimates class=runtime file=estimate.php line=19\n'
+            'ERROR --> native_asaas_operation_failure class=runtime file=secret-value.php line=1\n'
+            'ERROR --> native_asaas_operation_failure class=runtime file=CompanyFeeExpense.php line=24 token=secret-value\n'
+            'ERROR --> native_asaas_operation_failure class=runtime file=../../secret-value.php line=1\n'
+            'ERROR --> native_asaas_operation_failure class=secret-value file=CompanyFeeExpense.php line=24\n'
+        )
+        result = subprocess.run(['python3', 'tests/ci/classify_php_error_log.py'],
+                                cwd=root, input=source, text=True, capture_output=True, check=True)
+        self.assertEqual(result.stdout.splitlines(), [
+            'kind=engine location=CompanyFeeExpense.php:24 code=native_asaas_operation_failure',
+            'kind=runtime location=estimate.php:19 code=native_sales_form_failure kind=estimates',
+            'kind=runtime location=unavailable code=native_asaas_operation_failure',
+        ])
+        self.assertNotIn('secret-value', result.stdout)
+        self.assertEqual(result.stderr, '')
+
     def test_disposable_logging_and_classifier_are_in_existing_preflight(self):
         root = Path(__file__).resolve().parents[1]
         script = (root / 'tests/issuers_standalone_http_smoke.sh').read_text()
         workflow = (root / '.github/workflows/deployment-integrity.yml').read_text()
         self.assertIn('python3 -m unittest tests/test_issuer_browser_environment.py', workflow)
         self.assertIn('python3 tests/ci/classify_php_error_log.py', script)
+        self.assertIn('cat "$evidence/$container-application.log" >&2', script)
+        self.assertNotIn('cat "$evidence/$container-docker.log"', script)
         self.assertLess(script.index('if (APP_DB_NAME !== "argws_upgrade_ci")'),
                         script.index('node tests/companies_portal_browser.cjs'))
         self.assertLess(script.index('define(\\"APP_LOG_THRESHOLD\\", 1)'),
