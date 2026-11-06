@@ -772,3 +772,11 @@ Somente o app-config gerado pelo smoke descartável habilita log_threshold1.
 O teste coleta por regex exclusivamente o evento limitado, sem publicar logs
 brutos. Isso fornece diagnóstico para a próxima rodada; não declara o503
 corrigido nem altera as expectativas de sucesso do formulário.
+
+CI fb51040f/settings, job127979982820, avançou pelos rascunhos autenticados
+e falhou na contagem do cabeçalho de recorrências: DOM7 vs8. A view original
+contém8 colunas e marca Ano como not_visible; DataTables remove esse TH do DOM.
+Corrigida a leitura para o modelo DataTables, exigindo8 colunas e confirmando
+que somente o campo Ano esperado está oculto. Nenhuma coluna de produto foi
+removida ou tornada visível para satisfazer o teste. Execução autenticada nova
+ainda pendente.
