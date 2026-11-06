@@ -1,0 +1,20 @@
+<?php defined('BASEPATH')or exit('No direct script access allowed');
+$bbAdminUrl=fn($path)=>CompanyRequestScope::adminUrl($this,$path.'?return_settings=1');
+init_head(); ?>
+<div id="wrapper"><div class="content"><div class="panel_s"><div class="panel-body">
+<p><a href="<?= html_escape(CompanyRequestScope::adminUrl($this,'settings?group=payment_gateways')); ?>">Configurações · Meios de pagamento</a> / Banco do Brasil</p>
+<h1 class="h3">Banco do Brasil</h1>
+<p><a class="btn btn-default" href="<?= html_escape(CompanyRequestScope::adminUrl($this,'banco_brasil')); ?>">Abrir operação de remessa e retorno</a></p>
+<?php if(!empty($notice)){?><p class="alert alert-info" role="status"><?= html_escape($notice['message']); ?></p><?php } ?>
+<?php if($storage_error){?><p class="alert alert-danger">Não foi possível confirmar a configuração desta empresa. Verifique instalação e permissões antes de salvar.</p><?php } ?>
+<p>Contas, ambientes, convênios e leiautes preservam vínculos distintos. Os perfis abaixo apresentam os parâmetros efetivamente suportados; não substituem o contrato e a homologação do banco.</p>
+<ul class="nav nav-tabs" id="bb-settings-tabs" role="tablist"><?php foreach(['account'=>'Conta e convênio','api'=>'API','cnab240'=>'CNAB 240','cnab400'=>'CNAB 400']as$key=>$label){?><li role="presentation" class="<?= $key==='account'?'active':''; ?>"><a id="bb-settings-tab-<?= $key; ?>" href="#bb-settings-<?= $key; ?>" aria-selected="<?= $key==='account'?'true':'false'; ?>" tabindex="<?= $key==='account'?'0':'-1'; ?>" role="tab" data-toggle="tab" aria-controls="bb-settings-<?= $key; ?>"><?= $label; ?></a></li><?php } ?></ul>
+<div class="tab-content">
+<section id="bb-settings-account" aria-labelledby="bb-settings-tab-account" class="tab-pane active" role="tabpanel"><h2 class="h4">Conta e convênio</h2><?php require $bb_module_views.'settings_account.php';require $bb_module_views.'settings_channels.php'; ?></section>
+<section id="bb-settings-api" aria-labelledby="bb-settings-tab-api" class="tab-pane" role="tabpanel"><h2 class="h4">API de cobrança</h2><?php require $bb_module_views.'api_configuration.php'; ?></section>
+<section id="bb-settings-cnab240" aria-labelledby="bb-settings-tab-cnab240" class="tab-pane" role="tabpanel"><h2 class="h4">CNAB 240</h2><p>Perfil suportado: cobrança P/Q, convênio de sete posições, carteira 17 simples, Real. Nosso Número usa o convênio e a sequência exclusiva de dez posições. Os dígitos e a disposição vêm do codec do perfil, não de valores presumidos. Registre o vínculo CNAB 240 da conexão em Conta e convênio antes de declarar a faixa.</p><?php require $bb_module_views.'settings_cnab240.php'; ?></section>
+<section id="bb-settings-cnab400" aria-labelledby="bb-settings-tab-cnab400" class="tab-pane" role="tabpanel"><h2 class="h4">CNAB 400</h2><?php require $bb_module_views.'settings_cnab400.php'; ?><p>Perfil CBR641/643: convênio de sete posições e carteira 17 simples. Conta, agência, dígitos, ambiente, convênio e variação são os campos reais do vínculo em Conta e convênio; selecione o perfil 400 contratado naquela guia. A faixa de Nosso Número é compartilhada com a conexão, sem reinício ou inferência de números.</p><p>O perfil de registros auxiliares é somente de retorno observacional e não habilita emissão. Homologação do lote 400, moeda BRL e isenção exigem as declarações específicas na operação de remessa. Outros convênios, carteiras e composições ainda não são suportados; não há campos fictícios de contrato ou código de cliente usados pelo gerador.</p><table class="table"><thead><tr><th>Vínculo 400</th><th>Conexão</th><th>Perfil declarado</th></tr></thead><tbody><?php foreach($layout_bindings as$binding){if(!in_array($binding['layout_id'],[\BancoBrasil\LayoutCatalog::CNAB400,\BancoBrasil\LayoutCatalog::CNAB400_AUX],true))continue;?><tr><td>#<?= (int)$binding['id']; ?></td><td>#<?= (int)$binding['connection_id']; ?></td><td><?= html_escape($binding['layout_id']); ?></td></tr><?php } ?></tbody></table></section>
+</div></div></div></div></div>
+<?php init_tail(); ?>
+<script src="<?= html_escape(base_url('assets/js/native-bb-settings.js')); ?>"></script>
+</body></html>

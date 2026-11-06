@@ -47,6 +47,7 @@ jobs:
       - run: node tests/banco_brasil_checkout_browser.cjs
         env:
           BB_CHECKOUT_SCREENSHOT_DIR: /tmp/bb-checkout-render
+      - run: node tests/browser/bb_settings.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

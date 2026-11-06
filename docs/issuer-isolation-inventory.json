@@ -5891,13 +5891,13 @@
       "evidence": ""
     },
     "application/services/NativeCompanySettingsController.php": {
-      "sha256": "d5dd01bad6dac2ad6743159102683953e081a595d9b3bd80b438621037c4fcc2",
+      "sha256": "8ea11bb00def811e0d7ddd95208ed2b05ee4bbde2813ca2b2ccedaa865550baa",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        265
+        269
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8802,7 +8802,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "6145b1e3b0a99f339bb0668adf8477280a273a835ce46bb1290c52d78cf26984",
+      "sha256": "9d4b52abb4998e0235ef996d84f21b532fce98d90f2221a0aee258e453b73b08",
       "categories": [
         "invoice_table"
       ],

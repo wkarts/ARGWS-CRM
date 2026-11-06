@@ -100,3 +100,20 @@ A falha de CI de b06b1851 foi localizada em `node-contracts`: `main.min.js` e
 essa dependência. `npm ci --ignore-scripts --no-audit --no-fund` e Mix production
 regeneraram os artefatos. Gates não foram removidos nem relaxados. CI do novo
 SHA deve ser consultado depois do push.
+
+## Banco do Brasil 1.3.7 — configuração nativa
+
+Executados localmente: `php tests/banco_brasil_admin.php` (98 checks, além de118
+codec/56 store), `php tests/banco_brasil_module_version.php` (54),
+`php tests/banco_brasil_origination_mysql.php` (233 cumulativos em MySQL8.4,
+instalação/upgrade/erro de tracking/repetição reais), `node tests/browser/bb_settings.cjs`
+(view PHP real em Chromium com dados/HTTP sintéticos), lint PHP e node --check,
+`python3 tests/banco_brasil_bridge125_static.py` (5 testes estáticos).
+Não houve banco remoto nem homologação do convênio. Rotas dos browsers autenticados
+foram atualizadas; sua execução completa permanece pendente.
+
+CI do incremento de reajustes `05e8030038212dc959abaae5a928c0cd990d4ff7`:
+[workflow de reajustes aprovado](https://github.com/wkarts/ARGWS-CRM/actions/runs/42153603040).
+A primeira rodada executou os testes com sucesso, mas recusou a limpeza porque o
+nome do schema não estava na lista segura do harness. O workflow passou a usar
+`issuer_tests`, já permitido; a proteção de limpeza não foi alterada.

@@ -59,10 +59,10 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | R09 Todo Vendas | Inventário e adaptadores da PR61 | Cobertura integral de módulos/ações não comprovada | Asaas em pagamento nativo | Testes de view/controlador/browser Asaas |
 | R10 Outras áreas | Controllers nativos e contratos globais da PR61 | Áreas NA01–NA09 e propriedade das integrações continuam na matriz anterior | Não se abriu módulo global em secundária | Navegação/presentation limitada |
 | R11 Empresa ativa | `CompanyRequestScope`, `IssuerResourceAccess`, runtime settings | Cobertura universal não comprovada | Seleção Asaas conserva lease/ACL; exportação API bloqueada | Native settings controller + secret controller A/B |
-| BB01 Configuração | `modules/banco_brasil/controllers/Banco_brasil.php`, view index | Configuração ainda mistura operação no menu BB | Link existente preservado, sem alegar reorganização concluída | Teste administrativo BB |
-| BB02 API/240/400 | Perfis e layouts próprios | Guias específicas no local exigido faltam | Sem alteração | Parsers 240/400 separados |
-| BB03 Parâmetros reais | Conexão, layout bindings, perfis origination/API | Validar convênio/conta/layout de destino e desenho das guias | Nenhum parâmetro inventado | Sem homologação contratual bancária |
-| BB04 Operação | Menu e arquivos de remessa/retorno | Separar configuração mantendo operação | Preservado | Testes administrativos/store |
+| BB01 Configuração | ModuleStore e ApiService existentes | Homologação HTTP autenticada pendente | Rota settings?group=payment_gateways&gateway=banco_brasil, shell nativo, formulários existentes | View PHP real em Chromium; comandos administrativos PHP |
+| BB02 API/240/400 | Perfis e codecs separados | Perfis bancários não suportados continuam recusados | Guias API/CNAB240/CNAB400 com contratos reais e vínculo comum | Chromium: guias, campos e declarações explícitas |
+| BB03 Parâmetros reais | Conta, convênio7, carteira17, variação, faixa e perfis existentes | Outros convênios/carteiras exigem contrato/codec verificado; não foram inventados campos | Configuração de conta/layout/faixas/API na mesma tela | Módulo137 tracking/upgrade em MySQL; sem homologação bancária |
+| BB04 Operação | Remessa/retorno, arquivos e conciliação existentes | Novo ciclo de lotes ainda pendente | Menu operacional preservado; configuração movida e linkada | Admin PHP mantém formulários operacionais e CSRF |
 | BB05 Boleto antes transmissão | Origination/artefatos vinculados | Integração automática com emissão/recorrência não demonstrada | Não implementado | Não homologado |
 | BB06 Lote aberto compatível | `Origination::generate` cria lote e `finish` congela | Agrupamento incremental automático até download ausente | Não implementado | Inspeção; não declarar teste de agrupamento |
 | BB07 Primeiro download fecha | `Origination::download` altera entrega de bytes já congelados | Fechamento deve passar a ocorrer atomicamente no primeiro download | Não implementado | Corrida emissão/download nova não testada |
@@ -89,6 +89,22 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | REA05 Simulação/revisão | Novo fluxo | HTTP autenticado a executar | Relatório preservado, imprimível, confirmação da revisão exata; campanha atômica | Totais nativos; revisão concorrente invalida toda proposta |
 | REA06 Aplicação/agendamento | Worker nativo | Operação do worker na instalação não verificada | Data local/IANA explícita convertida UTC; horário ambíguo recusado; journal futuro | Clock controlado com transação SQL real; nova emissão usa preço futuro |
 | REA07 Integridade/ACL | Locks financeiros e ACL existentes | CSRF/HTTP autenticado e revogação concorrente específica ainda pendentes | ACL revalidada sob lock, chaves idempotentes, snapshots auditados | Dois processos MySQL: confirmação/confirmacão e confirmação/emissão; sem duplicação |
+
+## Banco do Brasil — configuração nativa, módulo 1.3.7/137
+
+`NativeCompanyBancoBrasilSettings` lê somente a empresa selada e exige acesso
+Settings/BB; os comandos existentes continuam com ACL contextual e CSRF próprios.
+Campos API não retornam segredos salvos. Conta, convênio, leiaute e declaração de
+faixa foram movidos para os respectivos formulários nativos; remessa, retorno,
+conciliação e operações vinculadas à origem continuam no menu BB. Query de retorno
+aceita somente o destino fixo de configurações, sem URL fornecida pelo usuário.
+
+Migration137 NOOP e header/ModuleRelease avançam juntos; 136 permanece intacta.
+MySQL descartável: `banco_brasil_origination_mysql.php` passou com 233 verificações
+cumulativas, incluindo upgrade/erro de tracking/repetição até137. PHP admin98,
+module_version54; Chromium renderiza view real de configuração com dados sintéticos.
+Os testes autenticados existentes tiveram rotas/selectors adaptados; sua execução
+ponta a ponta ainda depende do CI/instalação de teste, e não é alegada como concluída.
 
 ## Contratos externos inspecionados — somente leitura
 

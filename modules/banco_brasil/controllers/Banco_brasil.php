@@ -128,7 +128,7 @@ class Banco_brasil extends AdminController
             $channel=$this->input->post('contract_channel',false);if($channel==='api_return'){$this->issuer($id,'reconcile_api_return');$this->apiCnab()->declare($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}else{if(!in_array($channel,[null,'','cnab400'],true))throw new DomainException('bb_contract_channel_invalid');$layout=$channel==='cnab400'?\BancoBrasil\LayoutCatalog::CNAB400:\BancoBrasil\Agreement::LAYOUT_ID;$this->origination()->declareContract($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$input,$layout);}
             $this->flash('success','Declaração do operador registrada. Isso não comprova contrato ou homologação pelo banco. A faixa reservada não pode ser reiniciada.');
         }catch(Throwable $e){$this->flash('warning','Declaração não confirmada. Confira contrato, perfil, isenção, intercâmbio de teste e faixa exclusiva já utilizada; não reduza nem reutilize números.');}
-        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+        redirect($this->url('banco_brasil?issuer_id='.$id).($this->input->get('return_settings')==='1'?($this->input->post('contract_channel')==='cnab400'?'#bb-settings-cnab400':'#bb-settings-cnab240'):'#bb-remittance'));
     }
     public function generate_remittance()
     {
@@ -346,14 +346,14 @@ class Banco_brasil extends AdminController
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
         try{$input=$this->input->post('api_profile',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_profile');$this->api()->declareProfile($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$input);$this->flash('success','Perfil API declarado. Ambiente e origem ficam imutáveis. A declaração não comprova contrato, titularidade ou homologação.');}
         catch(Throwable $error){$this->flash('warning','Perfil API não confirmado. Confira conexão, ambiente, contrato e faixa exclusiva compartilhada com CNAB; números não podem ser reiniciados.');}
-        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-auth');
+        redirect($this->url('banco_brasil?issuer_id='.$id).($this->input->get('return_settings')==='1'?'#bb-settings-api':'#bb-billing'));
     }
     public function save_api_credentials()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
         try{$input=$this->input->post('api_credentials',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_credentials');$this->api()->saveCredentials($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$input);$this->flash('success','Nova versão de credenciais protegida para o perfil e ambiente indicados. Nenhum token ou operação bancária foi solicitado ao salvar.');}
         catch(Throwable $error){$this->flash('warning','Credenciais não confirmadas. Confira perfil, ambiente, permissão e criptografia nativa. Nenhuma credencial será mostrada na resposta.');}
-        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-auth');
+        redirect($this->url('banco_brasil?issuer_id='.$id).($this->input->get('return_settings')==='1'?'#bb-settings-api':'#bb-billing'));
     }
     public function issue_api()
     {
@@ -492,6 +492,7 @@ class Banco_brasil extends AdminController
     }
     private function url(string $path=''):string
     {
+        if(str_starts_with($path,'banco_brasil?issuer_id=')&&$this->input->get('return_settings')==='1')$path='settings?group=payment_gateways&gateway=banco_brasil';
         if(function_exists('admin_url'))return admin_url($path);
         return $this->config->site_url((defined('ADMIN_URI')?ADMIN_URI:'admin').'/'.$path);
     }

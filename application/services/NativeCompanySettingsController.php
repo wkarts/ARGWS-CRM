@@ -206,6 +206,10 @@ final class NativeCompanySettingsController
             $selected['installation_controls']=$installationSettings;
             if($group==='payment_gateways'){
                 $gateway=$ci->input->get('gateway',false);
+                if($gateway==='banco_brasil'){
+                    if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
+                    require_once __DIR__.'/NativeCompanyBancoBrasilSettings.php';NativeCompanyBancoBrasilSettings::render($ci);return;
+                }
                 if($gateway==='asaas'){
                     if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
                     $ci->asaas();return;

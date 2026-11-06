@@ -62,7 +62,8 @@ $ci->input->posts['csrf_bb']=[$csrf];rejects(fn()=>$controller->register_connect
 $ci->input->posts['csrf_bb']=$csrf;$ci->input->posts['tax_id']='99999999999999';try{$controller->register_connection();}catch(BbRedirect $e){}
 check(!$ci->db->tables,'cannot replace issuer CNPJ in form');unset($ci->input->posts['tax_id']);
 try{$controller->register_connection();}catch(BbRedirect $e){check(str_contains($e->getMessage(),'issuer_id=1'),'scope retained after action');}
-check(count($ci->db->tables['t_bb_connections'])===1,'real registration method persists');check($ci->db->tables['t_bb_connections'][0]['issuer_tax_id']==='12ABC34501DE35','identity from issuer registry');
+check(count($ci->db->tables['t_bb_connections'])===1,'real registration method persists');
+$ci->input->gets=['return_settings'=>'1'];try{$controller->register_connection();}catch(BbRedirect $e){check($e->getMessage()==='https://crm.example.test/admin/settings?group=payment_gateways&gateway=banco_brasil','configuration command returns only to fixed native payment settings');}$ci->input->gets=['issuer_id'=>'1'];check($ci->db->tables['t_bb_connections'][0]['issuer_tax_id']==='12ABC34501DE35','identity from issuer registry');
 check($ci->db->tables['t_bb_connections'][0]['lifecycle']==='pending_verification','no bank verification fabricated');
 $ci->input->posts['issuer_id']='2';rejects(fn()=>$controller->register_connection(),'cross issuer POST');
 $ci->input->gets=['issuer_id'=>'2'];rejects(fn()=>$controller->index(),'cross issuer GET');
@@ -72,11 +73,13 @@ $GLOBALS['issuerCoreReady']=false;$controller->index();check($ci->load->viewData
 $ci->input->gets=['issuer_id'=>'1'];$GLOBALS['issuerRows'][1]['legal_name']='<script>evil</script>';$controller->index();
 extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$html=ob_get_clean();
 check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;script&gt;evil&lt;/script&gt;'),'escaped issuer label');
-foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
+foreach(['Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
 check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="tax_id"'),'no secret or substitute identity field');
-$connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/register_connection"[^>]*>(.*?)</form>~s',$html,$connectionForm),'connection form rendered');
+check(!str_contains($html,'/register_connection')&&str_contains($html,'settings?group=payment_gateways&amp;gateway=banco_brasil'),'operational menu links native configuration without duplicating its forms');
+ob_start();include __DIR__.'/../modules/banco_brasil/views/settings_account.php';$settingsHtml=ob_get_clean();
+$connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/register_connection"[^>]*>(.*?)</form>~s',$settingsHtml,$connectionForm),'connection form rendered');
 check(substr_count($connectionForm[1],'name="_company_context"')===1,'connection form carries one company scope token from the native helper');
-check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
+check(str_contains($html,'aria-labelledby="bb-tab-remittance"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
 check(str_contains($html,'A importação não cria pagamento')&&str_contains($html,'confirmação e evidência do operador'),'import and assisted financial impact are explicitly distinct');
 $view400=$ci->load->viewData;$view400['origination_ready']=true;$view400['can_generate']=true;$view400['can_download']=true;$view400['can_manage']=true;
 $view400['connections']=[['id'=>10,'account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox']];
@@ -110,8 +113,8 @@ $ci->input->posts['layout_id']=\BancoBrasil\Agreement::LAYOUT_ID;try{$controller
 check(count($ci->db->tables['t_bb_layout_bindings'])===2,'second layout distinct new ID');
 $controller->index();extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$html=ob_get_clean();
 check(str_contains($html,'name="layout_binding_id"')&&str_contains($html,'Selecione explicitamente'),'explicit import profile selector');
-check(str_contains($html,'name="layout_id"')&&str_contains($html,'CNAB 400')&&str_contains($html,'CNAB 240'),'GUI profile registration both formats');
-check(str_contains($html,'não contém evidência inequívoca')&&str_contains($html,'2000–2099'),'provenance and dates limitations visible');
+check(str_contains($settingsHtml,'name="layout_id"')&&str_contains($settingsHtml,'CNAB 400')&&str_contains($settingsHtml,'CNAB 240'),'GUI profile registration both formats');
+check(str_contains($html,'não comprova autenticidade bancária')&&str_contains($html,'2000–2099'),'provenance and dates limitations visible');
 check(!str_contains($html,'getenv(')&&!str_contains($html,'app-config'),'functional parameters in native GUI');
 $GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];rejects(fn()=>$controller->index(),'selected company access requires resource view');
 $ci->input->gets=['issuer_id'=>'1'];rejects(fn()=>$controller->index(),'resource view required on direct URL');$GLOBALS['resourceGrants']['view']=true;

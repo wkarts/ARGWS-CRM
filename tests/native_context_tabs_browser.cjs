@@ -4,7 +4,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
-const keys = ['auth', 'environment', 'agreement', 'account', 'billing', 'remittance', 'return', 'webhook'];
+const keys = ['remittance', 'return', 'billing', 'webhook'];
 const shellTail = fs.readFileSync(path.join(root, 'application/views/admin/includes/native_company_layout_tail.php'), 'utf8');
 const bbView = fs.readFileSync(path.join(root, 'modules/banco_brasil/views/index.php'), 'utf8');
 const tabsScript = path.join(root, 'assets/js/native-admin-tabs.js');
@@ -38,12 +38,12 @@ for (const key of keys) {
 
         await page.locator('#bb-tab-webhook').focus();
         await page.keyboard.press('ArrowRight');
-        assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-auth', 'right arrow wraps and moves focus');
-        assert.equal(await page.locator('#bb-auth').getAttribute('aria-hidden'), 'false');
+        assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-remittance', 'right arrow wraps and moves focus');
+        assert.equal(await page.locator('#bb-remittance').getAttribute('aria-hidden'), 'false');
         await page.keyboard.press('End');
         assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-webhook', 'End selects the final tab');
         await page.keyboard.press('Home');
-        assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-auth', 'Home selects the first tab');
+        assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-remittance', 'Home selects the first tab');
         await page.evaluate(() => { window.location.hash = '#bb-remittance'; });
         await page.waitForFunction(() => document.getElementById('bb-tab-remittance').getAttribute('aria-selected') === 'true');
         assert.equal(await page.locator('#bb-remittance').getAttribute('aria-hidden'), 'false', 'POST redirect fragment opens the remittance tab');

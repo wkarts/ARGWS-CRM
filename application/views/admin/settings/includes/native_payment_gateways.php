@@ -4,7 +4,7 @@ $paymentAcl=new IssuerResourceAccess($this->db,db_prefix());
 $paymentEntries=[
     ['name'=>'Asaas','module'=>'asaas','route'=>'settings?group=payment_gateways&gateway=asaas','feature'=>'settings','description'=>'Configuração, webhook, operações, transações e conciliação.'],
     ['name'=>'Efí','module'=>'gerencianet_gateway','route'=>'settings/efi','feature'=>'settings','description'=>'Contas e credenciais de cobrança da empresa.'],
-    ['name'=>'Banco do Brasil — API e CNAB','module'=>'banco_brasil','route'=>'banco_brasil','feature'=>'banco_brasil','description'=>'API de cobrança, remessa, retorno e conciliação CNAB 240/400.'],
+    ['name'=>'Banco do Brasil — API e CNAB','module'=>'banco_brasil','route'=>'settings?group=payment_gateways&gateway=banco_brasil','feature'=>'banco_brasil','description'=>'Configuração de contas, convênios e perfis API/CNAB 240/400.'],
 ];
 $paymentModules=[];
 foreach(IssuerStorage::query($this->db,'SELECT module_name FROM '.db_prefix().'modules WHERE active=1')->result_array() as $paymentModule)$paymentModules[$paymentModule['module_name']]=true;

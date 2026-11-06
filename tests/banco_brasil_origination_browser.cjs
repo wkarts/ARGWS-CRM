@@ -55,7 +55,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(await page.locator('body.native-company-admin #header').count(),1,'BB uses the original CRM header');
    assert.equal(await page.locator('body.company-context-shell').count(),0,'BB no longer uses the company application shell');
    assert.equal(await page.locator('#bb_issuer').count(),0,'sidebar is the sole company selector');
-   await page.locator('#bb-tab-auth').click();
+   await page.locator('[href="#bb-settings-api"]').click();
    for(const channel of ['api','cnab']){
     const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});
     assert.equal(await form.count(),1,'each company has two independent native channel controls');
@@ -82,20 +82,21 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await native.date(page,'#date',new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await native.line(page,{description:'SYNTHETIC BB SERVICE',qty:'1',rate:'100.00'});
   const {id:invoice}=await native.save(page,url);assert.match(invoice,/^[1-9]\d*$/);
-  let response=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
-  await page.locator('#bb-tab-account').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
+  let response=await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
+  await page.locator('[href="#bb-settings-account"]').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
   const variation=page.locator('input[name=variation]');await variation.fill('019');
   await navigate(page,variation.locator('xpath=ancestor::form').locator('button'));
   const connection=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+a);assert.match(connection,/^[1-9]\d*$/);
-  await page.locator('#bb-tab-account').click();const layoutForm=page.locator('form[action*="register_layout"]');
+  await page.locator('[href="#bb-settings-account"]').click();const layoutForm=page.locator('form[action*="register_layout"]');
   await layoutForm.locator('select[name=connection_id]').selectOption(connection);await layoutForm.locator('select[name=layout_id]').selectOption('bb-cobranca-240-2026-06-084-043');await navigate(page,layoutForm.locator('button'));
   const binding=sql('SELECT id FROM tblbb_layout_bindings WHERE connection_id='+connection);
-  await page.locator('#bb-tab-remittance').click();
+  await page.locator('[href="#bb-settings-cnab240"]').click();
   for(const [key,value]of Object.entries({beneficiary_name:'SYNTHETIC PORTAL A',first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC CONTRACT ONLY'}))await page.locator('#bb-contract-'+key).fill(value);
-  await page.locator('input[name="contract[interest_exempt]"]').check();await page.locator('input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
+  await page.locator('#bb-settings-cnab240 input[name="contract[interest_exempt]"]').check();await page.locator('#bb-settings-cnab240 input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
   const nativeContract=page.locator('form').filter({has:page.locator('#bb-contract-beneficiary_name')});
   assert.equal(await nativeContract.count(),1);
   await navigate(page,nativeContract.getByRole('button',{name:'Registrar declaração do operador',exact:true,includeHidden:true}));
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
   await page.waitForFunction(()=>document.querySelector('#bb-remittance').getAttribute('aria-hidden')==='false');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_contract_declarations WHERE issuer_id='+a),'1');
   for(const [key,value]of Object.entries({invoice_id:invoice,payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA'}))await page.locator('#bb-title-'+key).fill(value);
@@ -136,7 +137,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'2');assert.equal(sql('SELECT financial_state FROM tblbb_return_events WHERE id='+event),'applied_assisted');
   const retry=await context.request.post(url+'/admin/banco_brasil/settle_event',{form:settlementData});assert.equal(retry.status(),200);await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1','retry and reimport cannot duplicate reviewed payment');
   // Configure native API vault through the real UI. This browser never invokes an API banking operation.
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-auth');await page.locator('#bb-api-connection').selectOption(connection);await page.locator('#bb-api-stage').selectOption('homologation');
+  await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');await page.locator('#bb-api-connection').selectOption(connection);await page.locator('#bb-api-stage').selectOption('homologation');
   for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC API CONTRACT ONLY'}))await page.locator('#bb-api-'+key).fill(value);
   await page.locator('#bb-api-interest-policy').selectOption('exempt');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
   const apiProfile=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+a);assert.match(apiProfile,/^[1-9]\d*$/);
@@ -164,10 +165,10 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal((await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields})).status(),409,'old original download form is rejected after switching company');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   // Complete positive UI credit path for B, with a distinct account/agreement/profile.
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('[href="#bb-settings-account"]').click();
   await page.locator('#bb_account_id').fill('001:00452-3:000000223873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('7654321');
   await page.locator('input[name=variation]').fill('019');await navigate(page,page.locator('input[name=variation]').locator('xpath=ancestor::form').locator('button'));
-  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('#bb-tab-auth').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
+  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('[href="#bb-settings-api"]').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
   for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC B API CONTRACT'}))await page.locator('#bb-api-'+key).fill(value);
   await page.locator('#bb-api-interest-policy').selectOption('exempt');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
   const profileB=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+b);await page.locator('#bb-api-credential-profile').selectOption(profileB);
@@ -181,7 +182,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','B positive flow preserves A payment');
   // Explicit positive daily-interest profile and authenticated movement observation in A and B.
   for(const [issuer,conn,letter] of [[a,connection,'a'],[b,connectionB,'b']]){
-   await select(issuer);await page.goto(url+'/admin/banco_brasil?issuer_id='+issuer+'#bb-auth');await page.locator('#bb-api-connection').selectOption(conn);await page.locator('#bb-api-stage').selectOption('homologation');
+   await select(issuer);await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');await page.locator('#bb-api-connection').selectOption(conn);await page.locator('#bb-api-stage').selectOption('homologation');
    for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC DAILY INTEREST '+letter}))await page.locator('#bb-api-'+key).fill(value);
    const beforeNumber=sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+issuer);
    await page.locator('#bb-api-interest-policy').selectOption('daily_fixed');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
