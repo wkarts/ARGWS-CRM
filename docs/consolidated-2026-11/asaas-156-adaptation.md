@@ -112,3 +112,29 @@ Rollout somente após revisão/autorização: backup e runner nativo, confirmar1
 schema, testar salvar/reabrir/contas autorizadas. Em falha, suspender configuração
 e corrigir adiante; não reduzir marcador ou apagar histórico. Reversão de view
 não desfaz configurações já salvas. Sem publicação de release, merge ou deploy.
+
+## Histórico local paginado — módulo1.7.4/174
+
+Monitoramento nativo em Meios de pagamento > Asaas lê cobranças vinculadas,
+webhooks e jobs já existentes. Carrega sob consulta explícita GET, sem SDK,
+credencial, chamada remota ou lançamento financeiro. Filtros de conta e estado,
+cursor por ID decrescente,50 registros por página; novos eventos não deslocam
+registros para páginas já visitadas. ACL exige settings.view e invoices.view,
+revalidada após leitura. Conta/ambiente são derivados do registro autorizado.
+Somente campos permitidos são enviados à view; nenhum payload bruto ou segredo.
+
+Migration174 NOOP, preservando173.16 testes novos por SQLite/MySQL: fronteira50/3,
+sem sobreposição, A/B, conta estrangeira, filtros inválidos, ACL, SQL de cada
+lista, view escapada, controller422 e carregamento sob demanda. Runner nativo
+MySQL317 checks, tracking174 falho conserva173, retry/replay. Chromium autenticado
+local: manutenção174, listas GET e formulário original200; filtro array422.
+Driver A/B do CI foi ampliado; execução integral final pendente.12 contratos Node,
+callback13 e históricos154/155:48/101 passaram.
+
+Limites explícitos: lista apenas origens vinculadas, não todas as faturas Asaas
+legadas sem vínculo. Não implementa ainda lista remota paginada, associação de
+cobranças legadas ou lote de comparar/conciliar da fonte. Logs globais/arquivos
+não são usados como fallback por falta de escopo verificável. O monitor mostra
+estado local e explica que evento processado não comprova pagamento atual.
+Nenhuma migration/dado/provedor externo alterado por leitura; rollback de view
+não exige remoção de schema. Nenhuma homologação de provedor foi realizada.

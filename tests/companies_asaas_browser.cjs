@@ -99,6 +99,12 @@ try{
   await page.locator('#asaas-tab-accounts').click();const automation=page.locator('form').filter({has:page.locator('input[name=action][value=automation]')});await go(page,automation.locator('button[type=submit]'),trace,letter+':automation');
   trace.stage(letter+':worker');const asyncTitle=fixture(letter);const asyncEvent={id:'evt_browser_async_'+letter,event:'PAYMENT_RECEIVED',payment:{id:asyncTitle.remote}};assert.equal((await context.request.post(cb,{headers,data:JSON.stringify(asyncEvent)})).status(),200);
   fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','opt-in worker creates exactly one canonical nominal receipt');fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','worker retry preserves canonical receipt');await openCompany(page,url,trace,letter+':refresh-worker');
+  const monitorResponse=await page.goto(url+'/admin/settings/asaas?monitor_kind=origins#monitor',{waitUntil:'domcontentloaded'});
+  assert.equal(monitorResponse.status(),200,'scoped monitor GET succeeds');
+  assert.equal(await page.locator('#monitor').isVisible(),true,'native tab opens filtered local history');
+  assert.ok((await page.locator('#monitor').innerText()).includes(x.remote),'owned origin is visible in local monitor');
+  if(letter==='b')assert.ok(!(await page.locator('#monitor').innerText()).includes(prepared[a].remote),'monitor hides other company origins');
+  await openCompany(page,url,trace,letter+':refresh-worker');
   if(letter==='a')oldForm={...await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}))};
  }
  trace.stage('isolation');assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:oldForm})).status(),409,'obsolete A company editor denied before effects');

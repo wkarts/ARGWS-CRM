@@ -287,12 +287,15 @@ verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE modu
 verify((string)(new App_module_migration('asaas'))->version('172')==='172','172 retry confirmed');verify((new App_module_migration('asaas'))->version('172')===true,'172 replay no-op');
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()===0,'172 does not create card attempts');
 $db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_card_pricing`';$failed=false;
-try{(new App_module_migration('asaas'))->to_latest();}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+try{(new App_module_migration('asaas'))->version('173');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
 $db->failQuery=null;
 verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 DDL failure preserves172');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'173 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('173')===false,'173 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 failed tracking preserves172');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='173','173 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'173 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('173')==='173','173 retry confirmed');verify((new App_module_migration('asaas'))->version('173')===true,'173 replay no-op');
 \Asaas\CompanyCardPricingSchema::ensure($db,db_prefix(),false);
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_pricing')->fetchColumn()===0,'173 creates no automatic pricing configuration');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'174 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.3','174 tracking failure preserves173');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='174','174 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'174 replay no-op');
 echo "OK: {$n} native module migration MySQL assertions.\n";
