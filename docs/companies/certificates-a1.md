@@ -45,7 +45,8 @@ Uma nova exportação AES-256-CBC/PBKDF2 continua sendo uma alternativa para
 servidores sem as dependências abaixo. Nunca envie PFX ou senha pelo chat.
 
 Somente uma falha classificada como algoritmo indisponível permite
-uma segunda leitura. `/usr/bin/prlimit` executa `/usr/bin/openssl pkcs12 -legacy`
+leituras isoladas. `/usr/bin/prlimit` executa primeiro `/usr/bin/openssl pkcs12`
+e só acrescenta `-legacy` se o CLI padrão também indicar algoritmo indisponível,
 em processo independente, sem shell. A configuração OpenSSL do subprocesso é
 `/dev/null` e nenhum provider é carregado no worker PHP/TLS. Dependências da imagem:
 `openssl` e `util-linux` (prlimit). Ausência/desabilitação de proc_open, executáveis,
@@ -54,8 +55,9 @@ provider legado ou limites produz recusa segura; não há fallback irrestrito.
 Modelo de ameaça e limites:
 
 - PFX não confiável pode exigir recursos excessivos ou provocar falha do parser.
-  O subprocesso tem CPU de 3 s, endereço virtual de 128 MiB, core dump e tamanho de
-  arquivo em zero, 16 descritores e prazo monotônico de 5 s no pai. Saída máxima
+  Os subprocessos dividem CPU de 3 s (1 s padrão e 2 s legado), endereço virtual
+  de 128 MiB por processo, core dump e tamanho de
+  arquivo em zero, 16 descritores e prazo monotônico total de 5 s no pai, compartilhado pelas duas tentativas. Saída máxima
   de 4 MiB e stderr de 16 KiB; ultrapassagem mata o processo e recusa a importação.
 - O pai usa pipes não bloqueantes para PFX e senha (FD 3). Nenhum segredo vai em
   argumento, ambiente, arquivo temporário ou log. PEM existe só na memória/pipes.
@@ -76,7 +78,9 @@ Modelo de ameaça e limites:
   variável restaura a recusa de novos uploads legados sem reconfiguração global.
 
 Testes adicionais (somente sintéticos): `php tests/certificates/openssl_compatibility.php`
-(moderno, RC2, senha, chave/validade/CNPJ, revisão zero e preservação) e
+(13 formatos: AES-128/192/256, 3DES, PBE-SHA1-3DES/2DES, RC2/RC4
+40/128, Camellia-256, ARIA-256 e SEED; senha/MAC adulterado, ausência de módulo,
+chave/validade/CNPJ, revisão zero e preservação) e
 `php tests/certificates/legacy_process_limits.php` (caps, timeout, saída não zero,
 large input e canal separado de senha). O CI instala o CLI/provider necessário.
 
@@ -204,3 +208,29 @@ específicos. Conferir backups cifrados e política de retenção operacional.
 - https://www.php.net/openssl-x509-check-private-key
 - https://www.php.net/manual/en/function.openssl-pkcs12-read.php
 - https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2020_15_DOCICP_04.01.pdf
+
+## Compatibilidade do runtime (4.9.0)
+
+A tentativa CLI padrão permite aproveitar algoritmos presentes no executável,
+mesmo quando a biblioteca vinculada ao PHP não os oferece ou o módulo legacy não
+está instalado. Não existe suporte universal: algoritmos, KDFs, formatos de chave
+ou políticas FIPS incompatíveis continuam sendo recusados. Não se ignora MAC nem
+se tenta novamente uma falha de autenticação; mensagens desconhecidas falham de
+forma conservadora. A mensagem de interface também contempla configuração ou
+opt-out operacional, sem atribuir a causa do servidor a um algoritmo específico.
+
+Antes de implantar, confirmar OpenSSL, util-linux, proc_open e provider legacy
+quando necessário sob o usuário do worker, com fixtures sintéticas. A variável
+ARGWS_CERTIFICATE_LEGACY_IMPORT=0 (ou valor inválido) desativa todo o fallback CLI;
+ausente, vazia ou 1 mantém a compatibilidade automática. Nenhum provider global,
+configuração TLS, ACL, CSRF ou armazenamento foi alterado. O limite de 1 s no CLI
+padrão pode recusar KDFs muito custosos; não aumentar limites para arquivos de
+origem desconhecida sem avaliar o orçamento do worker.
+
+Release nativa 490/4.9.0 com migration NOOP; não há DDL ou conversão de credenciais.
+A branch foi sincronizada com main 08ea84cf após a integração da PR 61; sua
+migration 489 e demais alterações foram preservadas. Se outra frente avançar main,
+sincronizar código e regenerar o próximo passo nativo antes do merge. Implantação
+requer CI/homologação e backup consistente pelo fluxo nativo. Em rollback,
+restaurar a distribuição anterior compatível, preservar cifras/auditoria e não
+reduzir o marcador ou remover migrations históricas. Nenhum deploy foi executado.

@@ -23,6 +23,15 @@ try {
         a1check(microtime(true)-$start<8,$label.' bounded cleanup');
         if (in_array($label,['deadline','closed channels'],true)) { a1check(microtime(true)-$start>=4,'deadline actually exercised'); }
     }
+    $failure=new ReflectionMethod(IssuerCertificateLegacyImport::class,'failure');
+    a1check($failure->invoke(null,"error:0308010C:digital envelope routines::unsupported:source:1:\n")==='issuer_certificate_algorithm_unsupported','allowlisted unsupported reason permits fallback');
+    a1check($failure->invoke(null,"error:0308010C:digital envelope routines::unsupported:source:1:\nMac verify error: invalid password?\n")==='issuer_certificate_authentication_failed','authentication takes precedence over unsupported');
+    a1check($failure->invoke(null,'unsupported user text')==='issuer_certificate_legacy_unavailable','unknown diagnostic never triggers fallback');
+    $deadline=hrtime(true)+200000000;
+    $code='stream_get_contents(fopen("php://fd/3","r"));stream_get_contents(STDIN);sleep(30);';
+    $start=microtime(true);
+    a1reject(fn()=>$method->invoke(null,[PHP_BINARY,'-r',$code],'synthetic','synthetic',$deadline),'issuer_certificate_legacy_unavailable','remaining shared deadline enforced');
+    a1check(microtime(true)-$start<1,'second attempt cannot reset wall budget');
     $pidfile=tempnam(sys_get_temp_dir(),'a1-pid-only-'); chmod($pidfile,0600);
     try {
         $code='file_put_contents('.var_export($pidfile,true).',getmypid());stream_get_contents(fopen("php://fd/3","r"));stream_get_contents(STDIN);sleep(30);';
@@ -39,8 +48,11 @@ try {
         $start=microtime(true);
         $code='stream_get_contents(fopen("php://fd/3","r"));stream_get_contents(STDIN);'.$code;
         $bounded=array_merge($prefix,[PHP_BINARY,'-n','-r',$code]);
-        a1reject(fn()=>$method->invoke(null,$bounded,'synthetic','synthetic'),'issuer_certificate_legacy_unavailable','real prlimit '.$label.' enforced');
-        a1check(microtime(true)-$start<4.8,'real prlimit '.$label.' terminates before wall deadline');
+        // CPU time excludes scheduler waits. Keep this resource-cap test independent
+        // of the production wall timeout, already exercised above.
+        $resourceDeadline=hrtime(true)+30000000000;
+        a1reject(fn()=>$method->invoke(null,$bounded,'synthetic','synthetic',$resourceDeadline),'issuer_certificate_legacy_unavailable','real prlimit '.$label.' enforced');
+        a1check(microtime(true)-$start<29,'real prlimit '.$label.' terminates before test wall deadline');
         if ($label==='CPU') { a1check(microtime(true)-$start>=2,'CPU budget actually exercised'); }
     }
     // Enough data to exceed pipe capacity; child consumes both channels while output grows.

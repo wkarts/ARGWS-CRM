@@ -67,8 +67,8 @@ final class IssuerCertificateParser
             $unsupported = $unsupported || preg_match('/^error:[0-9a-f]+:(?:digital envelope routines:[^:]*:unsupported|PKCS12 routines:[^:]*:unsupported algorithm)$/iD', $error) === 1;
             $authentication = $authentication || preg_match('/^error:[0-9a-f]+:PKCS12 routines:[^:]*:mac verify failure$/iD', $error) === 1;
         }
-        if ($unsupported) { return 'issuer_certificate_algorithm_unsupported'; }
         if ($authentication) { return 'issuer_certificate_authentication_failed'; }
+        if ($unsupported) { return 'issuer_certificate_algorithm_unsupported'; }
         return 'issuer_certificate_parse_failed';
     }
 
