@@ -50,6 +50,10 @@ final class CompanyReceivedReceipt implements \CompanyReceiptSource
             if(!$job||$job['state']!=='processing'||!hash_equals((string)$job['lease_token'],$this->leaseToken)||$job['lease_until']<=gmdate('Y-m-d H:i:s')||(int)$job['enabled']!==1||(int)$job['automation_actor']!==$actor)throw new \DomainException('asaas_company_worker_lease_lost');
         }
         $service=new CompanyService($db,$p);
+        if($this->monitorScope){
+            $reference=$service->legacyReferenceInOwned($issuer,$actor,$this->origin);
+            if($reference!==null){$this->explicitReference=$reference;$this->explicitGuard=function()use($service,$issuer,$actor,$reference):void{if($service->legacyReferenceInOwned($issuer,$actor,$this->origin)!==$reference)throw new \DomainException('asaas_legacy_binding_conflict');};}
+        }
         $this->claim=$this->explicitGuard===null?$service->receiptClaim($issuer,$actor,$this->origin,$this->proof):$service->receiptClaimExplicit($issuer,$actor,$this->origin,$this->proof,$this->explicitReference,$this->explicitGuard,$this->guardTables);
         return array_intersect_key($this->claim,array_flip(['invoice','key','input']));
     }

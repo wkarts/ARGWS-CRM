@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "44cc0849f961aee23bbeb996c44d5a781bf7b40899c346b20ee9432381a6f842",
+    "source_manifest_sha256": "63524dd139f4d7cb3ad39370cc0bc338fe9ba7d9c0ef21a7e88bbdf9dae775f1",
     "counts": {
         "modules": 38,
-        "source_files": 4872,
+        "source_files": 4875,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.7.6",
+            "version": "1.7.7",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26291,7 +26291,7 @@
         {
             "name": "asaas_company_origin_meta",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 19
         },
         {
             "name": "asaas_company_origin_policy",
@@ -26321,7 +26321,7 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 20
         },
         {
             "name": "asaas_company_receipts",
@@ -26371,12 +26371,12 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 76
+            "reference_count": 78
         },
         {
             "name": "asaas_payments_map",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 14
         },
         {
             "name": "asaas_settlement_outbox",
@@ -29026,7 +29026,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 652
+            "reference_count": 653
         },
         {
             "name": "issuer_certificate_audit",
@@ -29046,7 +29046,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 291
+            "reference_count": 292
         },
         {
             "name": "issuers_client_links",
@@ -29496,7 +29496,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 128
+            "reference_count": 130
         },
         {
             "name": "mrp_manufacturing_orders",

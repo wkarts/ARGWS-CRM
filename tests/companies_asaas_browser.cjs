@@ -108,6 +108,11 @@ try{
   const deniedBatch=await context.request.post(url+'/admin/settings/asaas',{form:{...batchHidden,action:'batch_reconcile',origin_id:String(x.origin)}});
   assert.equal(deniedBatch.status(),422,'batch application requires explicit confirmation');
   assert.deepEqual(await deniedBatch.json(),{ok:false,outcome:'review_required'});
+  const legacyForm=page.locator('#monitor form').filter({has:page.locator('[name=action][value=preview_legacy_binding]')});
+  assert.equal(await legacyForm.count(),1,'native legacy review is available in authorized company');
+  const legacyHidden=await hidden(legacyForm);
+  const deniedLegacy=await context.request.post(url+'/admin/settings/asaas',{form:{...legacyHidden,action:'confirm_legacy_binding',invoice_id:String(x.invoice),account_row:String(x.account),remote_id:x.remote}});
+  assert.equal(deniedLegacy.status(),422,'legacy binding requires a reviewed approval and confirmation');
   let batchUiCalls=0;
   const batchUiRoute=async route=>{
    const data=new URLSearchParams(route.request().postData()||'');

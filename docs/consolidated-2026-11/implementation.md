@@ -5,8 +5,8 @@
 Retomada após desconexão: arquivos locais preservados e comparados ao remoto8bcff568.
 Asaas1.5.6 confirmado emc3f169e7 é a fonte funcional vigente. A SDK fixada pela
 fonte foi consumida em172;173 adapta parâmetros/simulação de cartão por conta,
-174 acrescenta monitor local paginado;175 inclui consulta remota por conta e fila de comparação/conciliação para origens vinculadas. [Matriz específica e evidências](asaas-156-adaptation.md).
-Parâmetros ainda não alimentam captura/oferta parcelada. Associação legada, recebimentos remotos parciais e composição de encargos continuam pendentes. Trânsito de dados
+174 acrescenta monitor local paginado;175 inclui consulta remota por conta e fila de comparação/conciliação;176 elimina agendamento indireto ao comparar;177 acrescenta vínculo legado revisado e recebimento parcial de uma cobrança Pix/boleto, com origem manual e writer nativo. [Matriz específica e evidências](asaas-156-adaptation.md).
+Parâmetros ainda não alimentam captura/oferta parcelada. Associação de grupos/parcelamentos, múltiplos candidatos, cartão e composição de encargos continuam pendentes; edição/remoção/reembolso/recriação dos novos vínculos legados exigem adaptação própria. Trânsito de dados
 de cartão continua aguardando decisão; a ampliação remota da SDK permanece pausada.
 
 ## Fonte e bases verificadas

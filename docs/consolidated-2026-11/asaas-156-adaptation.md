@@ -216,3 +216,69 @@ permitir apenas `valor <= total` não comprovaria o principal nem distinguiria
 parcela, alteração remota ou baixa manual já existente. A adaptação exige journal
 de vinculação revisada e componentes de recebimento idempotentes por origem,
 sem modificar a origem histórica ou relaxar a normalização atual.
+
+## Vínculo legado revisado e recebimento parcial — módulo1.7.7/177
+
+Adaptação executável do contrato de recuperação da fonte: guia Monitoramento,
+Conferir → revisar empresa/conta/ambiente/fatura/cobrança/valor/saldo → confirmar.
+A conferência usa somente GET de carteira, lista por externalReference, cobrança
+individual e identidade fiscal do cliente; nenhum POST financeiro. Contratos
+oficiais consultados em6/11/2026: [listar cobranças](https://docs.asaas.com/reference/listar-cobrancas)
+e [recuperar uma cobrança](https://docs.asaas.com/reference/recuperar-uma-unica-cobranca).
+
+Só faturas com propriedade/documento nativos comprovados. Hash único; listagem
+paginada com total consistente, limite100 por página/1000 total, sem IDs repetidos.
+Exige um único candidato: até candidatos excluídos ou antigos exigem revisão
+adicional, não são descartados silenciosamente. Wallet, pagador, referência,
+meio, vencimento e valor são revalidados. Mapeamento legado global é somente
+lido sob a fronteira de transação; conflitos de fatura/ID remoto são negados.
+Nenhuma adoção de fatura com proprietário NULL, backfill ou alteração daquele mapa.
+
+A confirmação repete a consulta e compara o digest da revisão, incluindo conta,
+ator, snapshot da fatura, saldo e resposta mínima. Confirmação concorrente/retry
+conserva uma origem. A origem/meta, prova `legacy_bind` e auditoria vinculada por
+hash são gravadas atomicamente; falha de auditoria desfaz o conjunto. Referência
+manual_only impede automação implícita. Callbacks e workers não obtêm autorização
+financeira por esse vínculo. Histórico e prova inicial não são sobrescritos pela
+consulta posterior. Migration177 NOOP; utiliza armazenamento nativo existente.
+
+Conciliação explícita aceita o valor nominal congelado de uma cobrança Pix/boleto
+RECEIVED, menor ou igual ao saldo corrente, usando o writer nativo e a chave
+canônica por conta/ambiente/ID remoto. Não recorta o valor para caber no saldo.
+Recebimento anterior permanece; saldo restante deixa a fatura parcialmente paga.
+Líquido/tarifa observados não são somados ao principal nem lançados como despesa
+implicitamente. Mudança do valor remoto após vínculo vira conflito, não nova
+parcela. Retry retorna o mesmo pagamento. A verificação de vínculo/permissão é
+repetida dentro da transação; nenhum dado de cartão é capturado.
+
+Testes executados nesta etapa:
+- 74 verificações novas MySQL no fluxo de vínculo: preview sem efeito, A/B sem
+ rede, ambiguidade, mudança de valor, excesso sobre saldo, identidade divergente,
+ revogação durante GET, rollback de auditoria, vínculo manual, replay sem rede,
+ baixa parcial/retry e preservação de recebimento manual anterior.
+- 42 verificações adicionais com dois processos MySQL: confirmações concorrentes
+ compartilham origem, baixas parciais concorrentes compartilham pagamento e
+ revogação durante espera impede ambos. Contagens incluem asserts de transporte.
+- 5 guards do controller real por SQLite/MySQL: CSRF, confirmação, revisão inválida,
+ tipos inválidos e conta estrangeira. Sem chamadas de provedor.
+- View PHP real em Chromium: revisão conserva contexto/CSRF e exige checkbox.
+ HTTP autenticado local: runner177, formulário nativo e guards422 de confirmação,
+ revisão e conta estrangeira. O sucesso financeiro é coberto por SQL/transporte
+ simulado, não por API real dentro do navegador.
+- Runner MySQL329 checks, tracking177 falho conserva176, retry/replay. Callback13
+ e histórico155 atualizado somente na expectativa do header177; versão histórica
+ e migrações antigas preservadas. CI176 falhou no assert de header175 do callback;
+ essa expectativa foi corrigida, sem remover a verificação core492.
+
+Limites concretos: uma cobrança Pix/boleto por vínculo, não grupos de parcelas,
+cartão, múltiplos candidatos, juros/descontos/antecipação ou cobranças com total
+mutável. Vínculos revisados não entram nos writers antigos de edição, remoção,
+reembolso ou recriação; essas ações exigem adaptação própria, em vez de aplicar
+indevidamente o total da fatura ao valor parcial. As origens normais anteriores
+mantêm seus fluxos. Essa cobertura não equivale à adaptação integral1.5.6 nem à
+homologação Asaas. Não houve transação real, merge, release ou deploy.
+
+Rollback: suspender uso da nova ação se necessário e corrigir adiante, preservando
+origens, prova de revisão, auditoria, recebimentos e marcadores. Reverter somente
+view não desfaz vínculos ou baixas já confirmadas. Não apagar registros para
+"liberar" outra associação ou repetir um resultado incerto.

@@ -67,6 +67,16 @@ const server = http.createServer((req,res) => {
     await page.locator('#asaas-tab-accounts').click();
     await page.locator('#asaas-new-key').evaluate(input=>input.dispatchEvent(new Event('invalid')));
     assert.equal(await page.locator('#credentials').isVisible(),true);
+    await page.goto(`http://127.0.0.1:${server.address().port}/#monitor`);
+    const legacyReview=page.locator('#monitor form').filter({has:page.locator('[name=action][value=confirm_legacy_binding]')});
+    assert.equal(await legacyReview.count(),1);
+    assert.equal(await legacyReview.locator('[name=review_hash]').inputValue(),'b'.repeat(64));
+    assert.equal(await legacyReview.locator('[name=remote_id]').inputValue(),'pay_synthetic_legacy');
+    assert.equal(await legacyReview.locator('[name=_company_context]').count(),1);
+    assert.equal(await legacyReview.locator('[name=synthetic_csrf]').count(),1);
+    assert.equal(await legacyReview.evaluate(f=>f.checkValidity()),false);
+    await legacyReview.locator('[name=confirm]').check();
+    assert.equal(await legacyReview.evaluate(f=>f.checkValidity()),true);
     assert.deepEqual(errors,[]);
     console.log('Asaas actual PHP view in Chromium: tabs, deep links, keyboard, invalid-field recovery, context/CSRF preservation and non-exported API keys passed. Synthetic fixture; not provider homologation.');
   } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}

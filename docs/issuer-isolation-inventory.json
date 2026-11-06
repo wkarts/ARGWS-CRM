@@ -5963,26 +5963,26 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "fb780280b2b16a2efd356c4e1678c8b81eed2a131cdd14207dd6b856529a18e7",
+      "sha256": "94b2458229d67a44999ade0f40acce143d229c60021d5e4072bb344021140be5",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        303,
-        306,
-        329,
+        308,
+        311,
         334,
-        346,
-        353,
-        386,
-        390,
-        418,
-        526,
-        530,
-        667,
-        864,
-        867,
-        879
+        339,
+        351,
+        358,
+        391,
+        395,
+        423,
+        531,
+        535,
+        672,
+        869,
+        872,
+        884
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "9c74aa8626909bf4a96809d56a2cf2c3322770468b89f525d6169199198a4172",
+      "sha256": "142cb9a46cb9196e31d08869d87da272e61edb7fed71fde50204c463e26734b9",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8723,6 +8723,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/asaas/libraries/Asaas/CompanyLegacyBinding.php": {
+      "sha256": "a3168195adca02ca29dfde65c4fce1a9f23110cca899caf02543334c941cc706",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        42
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/asaas/libraries/Asaas/CompanyMonitor.php": {
       "sha256": "12196e476a1838d3aece92c919ac8b728d80ff6b36bcbd7a4247f11ed340a4eb",
       "categories": [
@@ -8806,24 +8817,24 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "e039ae881224217e7e5ff301bc28ece4429474497eadc1a3c44b80582cf3cc11",
+      "sha256": "39a0ceb9abf143a51638f62a1ca3becba9690ae1b81296e5e4b2c46f967bf522",
       "categories": [
         "customer_privacy",
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        41,
-        60,
+        43,
         62,
-        63,
         64,
-        292,
-        308,
-        373,
-        467,
-        620,
-        689
+        65,
+        66,
+        294,
+        310,
+        375,
+        469,
+        622,
+        691
       ],
       "state": "unreviewed",
       "evidence": ""
