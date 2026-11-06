@@ -457,3 +457,9 @@ além dos46 de154. O census de ações nativas também foi regenerado pelo gerad
 oficial após a mudança no controller; esse inventário é separado dos outros três.
 O wrapper único local não rodou por ausência de Python no container PHP; suas
 etapas foram executadas com Python no host e PHP no container, sem omitir o diff.
+
+CI8c5645b7: o gate de superfícies nativas detectou corretamente o formulário e a
+rota de preparação110 ausentes no inventário revisado. Atualizados somente os
+controles literais e a rota pública do PIGE, com a evidência Chromium/MySQL acima;
+nenhuma asserção do gate foi alterada. Reexecução local aprovada:16 views e6
+controllers. Trata-se de inventário estático, não de homologação HTTP autenticada.
