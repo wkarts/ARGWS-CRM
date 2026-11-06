@@ -757,3 +757,18 @@ novos do portal e o upgrade real120/121/122→143. O workflow agregado ainda
 falha pela expectativa de versão unitária corrigida neste commit, não por
 esses shards. Localmente, transferência canônica de itens Propostas/Orçamentos
 passou10 checks adicionais de falha/recuperação em MySQL após36 do formulário.
+
+### Erro autenticado de Orçamentos localizado na fronteira HTTP
+
+Run42242247862/job127979982747 (fb51040f) mostrou HTTP503 ao abrir o
+formulário original de Orçamento. O waiter corrigido agora preserva esse erro
+inicial. A causa interna ainda não foi determinada: o controlador captura a
+exceção e o provisionamento descartável não habilitava logs. Adicionado evento
+limitado a espécie engine/runtime, arquivo e linha, sem mensagem, trace ou
+request; teste com mensagem sensível simulada confirma503 e ausência do texto
+na resposta/log. Dois checks passaram em MySQL após53 do controlador.
+
+Somente o app-config gerado pelo smoke descartável habilita log_threshold1.
+O teste coleta por regex exclusivamente o evento limitado, sem publicar logs
+brutos. Isso fornece diagnóstico para a próxima rodada; não declara o503
+corrigido nem altera as expectativas de sucesso do formulário.

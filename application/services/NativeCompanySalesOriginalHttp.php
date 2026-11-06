@@ -34,6 +34,11 @@ final class NativeCompanySalesOriginalHttp
             $this->ci->output->set_header('Cache-Control: private, no-store')->set_output($method==='HEAD'?'':$html);
         }catch(Throwable $error){
             while(ob_get_level()>$level)ob_end_clean();
+            // Only bounded code-location facts: never request, exception text or trace arguments.
+            if(!$error instanceof DomainException){
+                $source=preg_replace('/[^A-Za-z0-9_.-]/','_',basename($error->getFile()));
+                log_message('error','native_sales_form_failure kind='.($kind==='estimates'?'estimates':'proposals').' class='.($error instanceof Error?'engine':'runtime').' file='.$source.' line='.$error->getLine());
+            }
             $message=match($error->getMessage()){
                 'native_proposal_customer_required'=>'O contrato atual de propostas exige um cliente vinculado à empresa. A referência com Lead precisa de decisão sobre esse vínculo.',
                 'native_sales_form_delivery_requires_acceptance'=>'O envio existente exige documento aceito e contato autorizado. Salve o documento e use o fluxo de aceite e envio.',
