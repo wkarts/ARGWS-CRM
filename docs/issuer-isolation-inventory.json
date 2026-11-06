@@ -2874,12 +2874,12 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasPartialManualSource.php": {
-      "sha256": "b0ac716f1078bf6a589b726c188bf43076dd1e82c39369f7754cab4ba82a876f",
+      "sha256": "3df5c611bf420d6b4ae65706c67a6cf6ed0a10a5fd8d45c49145c548d5b3011e",
       "categories": [
         "payments"
       ],
       "signal_lines": [
-        62
+        73
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4671,7 +4671,7 @@
       "evidence": "tests/issuers_essential.php (205 SQLite/207 MySQL on102): schema constraints and current marker/active/lock checked, request metadata cache only. Does not grant data access."
     },
     "application/services/InvoicePaymentWriter.php": {
-      "sha256": "0783cf36a2990ea59cbd6d3a05ac211c394f8c70ce49f5afb50d3cbcda3b035c",
+      "sha256": "d86e4184b7df428e243975d0619d7afcbe1f36d8d0b2e944c42c0aa0946fc25b",
       "categories": [
         "invoice_table",
         "payments"
@@ -4681,23 +4681,24 @@
         77,
         91,
         104,
-        125,
+        111,
+        113,
         127,
-        152,
-        153,
-        187,
-        221,
-        224,
-        232,
+        169,
+        170,
+        204,
+        238,
         241,
-        246,
         249,
-        252,
-        253,
-        289,
-        302,
-        310,
-        346
+        258,
+        263,
+        266,
+        269,
+        270,
+        306,
+        319,
+        327,
+        363
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5961,24 +5962,25 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "0ebd9d48699588d15fb949946b812fb94c22afbe2b5e2308e743637907a334af",
+      "sha256": "f30767fe96fa8be8b6b3e66e1521dc82c159ebe526228b8d5fc4ea7669822b8e",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        262,
-        265,
-        276,
-        283,
-        316,
-        320,
-        348,
-        456,
-        460,
-        597,
-        794,
-        797,
-        809
+        272,
+        275,
+        291,
+        295,
+        302,
+        335,
+        339,
+        367,
+        475,
+        479,
+        616,
+        813,
+        816,
+        828
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8595,7 +8597,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "f595ba3a0891c6ff426715d7e43c90c337cbb57ad93a1067e2bb35685679a65d",
+      "sha256": "8a457f6de123fda78e65eb4b780bf03eec914d755513ec496ebbe76e54657c9e",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8757,7 +8759,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRemoteOperations.php": {
-      "sha256": "382e73563f2e9d3530eb2127f825c5501a18aab39dbd28eab201296da6381706",
+      "sha256": "7057622733cdab0be105286f789e9e89fbd955e8aef5c55f8a379f7c949c3688",
       "categories": [
         "payments"
       ],
@@ -8780,7 +8782,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "92b668118ef1f4a8fadb306f4d897306d8c176bde789e9df99838eb493086377",
+      "sha256": "6c327c074c2499d90a16f3898ee9741c2bc67d25d937b624ef2570f43203c4b5",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -8797,7 +8799,7 @@
         344,
         428,
         581,
-        649
+        650
       ],
       "state": "unreviewed",
       "evidence": ""

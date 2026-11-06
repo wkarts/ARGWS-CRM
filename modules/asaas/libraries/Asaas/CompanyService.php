@@ -412,7 +412,7 @@ final class CompanyService
     /** Internal composition: private credentials never leave a transaction-owning service. */
     public function remoteSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
     {
-        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');$source=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');if($this->db->table_exists($this->p.'asaas_company_manual_settlements')){\IssuerTransaction::assertOwned($this->db,$this->p,['asaas_company_manual_settlements']);if($this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_manual_settlements WHERE origin_id=? FOR UPDATE',[$origin]))throw new \DomainException('asaas_manual_command_pending');}$source=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
     }
     /** Read-only authority for the closed native partial-manual writer. */
     public function manualSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
@@ -625,6 +625,7 @@ final class CompanyService
     private function receiptClaimOwned(int $issuer,int $actor,int $origin,int $proofId,bool $explicit):array
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());$this->authorize($issuer,$actor,'settle');[$row,$meta,$account,$parent]=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['invoice_id']);
+        if($this->db->table_exists($this->p.'asaas_company_manual_settlements')){\IssuerTransaction::assertOwned($this->db,$this->p,['asaas_company_manual_settlements']);if($this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_manual_settlements WHERE origin_id=? FOR UPDATE',[$origin]))throw new \DomainException('asaas_manual_receipt_review_required');}
         if($this->db->table_exists($this->p.'asaas_company_refund_requests')){require_once __DIR__.'/CompanyRefundSchema.php';CompanyRefundSchema::ensure($this->db,$this->p,false);\IssuerTransaction::assertOwned($this->db,$this->p,array_keys(CompanyRefundSchema::definitions()));if($this->rows("SELECT request_key FROM {$this->p}asaas_company_refund_requests WHERE origin_id=? AND (sent_at IS NOT NULL OR state<>'cancelled_local') FOR UPDATE",[$origin]))throw new \DomainException('asaas_refund_receipt_review_required');}
         $proof=$this->rows('SELECT * FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin])[0]??null;
         if(!$proof||(int)$proof['id']!==$proofId||$proof['state']!=='received_observed'||$proof['operation']!=='query'||$row['state']!=='received_observed'||$proof['account_revision']!==$account['revision'])throw new \DomainException('asaas_company_receipt_requires_review');

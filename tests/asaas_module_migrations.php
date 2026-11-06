@@ -33,7 +33,7 @@ function cleanupAsaasNativeFixture(PDO $pdo):void
     // These are the three disposable databases configured by CI/local verification.
     if(!in_array((string)$pdo->query('SELECT DATABASE()')->fetchColumn(),['asaas_test','callback_test','crm_tests'],true)
         ||!in_array(db_prefix(),['module_test_','callback_module_test_'],true))throw new RuntimeException('Disposable native fixture database required');
-    $tables=['asaas_company_recreations','asaas_company_card_payments','asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
+    $tables=['asaas_company_manual_settlements','asaas_company_manual_policies','asaas_company_recreations','asaas_company_card_payments','asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
         'asaas_settlement_outbox','asaas_payment_origin_events','asaas_payment_origins','asaas_webhook_admin_audit','asaas_webhook_integrations','asaas_webhook_events','asaas_payments_map','asaas_customers_map','asaas_logs',
         'company_expenses','invoicepaymentrecords','invoices','issuers_registry','clients','options','modules'];
     foreach($tables as $table)$pdo->exec('DROP TABLE IF EXISTS `'.db_prefix().$table.'`');
@@ -262,6 +262,13 @@ $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('
 verify((string)(new App_module_migration('asaas'))->version('166')==='166','166 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('166')===true,'166 replay no-op');
 $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('167')===false,'167 tracking failure rejected');$db->failQuery=null;
 verify((string)(new App_module_migration('asaas'))->version('167')==='167','167 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('167')===true,'167 replay no-op');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'168 tracking failure rejected');$db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='168','168 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'168 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('168')===false,'168 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('168')==='168','168 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('168')===true,'168 replay no-op');
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_manual_settlements`';$failed=false;
+try{(new App_module_migration('asaas'))->to_latest();}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.8','169 DDL failure preserves168');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'169 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->to_latest()==='169','169 tracking retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'169 replay no-op');
+\Asaas\CompanyManualSettlementSchema::ensure($db,db_prefix(),false);
+foreach(['asaas_company_manual_policies','asaas_company_manual_settlements'] as $table)verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_'.$table)->fetchColumn()===0,'169 creates no policy or command: '.$table);
 echo "OK: {$n} native module migration MySQL assertions.\n";

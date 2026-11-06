@@ -33,8 +33,19 @@ final class NativeCompanyInvoicePaymentAction
             if($origins){
                 if(count($origins)!==1)throw new DomainException('company_payment_provider_review_required');
                 $origin=(int)$origins[0]['id'];
-                if(!$receipt)(new \Asaas\CompanyService($this->db,$this->prefix))->observe($issuer,$actor,$origin,$decrypt,$this->transport);
-                $partial=new CompanyAsaasPartialManualSource($this->db,$this->prefix,$origin);
+                $fullCommand=$this->db->table_exists($this->prefix.'asaas_company_manual_settlements')?IssuerStorage::query($this->db,'SELECT request_key FROM '.$this->prefix.'asaas_company_manual_settlements WHERE origin_id=? AND issuer_id=? AND request_key=?',[$origin,$issuer,$input['_native_payment_key']])->row_array():null;
+                $full=$fullCommand||(!$receipt&&\app\services\InvoicePaymentWriter::minorUnits($payload['amount'])===\app\services\InvoicePaymentWriter::minorUnits($preview['balance']['receivable']));
+                if($full){
+                    require_once __DIR__.'/CompanyAsaasFullManualSource.php';
+                    $service=new \Asaas\CompanyManualSettlements($this->db,$this->prefix);
+                    if(!$fullCommand)(new \Asaas\CompanyService($this->db,$this->prefix))->observe($issuer,$actor,$origin,$decrypt,$this->transport);
+                    $service->reserve($issuer,$actor,$origin,$id,$payload,$input['_native_payment_key'],(string)($input['paymentmode']??''),$input['_native_payment_mode_revision'],$input['_native_invoice_revision'],$requested);
+                    if(!$receipt)$service->execute($issuer,$actor,$input['_native_payment_key'],$decrypt,$this->transport);
+                    $partial=new CompanyAsaasFullManualSource($this->db,$this->prefix,$input['_native_payment_key']);
+                }else{
+                    if(!$receipt)(new \Asaas\CompanyService($this->db,$this->prefix))->observe($issuer,$actor,$origin,$decrypt,$this->transport);
+                    $partial=new CompanyAsaasPartialManualSource($this->db,$this->prefix,$origin);
+                }
             }
         }
         $payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyManualWithMode($issuer,$actor,$id,$payload,$input['_native_payment_key'],$input['paymentmode']??null,$input['_native_payment_mode_revision'],$requested,$input['_native_invoice_revision'],$partial);

@@ -5,7 +5,7 @@ const {execFileSync}=require('node:child_process'),{chromium}=require('playwrigh
 const root=path.resolve(__dirname,'../..');
 const php=`define('BASEPATH',true);$esc=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
 $field=['id'=>'1','name'=>'Line choices','type'=>'checkbox','required'=>0,'options'=>'One "<literal>", Two & literal','display_inline'=>0];
-echo '<table class="table items"><tbody>';for($i=0;$i<2;$i++){$fieldName='credit[native_metadata][items]['.$i.'][custom_fields][values][1]';echo '<tr><td class="custom_field">';require 'application/views/admin/credit_notes/native_custom_field.php';echo '</td></tr>';}echo '</tbody></table>';`;
+echo '<table class="table items"><tbody>';for($i=0;$i<2;$i++){$field['default_value']=$i===0?$field['options']:'';$fieldName='credit[native_metadata][items]['.$i.'][custom_fields][values][1]';echo '<tr><td class="custom_field">';require 'application/views/admin/credit_notes/native_custom_field.php';echo '</td></tr>';}echo '</tbody></table>';`;
 const html=execFileSync(process.env.PHP_BIN||'php',['-r',php],{cwd:root,encoding:'utf8'});
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
@@ -18,7 +18,9 @@ const html=execFileSync(process.env.PHP_BIN||'php',['-r',php],{cwd:root,encoding
   for(let n=0;n<4;n++){
    const control=controls.nth(n),id=await control.getAttribute('id'),label=page.locator('label[for="'+id+'"]');
    assert.equal(await label.isVisible(),true,'checkbox option must remain visible inside native item cells');
-   await label.click();assert.equal(await control.isChecked(),true,'real pointer click on label selects its associated input');
+   const initial=n<2;assert.equal(await control.isChecked(),initial,'rendered catalog defaults differ from a blank row');
+   await label.click();assert.equal(await control.isChecked(),!initial,'real pointer click toggles its associated input');
+   if(initial){await label.click();assert.equal(await control.isChecked(),true,'catalog choice can be restored with a second pointer click');}
   }
   assert.deepEqual(await page.locator('form').evaluate(form=>[...new FormData(form).values()]),['One "<literal>"','Two & literal','One "<literal>"','Two & literal']);
   await page.close();

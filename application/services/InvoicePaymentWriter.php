@@ -106,8 +106,34 @@ final class InvoicePaymentWriter
         });
     }
 
+    private function selectedCompanyManualMode(int $issuer,int $actor,int $invoice,string $mode,string $modeRevision,string $prefix,\NativeCompanyPaymentModes $modes):array
+    {
+                $selected=$modes->get($issuer,$actor,$mode,'invoices',false);
+                if(!hash_equals($selected['revision'],$modeRevision))throw new \DomainException('native_payment_mode_stale');
+                $row=\IssuerStorage::query($this->db,'SELECT allowed_payment_modes FROM '.$prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])->row_array();
+                if(!$row||!is_string($row['allowed_payment_modes']))throw new \DomainException('native_payment_mode_unavailable');
+                $allowed=@unserialize($row['allowed_payment_modes'],['allowed_classes'=>false]);
+                if(!is_array($allowed)||!array_is_list($allowed))throw new \DomainException('native_payment_mode_unavailable');
+                $found=false;foreach($allowed as$value){if(!is_string($value)&&!is_int($value))throw new \DomainException('native_payment_mode_unavailable');if((string)$value===$mode)$found=true;}
+                if(!$found)throw new \DomainException('native_payment_mode_unavailable');return$selected;
+    }
+    public function manualModeParticipants():array { return $this->nativeManualModeTables(); }
+    /** No write or HTTP: canonical native validation before a durable provider command. */
+    public function reviewCompanyManualWithModeInOwned(int $issuer,int $actor,int $invoice,array $input,string $key,$mode,string $modeRevision,string $invoiceRevision):array
+    {
+        require_once __DIR__.'/NativeCompanyPaymentModes.php';$p=db_prefix();
+        \IssuerTransaction::assertOwned($this->db,$p,$this->nativeManualModeTables());
+        $acl=new \IssuerResourceAccess($this->db,$p);$acl->lockFinancialIdentity($issuer,$actor);
+        if(!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'payments','create'))throw new \DomainException('company_payment_access_denied');
+        $mode=\NativeCompanyResourceId::decode('payment_mode',$mode)['canonical_id'];
+        $selected=$this->selectedCompanyManualMode($issuer,$actor,$invoice,$mode,$modeRevision,$p,new \NativeCompanyPaymentModes($this->db,$p));
+        [$data,$amount,$hash]=$this->companyReceiptInput($invoice,$input,$key,$mode,$selected['name']);
+        if(!hash_equals((new \CompanyInvoices($this->db,$p))->revision($issuer,$actor,$invoice),$invoiceRevision))throw new \DomainException('company_invoice_stale');
+        return ['data'=>$data,'amount'=>$amount,'hash'=>$hash];
+    }
+
     /** Native invoice form: persist the selected, company-owned offline mode with the receipt. */
-    public function recordCompanyManualWithMode($issuer,$actor,$invoice,array $input,string $requestKey,$mode,string $modeRevision,bool $noticeRequested,?string $invoiceRevision=null,?\CompanyAsaasPartialManualSource $asaasPartial=null): int
+    public function recordCompanyManualWithMode($issuer,$actor,$invoice,array $input,string $requestKey,$mode,string $modeRevision,bool $noticeRequested,?string $invoiceRevision=null,\CompanyAsaasPartialManualSource|\CompanyAsaasFullManualSource|null $asaasPartial=null): int
     {
         require_once __DIR__.'/NativeCompanyPaymentModes.php';
         require_once __DIR__.'/NativeCompanyPaymentNoticeSchema.php';
@@ -121,16 +147,7 @@ final class InvoicePaymentWriter
         $tables=$this->nativeManualModeTables($invoiceRevision!==null);
         if($asaasPartial!==null){if($this->nativeBatchContext!==null)throw new \DomainException('company_payment_batch_invalid');$tables=array_values(array_unique(array_merge($tables,$asaasPartial->tables())));}
         $work=function()use($issuer,$actor,$invoice,$input,$requestKey,$mode,$modeRevision,$noticeRequested,$invoiceRevision,$prefix,$origins,$modes,$asaasPartial):int{
-            $check=function()use($issuer,$actor,$invoice,$mode,$modeRevision,$prefix,$modes):array{
-                $selected=$modes->get($issuer,$actor,$mode,'invoices',false);
-                if(!hash_equals($selected['revision'],$modeRevision))throw new \DomainException('native_payment_mode_stale');
-                $row=\IssuerStorage::query($this->db,'SELECT allowed_payment_modes FROM '.$prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])->row_array();
-                if(!$row||!is_string($row['allowed_payment_modes']))throw new \DomainException('native_payment_mode_unavailable');
-                $allowed=@unserialize($row['allowed_payment_modes'],['allowed_classes'=>false]);
-                if(!is_array($allowed)||!array_is_list($allowed))throw new \DomainException('native_payment_mode_unavailable');
-                $found=false;foreach($allowed as$value){if(!is_string($value)&&!is_int($value))throw new \DomainException('native_payment_mode_unavailable');if((string)$value===$mode)$found=true;}
-                if(!$found)throw new \DomainException('native_payment_mode_unavailable');return$selected;
-            };
+            $check=fn():array=>$this->selectedCompanyManualMode($issuer,$actor,$invoice,$mode,$modeRevision,$prefix,$modes);
             $selected=$check();[$data,$amount,$hash]=$this->companyReceiptInput($invoice,$input,$requestKey,$mode,$selected['name']);
             if($invoiceRevision!==null&&!\IssuerStorage::query($this->db,'SELECT request_key FROM '.$prefix.'company_payment_receipts WHERE request_key=? FOR UPDATE',[$requestKey])->row_array()){
                 require_once __DIR__.'/CompanyInvoices.php';if(!hash_equals((new \CompanyInvoices($this->db,$prefix))->revision($issuer,$actor,$invoice),$invoiceRevision))throw new \DomainException('company_invoice_stale');

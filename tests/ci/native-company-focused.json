@@ -3095,6 +3095,14 @@
     [
       "php",
       "tests/companies/asaas_partial_manual.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_full_manual.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_manual_controller.php"
     ]
   ],
   "browser": [

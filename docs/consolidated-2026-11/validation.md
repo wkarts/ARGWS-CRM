@@ -633,3 +633,26 @@ Teste novo: `tests/companies/native_credit_checkbox.browser.cjs`, incluído no C
 focused. O teste HTTP original permanece sem alteração/force/evaluate/remoção de
 asserts. Componente visual comprovado; reexecução autenticada integral fica a
 cargo do novo CI. Não altera saldo, banco, schema ou permissões; core492 preservado.
+
+
+## Continuação169 — recebimento manual integral
+
+- `tests/companies/asaas_full_manual.php`: MySQL8.4/PHP8.3, limite128MiB,
+  35 verificações adicionais sobre118+30 anteriores. Cash/remove, parcial seguido
+  de saldo integral, dunning antes do envio, resposta perdida, recuperação GET,
+  rollback tardio, duas gravações concorrentes por operação, isolamento e ação
+  nativa/replay sem HTTP novo. Transporte injetado simulado, sem cobrança real.
+- `tests/companies/asaas_manual_controller.php`: oito verificações adicionais sobre
+  179 anteriores; controlador e view reais com request/session sintéticos e
+  MySQL. CSRF, confirmação, revisão, conta estrangeira e apresentação somente
+  leitura. Não é aceitação HTTP autenticada.
+- `tests/asaas_module_migrations.php`:292 verificações MySQL do runner nativo;
+  falha DDL169, tracking, replay e ausência de políticas/comandos automáticos.
+- CI do SHA2ba50126: interface nativa aprovada; monitor falhou por transporte
+  incerto ao cancelar rodada antiga. HTTP avançou até créditos, onde o teste
+  clicava opções já selecionadas pelo catálogo esperando seleção verdadeira.
+  Expectativa corrigida para verificar estado inicial, alternância e restauração
+  por clique real, sem force/DOM mutation/remover asserções de valores enviados.
+  A correção de visibilidade do label anterior permanece necessária.
+
+Os resultados não encerram R01–R11, exclusão/edição remota, cartão ou homologação.

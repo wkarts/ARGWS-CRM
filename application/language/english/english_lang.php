@@ -4222,4 +4222,4 @@ $lang['native_privacy_delivery_sent'] = 'Your request is recorded. Administrator
 $lang['native_privacy_delivery_disabled'] = 'Your request is recorded. Email notifications are disabled by the company template settings.';
 $lang['native_privacy_delivery_review'] = 'Your request is recorded. Email delivery needs review; an uncertain delivery will not be automatically repeated.';
 
-$lang['asaas_partial_manual_native_notice'] = 'Partial receipts are recorded on this invoice and leave the Asaas charge open at its original amount. Asaas is queried before recording. Later provider receipts require reconciliation. Full settlement is not yet available in this flow.';
+$lang['asaas_partial_manual_native_notice'] = 'Partial receipts are recorded on this invoice and leave the Asaas charge open at its original amount. Asaas is queried before recording. Later provider receipts require reconciliation. Full settlement requires an explicit policy under Payment methods > Asaas > Manual receipts.';

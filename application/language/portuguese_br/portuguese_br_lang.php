@@ -4273,4 +4273,4 @@ $lang['search'] = 'Pesquisar';
 
 $lang['ticket_dt_date_created'] = 'Data de criação';
 
-$lang['asaas_partial_manual_native_notice'] = 'Recebimentos parciais são registrados nesta fatura e mantêm a cobrança Asaas aberta pelo valor original. Uma consulta ao Asaas será feita antes de registrar. Recebimentos posteriores do provedor exigem conciliação. A quitação integral ainda não está disponível neste fluxo.';
+$lang['asaas_partial_manual_native_notice'] = 'Recebimentos parciais são registrados nesta fatura e mantêm a cobrança Asaas aberta pelo valor original. Uma consulta ao Asaas será feita antes de registrar. Recebimentos posteriores do provedor exigem conciliação. A quitação integral exige política explícita em Meios de pagamento > Asaas > Recebimentos manuais.';

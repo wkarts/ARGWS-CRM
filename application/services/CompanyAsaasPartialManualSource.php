@@ -11,7 +11,7 @@ final class CompanyAsaasPartialManualSource
     public function tables():array
     {
         $tables=(new \Asaas\CompanyService($this->db,$this->p))->tablesForRun();
-        foreach(['asaas_company_refund_requests','asaas_company_recreations','asaas_company_card_payments'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;
+        foreach(['asaas_company_refund_requests','asaas_company_recreations','asaas_company_card_payments','asaas_company_manual_settlements'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;
         return array_values(array_unique(array_merge($tables,['company_payment_receipts'])));
     }
     private function identity($db,string $p):void
@@ -35,6 +35,15 @@ final class CompanyAsaasPartialManualSource
     }
     public function claim($db,string $p,int $issuer,int $actor,int $invoice,string $key,int $amount,string $hash):void
     {
+        $this->review($db,$p,$issuer,$actor,$invoice,$key,$amount,$hash,false);
+    }
+    /** Read-only eligibility for reservation; never authorizes the native partial writer. */
+    public function reviewFull($db,string $p,int $issuer,int $actor,int $invoice,string $key,int $amount,string $hash):array
+    {
+        $this->review($db,$p,$issuer,$actor,$invoice,$key,$amount,$hash,true);$review=$this->decision;$this->decision=null;return $review;
+    }
+    private function review($db,string $p,int $issuer,int $actor,int $invoice,string $key,int $amount,string $hash,bool $full):void
+    {
         $this->identity($db,$p);$acl=new IssuerResourceAccess($db,$p);$acl->lockFinancialIdentity($issuer,$actor);
         $service=new \Asaas\CompanyService($db,$p);$service->authorize($issuer,$actor,'settle');
         $version=$this->rows('SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
@@ -45,11 +54,13 @@ final class CompanyAsaasPartialManualSource
         foreach(['bb_origins','efi_company_origins'] as $table)if($db->table_exists($p.$table)&&$this->rows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('asaas_company_multiple_providers');
         $existing=$this->rows('SELECT payment_id,input_hash,actor_id FROM '.$p.'company_payment_receipts WHERE request_key=? AND issuer_id=? AND invoice_id=? FOR UPDATE',[$key,$issuer,$invoice])[0]??null;
         if($existing){
+            if($full)throw new DomainException('asaas_partial_manual_history_conflict');
             if((int)$existing['actor_id']!==$actor||$existing['input_hash']!==$hash||!$this->recorded($issuer,$invoice,(int)$existing['payment_id'],$key,$hash))throw new DomainException('asaas_partial_manual_history_conflict');
             $this->decision=['replay'=>(int)$existing['payment_id'],'issuer'=>$issuer,'actor'=>$actor,'invoice'=>$invoice,'key'=>$key,'hash'=>$hash];return;
         }
         if($db->table_exists($p.'asaas_company_refund_requests'))\Asaas\CompanyOriginGenerations::postRefundOriginInOwned($db,$p,$issuer,$invoice,$this->origin);
         elseif(count($this->rows('SELECT id FROM '.$p.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))!==1)throw new DomainException('asaas_partial_manual_history_conflict');
+        if(!$full&&$db->table_exists($p.'asaas_company_manual_settlements')&&$this->rows('SELECT origin_id FROM '.$p.'asaas_company_manual_settlements WHERE origin_id=? FOR UPDATE',[$this->origin]))throw new DomainException('asaas_partial_manual_operation_pending');
         if($origin['state']!=='issued'||!in_array((int)$parent['status'],[1,3,4],true))throw new DomainException('asaas_partial_manual_unpaid_required');
         foreach(['asaas_company_remote_operations','asaas_company_refund_requests','asaas_company_card_payments','asaas_company_receipts'] as $table)if($db->table_exists($p.$table)&&$this->rows('SELECT origin_id FROM '.$p.$table.' WHERE origin_id=? FOR UPDATE',[$this->origin]))throw new DomainException('asaas_partial_manual_operation_pending');
         if($this->rows("SELECT event_id FROM {$p}asaas_company_jobs WHERE origin_id=? AND state IN ('pending','processing') FOR UPDATE",[$this->origin]))throw new DomainException('asaas_partial_manual_operation_pending');
@@ -63,8 +74,8 @@ final class CompanyAsaasPartialManualSource
             if(!$payment['request_key']||!$this->recorded($issuer,$invoice,(int)$payment['id'],$payment['request_key'],$payment['input_hash']))throw new DomainException('asaas_partial_manual_other_funds');
         $balance=(new CompanyInvoiceBalance($db,$p))->inOwned($issuer,$actor,$invoice);
         if($balance['applied_credit']!=='0.00'||$balance['noncash_reductions']!=='0.00'||$balance['received_external_reversed']!=='0.00')throw new DomainException('asaas_partial_manual_other_funds');
-        if($amount<=0||$amount>=CompanyInvoiceAmounts::minor($balance['receivable']))throw new DomainException('asaas_partial_manual_partial_only');
-        $this->decision=['replay'=>null,'issuer'=>$issuer,'actor'=>$actor,'invoice'=>$invoice,'key'=>$key,'hash'=>$hash,'proof'=>(int)$proof['id'],'proof_hash'=>$proof['evidence_hash'],'account_revision'=>$account['revision']];
+        if($amount<=0||($full?$amount!==CompanyInvoiceAmounts::minor($balance['receivable']):$amount>=CompanyInvoiceAmounts::minor($balance['receivable'])))throw new DomainException('asaas_partial_manual_partial_only');
+        $this->decision=['replay'=>null,'issuer'=>$issuer,'actor'=>$actor,'invoice'=>$invoice,'key'=>$key,'hash'=>$hash,'proof'=>(int)$proof['id'],'proof_hash'=>$proof['evidence_hash'],'account_revision'=>$account['revision'],'total'=>$parent['total']];
     }
     public function applied($db,string $p,int $issuer,int $actor,int $invoice,string $key,int $payment,string $hash):void
     {

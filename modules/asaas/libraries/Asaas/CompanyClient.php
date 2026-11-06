@@ -19,12 +19,15 @@ final class CompanyClient
             if($payload===null)throw new \DomainException('asaas_card_request_invalid');
             $payload=CompanyCardPaymentRequest::payload($cardMatch[1],$payload);
         }
+        if($method==='POST'&&str_ends_with($path,'/receiveInCash')){
+            if(!is_array($payload)||array_keys($payload)!==['paymentDate','value','notifyCustomer']||!is_string($payload['paymentDate'])||!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D',$payload['paymentDate'])||!is_string($payload['value'])||!preg_match('/^[0-9]+\.[0-9]{2}$/D',$payload['value'])||!is_bool($payload['notifyCustomer']))throw new \DomainException('asaas_manual_request_invalid');
+        }
         $webhookRead=$method==='GET'&&$payload===null&&preg_match('~^webhooks\?limit=100&offset=(?:0|[1-9][0-9]{0,2})$~D',$path);
         $webhookWrite=($method==='POST'&&$path==='webhooks'&&$payload!==null)
             ||($method==='PUT'&&preg_match('~^webhooks/[A-Za-z0-9_-]{1,128}$~D',$path)&&$payload!==null)
             ||($method==='DELETE'&&preg_match('~^webhooks/[A-Za-z0-9_-]{1,128}$~D',$path)&&$payload===null);
         $readPath=preg_match('~^(?:wallets/|customers/[A-Za-z0-9_-]{1,64}|customers\?externalReference=[a-f0-9]{64}&limit=100&offset=(?:0|[1-9][0-9]{0,3})|payments/[A-Za-z0-9_-]{1,64}(?:/(?:pixQrCode|identificationField))?)$~D',$path);
-        if(!$webhookRead&&!$webhookWrite&&(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/(?:refund|payWithCreditCard|payWithCard)$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))))throw new \DomainException('asaas_company_request_invalid');
+        if(!$webhookRead&&!$webhookWrite&&(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/(?:refund|payWithCreditCard|payWithCard|receiveInCash)$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))))throw new \DomainException('asaas_company_request_invalid');
         try {
             if($this->transport!==null){$response=($this->transport)($this->environment,$method,$path,$payload,$this->secret);if(is_string($response))$response=self::decodeExact($response);if(!is_array($response)||array_is_list($response))throw new \RuntimeException();return $response;}
             $base=$this->environment==='sandbox'?'https://api-sandbox.asaas.com/v3/':'https://api.asaas.com/v3/';

@@ -211,3 +211,39 @@ Validação:30 verificações adicionais MySQL, incluindo formulário/ação nat
 replay sem HTTP novo, rollback tardio, saldo, prova vencida, duas corridas reais
 (repetição e revogação de ACL) e bloqueio de baixa integral posterior. Provedor
 simulado; não é homologação HTTP autenticada ou financeira.
+
+## Integral manual nativo — módulo169
+
+A guia Recebimentos manuais oferece política explícita por conta/empresa/ambiente:
+desabilitada (padrão), confirmação em dinheiro ou remoção da cobrança. Alterações
+exigem ACL de configuração, confirmação, CSRF e revisões de conta/política. Não há
+seed de consentimento. Parcial permanece local; ao quitar o saldo restante, o
+comando remoto trata o valor integral original e o recibo nativo apenas o saldo.
+
+Antes de qualquer envio, o serviço congela intenção, ator, entrada, revisão da
+fatura, política, conta e saldo; valida carteira, cliente e cobrança canônica.
+Dunning, assinatura, parcelamento, disputa e estorno bloqueiam a operação. O
+estado de envio persiste antes do POST receiveInCash ou DELETE. Resultado perdido
+não autoriza repetir a mutação: a recuperação consulta o mesmo ID. Confirmação
+em dinheiro exige RECEIVED/RECEIVED_IN_CASH e data esperada; remoção exige deleted
+sem recebimento. Somente depois o writer nativo grava recibo, diário, comando
+aplicado e intenção de notificação atomicamente. Rollback local não repete ação
+remota. O painel lista comandos pendentes do próprio ator para consulta/conclusão.
+
+Um comando bloqueia outros recebimentos automáticos e remoções concorrentes dessa
+origem. Alteração de ACL, saldo, conta ou política impede conclusão silenciosa e
+exige revisão. Cobrança já recebida remotamente após parcial, reversão de parcelas,
+exclusão da fatura e edição remota seguem fora desta entrega169. Não há captura
+de cartão nem alteração do SDK.
+
+Migration169 adiciona somente política e ledger de comandos, com vínculos, chave
+única e verificação estrutural. Preserva migrations anteriores. Em incidente,
+suspender writers e corrigir adiante: não apagar comandos, reduzir tracking ou
+repetir POST/DELETE cujo resultado seja incerto. Reverter apresentação não desfaz
+a operação externa nem o recibo local.
+
+Contratos oficiais consultados: [dinheiro recebido externamente](https://docs.asaas.com/reference/confirmar-recebimento-em-dinheiro)
+e [remoção de cobrança](https://docs.asaas.com/reference/excluir-cobranca).
+Confirmar dinheiro não credita saldo Asaas; remover não é reembolsar. Nenhuma
+transação real foi executada. Testes de transporte simulado não são homologação
+bancária, sandbox ou aceitação HTTP autenticada.

@@ -1,5 +1,11 @@
 # Histórico de alterações — integração Asaas
 
+## 1.6.9 — 2026-11-06
+
+- Política por conta para quitação manual integral: desabilitada, dinheiro recebido externamente ou remoção. Guia nativa, confirmação, ACL/CSRF/revisões; nenhum consentimento automático.
+- Intenção durável e envio único antes da escrita nativa. Recuperação canônica após resultado incerto ou rollback, sem repetir POST/DELETE; mantém parcelas e histórico.
+- Migration169 aditiva, sem backfill. Cartão continua pendente; exclusão da fatura e edição remota não são cobertas por esta etapa.
+
 ## 1.6.8 — 2026-11-06
 
 - Recebimento manual parcial pelo formulário nativo: consulta canônica, meio selecionado, saldo, ACL e prova histórica; recibo, diário e intenção de notificação atômicos. A cobrança externa permanece aberta pelo valor original.

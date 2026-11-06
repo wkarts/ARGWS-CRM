@@ -48,7 +48,10 @@ async function issue(issuer,client,label){
  // Keep real pointer actionability and verify the actual submitted control, without force or DOM mutation.
  for(const row of[first,second]){const group=creditField(row,fixture.fields.line.name);for(let option=0;option<2;option++){
   const control=group.locator('input[type=checkbox]').nth(option),id=await control.getAttribute('id');assert.match(id,/^credit-cf-[a-f0-9]+-[0-9]+-line-[0-9]+$/);
-  await group.locator('label[for="'+id+'"]').click();assert.equal(await control.isChecked(),true,'visible native checkbox label selects its own submitted value');
+  const selectedFromCatalog=row===first;assert.equal(await control.isChecked(),selectedFromCatalog,'catalog choices are copied; a new manual row starts unchecked');
+  const optionLabel=group.locator('label[for="'+id+'"]');
+  await optionLabel.click();assert.equal(await control.isChecked(),!selectedFromCatalog,'visible label toggles its own checkbox');
+  if(selectedFromCatalog){await optionLabel.click();assert.equal(await control.isChecked(),true,'second pointer click restores the catalog selection');}
  }}
  await page.locator('#credit-add-item').click();await page.locator('.credit-item').nth(2).locator('[data-credit-remove]').click();
  await second.locator('[data-credit-drag]').press('ArrowUp');assert.equal(await page.locator('.credit-item').first().locator('textarea[name$="[description]"]').inputValue(),'Second credit item','original row ordering keeps distinct line metadata');
