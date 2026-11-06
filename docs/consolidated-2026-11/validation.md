@@ -83,3 +83,9 @@ SDK CI final aprovado em7deb034aab8792c7cd58f6128fee2e9656c269d6:
 e [Audit42149805461](https://github.com/wkarts/asaas-sdk-argws/actions/runs/42149805461).
 O primeiro CI detectou tipos de arrays ausentes na fixture nova; corrigidos sem
 reduzir gates. Composer/PHPUnit10 e matriz PHP8.1/8.2/8.3 passaram remotamente.
+
+CI inicial CRM detectou inventário de isolamento desatualizado para os dois
+controllers alterados. Reconciliado pelo writer oficial; auditoria local:
+687 arquivos,658 unreviewed,29 partial,zero erros. Os11 testes de inventário e
+armazenamento de anexos passaram. `operational_rollout` permanece `blocked`;
+atualizar hashes/linhas não representa homologação de isolamento.

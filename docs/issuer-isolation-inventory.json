@@ -5879,13 +5879,13 @@
       "evidence": ""
     },
     "application/services/NativeCompanySettingsController.php": {
-      "sha256": "18d84db65477699ff08de8765e80e63f5b60825cffd0267c807e907d93d02289",
+      "sha256": "d5dd01bad6dac2ad6743159102683953e081a595d9b3bd80b438621037c4fcc2",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        259
+        265
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5916,27 +5916,27 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "47b15a55d08b4b4b8fd1ae170e714e00f55c61a7ba840705723781dc09269bca",
+      "sha256": "2ca98891ce051a6f5275a69d6b7740e8f05a78f23b32f5824990559c951c59c8",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        246,
         249,
-        258,
-        265,
-        298,
-        302,
-        330,
-        438,
-        442,
-        579,
-        776,
+        252,
+        261,
+        268,
+        301,
+        305,
+        333,
+        441,
+        445,
+        582,
         779,
-        791
+        782,
+        794
       ],
       "state": "unreviewed",
-      "evidence": "Revisão limitada ao delta Efí da PR61: efi_company_module_required passa de 403 a 503, sem alteração de ACL, schema ou chamadas ao provedor. tests/settings/efi_primary_configuration_mysql.php e tests/efi/native_controller_contract.php; docs/companies/pr61-settings-regression.md. O trait completo continua unreviewed; não há fechamento operacional."
+      "evidence": ""
     },
     "application/services/NativeCompanyStaffInviteMail.php": {
       "sha256": "e72bf68cadf5a0c338f3e2d7707e4d85c60bcf8968acfa8e7369322fa46deb2c",
