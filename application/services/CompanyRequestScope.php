@@ -130,6 +130,12 @@ final class CompanyRequestScope
     private static function ownedExpenseRoute($ci,string $class,string $method):bool
     {
         if($class!=='expenses')return false;
+        // Only catalogued actions can select this adapter. Keep ownership
+        // independent of the submitted verb so known owned routes with a wrong
+        // verb are denied before any legacy hydration, rather than falling back.
+        if(!NativeCompanyRoutes::admits('admin','',$class,$method,'GET')
+            &&!NativeCompanyRoutes::admits('admin','',$class,$method,'HEAD')
+            &&!NativeCompanyRoutes::admits('admin','',$class,$method,'POST'))return false;
         // Explicit category requests keep the owned boundary even for a rejected verb.
         if(in_array($method,['categories','category'],true)&&$ci->input->get('source',false)==='company')return true;
         if($method==='bulk_action'&&($ci->input->get('source',false)==='company'||$ci->input->post('native_expense_bulk',false)!==null))return true;

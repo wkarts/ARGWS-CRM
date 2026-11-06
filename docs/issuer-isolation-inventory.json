@@ -4279,7 +4279,7 @@
       "evidence": ""
     },
     "application/services/CompanyRequestScope.php": {
-      "sha256": "8548f8bb925490df880ea9a300725580b33787b758bcda9a2c8a3da5816dfa7f",
+      "sha256": "d6cd7e04825edd9db680a98c307bb2afafa1de08abc782d14068dbda9db03185",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -4291,12 +4291,12 @@
         116,
         122,
         123,
-        211,
-        214,
-        257,
-        273,
-        287,
-        288
+        217,
+        220,
+        263,
+        279,
+        293,
+        294
       ],
       "state": "unreviewed",
       "evidence": ""

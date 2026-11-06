@@ -387,6 +387,13 @@ foreach(['manage','delete','change_payment_mode_status','change_payment_mode_sho
 }
 foreach(['index','add','ticket']as$ticketAction){$ci=contextEnvironment($f,$s,'tickets',$ticketAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal original Tickets/'.$ticketAction.' selects the bounded historical/owned adapter');CompanyRequestScope::finish();}
 foreach([['projects','billing_rates'],['projects','fixed_billing'],['tasks','billing']]as[$boundedClass,$boundedAction]){$ci=contextEnvironment($f,$s,$boundedClass,$boundedAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::isolated(),'primary bounded '.$boundedClass.'/'.$boundedAction.' retains its native presentation and guards');CompanyRequestScope::finish();}
+// Owned expenses with rejected verbs must stop before legacy model hydration.
+foreach(['DELETE','PUT','PATCH','OPTIONS'] as $expenseVerb){
+    $ci=contextEnvironment($f,$s,'expenses','expense',$expenseVerb);
+    $ci->input->query=['expense'=>NativeCompanyResourceId::encode('company_expense',42)];
+    expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+    essentialCheck(!in_array('model:expenses_model',$ci->load->trace,true),'wrong expense verb never hydrates legacy expenses');
+}
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();
 essentialCheck(CompanySettingsRuntime::issuerId() === 41 && !CompanyRequestScope::isolated(), 'primary legacy request resolves before standard libraries');
 essentialCheck(in_array('app', $ci->load->autoload['libraries'], true), 'primary preserves legacy autoload');
