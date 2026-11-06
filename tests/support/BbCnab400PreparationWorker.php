@@ -8,6 +8,9 @@ $prefix=$argv[1]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$prefix))exit
 $payload=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);
 $db=new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$prefix);
 try{
+    $service=new \BancoBrasil\Cnab400Preparation($db,$prefix);
+    if(($payload['action']??null)==='print'){echo $service->boleto($payload['issuer'],$payload['actor'],$payload['preparation'])['barcode'];exit(0);}
+    if(($payload['action']??null)==='download'){echo $service->download($payload['issuer'],$payload['actor'],$payload['preparation'])['hash'];exit(0);}
     $result=(new \BancoBrasil\Cnab400Preparation($db,$prefix))->prepare($payload['issuer'],$payload['actor'],$payload['connection'],$payload['binding'],$payload['invoice'],$payload['key']);
     echo (string)$result['id'];
 }catch(DomainException $error){

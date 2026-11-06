@@ -225,3 +225,22 @@ Executados localmente com as correções:
 O Composer local continua bloqueado pelo HTTP403 no download oficial de Mustache;
 nenhum gate foi retirado. O CI remoto conseguiu construir a imagem de smoke de
 473352dc, mas seus grupos HTTP ainda estavam em execução nesta verificação.
+
+## Boleto CNAB400 — módulo140
+
+- `banco_brasil_cnab400_boleto_mysql.php`:335 verificações cumulativas MySQL8.4,
+  incluindo instalação/tracking nativo até140, geração real a partir da preparação,
+  snapshot, origem, saldo, isolamento, cancelamento, revogação e impressão sem
+  mutações. Dois processos esperam no mutex real: impressão/download preservam
+  código e hash; revogação enquanto aguardam impede ambos os documentos.
+- `banco_brasil_admin.php`:104 verificações, incluindo POST/CSRF da impressão400;
+  `banco_brasil_module_version.php`:54; contratos439/440:192; bridge125:5.
+- Chromium: view produzida pelo teste SQL400, ficha190×105mm, I25 103×13mm,
+  barras completas, linha digitável sem corte, aviso HOMOLOGAÇÃO—NÃO PAGAR e
+  nenhuma requisição externa. Captura local inspecionada; não é HTTP autenticado.
+- Plano SQL histórico preservado; novo teste400 em etapa adicional;14 testes do
+  plano passaram. Nenhum envio ao banco, cobrança, registro ou homologação real.
+
+A rodada bee529da foi interrompida pelo inventário de isolamento desatualizado.
+Os geradores oficiais foram executados novamente e seus resultados serão incluídos
+integralmente, sem alterar estados conservadores de prontidão.

@@ -223,6 +223,18 @@ class Banco_brasil extends AdminController
         try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';$file=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->download($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')));$this->output->set_header('Cache-Control: private, no-store, max-age=0');$this->output->set_header('Pragma: no-cache');$this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Content-Disposition: attachment; filename="'.$file['filename'].'"');$this->output->set_content_type('application/octet-stream')->set_output($file['content']);}
         catch(Throwable $error){show_error('Arquivo indisponível ou integridade não confirmada. Nenhum envio foi realizado.',403);}
     }
+    public function print_cnab400_boleto()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';
+            $boleto=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->boleto($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')));
+            $boleto['barcode_svg']=\BancoBrasil\CnabBoleto::svg($boleto['barcode']);
+            $this->output->set_header('Cache-Control: private, no-store, max-age=0');$this->output->set_header('Pragma: no-cache');
+            $this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Referrer-Policy: no-referrer');
+            $this->load->view('banco_brasil/cnab_boleto',['boleto'=>$boleto]);
+        }catch(Throwable $error){show_error('Boleto indisponível. Confira origem, saldo, empresa e permissões. Nenhum registro bancário foi confirmado.',403);}
+    }
     public function report_cnab400()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');

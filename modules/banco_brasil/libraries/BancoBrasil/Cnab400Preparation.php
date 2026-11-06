@@ -25,14 +25,14 @@ final class Cnab400Preparation
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix))throw new \InvalidArgumentException('bb_prefix_invalid');
     }
     private function rows(string $sql,array $bind=[]):array{return \IssuerStorage::query($this->db,$sql,$bind)->result_array();}
-    private function transaction(callable $work)
+    private function transaction(callable $work,array $extraTables=[])
     {
-        return \IssuerTransaction::run($this->db,$this->prefix,[
+        return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge([
             'issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions',
             'issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents',
             'currencies','company_currency_units','bb_connections','bb_layout_bindings',
             'bb_cnab_preparations','bb_contract_declarations','bb_batch_actions','bb_origins','bb_origin_snapshots','bb_batches','bb_batch_origins','bb_audit',
-        ],$work);
+        ],$extraTables))),$work);
     }
     private function authorize(int $issuer,int $actor,string $cap='generate'):\IssuerResourceAccess
     {
@@ -283,6 +283,38 @@ final class Cnab400Preparation
             if(!hash_equals($row['source_hash'],self::digest($final)))throw new \RuntimeException('issuer_bb_write_unconfirmed');
             return $this->recoverProjection($issuer,$row,$final);
         });
+    }
+    /** Read-only printable instrument from the validated 400 origin, before any transmission. */
+    public function boleto($issuer,$actor,$preparation):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$preparation=\IssuerPolicy::id($preparation);
+        return $this->transaction(function()use($issuer,$actor,$preparation):array{
+            $acl=$this->authorize($issuer,$actor,'download');
+            $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_cnab_preparations WHERE id=? AND issuer_id=? FOR UPDATE',[$preparation,$issuer])[0]??null;
+            if(!$row)throw new \DomainException('bb400_preparation_unavailable');
+            $current=$this->source($issuer,$actor,(int)$row['connection_id'],(int)$row['layout_binding_id'],(int)$row['invoice_id'],$acl);
+            if($this->projection($row,$current)['stale'])throw new \DomainException('bb400_preparation_stale');
+            $batch=$this->verifyReservation($issuer,$row);
+            if($batch['generation_state']!=='generated')throw new \DomainException('bb_boleto_unavailable');
+            $origin=$this->rows('SELECT active_slot FROM '.$this->prefix.'bb_origins WHERE id=? AND issuer_id=?',[(int)$row['origin_id'],$issuer])[0]??[];
+            if((int)($origin['active_slot']??0)!==1)throw new \DomainException('bb_boleto_unavailable');
+            $invoice=(int)$row['invoice_id'];
+            (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);
+            foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])
+                if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=?',[$invoice]))throw new \DomainException('bb_boleto_unavailable');
+            $snapshot=json_decode($batch['snapshot_json'],true,64,JSON_THROW_ON_ERROR);
+            // Use the exact validated record, not a new browser-supplied payer or a current customer profile.
+            $detail=explode("\r\n",$batch['content'])[1];
+            foreach(['payer_name'=>[234,37],'payer_address'=>[274,40],'payer_district'=>[314,12],'payer_zip'=>[326,8],'payer_city'=>[334,15],'payer_state'=>[349,2],'species'=>[147,2],'acceptance'=>[149,1]] as $field=>[$offset,$length])
+                $snapshot['title'][$field]=rtrim(substr($detail,$offset,$length),' ');
+            $snapshot['title']['payer_tax_id']=$snapshot['document_snapshot']['recipient']['tax_id'];
+            $c=$snapshot['connection'];
+            $agreement=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$snapshot['beneficiary_name'],$c['variation'],$c['wallet']);
+            require_once __DIR__.'/CnabBoleto.php';
+            $codes=CnabBoleto::codes($agreement,$snapshot['title']['sequence'],$snapshot['title']['due_date'],$snapshot['title']['amount']);
+            $this->authorize($issuer,$actor,'download');
+            return $codes+['snapshot'=>$snapshot,'document'=>$current['document'],'environment'=>$c['environment'],'bank_state'=>'generated_registration_not_confirmed','batch_id'=>(int)$row['batch_id']];
+        },array_merge(['invoicepaymentrecords','credits'],(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()));
     }
     /** Private download: records only local disclosure, never bank transmission. */
     public function download($issuer,$actor,$preparation):array

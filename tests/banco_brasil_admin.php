@@ -58,8 +58,10 @@ $ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'=>'1','csrf_bb'=>$cs
 $GLOBALS['issuerGrant']=true;$GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'contextual grant not vetoed by global deny');check(!$ci->db->tables,'GET remains read only');$GLOBALS['permissions']['manage']=true;
 $ci->input->verb='GET';try{$controller->register_connection();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','POST only');}
 $ci->input->verb='GET';try{$controller->print_cnab_boleto();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','boleto print requires POST before hydration');}
+try{$controller->print_cnab400_boleto();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','400 print requires POST before hydration');}
 $ci->input->verb='POST';$ci->input->posts['csrf_bb']='wrong';try{$controller->register_connection();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','constant time own CSRF enforced');}
 try{$controller->print_cnab_boleto();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','boleto print requires valid CSRF before hydration');}
+try{$controller->print_cnab400_boleto();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','400 print requires valid CSRF before hydration');}
 $ci->input->posts['csrf_bb']=[$csrf];rejects(fn()=>$controller->register_connection(),'array token refused');
 $ci->input->posts['csrf_bb']=$csrf;$ci->input->posts['tax_id']='99999999999999';try{$controller->register_connection();}catch(BbRedirect $e){}
 check(!$ci->db->tables,'cannot replace issuer CNPJ in form');unset($ci->input->posts['tax_id']);
@@ -88,7 +90,7 @@ $view400['connections']=[['id'=>10,'account_id'=>'001:00452-3:000000123873-X','e
 $view400['layout_bindings']=[['id'=>17,'connection_id'=>10,'layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400]];$view400['batches']=[];
 $render400=static function(array $d){extract($d);ob_start();try{include __DIR__.'/../modules/banco_brasil/views/index.php';return ob_get_clean();}catch(Throwable $error){ob_end_clean();throw $error;}};
 $html400=$render400($view400);
-foreach(['prepare_cnab400','reserve_cnab400','candidate_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','report_cnab400','recover_cnab400'] as $action){$m=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/'.$action.'"[^>]*>(.*?)</form>~s',$html400,$m),'actual 400 form '.$action.' rendered');check(str_contains($m[1],'name="csrf_bb"')&&substr_count($m[1],'name="_company_context"')===1,'400 form '.$action.' carries CSRF and company context');}
+foreach(['prepare_cnab400','reserve_cnab400','candidate_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','print_cnab400_boleto','report_cnab400','recover_cnab400'] as $action){$m=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/'.$action.'"[^>]*>(.*?)</form>~s',$html400,$m),'actual 400 form '.$action.' rendered');check(str_contains($m[1],'name="csrf_bb"')&&substr_count($m[1],'name="_company_context"')===1,'400 form '.$action.' carries CSRF and company context');}
 check(!preg_match('/name="approval400\[(?:currency_confirmed|interest_confirmed|homologation_confirmed)\]"[^>]*checked/',$html400),'external bank declarations are not preselected');
 check(!str_contains($html400,'name="currency_candidate"')&&!str_contains($html400,'name="approval400[currency_field]"'),'BRL wire bytes are fixed by the profile rather than accepted from the operator');
 check(str_contains($html400,'posições 85–86')&&str_contains($html400,'não aplica juros padrão'),'UI distinguishes fixed layout bytes from the external bank-profile interest gate');

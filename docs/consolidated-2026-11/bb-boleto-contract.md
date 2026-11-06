@@ -34,3 +34,19 @@ lacunas separadas. Nenhum boleto foi transmitido ou homologado nesta investigaç
 Migration139 NOOP; histórico e dados preservados. O contrato de impressão não
 altera a migration138 nem congela o lote. Testes de tracking/falha/replay até139
 foram executados pelo runner nativo no fixture MySQL.
+
+## Extensão CNAB400 — módulo 1.4.0/140
+
+A preparação400 com arquivo gerado e validado pode produzir o mesmo documento
+imprimível antes de qualquer download/transmissão. O serviço recupera Nosso Número,
+valor, datas e identidade imutáveis da origem; nome/endereço/espécie/aceite vêm do
+registro400 validado, sem novo payload do navegador. A declaração do operador
+exigida pela geração permanece explícita e não equivale a homologação automática.
+Preparação apenas reservada ainda não possui o registro completo do pagador e
+não libera impressão. O documento continua indicando registro não confirmado.
+
+A operação usa POST com contexto/CSRF, ACL revalidada sob mutex, saldo nativo,
+origem ativa e snapshot corrente. Não altera lote, contadores, fatura, pagamentos
+ou auditoria. Reimpressão não altera bytes da remessa. Migration140 é NOOP e não
+reescreve139. Agrupamento400, emissão automática e portal do cliente permanecem
+pendentes; esta extensão não os representa como concluídos.
