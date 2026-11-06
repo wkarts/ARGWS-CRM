@@ -12,8 +12,8 @@ Nenhuma afirmação histórica de testes foi convertida em teste desta entrega.
 Main revalidada após a mensagem de integração: `769840ad` (merge PR62).
 PR61 e PR62 estão integradas; o head62 permanece `93f9ed8734c48bf88dfa3b7d27ee01aa355fbc38`.
 A branch foi sincronizada com a main sem descartar o delta local. A nova PR tem
-base **main**, sem dependência de PR62 aberta, e avança **4.9.0/490 → 4.9.1/491**
-com o gerador oficial e migration NOOP. Nenhuma migration publicada foi editada.
+base **main**, sem dependência de PR62 aberta, e avança **4.9.0/490 → 4.9.2/492**
+com o gerador oficial: 491 NOOP e 492 aditiva para reajustes. Nenhuma migration publicada foi editada.
 
 ## Delta implementado
 
@@ -38,8 +38,7 @@ com o gerador oficial e migration NOOP. Nenhuma migration publicada foi editada.
   consumido pela emissão. Save preserva Pix, boleto, rótulo e descrição, com
   CAS e ACL sob lock. Não adiciona opções sem consumidor funcional. O fluxo
   direto completo e outros parâmetros de cartão permanecem pendentes.
-- Nenhum escritor financeiro, regra de preço, calendário, produto, contrato
-  bancário ou calendário foi alterado no CRM. Há delta restrito do SDK em PR própria; o vendor do CRM não foi atualizado silenciosamente.
+- Reajustes: journal imutável de preços futuros, vínculos explícitos revisados, regras por item, quantidade local, inclusão no alvo, simulação e confirmação, agendamento com fuso explícito. Não altera faturas emitidas, catálogo ou calendário. Veja [repricing.md](repricing.md). O vendor SDK continua sem atualização neste incremento.
 
 ## Matriz requisito → existente → lacuna → delta → evidência
 
@@ -53,10 +52,10 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | R02 Marca/PWA | `NativePwaIdentity`, shell nativo | Browser/PWA de todas as empresas e estados | Preservado | `tests/native_company/presentation.php` |
 | R03 Orçamentos | `NativeCompanyEstimateForm`, matriz AC08–13 | Paridade integral e conflitos documentados | Preservado | Não revalidado integralmente |
 | R04 Faturas | `CompanyInvoices`, `NativeCompanyInvoiceCommands` e snapshots | Edição de emitidas não equivale ao legado; ciclo Asaas completo pendente | Preservado | Testes Asaas financeiros delimitados abaixo |
-| R05 Recorrências | `CompanyInvoiceRecurring` + Modes + Origin | Reajuste futuro não existe; não editar snapshot base | Preservado | Inspeção dos hashes/auditoria; sem aceite de reajustes |
+| R05 Recorrências | CompanyInvoiceRecurring + Modes | Validação autenticada integral continua pendente | Journal futuro consumido pelo emissor e leitor | SQLite/MySQL + corrida de processos |
 | R06 Pagamentos | Escritor nativo e contexto | Travamento relatado não reproduzido em instalação autenticada | Preservado | MySQL escritor, 34 asserts; não é reprodução do menu |
 | R07 Créditos | `NativeCompanyCreditsController` e ledger | Conflitos de edição/reabertura da matriz anterior | Preservado | Sem nova homologação completa |
-| R08 Itens | Catálogo próprio e união autorizada | Identidade do item na linha de recorrência não está persistida | Preservado; Produtos não unido a Itens | Inspeção `CompanyInvoiceLines::normalize` |
+| R08 Itens | Catálogo próprio | Paridade geral de Itens não encerrada | Vínculo revisado por ID em recorrências; sem equivalência por descrição | Item estrangeiro e ausência de revisão recusados |
 | R09 Todo Vendas | Inventário e adaptadores da PR61 | Cobertura integral de módulos/ações não comprovada | Asaas em pagamento nativo | Testes de view/controlador/browser Asaas |
 | R10 Outras áreas | Controllers nativos e contratos globais da PR61 | Áreas NA01–NA09 e propriedade das integrações continuam na matriz anterior | Não se abriu módulo global em secundária | Navegação/presentation limitada |
 | R11 Empresa ativa | `CompanyRequestScope`, `IssuerResourceAccess`, runtime settings | Cobertura universal não comprovada | Seleção Asaas conserva lease/ACL; exportação API bloqueada | Native settings controller + secret controller A/B |
@@ -83,13 +82,13 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | ASA03 Cartão obrigatório | Checkout hospedado; SDK já oferece tokenização/cobrança | Checkout rejeitado não satisfaz; seguir documentação e parametrização flexível conforme esclarecimento posterior | Guia de configuração efetiva; SDK ganhou contrato ausente e bloqueio de retry; pagamento direto CRM pendente | Inventário abaixo; sem sandbox/cartão aprovado |
 | ASA04 Ciclo faturas | Origem, operações remotas e reconciliação | Delete/cancel/reactivate/manual parcial/HTTP incerto exigem matriz ponta a ponta | Preservado, não reescrito | Escritor MySQL e suites delimitadas; não aceite integral |
 | ASA05 Observabilidade | Eventos, jobs, provas e revisão existentes | Operações relacionadas a cada evento não homologadas integralmente | Guias para recursos existentes | View/controller; sem efeito financeiro real |
-| REA01 Tela/filtros | Diretório `CompanyInvoiceRecurring::directory` | Tela única item/meio/regras/grid ausente | Não implementado | Fonte consolidada§4/AnexoB; gap explícito |
-| REA02 Elegibilidade | `principalPaid` em Modes; estado de recorrência distinto da fatura | Modelo futuro com original paga precisa entrar no novo seletor | Não implementado | Inspeção; não confundir fatura paga com recorrência encerrada |
-| REA03 Vínculo item | Payload normaliza descrição/qty/rate, sem ID de catálogo | Vínculo legado revisado e identidade persistente faltam | Não implementado | Não houve equivalência automática por descrição |
-| REA04 Regras/quantidade/+ | Snapshots de linhas existentes | Múltiplos preços/itens, qty local e inclusão alvo faltam | Não implementado | Nenhuma alteração de Produtos/faturas |
-| REA05 Simulação/revisão | Nenhum fluxo de reajuste | Preview imprimível, confirmação, revisão e resultado parcial faltam | Não implementado | Não chamar HTML de simulação financeira |
-| REA06 Aplicação/agendamento | Schedule/Origin/Modes validam hashes e auditoria de criação | Revisões futuras precisam de journal imutável e fuso empresarial | Não implementado | Mutar payload_json quebraria validação; calendário não alterado |
-| REA07 Integridade/ACL | Transações e locks nos serviços existentes | Atomicidade da campanha, corrida com emissor, idempotência, ACL/CSRF próprios faltam | Não implementado | Nenhum teste de reajuste executado porque o recurso não existe |
+| REA01 Tela/filtros | Rota nativa Faturas recorrentes | Homologação autenticada pendente | Tela única, filtros item/meio, grid e múltiplas regras | View PHP real em Chromium; dados/HTTP sintéticos |
+| REA02 Elegibilidade | Estado da série independente da fatura principal | Perfil completo da instalação a validar | Seleção por active/paused, sem filtro por pagamento principal | Prérequisitos reais de modos/quitada preservados |
+| REA03 Vínculo item | Linhas legadas sem ID | Revisão manual necessária para legado | Tabela de vínculos com hash/revisão/auditoria e catálogo autorizado | Identidade e escopo testados em SQL |
+| REA04 Regras/quantidade/+ | Snapshots originais preservados | Sem aceite visual do usuário ainda | Múltiplas regras, qty por linha e inclusão por série; + exige linhas antigas revisadas | SQLite/MySQL e Chromium |
+| REA05 Simulação/revisão | Novo fluxo | HTTP autenticado a executar | Relatório preservado, imprimível, confirmação da revisão exata; campanha atômica | Totais nativos; revisão concorrente invalida toda proposta |
+| REA06 Aplicação/agendamento | Worker nativo | Operação do worker na instalação não verificada | Data local/IANA explícita convertida UTC; horário ambíguo recusado; journal futuro | Clock controlado com transação SQL real; nova emissão usa preço futuro |
+| REA07 Integridade/ACL | Locks financeiros e ACL existentes | CSRF/HTTP autenticado e revogação concorrente específica ainda pendentes | ACL revalidada sob lock, chaves idempotentes, snapshots auditados | Dois processos MySQL: confirmação/confirmacão e confirmação/emissão; sem duplicação |
 
 ## Contratos externos inspecionados — somente leitura
 
@@ -123,10 +122,10 @@ transmissão bancária, cobrança, baixa em produção ou alteração de credenc
 
 ## Operação, risco e rollback
 
-Não distribuir este checkpoint como solução integral. Após completar/revisar
-as lacunas, usar runner nativo para491 e confirmar
-tracking;491 é NOOP. Migrations anteriores permanecem intactas. Este delta
-não muda DDL nem dados financeiros. Código anterior pode ser restaurado sem
-reduzir marcadores; manter backup operacional consistente. Reverter o código
-reabre a exportação administrativa da chave API antiga, portanto preferir
-correção adiante para erros de apresentação. Nenhuma implantação executada.
+Não distribuir como solução integral. O runner nativo aplica 491 NOOP e 492
+aditiva (propostas, vínculos revisados e journal de preços); sem backfill.
+Migrations anteriores permanecem intactas. Instalação/repetição do schema foi
+executada em MySQL descartável; tracking do runner 492 ainda deve ser validado.
+Após uso do reajuste, não reverter para um emissor que ignore o journal: poderia
+emitir preços antigos. Em incidente, suspender o worker e corrigir adiante,
+preservando snapshots, auditoria e marcadores. Nenhuma implantação executada.

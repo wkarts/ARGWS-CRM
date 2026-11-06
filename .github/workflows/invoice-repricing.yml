@@ -1,0 +1,38 @@
+name: Reajustes de faturas recorrentes
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['application/services/CompanyInvoice*.php', 'application/services/NativeCompanyInvoice*.php', 'application/views/admin/invoices/**', 'application/controllers/Recurring_worker.php', 'application/migrations/492_version_492.php', 'assets/js/native-invoice-repricing.js', 'tests/companies/invoice_repricing*.php', 'tests/browser/invoice_repricing.cjs', 'tests/fixtures/invoice_repricing_page.php', '.github/workflows/invoice-repricing.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  repricing:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+      options: --shm-size=1g
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: repricing_test
+          MYSQL_ROOT_PASSWORD: ephemeral-test-only
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pephemeral-test-only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v5
+      - name: SQLite — aplicação, revisão e calendário preservado
+        run: php tests/companies/invoice_repricing.php
+      - name: MySQL — schema, transações e snapshots reais
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=repricing_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: ephemeral-test-only
+        run: php tests/companies/invoice_repricing_concurrency.php
+      - name: Chromium — view nativa e alvos explícitos
+        run: node tests/browser/invoice_repricing.cjs

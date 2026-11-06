@@ -105,6 +105,7 @@ final class CompanyInvoiceRecurringModes
     }
     private function payload(array $schedule,string $date):array
     {
-        $p=json_decode($schedule['payload_json'],true,32,JSON_THROW_ON_ERROR);$days=(int)(new DateTimeImmutable($p['date'],new DateTimeZone('UTC')))->diff(new DateTimeImmutable($p['due_date'],new DateTimeZone('UTC')))->format('%a');$p['date']=$date;$p['due_date']=(new DateTimeImmutable($date,new DateTimeZone('UTC')))->modify('+'.$days.' days')->format('Y-m-d');return$p;
+        require_once __DIR__.'/CompanyInvoiceRecurringPrices.php';
+        return CompanyInvoiceRecurringPrices::occurrencePayload($this->db,$this->p,$schedule,$date);
     }
 }

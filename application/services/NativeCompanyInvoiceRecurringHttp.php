@@ -7,6 +7,7 @@ final class NativeCompanyInvoiceRecurringHttp
     public function __construct(private $ci){}
     public function index($routeId=null,bool $fragment=false):void
     {
+        if(!$fragment&&($routeId===null||$routeId==='')&&$this->ci->input->get('reprice',false)==='1'){require_once __DIR__.'/NativeCompanyInvoiceRepricingHttp.php';(new NativeCompanyInvoiceRepricingHttp($this->ci))->index();return;}
         if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Contexto indisponível.',503);return;}require_once __DIR__.'/CompanyInvoiceRecurring.php';require_once __DIR__.'/CompanyClients.php';
         $ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();$acl=new IssuerResourceAccess($this->ci->db,db_prefix());if(!$acl->can($issuer,$actor,'invoices','view')){show_error('Agenda indisponível.',403);return;}
         $this->ci->output->set_header('Cache-Control: no-store');$s=new CompanyInvoiceRecurring($this->ci->db,db_prefix());$csrf=$this->ci->session->userdata('company_invoice_schedule_csrf');if(!is_string($csrf)||!preg_match('/^[a-f0-9]{64}$/D',$csrf)){$csrf=bin2hex(random_bytes(32));$this->ci->session->set_userdata('company_invoice_schedule_csrf',$csrf);}

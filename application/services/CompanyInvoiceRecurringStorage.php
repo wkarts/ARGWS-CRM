@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanySalesBase.php';require_once __DIR__.'/CompanyInvoiceRecurringSchema.php';require_once __DIR__.'/CompanyInvoiceRecurringDates.php';
+require_once __DIR__.'/CompanyInvoiceRecurringPrices.php';require_once __DIR__.'/CompanySalesBase.php';require_once __DIR__.'/CompanyInvoiceRecurringSchema.php';require_once __DIR__.'/CompanyInvoiceRecurringDates.php';
 
 /** Owned schedule storage;425 series live in different tables and are never adopted. */
 abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
@@ -16,7 +16,7 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
     }
     public function tables():array
     {
-        $tables=array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','currencies','company_currency_units','options','issuers_audit','company_invoice_requests','invoices','issuers_invoice_documents','itemable','item_tax'],array_keys(CompanyInvoiceRecurringSchema::definitions()));$tables=array_merge($tables,(new CompanyInvoiceRecurringModes($this->db,$this->prefix))->tables());
+        $tables=array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','currencies','company_currency_units','options','issuers_audit','company_invoice_requests','invoices','issuers_invoice_documents','itemable','item_tax'],array_keys(CompanyInvoiceRecurringSchema::definitions()));$tables=array_merge($tables,(new CompanyInvoiceRecurringModes($this->db,$this->prefix))->tables(),CompanyInvoiceRepricingSchema::availableTables($this->db,$this->prefix));
         foreach(['contacts','contact_permissions','emailtemplates','mail_queue','company_invoice_deliveries']as$t)if($this->db->table_exists($this->prefix.$t))$tables[]=$t;
         foreach(['CompanyGoogleMailOAuth','CompanyMailTransportPolicy']as$type)if(is_file(__DIR__.'/'.$type.'.php')){require_once __DIR__.'/'.$type.'.php';$tables=array_merge($tables,$type::participantTables($this->db,$this->prefix));}return array_values(array_unique($tables));
     }
@@ -38,7 +38,7 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
     protected function occurrence(int$i,int$id,string$date):?array{return$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_schedule_runs WHERE issuer_id=? AND schedule_id=? AND run_date=? FOR UPDATE',[$i,$id,$date])[0]??null;}
     protected function payloadFor(array$r,string$date):array
     {
-        $payload=$this->decode($r['payload_json']);$days=(int)(new DateTimeImmutable($payload['date'],new DateTimeZone('UTC')))->diff(new DateTimeImmutable($payload['due_date'],new DateTimeZone('UTC')))->format('%a');$payload['date']=$date;$payload['due_date']=(new DateTimeImmutable($date,new DateTimeZone('UTC')))->modify('+'.$days.' days')->format('Y-m-d');CompanyInvoiceRecurringDates::date($payload['due_date']);return$payload;
+        $payload=CompanyInvoiceRecurringPrices::occurrencePayload($this->db,$this->prefix,$r,$date);CompanyInvoiceRecurringDates::date($payload['due_date']);return$payload;
     }
     protected function validate(int$i,int$a,array$r,?array$run=null,bool$processing=true):array
     {

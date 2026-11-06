@@ -89,3 +89,14 @@ controllers alterados. Reconciliado pelo writer oficial; auditoria local:
 687 arquivos,658 unreviewed,29 partial,zero erros. Os11 testes de inventário e
 armazenamento de anexos passaram. `operational_rollout` permanece `blocked`;
 atualizar hashes/linhas não representa homologação de isolamento.
+
+## Incremento 492 — reajustes
+
+Ver [repricing.md](repricing.md) para testes novos, critérios e limites. SQLite,
+MySQL 8.4 e Chromium passaram localmente, incluindo dois processos reais de
+confirmação/emissão. Schema aditivo criado/repetido em banco descartável.
+A falha de CI de b06b1851 foi localizada em `node-contracts`: `main.min.js` e
+`tickets.min.js` divergiam da compilação reproduzível; outros gates pararam por
+essa dependência. `npm ci --ignore-scripts --no-audit --no-fund` e Mix production
+regeneraram os artefatos. Gates não foram removidos nem relaxados. CI do novo
+SHA deve ser consultado depois do push.
