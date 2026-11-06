@@ -80,7 +80,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | ASA01 Configuração unificada | View nativa já contém operações | Equivalência total ao1.4.8 não comprovada | Guias e acesso em Meios de pagamento | PHP+Chromium com Bootstrap real |
 | ASA02 Credenciais | Guard/cifra por conta/ambiente | Token webhook permanece recuperável mediante ação protegida | Chave API salva nunca exportada pelo controller | POST com/sem CSRF, A/B, master/secundário |
 | ASA03 Cartão obrigatório | Checkout hospedado; SDK já oferece tokenização/cobrança | Checkout rejeitado não satisfaz; seguir documentação e parametrização flexível conforme esclarecimento posterior | Guia de configuração efetiva; SDK ganhou contrato ausente e bloqueio de retry; pagamento direto por token com dois contratos e tentativa única (1.6.2); fluxo completo pendente | [Evidências e limites](asaas-direct-card.md); sem sandbox/cartão aprovado |
-| ASA04 Ciclo faturas | Origem, operações remotas e reconciliação | Delete/cancel/reactivate/manual parcial/HTTP incerto exigem matriz ponta a ponta | Cancelamento163, recriação PIX/BOLETO165 e composição pós-reembolso167 com prova completa dos predecessores; parcial manual168 com consulta canônica e recibo nativo; integral manual169 por política explícita e comando de envio único; edição nativa170 de PIX/BOLETO elegível e exclusão lógica com remoção remota; cartão/delete físico continuam pendentes | MySQL22 adicionais + corrida6; gerações/fluxo166:69 + pós-reembolso167:30 checks sob128MiB; parcial168:30; integral169:35 + controlador8; edição170:38 + controlador4; runner297; [limites](asaas-invoice-lifecycle.md) |
+| ASA04 Ciclo faturas | Origem, operações remotas e reconciliação | Delete/cancel/reactivate/manual parcial/HTTP incerto exigem matriz ponta a ponta | Cancelamento163, recriação PIX/BOLETO165 e composição pós-reembolso167 com prova completa dos predecessores; parcial manual168 com consulta canônica e recibo nativo; integral manual169 por política explícita e comando de envio único; edição nativa170 de PIX/BOLETO elegível e exclusão lógica com remoção remota; cartão/delete físico continuam pendentes | MySQL22 adicionais + corrida6; gerações/fluxo166:69 + pós-reembolso167:30 checks sob128MiB; parcial168:30; integral169:35 + controlador8; edição170:38 + controlador8; runner297; [limites](asaas-invoice-lifecycle.md) |
 | ASA05 Observabilidade | Eventos, jobs, provas e revisão existentes | Operações relacionadas a cada evento não homologadas integralmente | Guias para recursos existentes | View/controller; sem efeito financeiro real |
 | REA01 Tela/filtros | Rota nativa Faturas recorrentes | Homologação autenticada pendente | Tela única, filtros item/meio, grid e múltiplas regras | View PHP real em Chromium; dados/HTTP sintéticos |
 | REA02 Elegibilidade | Estado da série independente da fatura principal | Perfil completo da instalação a validar | Seleção por active/paused, sem filtro por pagamento principal | Prérequisitos reais de modos/quitada preservados |
@@ -154,8 +154,10 @@ foi integrado pelo usuário; nesta etapa não há alteração de SDK/vendor/Perf
 ## Boleto local CNAB240 /139
 
 [Contrato, implementação e evidências](bb-boleto-contract.md). Impressão no lote
-antes do download/transmissão, sem alterar arquivo ou gerar pagamento. BB05 passa
-a parcial: emissão automática pelo meio de pagamento/recorrência e publicação ao
-cliente ainda não foram integradas; CNAB400 e homologação bancária seguem pendentes.
+antes do download/transmissão, sem alterar arquivo ou gerar pagamento. O checkpoint139
+foi ampliado por140–142: CNAB400 e emissão canônica/recorrente agora estão
+implementados e testados em MySQL, conforme as linhas BB05–BB07 acima.
+Publicação do boleto no portal, validação HTTP autenticada dessa emissão e
+homologação bancária continuam pendentes.
 
 PIGE111 acrescenta diagnóstico explícito de conexão já habilitada pelo contrato remoto existente, com revisão/ACL antes e depois do HTTP. Não ativa conexão desativada nem substitui homologação bilateral real. Ver [contrato](pige-discovery.md).

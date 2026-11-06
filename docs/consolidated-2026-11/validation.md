@@ -678,4 +678,19 @@ Correção R07 do preview: `native_credit_preview_helpers.browser.cjs` passou co
 CI92278fa6: node-contracts e preflight Chromium8.1/8.5 passaram. O contrato remoto Asaas ainda esperava erro genérico ao rejeitar PUT de cobrança; atualizado para a rejeição específica de payload inválido, mantendo caminho/escopo restritos e acrescentando Pix válido, cartão recusado, data impossível, valor inválido e cliente extra. Os19 scripts do job `contracts` passaram localmente sem rede, incluindo contato2316, retry847, webhook171 e escritores84/44. Versão mínima do módulo170 ajustada para núcleo4.9.2; callback13 passou. A nova rodada precisa confirmar o SHA posterior, sem tratar922 como verde.
 
 
-Ajuste do teste histórico154 após o mínimo170: o método nativo de compatibilidade rejeita457/458/491 e aceita492. Migração154 preservada:48 checks MySQL; migração155:101. CIdffaccad passou contratos8.1/8.5 e settings-ui, mas parou nesse assert antigo, corrigido sem alterar migrations publicadas. Download local oficial por Git (`--prefer-source`) obteve Mustache no commit do lockfile com CA do ambiente via secret de build; TLS e proxy mantidos. Build completo/HTTP ainda em andamento, sem declarar homologação.
+Ajuste do teste histórico154 após o mínimo170: o método nativo de compatibilidade rejeita457/458/491 e aceita492. Migração154 preservada:48 checks MySQL; migração155:101. CIdffaccad passou contratos8.1/8.5 e settings-ui, mas parou nesse assert antigo, corrigido sem alterar migrations publicadas. Download local oficial por Git (`--prefer-source`) obteve Mustache no commit do lockfile com CA do ambiente via secret de build; TLS e proxy mantidos. O build subsequente falhou por espaço insuficiente em `/var/cache/apt/archives` ao instalar extensões PHP. Não foi executado HTTP local dessa imagem. Removidos somente os dois caches de cópia de fontes desse build, preservando checkout, banco e imagens de testes.
+
+CIffd4dbb7: workflow Asaas42233268954 aprovado, incluindo contratos8.1/8.5,
+settings-ui e MySQL. Reajustes, calendário, interface nativa, node-contracts e
+preflight Chromium8.1/8.5 também passaram. O job registry-shards8.1/1
+127946237237 encontrou hash de fontes desatualizado no inventário de superfícies
+operacionais. Regeneração oficial altera somente esse hash; nenhuma superfície
+foi promovida a operacional. Os demais shards e HTTP permanecem diagnósticos
+independentes; esta rodada não é verde.
+
+O teste `asaas_invoice_edit_controller.php` foi ampliado e passou com oito
+verificações adicionais sobre187 em MySQL8.4/PHP8.3: painel indisponível antes
+do tracking170, leitura real do journal após instalação, CSRF, confirmação,
+recusa de chave sem comando e ausência de intenção criada por essa recusa.
+A fixture agora instala também a tabela nativa de comandos exigida pela
+transação; não há relaxamento do guard de produção nem chamada ao provedor.
