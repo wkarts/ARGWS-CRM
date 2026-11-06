@@ -11,10 +11,12 @@
         var submitting = false;
         form.addEventListener('submit', function (event) {
             if (submitting) { event.preventDefault(); return; }
+            if (event.defaultPrevented) return;
             submitting = true;
             toggle.disabled = true;
             // Do not disable the submitter: its company_id must remain in native form data.
             choices.forEach(function (choice) { choice.setAttribute('aria-disabled', 'true'); });
+            if (window.NativeCompanyContextGuard) window.NativeCompanyContextGuard.beginSelection();
         });
         window.addEventListener('pageshow', function () {
             submitting = false;

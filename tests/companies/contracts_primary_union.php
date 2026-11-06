@@ -54,7 +54,7 @@ essentialCheck($route->invoke(null,$probe,'contracts','contract'),'wrong high ty
 $probe->uri->value='';$probe->input->get=['source'=>'company'];
 essentialCheck($route->invoke(null,$probe,'contracts','contract'),'explicit owned create selects the company adapter');
 $probe->input->get=[];
-essentialCheck(!$route->invoke(null,$probe,'contracts','index')&&$route->invoke(null,$probe,'contracts','file'),'principal index remains the legacy union while owned files use the scoped reader');
+essentialCheck($route->invoke(null,$probe,'contracts','index')&&$route->invoke(null,$probe,'contracts','table')&&$route->invoke(null,$probe,'contracts','file'),'principal original list and table use the scoped legacy/owned union while owned files retain their scoped reader');
 
 foreach(['mark_as_signed','unmark_as_signed','clear_signature','add_contract_attachment']as$action){
     $probe->uri->value=$canonical;

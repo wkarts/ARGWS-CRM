@@ -21,7 +21,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
     Module Name: Webhooks
     Module URI: https://github.com/wkarts/argws-crm/releases
     Description: Integração ARGWS CRM com serviços que oferecem suporte a webhooks.
-    Version: 1.2.7
+    Version: 1.2.8
     Requires at least: 3.0.*
 */
 

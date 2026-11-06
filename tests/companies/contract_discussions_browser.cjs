@@ -1,4 +1,5 @@
 'use strict';
+const {selectContractClient} = require('../helpers/native_contract_driver.cjs');
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Official staff and contact contract routes with private publication. Disposable fixture only.
@@ -53,7 +54,7 @@ async function hidden(form) { return form.locator('input[type=hidden]').evaluate
       sql('UPDATE tblcontacts SET email_verified_at=COALESCE(email_verified_at,UTC_TIMESTAMP()) WHERE id=' + contact);
 
       await admin.goto(url + '/admin/contracts/contract?source=company');
-      await admin.locator('#contract-client').selectOption(client);
+      await selectContractClient(admin, client);
       await admin.locator('#contract-new-name').fill('Native discussion ' + letter);
       await admin.locator('#contract-new-body').fill('Immutable contractual text ' + letter + ' <script>literal</script>');
       await admin.locator('#contract-new-start').fill('2026-10-19');

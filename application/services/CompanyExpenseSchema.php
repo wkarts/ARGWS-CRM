@@ -32,6 +32,7 @@ final class CompanyExpenseSchema
     public static function assertValid($db,string $p):void
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');
+        if(IssuerStorage::fieldExists($db,'description',$p.'company_expense_categories')){require_once __DIR__.'/NativeCompanyExpenseCategorySchema.php';NativeCompanyExpenseCategorySchema::assertValid($db,$p);}
         $conn=$db->pdo??$db->conn_id??null;if($conn instanceof PDO&&$conn->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite')return;
         foreach(self::definitions() as $suffix=>$fields){
             $table=$p.$suffix;$columns=[];

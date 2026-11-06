@@ -13,12 +13,24 @@ require_once __DIR__.'/CompanyInvoiceBalance.php';
 /** Named-company credit and reversal entries share the native financial writer and installation lock. */
 trait CompanyCreditWriter
 {
+    private ?array $nativeCreditCreation=null;
+    /** Exact short-lived issuance authority; this public verifier cannot manufacture a creation frame. */
+    public function assertNativeCreditCreationInOwned($db,string $p,int $issuer,int $actor,int $credit,?int $line=null):void
+    {
+        $frame=$this->nativeCreditCreation;
+        if(!$frame||$db!==$this->db||$p!==$frame['prefix']||$issuer!==$frame['issuer']||$actor!==$frame['actor']||$credit!==$frame['credit']||($line!==null&&!in_array($line,$frame['lines'],true)))throw new \DomainException('native_custom_field_creation_denied');
+        \IssuerTransaction::assertOwned($db,$p,['creditnotes','company_credit_documents','itemable']);
+        $this->creditAuth($issuer,$actor,[['credit_notes','view'],['credit_notes','create']]);
+        $receipt=$this->creditRows('SELECT d.actor_id,d.request_key,d.input_hash FROM '.$p.'company_credit_documents d JOIN '.$p.'creditnotes c ON c.id=d.credit_id AND c.issuer_id=d.issuer_id WHERE d.credit_id=? AND d.issuer_id=? FOR UPDATE',[$credit,$issuer])[0]??null;
+        if(!$receipt||(int)$receipt['actor_id']!==$actor||$receipt['request_key']!==$frame['key']||$receipt['input_hash']!==$frame['hash'])throw new \DomainException('native_custom_field_creation_denied');
+        if($line!==null&&!$this->creditRows('SELECT id FROM '.$p.'itemable WHERE id=? AND rel_id=? AND rel_type=?',[$line,$credit,'credit_note']))throw new \DomainException('native_custom_field_creation_denied');
+    }
     private function creditRows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function creditAuth(int $issuer,int $actor,array $caps):void
     {
         $acl=new \IssuerResourceAccess($this->db,db_prefix());foreach($caps as [$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new \DomainException('company_credit_access_denied');
     }
-    private function creditTransaction(int $issuer,int $actor,array $caps,callable $work,?\CompanyFinancialApiGuard $apiGuard=null,string $apiOperation='',array $apiTarget=[],string $apiKey='',?\CompanyPostRefundManualReversalSource $manualSource=null,?\CompanyLocalNoncashFundsSource$localSource=null)
+    private function creditTransaction(int $issuer,int $actor,array $caps,callable $work,?\CompanyFinancialApiGuard $apiGuard=null,string $apiOperation='',array $apiTarget=[],string $apiKey='',?\CompanyPostRefundManualReversalSource $manualSource=null,?\CompanyLocalNoncashFundsSource$localSource=null,array $extraTables=[])
     {
         $this->creditAuth($issuer,$actor,$caps);\CompanyCreditSchema::assertValid($this->db,db_prefix());
         $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','invoices','issuers_invoice_documents','creditnotes','creditnote_refunds','credits','currencies','options','itemable','item_tax','issuers_sequences','invoicepaymentrecords','company_payment_receipts','company_credit_documents','company_credit_entries','issuers_audit'];
@@ -27,6 +39,7 @@ trait CompanyCreditWriter
         if($apiGuard!==null)$tables=array_values(array_unique(array_merge($tables,$apiGuard->tables())));
         if($manualSource!==null){$manualSource->assertStorage($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,$manualSource->tables())));}
         if($localSource!==null){if(get_class($localSource)!=='BancoBrasil\\RestoredLocalNoncashFunds')throw new \DomainException('company_local_settlement_source_denied');$localSource->assertSchema($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,$localSource->tables())));}
+        $tables=array_values(array_unique(array_merge($tables,$extraTables)));
         return \IssuerTransaction::run($this->db,db_prefix(),$tables,function()use($issuer,$actor,$caps,$work,$apiGuard,$apiOperation,$apiTarget,$apiKey,$localSource){(new \IssuerResourceAccess($this->db,db_prefix()))->lockFinancialIdentity($issuer,$actor);$this->creditAuth($issuer,$actor,$caps);$apiGuard?->beforeInOwned($this->db,db_prefix(),$issuer,$actor,$apiOperation,$apiTarget,$apiKey);$result=$work();$this->creditAuth($issuer,$actor,$caps);$apiGuard?->afterInOwned($this->db,db_prefix(),$issuer,$actor,$apiOperation,$apiTarget,$apiKey);$localSource?->confirmed($this->db,db_prefix(),$issuer,$actor);return $result;});
     }
     private static function creditText($value,int $max,bool $required=false):string
@@ -50,10 +63,17 @@ trait CompanyCreditWriter
     public function issueCompanyCredit($issuer,$actor,array $input,string $key,?\CompanyFinancialApiGuard $apiGuard=null):int
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);self::creditKey($key);
-        if(array_diff(array_keys($input),['client_id','currency','date','items','discount_mode','discount_value','discount_type','adjustment','note']))throw new \DomainException('company_credit_invalid_input');
+        if(array_diff(array_keys($input),['client_id','currency','date','items','discount_mode','discount_value','discount_type','adjustment','note','native_metadata']))throw new \DomainException('company_credit_invalid_input');
         if(!is_array($input['items']??null))throw new \DomainException('company_credit_invalid_input');
         $data=\CompanyInvoiceAmounts::calculate($input['items'],array_intersect_key($input,array_flip(['discount_mode','discount_value','discount_type','adjustment'])));
-        $data+=['client_id'=>\IssuerPolicy::id($input['client_id']??null),'currency'=>\IssuerPolicy::id($input['currency']??null),'date'=>self::creditDate($input['date']??null),'note'=>self::creditText($input['note']??'',20000)];$hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));
+        $data+=['client_id'=>\IssuerPolicy::id($input['client_id']??null),'currency'=>\IssuerPolicy::id($input['currency']??null),'date'=>self::creditDate($input['date']??null),'note'=>self::creditText($input['note']??'',20000)];
+        $extraTables=[];
+        if(array_key_exists('native_metadata',$input)){
+            require_once __DIR__.'/CompanyCreditMetadata.php';
+            $data['native_metadata']=\CompanyCreditMetadata::normalize($input['native_metadata'],count($data['items']));
+            $extraTables=\CompanyCreditMetadata::tables($data['native_metadata']);
+        }
+        $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));
         return $this->creditTransaction($issuer,$actor,[['credit_notes','view'],['credit_notes','create'],['customers','view']],function()use($issuer,$actor,$key,$data,$hash):int{
             $p=db_prefix();$receipt=$this->creditRows('SELECT issuer_id,actor_id,credit_id,input_hash FROM '.$p.'company_credit_documents WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||!hash_equals($receipt['input_hash'],$hash))throw new \DomainException('company_credit_request_conflict');$this->ownedCredit($issuer,(int)$receipt['credit_id']);return (int)$receipt['credit_id'];}
@@ -61,17 +81,28 @@ trait CompanyCreditWriter
             if(!$client)throw new \DomainException('company_credit_access_denied');$tax=\IssuerPolicy::taxId((string)($client['vat']??''),false)??'';if($tax!==($client['tax_id']??''))throw new \DomainException('company_credit_identity_changed');
             $unit=(new \CompanyCurrencyUnits($this->db,$p))->assertWrite($data['currency']);
             $company=$this->creditRows('SELECT * FROM '.$p.'issuers_registry WHERE id=? AND active=1 FOR UPDATE',[$issuer])[0]??null;if(!$company)throw new \DomainException('company_credit_access_denied');
+            if(isset($data['native_metadata']))$data['native_snapshot']=\CompanyCreditMetadata::capture($this->db,$p,$issuer,$actor,$data['client_id'],$data['native_metadata']);
             $settings=new \CompanySettingsStorage($this->db,$p);$get=fn($name)=>$settings->get($issuer,$name);$raw=json_decode($company['settings_json'],true,32,JSON_THROW_ON_ERROR);
             $profile=['address'=>\CompanySettingsIdentity::documentAddress($get),'city'=>$get('invoice_company_city'),'state'=>$get('company_state'),'postcode'=>$get('invoice_company_postal_code'),'country_code'=>strtoupper($get('invoice_company_country_code')),'phone'=>$get('invoice_company_phonenumber'),'email'=>$get('smtp_email'),'prefix'=>$get('credit_note_prefix'),'terms'=>$get('predefined_terms_credit_note'),'padding'=>6,'logo_inline'=>$raw['company_brand_assets']['logo']??'','signature_inline'=>$raw['company_brand_assets']['signature']??'','pdf_preferences'=>\CompanyInvoicePresentation::capture($settings,$issuer,'creditnotes')];
+            if(isset($data['native_metadata'])&&array_key_exists('terms',$data['native_metadata']))$profile['terms']=$data['native_metadata']['terms'];
             $company['settings_json']=json_encode(['document_profile'=>$profile],JSON_THROW_ON_ERROR);$identity=\InvoiceIssuerDocuments::identity($company);
             $sequence=$this->creditRows("SELECT next_number FROM {$p}issuers_sequences WHERE issuer_id=? AND series='CREDIT' FOR UPDATE",[$issuer])[0]??null;$number=$sequence?(int)$sequence['next_number']:1;if($number<1||$number>2147483647)throw new \DomainException('company_credit_sequence_exhausted');
             if($sequence)\IssuerStorage::query($this->db,"UPDATE {$p}issuers_sequences SET next_number=? WHERE issuer_id=? AND series='CREDIT'",[$number+1,$issuer]);else $this->creditInsert('issuers_sequences',['issuer_id'=>$issuer,'series'=>'CREDIT','next_number'=>2]);
             $formatted=$identity['prefix'].str_pad((string)$number,6,'0',STR_PAD_LEFT);
-            $id=$this->creditInsert('creditnotes',['issuer_id'=>$issuer,'clientid'=>$data['client_id'],'number'=>$number,'prefix'=>$identity['prefix'],'formatted_number'=>$formatted,'number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'status'=>1,'clientnote'=>$data['note'],'terms'=>$identity['terms'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'discount_type'=>$data['discount_type'],'include_shipping'=>0,'show_shipping_on_credit_note'=>0]);if($id<1)throw new \RuntimeException('issuer_credit_write_unconfirmed');
-            foreach($data['items'] as $i=>$item){$itemId=$this->creditInsert('itemable',['rel_id'=>$id,'rel_type'=>'credit_note','description'=>$item['description'],'long_description'=>'','qty'=>$item['qty'],'rate'=>$item['rate'],'unit'=>'','item_order'=>$i+1,'is_optional'=>0,'is_selected'=>1]);foreach($item['taxes'] as $t)$this->creditInsert('item_tax',['itemid'=>$itemId,'rel_id'=>$id,'rel_type'=>'credit_note','taxrate'=>$t['rate'],'taxname'=>$t['name']]);}
+            $record=['issuer_id'=>$issuer,'clientid'=>$data['client_id'],'number'=>$number,'prefix'=>$identity['prefix'],'formatted_number'=>$formatted,'number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'status'=>1,'clientnote'=>$data['note'],'terms'=>$identity['terms'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'discount_type'=>$data['discount_type'],'include_shipping'=>0,'show_shipping_on_credit_note'=>0];
+            if(isset($data['native_metadata']))$record=array_replace($record,\CompanyCreditMetadata::columns($data['native_metadata']));
+            $id=$this->creditInsert('creditnotes',$record);if($id<1)throw new \RuntimeException('issuer_credit_write_unconfirmed');
+            $lineIds=[];
+            foreach($data['items'] as $i=>$item){$metadata=$data['native_metadata']['items'][$i]??['long_description'=>'','unit'=>''];$itemId=$this->creditInsert('itemable',['rel_id'=>$id,'rel_type'=>'credit_note','description'=>$item['description'],'long_description'=>$metadata['long_description'],'qty'=>$item['qty'],'rate'=>$item['rate'],'unit'=>$metadata['unit'],'item_order'=>$i+1,'is_optional'=>0,'is_selected'=>1]);$lineIds[]=$itemId;foreach($item['taxes'] as $t)$this->creditInsert('item_tax',['itemid'=>$itemId,'rel_id'=>$id,'rel_type'=>'credit_note','taxrate'=>$t['rate'],'taxname'=>$t['name']]);}
             $this->creditInsert('company_credit_documents',['credit_id'=>$id,'issuer_id'=>$issuer,'actor_id'=>$actor,'request_key'=>$key,'input_hash'=>$hash,'number'=>$number,'identity_json'=>json_encode($identity,JSON_THROW_ON_ERROR),'recipient_json'=>json_encode(['client_id'=>$data['client_id'],'name'=>self::creditText($client['company'],191,true),'tax_id'=>$tax],JSON_THROW_ON_ERROR),'items_json'=>json_encode($data,JSON_THROW_ON_ERROR),'created_at'=>date('Y-m-d H:i:s')]);
+            if(isset($data['native_metadata'])){
+                if($this->nativeCreditCreation!==null)throw new \DomainException('native_custom_field_creation_denied');
+                $this->nativeCreditCreation=['prefix'=>$p,'issuer'=>$issuer,'actor'=>$actor,'credit'=>$id,'key'=>$key,'hash'=>$hash,'lines'=>$lineIds];
+                try{\CompanyCreditMetadata::persist($this->db,$p,$issuer,$actor,$id,$lineIds,$data,$this);\CompanyCreditMetadata::confirmCreated($this->db,$p,$issuer,$id,$data);}
+                finally{$this->nativeCreditCreation=null;}
+            }
             if(!$this->creditRows('SELECT d.credit_id FROM '.$p.'company_credit_documents d JOIN '.$p.'creditnotes c ON c.id=d.credit_id AND c.issuer_id=d.issuer_id WHERE d.request_key=? AND d.input_hash=? AND c.total=?',[$key,$hash,$data['total']]))throw new \RuntimeException('issuer_credit_write_unconfirmed');$this->creditAudit($issuer,$actor,$id,'company_credit_issued',$key);$this->creditJournal($issuer,$actor,'credit_issued','credit',$id,$data['currency'],$data['date'],$data['total'],[],['date'=>$data['date'],'total'=>$data['total'],'status'=>1,'available'=>$data['total']],hash('sha256','company-journal:credit-issued:'.$key));return $id;
-        },$apiGuard,'credit_issue',['client_id'=>$data['client_id'],'currency'=>$data['currency']],$key);
+        },$apiGuard,'credit_issue',['client_id'=>$data['client_id'],'currency'=>$data['currency']],$key,null,null,$extraTables);
     }
     private function ownedCredit(int $issuer,int $credit):array
     {

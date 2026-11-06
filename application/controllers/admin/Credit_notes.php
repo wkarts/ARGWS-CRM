@@ -48,6 +48,11 @@ class Credit_notes extends AdminController
 
     public function table($clientid = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::table($this, $clientid);
+            return;
+        }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {
             ajax_access_denied();
         }
@@ -55,6 +60,27 @@ class Credit_notes extends AdminController
         App_table::find('credit_notes')->output([
             'clientid' => $clientid,
         ]);
+    }
+
+    public function client_change_data($clientid)
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::client($this,$clientid);
+    }
+
+    public function items()
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::catalog($this);
+    }
+
+    public function item($id)
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_404(); return; }
+        require_once APPPATH.'services/NativeCompanyCreditsController.php';
+        NativeCompanyCreditsController::catalog($this,$id);
     }
 
     public function update_number_settings($id)
@@ -109,6 +135,11 @@ class Credit_notes extends AdminController
     /* Add new invoice or update existing */
     public function credit_note($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::form($this, $id);
+            return;
+        }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {
             access_denied('credit_notes');
         }
@@ -275,6 +306,11 @@ class Credit_notes extends AdminController
     /* Get all invoice note data */
     public function get_credit_note_data_ajax($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::preview($this, $id);
+            return;
+        }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {
             echo _l('access_denied');
             die;
@@ -392,6 +428,11 @@ class Credit_notes extends AdminController
     /* Generates credit note PDF and send to email */
     public function pdf($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCreditsController.php';
+            NativeCompanyCreditsController::pdf($this, $id);
+            return;
+        }
         if (staff_cant('view', 'credit_notes') && staff_cant('view_own', 'credit_notes')) {
             access_denied('credit_notes');
         }

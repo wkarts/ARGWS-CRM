@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php if(!empty($native_company_sales_workspace)){init_head(); ?><div id="wrapper"><div class="content"><div class="row"><div class="col-md-12"><div class="panel_s"><div class="panel-body"><?php require APPPATH.'views/admin/includes/native_sales_workspace.php'; ?></div></div></div></div></div></div><?php init_tail(); ?></body></html><?php return;} ?>
+<?php if(!empty($native_company_sales_workspace)&&empty($native_company_sales_manage)){init_head(); ?><div id="wrapper"><div class="content"><div class="row"><div class="col-md-12"><div class="panel_s"><div class="panel-body"><?php require APPPATH.'views/admin/includes/native_sales_workspace.php'; ?></div></div></div></div></div></div><?php init_tail(); ?></body></html><?php return;} ?>
 <?php init_head(); ?>
-<div id="wrapper">
+<div id="wrapper"<?php if(!empty($native_company_sales_manage)){ ?> data-native-sales-kind="estimates"<?php } ?>>
     <div class="content">
         <div class="row">
             <div class="panel-table-full">
@@ -30,6 +30,7 @@ var hidden_columns = [2, 5, 6, 8, 9];
 <?php init_tail(); ?>
 <script>
 $(function() {
+    <?php if(!empty($native_company_sales_manage)){ ?>initDataTable('.table-estimates', admin_url + 'estimates/table', [5,6], [5,6], {}, [0, 'desc']);<?php } ?>
     init_estimate();
 });
 </script>

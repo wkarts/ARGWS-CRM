@@ -104,7 +104,7 @@ foreach ($groups as $group) {
                                                         <?= e($group['name']); ?>
                                                     </a>
                                                     <small class="tw-text-white"> -
-                                                        <?= isset($native_knowledge) ? $native_knowledge_counts[$group['groupid']] : total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></small>
+                                                        <span data-kb-group-count><?= isset($native_knowledge) ? $native_knowledge_counts[$group['groupid']] : total_rows(db_prefix() . 'knowledge_base', 'articlegroup=' . $group['groupid']); ?></span></small>
                                                     <?php if ($has_permission_edit) { ?>
                                                     <a href="#" onclick="return false;"
                                                         class="pull-right color-white kanban-color-picker"
@@ -236,7 +236,13 @@ foreach ($groups as $group) {
                     setTimeout(function() {
                         var payload = {order: order, groupid: $(ui.item.parent()[0]).attr('data-group-id')};
                         if (window.NativeCompanyTransport) payload.revisions = revisions;
-                        $.post(admin_url + 'knowledge_base/update_kan_ban', payload).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
+                        $.post(admin_url + 'knowledge_base/update_kan_ban', payload).done(function (response) {
+                            if (!window.NativeCompanyTransport) return;
+                            if (!updateKnowledgeRevisions(response, articles, revisions)) return;
+                            $('.kan-ban-col').each(function () {
+                                $(this).find('[data-kb-group-count]').text($(this).find('.article-group > li').length);
+                            });
+                        });
                     }, 100);
                 }
             }
@@ -266,7 +272,12 @@ foreach ($groups as $group) {
                 var data = {}
                 data.order = order;
                 if (window.NativeCompanyTransport) data.revisions = revisions;
-                $.post(admin_url + 'knowledge_base/update_groups_order', data).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
+                $.post(admin_url + 'knowledge_base/update_groups_order', data).done(function (response) {
+                    if (!window.NativeCompanyTransport || !updateKnowledgeRevisions(response, status, revisions)) return;
+                    status.each(function (index) {
+                        $(this).find('.panel-heading [data-native-revision]').attr('data-order', order[index][1]).data('order', order[index][1]);
+                    });
+                });
             }
         });
         // Status color change
@@ -274,8 +285,17 @@ foreach ($groups as $group) {
             var color = $(this).data('color');
             var group_id = $(this).parents('.panel-heading').data('group-id');
             var payload = {color: color, group_id: group_id};
-            if (window.NativeCompanyTransport) payload.revision = $('.kan-ban-col').filter(function () { return $(this).attr('data-col-group-id') === String(group_id); }).attr('data-native-revision');
-            $.post(admin_url + 'knowledge_base/change_group_color', payload).done(function () { if (window.NativeCompanyTransport) window.location.reload(); });
+            var group = $('.kan-ban-col').filter(function () { return $(this).attr('data-col-group-id') === String(group_id); });
+            if (window.NativeCompanyTransport) payload.revision = group.attr('data-native-revision');
+            $.post(admin_url + 'knowledge_base/change_group_color', payload).done(function (response) {
+                if (!window.NativeCompanyTransport) return;
+                if (typeof response === 'string') {
+                    try { response = JSON.parse(response); } catch (error) { return; }
+                }
+                if (!response) return;
+                if (!updateKnowledgeRevisions({success: response.success, revisions: [response.revision]}, group, [payload.revision])) return;
+                group.find('.panel-heading [data-native-revision]').attr('data-color', color).data('color', color);
+            });
         });
         $('.toggle-articles-list').on('click', function() {
             var list_tab = $('#list_tab');
@@ -290,6 +310,27 @@ foreach ($groups as $group) {
             }
         });
     });
+
+    // Keep the original kanban interaction in place after a confirmed mutation.
+    // Only the server's revision can authorize the next edit; a stale/incomplete
+    // response must not overwrite a newer token already attached to the DOM.
+    function updateKnowledgeRevisions(response, elements, previous) {
+        if (typeof response === 'string') {
+            try { response = JSON.parse(response); } catch (error) { return false; }
+        }
+        var revisions = response && response.revisions;
+        if (!response || response.success !== true || !Array.isArray(revisions) || revisions.length !== elements.length || previous.length !== elements.length) return false;
+        var valid = true;
+        elements.each(function (index) {
+            if (typeof revisions[index] !== 'string' || !/^[a-f0-9]{64}$/.test(revisions[index]) || $(this).attr('data-native-revision') !== previous[index]) valid = false;
+        });
+        if (!valid) return false;
+        elements.each(function (index) {
+            $(this).attr('data-native-revision', revisions[index]);
+            if ($(this).hasClass('kan-ban-col')) $(this).find('.panel-heading [data-native-revision]').attr('data-native-revision', revisions[index]);
+        });
+        return true;
+    }
 
     function initKnowledgeBaseTableArticles() {
         var KB_Articles_ServerParams = {};

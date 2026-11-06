@@ -209,7 +209,7 @@ específicos. Conferir backups cifrados e política de retenção operacional.
 - https://www.php.net/manual/en/function.openssl-pkcs12-read.php
 - https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2020_15_DOCICP_04.01.pdf
 
-## Compatibilidade do runtime (4.8.9)
+## Compatibilidade do runtime (4.9.0)
 
 A tentativa CLI padrão permite aproveitar algoritmos presentes no executável,
 mesmo quando a biblioteca vinculada ao PHP não os oferece ou o módulo legacy não
@@ -227,8 +227,9 @@ configuração TLS, ACL, CSRF ou armazenamento foi alterado. O limite de 1 s no 
 padrão pode recusar KDFs muito custosos; não aumentar limites para arquivos de
 origem desconhecida sem avaliar o orçamento do worker.
 
-Release nativa 489/4.8.9 com migration NOOP; não há DDL ou conversão de credenciais.
-A PR parte de main 3cd2ac57, sem incorporar a PR 61. Se outra frente avançar main,
+Release nativa 490/4.9.0 com migration NOOP; não há DDL ou conversão de credenciais.
+A branch foi sincronizada com main 08ea84cf após a integração da PR 61; sua
+migration 489 e demais alterações foram preservadas. Se outra frente avançar main,
 sincronizar código e regenerar o próximo passo nativo antes do merge. Implantação
 requer CI/homologação e backup consistente pelo fluxo nativo. Em rollback,
 restaurar a distribuição anterior compatível, preservar cifras/auditoria e não

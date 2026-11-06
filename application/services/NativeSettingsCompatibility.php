@@ -6,6 +6,7 @@ declare(strict_types=1);
 final class NativeSettingsCompatibility
 {
     public const PRIMARY_GROUPS = [
+        'email', 'invoices',
         'credit_notes', 'subscriptions', 'payment_gateways', 'leads', 'pusher',
         'e_sign', 'cronjob', 'ai', 'update', 'info', 'argws_platform',
         'sms', 'openai', 'einvoice', 'products',

@@ -17,12 +17,12 @@
   {
     "name": "clear_item_preview_values",
     "source": "assets/js/main.js",
-    "sha256": "3dad68a96f813ec015a50032741f8b638f818af6c2c535c733ec0506dad3267e"
+    "sha256": "cdd81018d190cb56bc2578da7030d047fb40e353b87550de207f17b23e0ab9cb"
   },
   {
     "name": "add_item_to_table",
     "source": "assets/js/main.js",
-    "sha256": "e0f9f2d9873658e317a18937ea2219534b3beafa338ba4216b4bfac8029e52db"
+    "sha256": "a7a389ed511999e76e9c7f5c6be38a8bd9036dc4dde81b26657ec47a4c96231f"
   },
   {
     "name": "get_taxes_dropdown_template",
@@ -102,11 +102,11 @@
   {
     "name": "init_billing_and_shipping_details",
     "source": "assets/js/main.js",
-    "sha256": "bf2a3e63824e16bf721d93674aab2ae27d01fa012eba938a07a7ef3929f7e1f1"
+    "sha256": "4a2edb862b77abb573bf08fded5ee2f0155ff7e993d9e43478d6f4b23fb549ad"
   },
   {
     "name": "ready_handlers",
     "source": "assets/js/main.js",
-    "sha256": "0f07a2c8434135d0ff2512c25fe449d60cbf3c4aa09d023b63eacb44ea91ed87"
+    "sha256": "432fbf029b0ff16833eccd4c8473d627fa34df84da840a0f5291e7a1a0192064"
   }
 ]

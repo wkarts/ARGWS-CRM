@@ -1,4 +1,5 @@
 'use strict';
+const {selectContractClient} = require('../helpers/native_contract_driver.cjs');
 const native=require('../helpers/native_invoice_driver.cjs');
 const {salesSourceId}=require('../helpers/native_sales_ids.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
@@ -55,7 +56,7 @@ if(letter==='primary'){
  await nav(p,p.locator('#task-billing-prepare'));await nav(p,p.locator('#task-billing-convert'));
  const invoiceUrl=new URL(await p.locator('#task-linked-invoice').getAttribute('href'),base);assert.equal(invoiceUrl.pathname,'/admin/invoices');rows[owner].invoices=Number(invoiceUrl.searchParams.get('invoice'));assert(rows[owner].invoices>0);
 }
-await p.goto(base+'/admin/contracts/contract?source=company');await p.locator('#contract-client').selectOption(client);await p.locator('#contract-new-name').fill('Calendar private contract '+owner);await p.locator('#contract-new-body').fill('Synthetic GUI contract '+owner);await p.locator('#contract-new-start').fill('2026-10-01');await p.locator('#contract-new-due').fill('2026-10-23');await nav(p,p.getByRole('button',{name:'Criar rascunho de contrato',exact:true}));const contractCanonical=new URL(p.url()).pathname.split('/').filter(Boolean).at(-1);assert.match(contractCanonical||'',/^[1-9]\d*$/);const contract=Number(BigInt(contractCanonical)%4294967296n);assert(contract>0);await nav(p,p.getByRole('button',{name:'Ativar contrato e preservar texto',exact:true}));rows[owner].contracts=contract;}
+await p.goto(base+'/admin/contracts/contract?source=company');await selectContractClient(p, client);await p.locator('#contract-new-name').fill('Calendar private contract '+owner);await p.locator('#contract-new-body').fill('Synthetic GUI contract '+owner);await p.locator('#contract-new-start').fill('2026-10-01');await p.locator('#contract-new-due').fill('2026-10-23');await nav(p,p.getByRole('button',{name:'Criar rascunho de contrato',exact:true}));const contractCanonical=new URL(p.url()).pathname.split('/').filter(Boolean).at(-1);assert.match(contractCanonical||'',/^[1-9]\d*$/);const contract=Number(BigInt(contractCanonical)%4294967296n);assert(contract>0);await nav(p,p.getByRole('button',{name:'Ativar contrato e preservar texto',exact:true}));rows[owner].contracts=contract;}
 await select(setup.owners.primary);await p.goto(base+'/admin/settings?group=company');
 const prepared=fixture('verify',JSON.stringify(rows)),before=fixture('snapshot');assert.equal(prepared.read_only,true);
 const settingsRoute=base+'/admin/settings?group=calendar',calendarRoute=base+'/admin/utilities/calendar',feedRoute=base+'/admin/utilities/get_calendar_data';

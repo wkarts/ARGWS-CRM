@@ -44,6 +44,11 @@ final class NativeCompanyResourceReferences
         if(in_array($type,['invoice','invoices'],true)){
             $tables=['invoices'];if($db->table_exists($prefix.'company_invoice_drafts')){require_once __DIR__.'/CompanyInvoiceDrafts.php';$tables=array_merge($tables,(new CompanyInvoiceDrafts($db,$prefix))->tables());}return array_values(array_unique($tables));
         }
+        if($type==='expense'){
+            // Existing historical-customer boundary and the separate company-owned source.
+            // Enlisting a table does not authorize a legacy or foreign parent.
+            return array_values(array_filter(['company_expenses','expenses','clients','issuers_clients','issuers_client_links','invoices'],static fn($table)=>$db->table_exists($prefix.$table)));
+        }
         return [];
     }
 

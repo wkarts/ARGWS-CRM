@@ -16,7 +16,9 @@ final class NativeCompanyGoogleCalendarPreferences
     public function valuesInOwnedTransaction(int $i,int $a):array
     {
         IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());CompanyCalendarPreferences::authorize($this->db,$this->p,$i,$a);$acl=new IssuerResourceAccess($this->db,$this->p);$primary=$acl->primaryId();$storage=new CompanySettingsStorage($this->db,$this->p);$values=[];
-        foreach(self::KEYS as$key){if($primary===$i){$rows=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'options WHERE name=?',[$key])->result_array();if(count($rows)!==1)throw new DomainException('native_calendar_google_invalid');$values[$key]=$rows[0]['value'];}else $values[$key]=$storage->exists($i,$key)?$storage->get($i,$key):'';}
+        // These optional keys have empty installation defaults. Reading a missing
+        // key must not provision it; only an explicit guarded save may do so.
+        foreach(self::KEYS as$key){if($primary===$i){$rows=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'options WHERE name=?',[$key])->result_array();if(count($rows)>1)throw new DomainException('native_calendar_google_invalid');$values[$key]=$rows?$rows[0]['value']:'';}else $values[$key]=$storage->exists($i,$key)?$storage->get($i,$key):'';}
         $values=self::prepare($values);CompanyCalendarPreferences::authorize($this->db,$this->p,$i,$a);if($primary!==$acl->primaryId())throw new DomainException('native_calendar_google_invalid');return['values'=>$values,'revision'=>hash('sha256',json_encode([$i,$primary,$values],JSON_THROW_ON_ERROR))];
     }
     public function page(int $i,int $a):array{return IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($i,$a){(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($i,$a);$v=$this->valuesInOwnedTransaction($i,$a);if($v!==$this->valuesInOwnedTransaction($i,$a))throw new DomainException('native_calendar_google_stale');return$v;});}

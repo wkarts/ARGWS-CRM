@@ -36,6 +36,64 @@ const native='<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="U
    assert.equal(await page.locator('#native-field').inputValue(),value,'navigation leaves form intact');
    await page.screenshot({path:path.join(output,`company-${width}.png`),fullPage:true});
   }
-  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(output,'receipt.json'),JSON.stringify({kind:'synthetic-provider-real-native-template',widths:[1280,768,390],errors,limitations:['search/timers/notifications need scoped providers','no authenticated application or database exercised']},null,2));
+  // Actual PHP-emitted hyperlink editor, including already persisted markup.
+  // The wrapper uses attribute setters; only the production helper parses it.
+  const hostileLabel='Field <img src=x onerror="window.linkExecuted=true">';
+  await page.evaluate(label=>{
+   const wrapper=document.createElement('div');wrapper.className='cf-hyperlink';wrapper.id='literal-link-fixture';
+   wrapper.setAttribute('data-fieldto','contacts');wrapper.setAttribute('data-field-id','987');wrapper.setAttribute('data-field-name',label);
+   wrapper.setAttribute('data-value','<a href="https://example.invalid/"><img src=x onerror="window.linkExecuted=true">Original title</a>');
+   wrapper.innerHTML='<a id="custom_fields_contacts_987_popover" href="#">Tip</a><input type="hidden" id="custom_fields[contacts][987]" name="custom_fields[contacts][987]">';
+   cfh_popover_templates['987']='<div><input id="custom_fields_contacts_987_title"><input id="custom_fields_contacts_987_link"><a id="cf_hyperlink_open_987">Open</a><button type="button" id="custom_fields_contacts_987_btn-save">Save</button><button type="button" id="custom_fields_contacts_987_btn-cancel">Cancel</button></div>';
+   document.body.append(wrapper);custom_fields_hyperlink();
+  },hostileLabel);
+  assert.equal(await page.locator('#custom_fields_contacts_987_popover').textContent(),'Original title','stored link HTML contributes text only');
+  assert.equal(await page.locator('#literal-link-fixture img').count(),0);
+  await page.evaluate(()=>$('#custom_fields_contacts_987_popover').trigger('click'));
+  assert.equal(await page.locator('.popover-title').textContent(),hostileLabel,'popover title treats the definition as literal text');
+  assert.equal(await page.locator('.popover img').count(),0);
+  const literalTitle='<svg onload="window.linkExecuted=true"> & "quote"';
+  const literalUrl='https://example.invalid/?q="/><img src=x onerror="window.linkExecuted=true">';
+  await page.locator('#custom_fields_contacts_987_title').fill(literalTitle);
+  await page.locator('#custom_fields_contacts_987_link').fill(literalUrl);
+  await page.evaluate(()=>$('#custom_fields_contacts_987_btn-save').trigger('click'));
+  const stored=await page.locator('[name="custom_fields[contacts][987]"]').inputValue();
+  assert.deepEqual(await page.evaluate(value=>{const template=document.createElement('template');template.innerHTML=value;const a=template.content.querySelector('a');return{href:a.getAttribute('href'),title:a.textContent,unsafe:template.content.querySelectorAll('img,svg,script,[onerror],[onload]').length};},stored),{href:literalUrl,title:literalTitle,unsafe:0},'editing serializes text and URL through DOM attributes without active markup');
+  assert.equal(await page.locator('#custom_fields_contacts_987_popover').textContent(),literalTitle);
+  await page.evaluate(()=>$('#custom_fields_contacts_987_popover').trigger('click'));
+  await page.locator('#custom_fields_contacts_987_link').fill('javascript:window.linkExecuted=true');
+  await page.evaluate(()=>$('#custom_fields_contacts_987_btn-save').trigger('click'));
+  assert.equal(await page.locator('[name="custom_fields[contacts][987]"]').inputValue(),stored,'unsupported executable scheme cannot replace the stored value');
+  assert.equal(await page.locator('#custom_fields_contacts_987_link').evaluate(node=>node.validity.customError),true);
+  await page.evaluate(()=>$('#custom_fields_contacts_987_btn-cancel').trigger('click'));
+  assert.equal(await page.evaluate(()=>Boolean(window.linkExecuted)),false);
+  // Repeated custom-field identities are expected in original document rows.
+  // Open both editors together: only the second owning row may be changed.
+  await page.evaluate(()=>{
+   cfh_popover_templates['988']='<div><input id="custom_fields_items_988_title"><input id="custom_fields_items_988_link"><a id="cf_hyperlink_open_988">Open</a><button type="button" id="custom_fields_items_988_btn-save">Save</button><button type="button" id="custom_fields_items_988_btn-cancel">Cancel</button></div>';
+   for(const index of [1,2]){
+    const wrapper=document.createElement('div');wrapper.className='cf-hyperlink';wrapper.id='item-link-row-'+index;
+    wrapper.setAttribute('data-fieldto','items');wrapper.setAttribute('data-field-id','988');wrapper.setAttribute('data-field-name','Item link');
+    wrapper.setAttribute('data-value','<a href="https://example.invalid/'+index+'">Row '+index+'</a>');
+    wrapper.innerHTML='<a id="custom_fields_items_988_popover" href="#">Tip</a><input type="hidden" id="custom_fields[items][988]" data-fieldid="988" data-fieldto="items" name="newitems['+index+'][custom_fields][items][988]">';
+    document.body.append(wrapper);
+   }
+   custom_fields_hyperlink();
+  });
+  const firstStored=await page.locator('#item-link-row-1 > input').inputValue();
+  await page.locator('#item-link-row-1 > a').click();
+  await page.locator('#item-link-row-2 > a').click();
+  const secondPopover=page.locator('#'+await page.locator('#item-link-row-2 > a').getAttribute('aria-describedby'));
+  assert.equal(await secondPopover.locator('[id="custom_fields_items_988_title"]').inputValue(),'Row 2');
+  await secondPopover.locator('[id="custom_fields_items_988_title"]').fill('Second edited');
+  await secondPopover.locator('[id="custom_fields_items_988_link"]').fill('https://example.invalid/second-edited');
+  await secondPopover.locator('[id="custom_fields_items_988_btn-save"]').click();
+  assert.equal(await page.locator('#item-link-row-1 > input').inputValue(),firstStored,'a repeated field ID cannot overwrite a different document row');
+  assert.equal(await page.locator('#item-link-row-1 > a').textContent(),'Row 1');
+  assert.match(await page.locator('#item-link-row-2 > input').inputValue(),/second-edited/);
+  assert.equal(await page.locator('#item-link-row-2 > a').textContent(),'Second edited');
+  const firstPopover=page.locator('#'+await page.locator('#item-link-row-1 > a').getAttribute('aria-describedby'));
+  await firstPopover.locator('[id="custom_fields_items_988_btn-cancel"]').click();
+  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(output,'receipt.json'),JSON.stringify({kind:'synthetic-provider-real-native-template',widths:[1280,768,390],custom_field_link:'literal DOM and safe transport checked',errors,limitations:['search/timers/notifications need scoped providers','no authenticated application or database exercised']},null,2));
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

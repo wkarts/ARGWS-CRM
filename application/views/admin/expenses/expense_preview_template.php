@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_expense_index)){require __DIR__.'/native_preview.php';return;} ?>
 <div class="col-md-12 no-padding">
     <div class="panel_s">
         <div class="panel-body">

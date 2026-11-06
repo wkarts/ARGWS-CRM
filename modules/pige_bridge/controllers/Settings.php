@@ -45,6 +45,19 @@ class Settings extends AdminController
         }catch(Throwable $e){set_alert('danger','Não foi possível confirmar a configuração. Reabra a tela, confira revisão, permissões e campos; o segredo não será exibido.');}
         redirect(admin_url('pige_bridge/settings'));
     }
+    public function disable()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            $key=$this->value('connection_key');$revision=$this->integer('revision');$caller=(int)get_staff_user_id();$owned=null;
+            foreach($this->service()->listed($caller) as $connection){if($connection['connection_key']===$key){$owned=$connection;break;}}
+            if($owned===null)throw new DomainException('pige_configuration_access_denied');
+            // Scope comes only from the authorized stored record. The writer locks and rechecks revision/ACL.
+            $this->service()->save($key,$owned['scope'],null,false,$revision,$caller);
+            set_alert('success','Integração desativada. Histórico preservado; nenhuma cobrança foi enviada.');
+        }catch(Throwable $e){set_alert('danger','Não foi possível desativar. Reabra a lista e confira as permissões e a revisão.');}
+        redirect(admin_url('pige_bridge/settings'));
+    }
     public function mapping()
     {
         if(!$this->writeAllowed())return;

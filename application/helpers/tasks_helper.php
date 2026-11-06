@@ -231,9 +231,9 @@ function init_relation_tasks_table($table_attributes = [], $filtersWrapperId = '
     if ($native) {
         $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');
         require_once APPPATH.'services/NativeCompanyRelatedTaskTableFactory.php';require_once APPPATH.'services/NativeCompanyFilters.php';require_once APPPATH.'services/NativeCompanyCustomFields.php';
-        $relationType=$table_attributes['data-new-rel-type']??null;if(!in_array($relationType,['ticket','project','invoice'],true))throw new DomainException('native_task_relation_writer_required');
+        $relationType=$table_attributes['data-new-rel-type']??null;if(!in_array($relationType,['ticket','project','invoice','expense'],true))throw new DomainException('native_task_relation_writer_required');
         $parent=NativeCompanyResourceReferences::resolve($CI->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$relationType,$table_attributes['data-new-rel-id']??null,'view');
-        $allowedSources=match($relationType){'ticket'=>['company_ticket'],'project'=>['company_project'],'invoice'=>['invoice','company_invoice_draft']};if(!in_array($parent['source_kind'],$allowedSources,true))throw new DomainException('native_task_legacy_relation_projection_required');
+        $allowedSources=match($relationType){'ticket'=>['company_ticket'],'project'=>['company_project'],'invoice'=>['invoice','company_invoice_draft'],'expense'=>['expense','company_expense']};if(!in_array($parent['source_kind'],$allowedSources,true))throw new DomainException('native_task_legacy_relation_projection_required');
         // The project variant renders bulk, overview and Kanban controls whose
         // native adapters have not yet been composed. Fail before any HTML.
         if($relationType==='project')throw new DomainException('native_task_project_controls_incomplete');

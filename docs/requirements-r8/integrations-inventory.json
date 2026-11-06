@@ -1,0 +1,1884 @@
+{
+  "reference": {
+    "version": "4.0.2",
+    "commit": "aa58b832b3c5ed04a599caacba125b056c081ba7"
+  },
+  "base": {
+    "version": "4.8.8",
+    "commit": "3cd2ac577a969840c94b019f602cb69d710c0e78"
+  },
+  "scope": "R10/R11 integrations and online help",
+  "methodology": "Inventory of declared PHP controller/library methods, literal routes/hooks/options and view blob IDs. Framework base classes are labelled separately. Does not infer dynamic endpoints, enabled modules, effective permissions, visual equivalence or provider validation.",
+  "areas": [
+    {
+      "module": "api",
+      "current_header_after_change": "2.0.4",
+      "reference_to_base_changes": [
+        {
+          "path": "modules/api/api.php",
+          "reference_blob": "d3015a5bd5fbfd81e37869c27563837c80c509c4",
+          "base_blob": "7ad13f26f402641d632672beb3d7fc744cbf35c8",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "modules/api/controllers/Contacts.php",
+          "reference_blob": "43ac76efade19d0af33298825da11d9726d14492",
+          "base_blob": "8537c7832db465b209dfc88920226cbb83ecb824",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "modules/api/controllers/Invoices.php",
+          "reference_blob": "8dde9754763b39253f9fb6d684d9f0171cbf49ea",
+          "base_blob": "00a9a18fc8bd185010a5b2cfd8b788d58069efd0",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "modules/api/controllers/Staffs.php",
+          "reference_blob": "e54c18b73b3e3624eb8bf8fe875409e30326ec90",
+          "base_blob": "9a21b24eae78b94b400fc8ad3cd9605afe24426b",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "modules/api/install_migrations.php",
+          "reference_blob": null,
+          "base_blob": "6550218409793bc0610b571ee4d8431dc9206582",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "modules/api/migrations/202_version_202.php",
+          "reference_blob": null,
+          "base_blob": "42c75389f4348a3249cdffe271e41c52b5d05d93",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "modules/api/migrations/203_version_203.php",
+          "reference_blob": null,
+          "base_blob": "502ae9ecf35ae4b82eb1555b25404d43cbbec77b",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "modules/api/models/Api_model.php",
+          "reference_blob": "6d51b85685afa27d492acbb80c5bd7376cb588a6",
+          "base_blob": "afc49de8c0b124fbce7bd48da737f5504600bb66",
+          "reference_to_base": "changed"
+        }
+      ],
+      "controllers": [
+        {
+          "path": "modules/api/controllers/API_Controller.php",
+          "reference_blob": "1eeb178a9e1187ec2e11d1676a49d430ddb07825",
+          "base_blob": "1eeb178a9e1187ec2e11d1676a49d430ddb07825",
+          "reference_to_base": "same",
+          "kind": "framework_base",
+          "class": [
+            "API_Controller"
+          ],
+          "declared_methods": [
+            "__construct",
+            "_APIConfig",
+            "_allow_methods",
+            "_limit_method",
+            "api_return"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "_APIConfig",
+            "_allow_methods",
+            "_limit_method",
+            "api_return"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Api.php",
+          "reference_blob": "68e86de3bce8a38f2e81e3783061e27443a1c708",
+          "base_blob": "68e86de3bce8a38f2e81e3783061e27443a1c708",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Api"
+          ],
+          "declared_methods": [
+            "__construct",
+            "api_management",
+            "api_guide",
+            "user",
+            "create_user",
+            "edit_user",
+            "delete_user"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "api_management",
+            "api_guide",
+            "user",
+            "create_user",
+            "edit_user",
+            "delete_user"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Common.php",
+          "reference_blob": "242d96a30cd1c50d27043fc7fe33dd234c8f6dab",
+          "base_blob": "242d96a30cd1c50d27043fc7fe33dd234c8f6dab",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Common"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "expense_category",
+            "payment_mode",
+            "tax_data"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "expense_category",
+            "payment_mode",
+            "tax_data"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Contacts.php",
+          "reference_blob": "43ac76efade19d0af33298825da11d9726d14492",
+          "base_blob": "8537c7832db465b209dfc88920226cbb83ecb824",
+          "reference_to_base": "changed",
+          "kind": "controller",
+          "class": [
+            "Contacts"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "client_id_check"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "client_id_check"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Contracts.php",
+          "reference_blob": "f50be81296a5981279e62ba7c68b9d69ed8fec11",
+          "base_blob": "f50be81296a5981279e62ba7c68b9d69ed8fec11",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Contracts"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_delete",
+            "data_post",
+            "validate_contract_number"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_delete",
+            "data_post",
+            "validate_contract_number"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Credit_notes.php",
+          "reference_blob": "670b7a28fe39339f2c8301363b15624630a4f477",
+          "base_blob": "670b7a28fe39339f2c8301363b15624630a4f477",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Credit_notes"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "validate_creditnotes_number",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "validate_creditnotes_number",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Custom_fields.php",
+          "reference_blob": "bf26bfce282425a0d2f6f882934e06c0fbd0a2c4",
+          "base_blob": "bf26bfce282425a0d2f6f882934e06c0fbd0a2c4",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Custom_fields"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Customers.php",
+          "reference_blob": "d8b54bfc6f6bf4437e1d530e119462548e9e1a7b",
+          "base_blob": "d8b54bfc6f6bf4437e1d530e119462548e9e1a7b",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Customers"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Env_ver.php",
+          "reference_blob": "e6a95a3961d4c0193b8faea2008b39cfeb4dfa50",
+          "base_blob": "e6a95a3961d4c0193b8faea2008b39cfeb4dfa50",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Env_ver"
+          ],
+          "declared_methods": [
+            "__construct"
+          ],
+          "reference_declared_methods": [
+            "__construct"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Estimates.php",
+          "reference_blob": "a64c3774fa5334c591b8ce67c0c06598931db2ee",
+          "base_blob": "a64c3774fa5334c591b8ce67c0c06598931db2ee",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Estimates"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "validate_estimate_number",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "validate_estimate_number",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Expenses.php",
+          "reference_blob": "2af729ad263a00bea796c024c19b6ba314125110",
+          "base_blob": "2af729ad263a00bea796c024c19b6ba314125110",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Expenses"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "data_put",
+            "validate_category"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "data_put",
+            "validate_category"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Invoices.php",
+          "reference_blob": "8dde9754763b39253f9fb6d684d9f0171cbf49ea",
+          "base_blob": "00a9a18fc8bd185010a5b2cfd8b788d58069efd0",
+          "reference_to_base": "changed",
+          "kind": "controller",
+          "class": [
+            "Invoices"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "validate_invoice_number"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "validate_invoice_number"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Items.php",
+          "reference_blob": "b5b283fad70b9481be8c31af5b1bb50c72511f52",
+          "base_blob": "b5b283fad70b9481be8c31af5b1bb50c72511f52",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Items"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Key.php",
+          "reference_blob": "223fc5a35d18c6b8f769f4b27bc4f888a36eb234",
+          "base_blob": "223fc5a35d18c6b8f769f4b27bc4f888a36eb234",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Key"
+          ],
+          "declared_methods": [
+            "index_put",
+            "index_delete",
+            "level_post",
+            "suspend_post",
+            "regenerate_post"
+          ],
+          "reference_declared_methods": [
+            "index_put",
+            "index_delete",
+            "level_post",
+            "suspend_post",
+            "regenerate_post"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Leads.php",
+          "reference_blob": "7a59c604d54b7646cca8e0a4b7f6fd639648e1dc",
+          "base_blob": "7a59c604d54b7646cca8e0a4b7f6fd639648e1dc",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Leads"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "handle_lead_attachments_array"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put",
+            "handle_lead_attachments_array"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Login.php",
+          "reference_blob": "96c8952f3bcd25bbbe45e2c9e712e698426edb39",
+          "base_blob": "96c8952f3bcd25bbbe45e2c9e712e698426edb39",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Login"
+          ],
+          "declared_methods": [
+            "__construct",
+            "login_api",
+            "view",
+            "api_key"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "login_api",
+            "view",
+            "api_key"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Milestones.php",
+          "reference_blob": "d3a3610c71e46be1db9aa56380b8be6e21e245a4",
+          "base_blob": "d3a3610c71e46be1db9aa56380b8be6e21e245a4",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Milestones"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Payments.php",
+          "reference_blob": "8b96420152c4450f71ffa8083015c2674f339012",
+          "base_blob": "8b96420152c4450f71ffa8083015c2674f339012",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Payments"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Projects.php",
+          "reference_blob": "b10572b348ad793bfaefdfa545090ce5d2f14c24",
+          "base_blob": "b10572b348ad793bfaefdfa545090ce5d2f14c24",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Projects"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Proposals.php",
+          "reference_blob": "4d1797e23a0c1e1d55f2831452a0f714106de737",
+          "base_blob": "4d1797e23a0c1e1d55f2831452a0f714106de737",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Proposals"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_delete",
+            "data_post",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/REST_Controller.php",
+          "reference_blob": "773b32dabbadafd20655412282e41ce202c099e5",
+          "base_blob": "773b32dabbadafd20655412282e41ce202c099e5",
+          "reference_to_base": "same",
+          "kind": "framework_base",
+          "class": [
+            "REST_Controller"
+          ],
+          "declared_methods": [
+            "__construct",
+            "__destruct",
+            "_remap",
+            "response",
+            "set_response",
+            "get",
+            "options",
+            "head",
+            "post",
+            "put",
+            "delete",
+            "patch",
+            "query",
+            "validation_errors"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "__destruct",
+            "_remap",
+            "response",
+            "set_response",
+            "get",
+            "options",
+            "head",
+            "post",
+            "put",
+            "delete",
+            "patch",
+            "query",
+            "validation_errors"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Staffs.php",
+          "reference_blob": "e54c18b73b3e3624eb8bf8fe875409e30326ec90",
+          "base_blob": "9a21b24eae78b94b400fc8ad3cd9605afe24426b",
+          "reference_to_base": "changed",
+          "kind": "controller",
+          "class": [
+            "Staffs"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Tasks.php",
+          "reference_blob": "7f2e03cd7c049752d4a17989ebb85b1122584799",
+          "base_blob": "7f2e03cd7c049752d4a17989ebb85b1122584799",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Tasks"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/api/controllers/Tickets.php",
+          "reference_blob": "51f616bc5413bc5ea361070c693868d38fb9caef",
+          "base_blob": "51f616bc5413bc5ea361070c693868d38fb9caef",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Tickets"
+          ],
+          "declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "data_get",
+            "data_search_get",
+            "data_post",
+            "data_delete",
+            "data_put"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        }
+      ],
+      "libraries": [
+        {
+          "path": "modules/api/libraries/Authorization_Token.php",
+          "declared_methods": [
+            "__construct",
+            "generateToken",
+            "get_token",
+            "validateToken"
+          ]
+        },
+        {
+          "path": "modules/api/libraries/Format.php",
+          "declared_methods": [
+            "__construct",
+            "factory",
+            "to_array",
+            "to_xml",
+            "to_html",
+            "to_csv",
+            "to_json",
+            "to_serialized",
+            "to_php"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "path": "modules/api/views/api_management.php",
+          "reference_blob": "f9081051db5bb0b5a8dfb6d35bed647861ecc43d",
+          "base_blob": "f9081051db5bb0b5a8dfb6d35bed647861ecc43d",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/api/views/apidoc.php",
+          "reference_blob": "ee070bdcc20f0d6e1738bbee5227dbdba18040bf",
+          "base_blob": "ee070bdcc20f0d6e1738bbee5227dbdba18040bf",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/api/views/create_user_api.php",
+          "reference_blob": "ea7e8f59df025558e5963edc610eaa43308f7c3f",
+          "base_blob": "ea7e8f59df025558e5963edc610eaa43308f7c3f",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/api/views/edit_user_api.php",
+          "reference_blob": "75e930f8c1edc7e2c65097234158c17e7ac498c0",
+          "base_blob": "75e930f8c1edc7e2c65097234158c17e7ac498c0",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/api/views/permissions.php",
+          "reference_blob": "32a5820ca8d79501bcd87e6197746a11ed59086c",
+          "base_blob": "32a5820ca8d79501bcd87e6197746a11ed59086c",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/api/views/table.php",
+          "reference_blob": "14b95b46b8910571e0df36ca45009f0cb5cf1d81",
+          "base_blob": "14b95b46b8910571e0df36ca45009f0cb5cf1d81",
+          "reference_to_base": "same"
+        }
+      ],
+      "literal_routes": [
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/delete/(:any)/(:num)'] = '$1/data/$2';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)/search/(:any)'] = '$1/data_search/$2';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)/search']        = '$1/data_search';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/login/auth']           = 'login/login_api';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/login/view']           = 'login/view';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/login/key']            = 'login/api_key';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)/(:any)/(:num)'] = '$1/data/$2/$3';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)/(:num)/(:num)'] = '$1/data/$2/$3';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/custom_fields/(:any)/(:num)'] = 'custom_fields/data/$1/$2';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/custom_fields/(:any)'] = 'custom_fields/data/$1';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/common/(:any)/(:num)'] = 'common/data/$1/$2';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/common/(:any)'] = 'common/data/$1';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)/(:num)']        = '$1/data/$2';"
+        },
+        {
+          "path": "modules/api/config/routes.php",
+          "definition": "$route['api/(:any)']               = '$1/data';"
+        }
+      ],
+      "literal_option_keys": [
+        "access_tickets_to_none_staff_members",
+        "allow_staff_view_estimates_assigned",
+        "allow_staff_view_invoices_assigned",
+        "allow_staff_view_proposals_assigned",
+        "credit_note_prefix",
+        "estimate_due_after",
+        "estimate_prefix",
+        "invoice_prefix",
+        "proposal_due_after",
+        "proposal_number_prefix",
+        "staff_access_only_assigned_departments"
+      ],
+      "literal_hooks": [
+        "admin_init",
+        "api_permissions"
+      ]
+    },
+    {
+      "module": "webhooks",
+      "current_header_after_change": "1.2.8",
+      "reference_to_base_changes": [
+        {
+          "path": "modules/webhooks/migrations/127_version_127.php",
+          "reference_blob": null,
+          "base_blob": "4c04655ef5c273ce3b72acb5eb0fbffc0d1ae84a",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "modules/webhooks/webhooks.php",
+          "reference_blob": "80009ef3ac10f0ceb70a69310ed40f75e8b57b9c",
+          "base_blob": "4646d93836388fffca44f298bb54a9ab1019b3c3",
+          "reference_to_base": "changed"
+        }
+      ],
+      "controllers": [
+        {
+          "path": "modules/webhooks/controllers/Cron.php",
+          "reference_blob": "4985871ab922088960a87474e3dc0e682fbbbb9c",
+          "base_blob": "4985871ab922088960a87474e3dc0e682fbbbb9c",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Cron"
+          ],
+          "declared_methods": [
+            "index",
+            "manually",
+            "run"
+          ],
+          "reference_declared_methods": [
+            "index",
+            "manually",
+            "run"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/webhooks/controllers/Env_ver.php",
+          "reference_blob": "e6a95a3961d4c0193b8faea2008b39cfeb4dfa50",
+          "base_blob": "e6a95a3961d4c0193b8faea2008b39cfeb4dfa50",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Env_ver"
+          ],
+          "declared_methods": [
+            "__construct"
+          ],
+          "reference_declared_methods": [
+            "__construct"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/webhooks/controllers/Webhooks.php",
+          "reference_blob": "3140d834c746d554dcb732c5a8be89ea727deee6",
+          "base_blob": "3140d834c746d554dcb732c5a8be89ea727deee6",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Webhooks"
+          ],
+          "declared_methods": [
+            "__construct",
+            "index",
+            "change_status_hook",
+            "change_debug_status_hook",
+            "delete_webhook",
+            "webhook",
+            "logs",
+            "clear_webhook_log",
+            "get_webhook_log_info",
+            "copy_webhook",
+            "webhooks_cron_job_queue_table",
+            "delete_scheduled_call"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "index",
+            "change_status_hook",
+            "change_debug_status_hook",
+            "delete_webhook",
+            "webhook",
+            "logs",
+            "clear_webhook_log",
+            "get_webhook_log_info",
+            "copy_webhook",
+            "webhooks_cron_job_queue_table",
+            "delete_scheduled_call"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        }
+      ],
+      "libraries": [
+        {
+          "path": "modules/webhooks/libraries/mails/Webhooks_failed.php",
+          "declared_methods": [
+            "__construct",
+            "build"
+          ]
+        },
+        {
+          "path": "modules/webhooks/libraries/merge_fields/Webhooks_merge_fields.php",
+          "declared_methods": [
+            "build",
+            "format"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "path": "modules/webhooks/views/list.php",
+          "reference_blob": "c59d5d75d4b4af7d52a287fbc0998f3cdf37d3f7",
+          "base_blob": "c59d5d75d4b4af7d52a287fbc0998f3cdf37d3f7",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/logs.php",
+          "reference_blob": "f3ecd375c9241a4ad3d049182b31d89b250d2ed7",
+          "base_blob": "f3ecd375c9241a4ad3d049182b31d89b250d2ed7",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/mail_lists/email_templates_list.php",
+          "reference_blob": "268059b396354847a74d50ceb9ab6a1569aa960e",
+          "base_blob": "268059b396354847a74d50ceb9ab6a1569aa960e",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/settings/webhooks_cron_job.php",
+          "reference_blob": "4e82aae2108c2aeefece627efde5b2b1154ba4f5",
+          "base_blob": "4e82aae2108c2aeefece627efde5b2b1154ba4f5",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/tables/webhooks.php",
+          "reference_blob": "656f6b7bafca1a95222b3bb3c0ecdf711214cddc",
+          "base_blob": "656f6b7bafca1a95222b3bb3c0ecdf711214cddc",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/tables/webhooks_cron_job_queue_table.php",
+          "reference_blob": "b8247a7bfb69dfe21246a8af901394d1bd697fcf",
+          "base_blob": "b8247a7bfb69dfe21246a8af901394d1bd697fcf",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/tables/webhooks_debug_log.php",
+          "reference_blob": "10a4bbdb9fe90ba1618fc05df34934edbe8ef5f7",
+          "base_blob": "10a4bbdb9fe90ba1618fc05df34934edbe8ef5f7",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/webhook.php",
+          "reference_blob": "1c7e6fb3002e2d116ea1283a58f8c96bf8f7c52a",
+          "base_blob": "1c7e6fb3002e2d116ea1283a58f8c96bf8f7c52a",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/webhooks/views/webhook_log_detail.php",
+          "reference_blob": "9913f1a8fc31e915f163b16c00d473da59cad16a",
+          "base_blob": "9913f1a8fc31e915f163b16c00d473da59cad16a",
+          "reference_to_base": "same"
+        }
+      ],
+      "literal_routes": [],
+      "literal_option_keys": [
+        "last_webhook_cron_run",
+        "webhook_cron_has_run_from_cli",
+        "webhooks_enabled"
+      ],
+      "literal_hooks": [
+        "admin_init",
+        "after_add_project",
+        "after_add_task",
+        "after_contract_added",
+        "after_contract_updated",
+        "after_email_templates",
+        "after_estimate_added",
+        "after_estimate_updated",
+        "after_invoice_added",
+        "after_payment_added",
+        "after_payment_updated",
+        "after_proposal_updated",
+        "after_ticket_status_changed",
+        "after_update_project",
+        "after_update_task",
+        "after_webhook_cron_run",
+        "app_admin_footer",
+        "app_admin_head",
+        "available_merge_fields",
+        "before_contract_deleted",
+        "before_delete_contact",
+        "before_delete_staff_member",
+        "before_estimate_deleted",
+        "before_invoice_deleted",
+        "before_lead_deleted",
+        "before_payment_deleted",
+        "before_project_deleted",
+        "before_proposal_deleted",
+        "before_start_render_dashboard_content",
+        "before_ticket_deleted",
+        "before_webhook_cron_run",
+        "contact_created",
+        "contact_updated",
+        "cron_functions_execute_seconds",
+        "event_update_data",
+        "invoice_updated",
+        "lead_created",
+        "lead_status_changed",
+        "other_merge_fields_available_for",
+        "proposal_accepted",
+        "proposal_created",
+        "proposal_declined",
+        "proposal_sent",
+        "staff_member_created",
+        "staff_member_updated",
+        "staff_merge_fields",
+        "staff_permissions",
+        "ticket_created",
+        "ticket_settings_updated"
+      ]
+    },
+    {
+      "module": "connect_api_manager",
+      "current_header_after_change": "1.1.2",
+      "reference_to_base_changes": [],
+      "controllers": [
+        {
+          "path": "modules/connect_api_manager/controllers/Connect_api_manager.php",
+          "reference_blob": "6ccd13a6fe7dfcaf3969dcb209ab2b94a6904c4e",
+          "base_blob": "6ccd13a6fe7dfcaf3969dcb209ab2b94a6904c4e",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Connect_api_manager"
+          ],
+          "declared_methods": [
+            "__construct",
+            "index",
+            "settings",
+            "test_connection",
+            "create",
+            "connection",
+            "connection_status",
+            "state",
+            "restart",
+            "logout",
+            "delete",
+            "send_test",
+            "token"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "index",
+            "settings",
+            "test_connection",
+            "create",
+            "connection",
+            "connection_status",
+            "state",
+            "restart",
+            "logout",
+            "delete",
+            "send_test",
+            "token"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        }
+      ],
+      "libraries": [
+        {
+          "path": "modules/connect_api_manager/libraries/ConnectApiManagerClient.php",
+          "declared_methods": [
+            "__construct",
+            "configure",
+            "getLastStatus",
+            "getLastError",
+            "fetchInstances",
+            "fetchInstance",
+            "connectionState",
+            "createInstance",
+            "connect",
+            "restart",
+            "logout",
+            "delete",
+            "sendText",
+            "request"
+          ]
+        },
+        {
+          "path": "modules/connect_api_manager/libraries/ConnectApiManagerSecureStore.php",
+          "declared_methods": [
+            "__construct",
+            "encrypt",
+            "decrypt"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "path": "modules/connect_api_manager/views/connection.php",
+          "reference_blob": "4148a8e0afb230593b89a8935b4c37ead9801a33",
+          "base_blob": "4148a8e0afb230593b89a8935b4c37ead9801a33",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_manager/views/dashboard.php",
+          "reference_blob": "bdadeced468aa0571b590aba128a9939bd31587e",
+          "base_blob": "bdadeced468aa0571b590aba128a9939bd31587e",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_manager/views/settings.php",
+          "reference_blob": "8e7aeb500d8cc40445657a5c7ecca5c2dd33650c",
+          "base_blob": "8e7aeb500d8cc40445657a5c7ecca5c2dd33650c",
+          "reference_to_base": "same"
+        }
+      ],
+      "literal_routes": [],
+      "literal_option_keys": [
+        "connect_api_manager_admin_token",
+        "connect_api_manager_api_url",
+        "connect_api_manager_namespace_hash",
+        "connect_api_manager_scope",
+        "connect_api_manager_timeout",
+        "connect_api_manager_verify_tls"
+      ],
+      "literal_hooks": [
+        "admin_init",
+        "connect_api_manager_connector_instances"
+      ]
+    },
+    {
+      "module": "connect_api_connector",
+      "current_header_after_change": "1.1.2",
+      "reference_to_base_changes": [],
+      "controllers": [
+        {
+          "path": "modules/connect_api_connector/controllers/Connect_api_connector.php",
+          "reference_blob": "832a3e2880d4d472c969bdb954f7051994f085b1",
+          "base_blob": "832a3e2880d4d472c969bdb954f7051994f085b1",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Connect_api_connector"
+          ],
+          "declared_methods": [
+            "__construct",
+            "index",
+            "save",
+            "bind_managed",
+            "test_connection",
+            "connect",
+            "connection_status",
+            "restart",
+            "send_test"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "index",
+            "save",
+            "bind_managed",
+            "test_connection",
+            "connect",
+            "connection_status",
+            "restart",
+            "send_test"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        }
+      ],
+      "libraries": [
+        {
+          "path": "modules/connect_api_connector/libraries/ConnectApiConnectorClient.php",
+          "declared_methods": [
+            "__construct",
+            "configure",
+            "state",
+            "info",
+            "connectQr",
+            "connectPairing",
+            "restart",
+            "sendText",
+            "request"
+          ]
+        },
+        {
+          "path": "modules/connect_api_connector/libraries/ConnectApiConnectorConfig.php",
+          "declared_methods": [
+            "__construct",
+            "all",
+            "normalizeNumber"
+          ]
+        },
+        {
+          "path": "modules/connect_api_connector/libraries/ConnectApiConnectorSecureStore.php",
+          "declared_methods": [
+            "__construct",
+            "encrypt",
+            "decrypt"
+          ]
+        },
+        {
+          "path": "modules/connect_api_connector/libraries/Sms_connect_api_connector.php",
+          "declared_methods": [
+            "__construct",
+            "send"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "path": "modules/connect_api_connector/views/connection.php",
+          "reference_blob": "61c3f7f15cb915d875b378ec3707b0ffb0f5bb8b",
+          "base_blob": "61c3f7f15cb915d875b378ec3707b0ffb0f5bb8b",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_connector/views/dashboard.php",
+          "reference_blob": "94caf018df7dc2d7f73a0461964f75e4dae770fe",
+          "base_blob": "94caf018df7dc2d7f73a0461964f75e4dae770fe",
+          "reference_to_base": "same"
+        }
+      ],
+      "literal_routes": [],
+      "literal_option_keys": [
+        "connect_api_connector_api_url",
+        "connect_api_connector_auto_normalize",
+        "connect_api_connector_default_area",
+        "connect_api_connector_default_country",
+        "connect_api_connector_instance_name",
+        "connect_api_connector_instance_number",
+        "connect_api_connector_instance_token",
+        "connect_api_connector_sms_takeover",
+        "connect_api_connector_timeout",
+        "connect_api_connector_verify_tls",
+        "sms_connect_api_connector_active",
+        "sms_trigger_invoice_payment_recorded",
+        "sms_trigger_invoice_send_to_customer2",
+        "sms_whatsapiv2_active"
+      ],
+      "literal_hooks": [
+        "admin_init",
+        "app_init",
+        "connect_api_manager_connector_instances",
+        "invoice_sent",
+        "sms_gateway_available_triggers",
+        "sms_gateways",
+        "sms_triggers"
+      ]
+    },
+    {
+      "module": "connect_api_chat",
+      "current_header_after_change": "1.1.3",
+      "reference_to_base_changes": [
+        {
+          "path": "modules/connect_api_chat/connect_api_chat.php",
+          "reference_blob": "8a9102a70e3b316b63a15ac8e3e2e73896c40879",
+          "base_blob": "99f4ebabbec62aefeb329d4a3847605cc6407f1d",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "modules/connect_api_chat/migrations/113_version_113.php",
+          "reference_blob": null,
+          "base_blob": "128adc513d86427cffa46189bce1c51be12a528a",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "modules/connect_api_chat/models/Connect_api_chat_model.php",
+          "reference_blob": "256bdd6d671cb0ceae0d1a9f38551c32cd3bca5a",
+          "base_blob": "643b168cb7fedb3110df3bcd6cc3b9a1a66a4cb6",
+          "reference_to_base": "changed"
+        }
+      ],
+      "controllers": [
+        {
+          "path": "modules/connect_api_chat/controllers/Connect_api_chat.php",
+          "reference_blob": "adf90c4b538dd12b4603b5e969c7d913dc04800d",
+          "base_blob": "adf90c4b538dd12b4603b5e969c7d913dc04800d",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Connect_api_chat"
+          ],
+          "declared_methods": [
+            "__construct",
+            "index",
+            "app",
+            "switch_instance",
+            "manifest",
+            "service_worker",
+            "diagnostics",
+            "download_diagnostics",
+            "clear_debug_logs",
+            "settings",
+            "configure_webhook",
+            "conversations",
+            "messages",
+            "realtime_events",
+            "inbound_watchdog",
+            "poll",
+            "search_messages",
+            "conversation_status",
+            "send_text",
+            "send_media",
+            "send_contact",
+            "media",
+            "new_chat",
+            "assign",
+            "delete_message",
+            "sync",
+            "sync_conversation"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "index",
+            "app",
+            "switch_instance",
+            "manifest",
+            "service_worker",
+            "diagnostics",
+            "download_diagnostics",
+            "clear_debug_logs",
+            "settings",
+            "configure_webhook",
+            "conversations",
+            "messages",
+            "realtime_events",
+            "inbound_watchdog",
+            "poll",
+            "search_messages",
+            "conversation_status",
+            "send_text",
+            "send_media",
+            "send_contact",
+            "media",
+            "new_chat",
+            "assign",
+            "delete_message",
+            "sync",
+            "sync_conversation"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        },
+        {
+          "path": "modules/connect_api_chat/controllers/Webhook.php",
+          "reference_blob": "87d0fdd28cd4635b7b067a052210ffa81321c58a",
+          "base_blob": "87d0fdd28cd4635b7b067a052210ffa81321c58a",
+          "reference_to_base": "same",
+          "kind": "controller",
+          "class": [
+            "Webhook"
+          ],
+          "declared_methods": [
+            "__construct",
+            "receive"
+          ],
+          "reference_declared_methods": [
+            "__construct",
+            "receive"
+          ],
+          "added_methods": [],
+          "removed_methods": []
+        }
+      ],
+      "libraries": [
+        {
+          "path": "modules/connect_api_chat/libraries/ConnectApiChatConnectorBridge.php",
+          "declared_methods": [
+            "__construct",
+            "available",
+            "context",
+            "baseContext",
+            "useContext",
+            "clearContext",
+            "availableContexts",
+            "contextForInstance",
+            "configured",
+            "normalizeNumber",
+            "state",
+            "info",
+            "ownProfile",
+            "instanceIdentity",
+            "findChats",
+            "findMessages",
+            "findMessageById",
+            "findContacts",
+            "sendText",
+            "sendMedia",
+            "sendContact",
+            "mediaBase64",
+            "mediaBase64ByKey",
+            "downloadPresignedMedia",
+            "deleteMessage",
+            "setWebhook",
+            "getWebhook",
+            "normalizeList"
+          ]
+        },
+        {
+          "path": "modules/connect_api_chat/libraries/ConnectApiChatLogger.php",
+          "declared_methods": [
+            "__construct",
+            "enabled",
+            "log",
+            "recent",
+            "clear"
+          ]
+        },
+        {
+          "path": "modules/connect_api_chat/libraries/ConnectApiChatNormalizer.php",
+          "declared_methods": [
+            "normalizeMessage",
+            "normalizeChat",
+            "normalizeContact",
+            "eventName"
+          ]
+        }
+      ],
+      "views": [
+        {
+          "path": "modules/connect_api_chat/views/_chat_shell.php",
+          "reference_blob": "82addf3cb8e77bd01073e0f6087028027de2279b",
+          "base_blob": "82addf3cb8e77bd01073e0f6087028027de2279b",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_chat/views/chat.php",
+          "reference_blob": "93a5a31d8a01e1a4b7f3a43d2f23d29ffe8d791b",
+          "base_blob": "93a5a31d8a01e1a4b7f3a43d2f23d29ffe8d791b",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_chat/views/diagnostics.php",
+          "reference_blob": "ea86c2e7b2fd24a7807b1de063d64f08205335ad",
+          "base_blob": "ea86c2e7b2fd24a7807b1de063d64f08205335ad",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_chat/views/pwa.php",
+          "reference_blob": "a536d7726827ec90041ce06dd294fdb97af1661b",
+          "base_blob": "a536d7726827ec90041ce06dd294fdb97af1661b",
+          "reference_to_base": "same"
+        },
+        {
+          "path": "modules/connect_api_chat/views/settings.php",
+          "reference_blob": "dc44bbbdf7ba7d5e3830f9173509b8590474fbf1",
+          "base_blob": "dc44bbbdf7ba7d5e3830f9173509b8590474fbf1",
+          "reference_to_base": "same"
+        }
+      ],
+      "literal_routes": [],
+      "literal_option_keys": [
+        "connect_api_chat_all_staff",
+        "connect_api_chat_api_sync_interval",
+        "connect_api_chat_auto_claim_on_send",
+        "connect_api_chat_debug_enabled",
+        "connect_api_chat_debug_retention",
+        "connect_api_chat_forward_webhook_url",
+        "connect_api_chat_inbound_queue_enabled",
+        "connect_api_chat_last_inbound_at",
+        "connect_api_chat_last_inbound_message_id",
+        "connect_api_chat_last_watchdog_at",
+        "connect_api_chat_media_storage_mode",
+        "connect_api_chat_multi_instance_enabled",
+        "connect_api_chat_notify_unassigned",
+        "connect_api_chat_page_size",
+        "connect_api_chat_poll_interval",
+        "connect_api_chat_pwa_enabled",
+        "connect_api_chat_realtime_poll_ms",
+        "connect_api_chat_upload_limit_mb",
+        "connect_api_chat_watchdog_seconds",
+        "connect_api_chat_webhook_configured_instance",
+        "connect_api_chat_webhook_secret",
+        "connect_api_manager_timeout",
+        "connect_api_manager_verify_tls"
+      ],
+      "literal_hooks": [
+        "admin_init",
+        "app_admin_head",
+        "module_connect_api_chat_action_links"
+      ]
+    },
+    {
+      "area": "Ajuda online",
+      "implementation": "knowledge_base core, not modules/wiki",
+      "controller": {
+        "path": "application/controllers/admin/Knowledge_base.php",
+        "reference_blob": "ba1009183f4b57e4b7c4819aabd3d072350d9618",
+        "base_blob": "689e01aa8a8798d17e878e61c5e022661b05224b",
+        "reference_to_base": "changed",
+        "declared_methods": [
+          "__construct",
+          "index",
+          "article",
+          "view",
+          "add_kb_answer",
+          "change_article_status",
+          "update_kan_ban",
+          "change_group_color",
+          "delete_article",
+          "manage_groups",
+          "group",
+          "change_group_status",
+          "update_groups_order",
+          "delete_group",
+          "get_article_by_id_ajax"
+        ],
+        "reference_declared_methods": [
+          "__construct",
+          "index",
+          "article",
+          "view",
+          "add_kb_answer",
+          "change_article_status",
+          "update_kan_ban",
+          "change_group_color",
+          "delete_article",
+          "manage_groups",
+          "group",
+          "change_group_status",
+          "update_groups_order",
+          "delete_group",
+          "get_article_by_id_ajax"
+        ]
+      },
+      "views": [
+        {
+          "path": "application/views/admin/knowledge_base/article.php",
+          "reference_blob": "6b0b6e920c2af47bf7252a84090855b7fe399495",
+          "base_blob": "dbaa3e2670fda80b14a782368dc75c63489b444e",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "application/views/admin/knowledge_base/articles.php",
+          "reference_blob": "81b03fcb66fb17f158fc14d61efdba6d940c7391",
+          "base_blob": "ab4eb54bb8f247fc70195e866e3aed504150cfbf",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "application/views/admin/knowledge_base/group.php",
+          "reference_blob": "55b4afb67a3d2b4d1edc72e426a1a6e91b7fc9b9",
+          "base_blob": "384c82aa4a7e7ec8ec25af228f4a0c96e902c417",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "application/views/admin/knowledge_base/manage_groups.php",
+          "reference_blob": "9eaf9f67f4ae63cde9f6773de63166db9ff6ccbf",
+          "base_blob": "88c60363a6abb33f5e349c798b8b803a8d2a915a",
+          "reference_to_base": "changed"
+        },
+        {
+          "path": "application/views/admin/knowledge_base/table_row.php",
+          "reference_blob": null,
+          "base_blob": "33e25eac334b62d58758f9dd9e7d73c93f757e44",
+          "reference_to_base": "new"
+        },
+        {
+          "path": "application/views/admin/knowledge_base/view.php",
+          "reference_blob": "828b823da3ef23ffa6cc1255afa69823328cf20b",
+          "base_blob": "004a9261f1b2583463ac6be914c48294abc9b23a",
+          "reference_to_base": "changed"
+        }
+      ]
+    }
+  ],
+  "connect_api_company_extensions": {
+    "source": "application/services/NativeCompanySpecializedOperations.php",
+    "routes": [
+      "admin/tickets/connect_api",
+      "admin/tickets/connect"
+    ],
+    "profile_actions": [
+      "save",
+      "check",
+      "revoke",
+      "reserve_pairing",
+      "request_pairing",
+      "reveal_pairing",
+      "complete_pairing",
+      "observe_pairing",
+      "reserve_restart",
+      "execute_restart",
+      "observe_restart",
+      "phone",
+      "queue",
+      "dispatch"
+    ],
+    "note": "Native company profile, pairing/restart and invoice/ticket delivery are preserved additions, not full replacement for installation Manager/Connector/Chat. Neither core profile nor the menu parent is the separate REST API module. Public methods are static source inventory, not inferred HTTP endpoints.",
+    "files": [
+      {
+        "path": "application/services/CompanyConnectApi.php",
+        "reference_blob": null,
+        "base_blob": "c48150224d8240b03b2964c22e2dd5cd05b190eb",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "authorize",
+          "choices",
+          "page",
+          "save",
+          "revoke",
+          "runtimeInOwned",
+          "state",
+          "open",
+          "identity",
+          "assertRemoteInOwned",
+          "check"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectApiClient.php",
+        "reference_blob": null,
+        "base_blob": "ff5d2038af4d3adee982bf4116b46e1a7f1a9e80",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "request",
+          "endpoints"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectApiCron.php",
+        "reference_blob": null,
+        "base_blob": "748e97084fb27231cd0ff0c5b95f1caa171d2401",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "run"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectApiSchema.php",
+        "reference_blob": null,
+        "base_blob": "8df8208d101b0378b480ce63e848b1931e224350",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "definitions",
+          "ensure",
+          "assertValid"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectApiWorker.php",
+        "reference_blob": null,
+        "base_blob": "1c586a979cd34278b02cf89413c9fd23512f1332",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "run"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectContactPhone.php",
+        "reference_blob": null,
+        "base_blob": "b1e19270ad8f02aae578540038893fb7866c0fdc",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "number",
+          "epochInOwned",
+          "pageInOwned",
+          "changeInOwned"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectInstanceOperations.php",
+        "reference_blob": null,
+        "base_blob": "73b964c03efd136b09bef2b30f2ce3741028117f",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "page",
+          "reserve",
+          "restart",
+          "observe"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectInstanceOperationsSchema.php",
+        "reference_blob": null,
+        "base_blob": "f3d5e3b430930b55d8cbb3a8a5100285c479d107",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "definitions",
+          "ensure",
+          "assertValid"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectPairing.php",
+        "reference_blob": null,
+        "base_blob": "85fa26595fd4666989c101f6225eaab2a67d198e",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "page",
+          "reserve",
+          "request",
+          "reveal",
+          "observeExpired",
+          "complete"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectPairingProof.php",
+        "reference_blob": null,
+        "base_blob": "773cd745cd2989a558aa3349bcb8c3c4e9d04a00",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "identity",
+          "state",
+          "png"
+        ]
+      },
+      {
+        "path": "application/services/CompanyConnectPairingSchema.php",
+        "reference_blob": null,
+        "base_blob": "891b895e27c1a63c0699c5f8185a5d7881353ac2",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "definitions",
+          "ensure",
+          "assertValid"
+        ]
+      },
+      {
+        "path": "application/services/CompanyInvoiceConnectNotification.php",
+        "reference_blob": null,
+        "base_blob": "6d5d7d5b7b3ab10e85d0273ba2ae3068a4422326",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "page",
+          "changePhone",
+          "queue",
+          "dispatch"
+        ]
+      },
+      {
+        "path": "application/services/CompanyTicketConnect.php",
+        "reference_blob": null,
+        "base_blob": "5f001372ab61a297aa868a8708b3f54e8187fa64",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "tables",
+          "configure",
+          "page",
+          "changePhone",
+          "queue",
+          "dispatch",
+          "discover",
+          "rotateDiscovery",
+          "blockPending"
+        ]
+      },
+      {
+        "path": "application/services/CompanyTicketConnectCron.php",
+        "reference_blob": null,
+        "base_blob": "bc4d7d85749b416c01087a16f3f5e0f62a39a7f9",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "run"
+        ]
+      },
+      {
+        "path": "application/services/CompanyTicketConnectSchema.php",
+        "reference_blob": null,
+        "base_blob": "6e7a975ddb0cb4ced3a1caa37f936f4eeabe0fa0",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "definitions",
+          "ensure",
+          "assertValid"
+        ]
+      },
+      {
+        "path": "application/services/CompanyTicketConnectWorker.php",
+        "reference_blob": null,
+        "base_blob": "ac6d1e15af2b0dc8fb72068b8191419109007a4e",
+        "reference_to_base": "new",
+        "declared_public_methods": [
+          "__construct",
+          "run"
+        ]
+      },
+      {
+        "path": "application/views/admin/tickets/native_connect.php",
+        "reference_blob": null,
+        "base_blob": "b53294f152809c38f0ae02fa1dcfeffe3533f694",
+        "reference_to_base": "new",
+        "declared_public_methods": []
+      },
+      {
+        "path": "application/views/admin/tickets/native_connect_api.php",
+        "reference_blob": null,
+        "base_blob": "587d471ef2696880494407ba648d08bfa17c924d",
+        "reference_to_base": "new",
+        "declared_public_methods": []
+      }
+    ]
+  }
+}

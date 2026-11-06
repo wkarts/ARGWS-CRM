@@ -19,10 +19,10 @@ final class ContextSession
 }
 final class ContextInput
 {
-    public string $verb = 'GET'; public array $headers = []; public bool $cli = false; public string $group = 'company';
+    public string $verb = 'GET'; public array $headers = []; public bool $cli = false; public string $group = 'company'; public array $query = [];
     public function method($upper = false) { return $upper ? $this->verb : strtolower($this->verb); }
     public function post($name = null, $clean = false) { return $name === null ? $_POST : ($_POST[$name] ?? null); }
-    public function get($name) { return $name === 'group' ? $this->group : null; }
+    public function get($name) { return $this->query[$name] ?? ($name === 'group' ? $this->group : null); }
     public function get_request_header($name, $clean = false) { return $this->headers[$name] ?? null; }
     public function is_cli_request() { return $this->cli; }
     public bool $ajax = false;
@@ -155,12 +155,20 @@ $context = new CompanyContext($db, $p, $s, 8);
 essentialCheck($context->resolve() === 41, 'valid server default selected, real primary ID 41');
 essentialCheck(array_column($context->available(), 'id') === [41,54], 'primary first and only authorized companies');
 $tokenA = $context->token(); $csrfA = $context->csrf();
+$browserA = $context->browserState();
+essentialCheck(array_keys($browserA) === ['channel','generation'] && preg_match('/^[a-f0-9]{64}$/D', $browserA['channel']) === 1 && $browserA['generation'] === 0, 'browser invalidation publishes only a non-authorizing channel and counter');
 expectContext(fn() => $context->select(55, $csrfA, $tokenA), 'company_context_access_denied');
 expectContext(fn() => $context->select(54, 'forged', $tokenA), 'company_context_invalid_csrf');
 expectContext(fn() => $context->select(54, $csrfA, 'forged'), 'company_context_mismatch');
+essentialCheck($context->browserState() === $browserA, 'denied company changes do not invalidate authorized documents');
 essentialCheck($context->select(54, $csrfA, $tokenA) === false, 'authorized switch chooses next request secondary');
 essentialCheck($context->issuerId() === 41, 'selection never mutates in-flight scope');
 $contextB = new CompanyContext($db, $p, $s, 8); essentialCheck($contextB->resolve() === 54, 'next request resolves B');
+$browserB = $contextB->browserState();
+essentialCheck($browserB['channel'] === $browserA['channel'] && $browserB['generation'] === 1, 'successful switch advances the shared browser generation without transferring a grant');
+essentialCheck($browserB === $contextB->browserState(), 'ordinary rendering never increments the company generation');
+$otherBrowser = new CompanyContext($db, $p, new ContextSession(), 8);
+essentialCheck($otherBrowser->browserState()['channel'] !== $browserA['channel'], 'different sessions never publish into another session channel');
 expectContext(fn() => $contextB->assertToken($tokenA), 'company_context_mismatch');
 $tokenB = $contextB->token(); $contextB->assertToken($tokenB);
 // The original public Download controller must resolve the selected staff
@@ -379,6 +387,13 @@ foreach(['manage','delete','change_payment_mode_status','change_payment_mode_sho
 }
 foreach(['index','add','ticket']as$ticketAction){$ci=contextEnvironment($f,$s,'tickets',$ticketAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal original Tickets/'.$ticketAction.' selects the bounded historical/owned adapter');CompanyRequestScope::finish();}
 foreach([['projects','billing_rates'],['projects','fixed_billing'],['tasks','billing']]as[$boundedClass,$boundedAction]){$ci=contextEnvironment($f,$s,$boundedClass,$boundedAction,'GET');CompanyRequestScope::beforeHydration($ci);essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::isolated(),'primary bounded '.$boundedClass.'/'.$boundedAction.' retains its native presentation and guards');CompanyRequestScope::finish();}
+// Owned expenses with rejected verbs must stop before legacy model hydration.
+foreach(['DELETE','PUT','PATCH','OPTIONS'] as $expenseVerb){
+    $ci=contextEnvironment($f,$s,'expenses','expense',$expenseVerb);
+    $ci->input->query=['expense'=>NativeCompanyResourceId::encode('company_expense',42)];
+    expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+    essentialCheck(!in_array('model:expenses_model',$ci->load->trace,true),'wrong expense verb never hydrates legacy expenses');
+}
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();
 essentialCheck(CompanySettingsRuntime::issuerId() === 41 && !CompanyRequestScope::isolated(), 'primary legacy request resolves before standard libraries');
 essentialCheck(in_array('app', $ci->load->autoload['libraries'], true), 'primary preserves legacy autoload');

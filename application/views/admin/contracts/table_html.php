@@ -19,7 +19,7 @@ $table_data = [
  ]),
  _l('signature'),
 ];
-$custom_fields = get_custom_fields('contracts', ['show_on_table' => 1]);
+$custom_fields = $native_contract_columns ?? get_custom_fields('contracts', ['show_on_table' => 1]);
 
 foreach ($custom_fields as $field) {
     array_push($table_data, [
@@ -28,7 +28,7 @@ foreach ($custom_fields as $field) {
  ]);
 }
 
-$table_data = hooks()->apply_filters('contracts_table_columns', $table_data);
+$table_data = isset($native_contract_columns) ? $table_data : hooks()->apply_filters('contracts_table_columns', $table_data);
 
 render_datatable($table_data, (isset($class) ? $class : 'contracts'), ['number-index-1'], [
   'data-last-order-identifier' => 'contracts',

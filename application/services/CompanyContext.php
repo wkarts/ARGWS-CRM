@@ -9,6 +9,7 @@ final class CompanyContext
     public const SELECTION = 'company_context_selection';
     public const NONCE = 'company_context_nonce';
     public const CSRF = 'company_context_switch_csrf';
+    private const BROWSER_GENERATION = 'company_context_browser_generation';
     private IssuerRegistry $registry;
     private IssuerResourceAccess $access;
     private $session;
@@ -73,6 +74,24 @@ final class CompanyContext
     }
 
     public function csrf(): string { return $this->secret(self::CSRF); }
+
+    /** A browser invalidation hint only: no issuer ID, authentication token or grant. */
+    public function browserState(): array
+    {
+        return [
+            'channel' => hash_hmac('sha256', 'browser:'.$this->staffId, $this->secret('company_context_browser_channel')),
+            'generation' => $this->browserGeneration(),
+        ];
+    }
+
+    private function browserGeneration(): int
+    {
+        $generation = $this->session->userdata(self::BROWSER_GENERATION) ?? 0;
+        if (!is_int($generation) || $generation < 0 || $generation >= 9007199254740991) {
+            throw new LogicException('company_context_browser_generation_invalid');
+        }
+        return $generation;
+    }
     /** Separate CSRF purpose; changing company rotates the token's context binding. */
     public function nativeCsrf(): string
     {
@@ -91,8 +110,10 @@ final class CompanyContext
 
     private function rotate(): void
     {
+        $generation = $this->browserGeneration();
         $this->session->set_userdata(self::NONCE, bin2hex(random_bytes(32)));
         $this->session->set_userdata(self::CSRF, bin2hex(random_bytes(32)));
+        $this->session->set_userdata(self::BROWSER_GENERATION, $generation + 1);
     }
 
     /** Select for the next request only. Never repurpose this request's runtime or original body. */

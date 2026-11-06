@@ -44,6 +44,9 @@ final class NativeCompanyParityHttp
         $context=CompanyRequestScope::context();$issuer=$context?->issuerId();$actor=$context?->staffId();
         if($issuer===null){show_error('Selecione uma empresa autorizada.',403);return;}
         $method=strtoupper((string)$ci->input->method(true));$input=self::input($ci);
+        if($module==='expenses'&&$action==='pdf'&&!in_array($method,['GET','HEAD'],true)){
+            $ci->output->set_header('Allow: GET, HEAD');show_error('Método não permitido.',405);return;
+        }
         try{
             if($method==='POST')CompanyRequestScope::assertNativeMutation($ci);
             elseif(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_parity_method_invalid');
@@ -110,7 +113,7 @@ final class NativeCompanyParityHttp
     private static function download($ci,string $mime,string $name,string $body):void
     {
         if(!preg_match('/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i',$mime)||!preg_match('/^[A-Za-z0-9._-]{1,160}$/D',$name))throw new DomainException('native_parity_invalid');
-        $ci->output->set_header('Cache-Control','private, no-store')->set_header('X-Content-Type-Options','nosniff')->set_header("Content-Disposition: attachment; filename=\"$name\"")->set_content_type($mime)->set_output($body);
+        $ci->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')->set_header("Content-Disposition: attachment; filename=\"$name\"")->set_content_type($mime)->set_output($body);
     }
     private static function ref($ci,string $kind,$value,int $issuer,int $actor,string $cap='view'):array
     {
@@ -267,7 +270,7 @@ final class NativeCompanyParityHttp
             if($method!=='POST'||!is_array($input['ids']??null))throw new DomainException('native_parity_invalid');$operation=$input['operation']??($input['mass_delete']??null?'cancel':'update');$done=0;foreach($input['ids'] as $raw){$id=self::id($raw);$row=$service->get($issuer,$actor,$id);if(!$row)throw new DomainException('company_expense_denied');$key=hash('sha256','native-expense-bulk:'.$issuer.':'.$id.':'.self::key($input));if($operation==='cancel')$service->change($issuer,$actor,$id,$row['revision_token'],$key,null);elseif($operation==='update'){$data=$input['expenses'][$raw]??$input['expenses'][(string)$id]??$input['expense']??null;if(!is_array($data))throw new DomainException('native_parity_invalid');$service->change($issuer,$actor,$id,$row['revision_token'],$key,self::expenseData($data));}else throw new DomainException('native_parity_invalid');$done++;}CompanyRequestScope::invalidateCaches($ci);return['success'=>true,'processed'=>$done];
         }
         if($action==='pdf'){
-            if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_parity_method_invalid');$id=self::id($args[0]??self::value($ci,$input,'id'));$expense=$service->get($issuer,$actor,$id);if(!$expense)throw new DomainException('company_expense_denied');$client=(int)$expense['client_id'];$identity=self::identity($ci->db,db_prefix(),$issuer);$lines=['Número: '.$expense['number'],'Data: '.$expense['expense_date'],'Categoria: '.$expense['category_name'],'Descrição: '.$expense['description'],'Valor: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['amount_cents']),'Tributo: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['tax_cents']),'Total: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['total_cents'])];return['__download'=>['mime'=>'application/pdf','name'=>'despesa-'.$id.'.pdf','body'=>CompanyFinancialDocumentPdf::render('Despesa #'.$expense['number'],$identity,$client?self::recipient($ci->db,db_prefix(),$client):['name'=>'','tax_id'=>''],$lines)]];
+            return self::expensePdf($ci,$args[0]??self::value($ci,$input,'id'),$issuer,$actor,$method,$service);
         }
         if($action==='add_expense'){
             if($method!=='POST')throw new DomainException('native_parity_method_invalid');$data=self::expenseData($input['expense']??$input);if(isset($data['project_id'])&&$data['project_id']!=='')$data['project_id']=self::id($data['project_id']);$data['category_id']=self::id($data['category_id']??null);$data['client_id']=$data['client_id']??0;$data['currency']=$data['currency']??'BRL';$data['date']=$data['date']??$data['expense_date']??null;$data['description']=$data['description']??null;$data['amount']=$data['amount']??null;$data['note']=$data['note']??'';$data['tax_rate']=$data['tax_rate']??'0.00';$id=$service->create($issuer,$actor,$data,self::key($input));CompanyRequestScope::invalidateCaches($ci);return['success'=>true,'expense_id'=>$id];
@@ -276,6 +279,40 @@ final class NativeCompanyParityHttp
             if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_parity_method_invalid');$project=self::project($ci,$args[0]??self::value($ci,$input,'project_id'),$issuer,$actor)[0];$items=self::rows($ci->db,'SELECT id,number,expense_date,description,currency,total_cents,state,revision FROM '.db_prefix().'company_expenses WHERE issuer_id=? AND project_id=? ORDER BY id LIMIT 500',[$issuer,$project]);return['project_id'=>$project,'items'=>$items,'total'=>count($items)];
         }
         throw new DomainException('native_parity_invalid');
+    }
+
+    private static function expenseRecipient($ci,int $issuer,int $actor,int $client):array
+    {
+        $empty=['name'=>'','tax_id'=>''];
+        if($client<1||(!(new IssuerResourceAccess($ci->db,db_prefix()))->can($issuer,$actor,'customers','view')
+            &&!(new CompanyCustomerAccess($ci->db,db_prefix()))->can($issuer,$actor,$client,'view')))return $empty;
+        $row=(new CompanyClients($ci->db,db_prefix()))->get($issuer,$actor,$client);
+        return $row===null?$empty:['name'=>(string)$row['company'],'tax_id'=>(string)$row['vat']];
+    }
+
+    /** Buffer the real document until the exact source, company and related read authority are revalidated. */
+    private static function expensePdf($ci,$value,int $issuer,int $actor,string $method,CompanyExpenses $service):array
+    {
+        if(!CompanyRequestScope::sealedFor($ci))throw new DomainException('company_expense_denied');
+        $ref=self::ref($ci,'expense',$value,$issuer,$actor);
+        if($ref['source_kind']!=='company_expense')throw new DomainException('company_expense_denied');
+        $id=(int)$ref['source_id'];$expense=$service->get($issuer,$actor,$id);
+        if($expense===null)throw new DomainException('company_expense_denied');
+        $identity=self::identity($ci->db,db_prefix(),$issuer);
+        $recipient=self::expenseRecipient($ci,$issuer,$actor,(int)$expense['client_id']);
+        $lines=['Número: '.$expense['number'],'Data: '.$expense['expense_date'],'Categoria: '.$expense['category_name'],
+            'Descrição: '.$expense['description'],'Valor: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['amount_cents']),
+            'Tributo: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['tax_cents']),
+            'Total: '.$expense['currency'].' '.CompanyExpenses::money((int)$expense['total_cents'])];
+        $body=$method==='HEAD'?'':CompanyFinancialDocumentPdf::render('Despesa #'.$expense['number'],$identity,$recipient,$lines);
+        if(self::ref($ci,'expense',$value,$issuer,$actor)!==$ref||$service->get($issuer,$actor,$id)!==$expense
+            ||self::identity($ci->db,db_prefix(),$issuer)!==$identity
+            ||self::expenseRecipient($ci,$issuer,$actor,(int)$expense['client_id'])!==$recipient)
+            throw new DomainException('company_expense_denied');
+        $context=CompanyRequestScope::context();
+        if(!CompanyRequestScope::nativeFor($ci)||!CompanyRequestScope::sealedFor($ci)||$context?->issuerId()!==$issuer||$context?->staffId()!==$actor)
+            throw new DomainException('company_expense_denied');
+        return ['__download'=>['mime'=>'application/pdf','name'=>'despesa-'.$id.'.pdf','body'=>$body]];
     }
 
     private static function invoices($ci,string $action,array $args,array $input,int $issuer,int $actor,string $method):array

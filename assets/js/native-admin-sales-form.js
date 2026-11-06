@@ -6,10 +6,19 @@ var billingAndShippingFields = [
   'shipping_street', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'
 ];
 
+function native_sales_editor_context() {
+  var form = $("#estimate-form, #proposal-form").filter(function () { return $(this).find('[name="_native_sales_id"]').length; }).first();
+  if (!form.length) return undefined;
+  return {native_editor: form.attr('id') === 'estimate-form' ? 'estimate' : 'proposal',
+    native_sales_id: form.find('[name="_native_sales_id"]').val(),
+    native_sales_revision: form.find('[name="_native_sales_revision"]').val()};
+}
+var nativeSalesCustomerSerial = 0;
+
 function native_invoice_catalog_context() {
   var form = $("#invoice-form");
   var parent = form.find('[name="_native_invoice_id"]');
-  if (!parent.length) return undefined;
+  if (!parent.length) return native_sales_editor_context();
   return {
     native_editor: "invoice",
     native_invoice_id: parent.val(),
@@ -154,6 +163,11 @@ function clear_item_preview_values(default_taxes) {
     .prop("checked", false); // cf
   previewArea.find("td.custom_field input:not(:checkbox):not(:hidden)").val(""); // cf // not hidden for chkbox hidden helpers
   previewArea.find("td.custom_field select").selectpicker("val", ""); // cf
+  if (typeof window !== "undefined" && window.NativeCompanyHeaderConfig) previewArea.find('.cf-hyperlink').each(function () {
+    var wrapper = $(this), trigger = wrapper.children('a').first();
+    wrapper.find('input[type="hidden"][data-fieldid]').val('');wrapper.attr('data-value','');
+    if (trigger.attr('data-native-cf-placeholder') !== undefined) trigger.text(trigger.attr('data-native-cf-placeholder'));
+  });
   previewArea.find('input[name="quantity"]').val(1);
   previewArea.find("select.tax").selectpicker("val", last_taxes_applied);
   previewArea.find('input[name="rate"]').val("");
@@ -254,6 +268,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
 
     if (custom_fields.length > 0) {
       $.each(custom_fields, function () {
+        var nativeFieldWire = typeof window !== "undefined" && !!window.NativeCompanyHeaderConfig;
         var cf = $(this).clone();
         var cf_html = "";
         var cf_field = $(this).find("[data-fieldid]");
@@ -272,24 +287,30 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
             var random_key = Math.random().toString(20).slice(2);
             $(this)
               .attr("id", random_key)
-              .attr("name", cf_name)
+              .attr("name", cf_name + (nativeFieldWire ? "[]" : ""))
               .next("label")
               .attr("for", random_key);
+            if (nativeFieldWire) $(this).prop("checked", false).removeAttr("checked");
             if ($(this).attr("data-custom-field-required") == "1") {
               cf_has_required = true;
             }
           });
 
           $.each(checked, function (i, e) {
-            cf.find('input[value="' + $(e).val() + '"]').attr("checked", true);
+            if (nativeFieldWire) cf.find('input[type="checkbox"]').filter(function () { return this.value === $(e).val(); }).attr("checked", true);
+            else cf.find('input[value="' + $(e).val() + '"]').attr("checked", true);
           });
+
+          if (nativeFieldWire) cf.find('input[type="hidden"][value="cfk_hidden"]').attr("name", cf_name + "[]");
 
           cf_html = cf.html();
         } else if (cf_field.is("input") || cf_field.is("textarea")) {
           if (cf_field.is("input")) {
             cf.find("[data-fieldid]").attr("value", cf_field.val());
+            if (nativeFieldWire) cf.find('.cf-hyperlink').removeClass('cfh-initialized').attr('data-value',cf_field.val());
           } else {
-            cf.find("[data-fieldid]").html(cf_field.val());
+            if (nativeFieldWire) cf.find("[data-fieldid]").text(cf_field.val());
+            else cf.find("[data-fieldid]").html(cf_field.val());
           }
           cf.find("[data-fieldid]").attr("name", cf_name);
           if (
@@ -306,25 +327,22 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
           var selected = $(this)
             .find("select[data-fieldid]")
             .selectpicker("val");
-          selected = typeof (selected != "array")
-            ? new Array(selected)
-            : selected;
-
-          // Check if is multidimensional by multi-select customfield
-          selected = selected[0].constructor === Array ? selected[0] : selected;
+          if (nativeFieldWire) selected = Array.isArray(selected) ? selected : (selected == null || selected === "" ? [] : [selected]);
+          else {
+            selected = typeof (selected != "array") ? new Array(selected) : selected;
+            // Check if is multidimensional by multi-select customfield
+            selected = selected[0].constructor === Array ? selected[0] : selected;
+          }
 
           var selectNow = cf.find("select");
           var $wrapper = $("<div/>");
-          selectNow.attr("name", cf_name);
+          selectNow.attr("name", cf_name + (nativeFieldWire && selectNow.prop("multiple") ? "[]" : ""));
 
           var $select = selectNow.clone();
-          $select.prop('required', 1);
+          $select.prop('required', nativeFieldWire ? $(cf_field).attr("data-custom-field-required") == "1" : 1);
           $wrapper.append($select);
-          $.each(selected, function (i, e) {
-            $wrapper
-              .find('select option[value="' + e + '"]')
-              .attr("selected", true);
-          });
+          if (nativeFieldWire) $wrapper.find('select option').each(function () { if (selected.indexOf(this.value) >= 0) $(this).attr("selected", true);else $(this).removeAttr("selected"); });
+          else $.each(selected, function (i, e) { $wrapper.find('select option[value="' + e + '"]').attr("selected", true); });
 
           cf_html = $wrapper.html();
         }
@@ -378,6 +396,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
     table_row += "</tr>";
 
     $("table.items tbody").append(table_row);
+    if (typeof window !== "undefined" && window.NativeCompanyHeaderConfig && typeof custom_fields_hyperlink === "function") custom_fields_hyperlink();
 
     $(document).trigger({
       type: "item-added-to-table",
@@ -947,9 +966,7 @@ function init_billing_and_shipping_details() {
       billingAndShippingFields[f].indexOf("billing_street") > -1
     ) {
       if ($('textarea[name="' + billingAndShippingFields[f] + '"]').length) {
-        _f = $('textarea[name="' + billingAndShippingFields[f] + '"]')
-          .val()
-          .replace(/(?:\r\n|\r|\n)/g, "<br />");
+        _f = $('textarea[name="' + billingAndShippingFields[f] + '"]').val();
       }
     } else {
       _f = $('input[name="' + billingAndShippingFields[f] + '"]').val();
@@ -963,7 +980,7 @@ function init_billing_and_shipping_details() {
       _f = "";
     }
     _f = _f !== "" ? _f : "--";
-    $("." + billingAndShippingFields[f]).html(_f);
+    $("." + billingAndShippingFields[f]).html(escapeHtml(_f).replace(/(?:\r\n|\r|\n)/g, "<br />"));
   }
   $("#billing_and_shipping_details").modal("hide");
 }
@@ -972,6 +989,28 @@ $(function () {
   init_ajax_search("customer", "#clientid.ajax-search");
 
   init_items_sortable();
+  if (typeof window !== "undefined" && window.NativeCompanyHeaderConfig) $('tr.main .cf-hyperlink > a').each(function () { $(this).attr('data-native-cf-placeholder',$(this).text()); });
+
+  $('body').on('change', '#main-optional', function(e){
+    if(e.target.checked){
+      $('#main-optional-choosen').parent().css('display', "block");
+    } else {
+      $('#main-optional-choosen').parent().css('display', "none");
+    }
+  });
+
+  $('body').on('change', '.optional-item-checkbox', function(e){
+    if(e.target.checked){
+      $(e.target).parent().next().css('display', "block")
+    } else {
+       $(e.target).parent().next().css('display', "none")
+    }
+    calculate_total();
+  });
+
+  $('body').on('change', '.optional-choose-item-checkbox', function(e){
+    calculate_total();
+  });
 
   $("body").on("change", "#unlimited_cycles", function () {
     $(this)
@@ -1048,6 +1087,7 @@ $(function () {
     // Add disabled to submit buttons
     $(this).find(".transaction-submit").prop("disabled", true);
 
+    if ($(this).find('[name="_native_sales_id"]').length) return window.native_sales_original_submit(this);
     return true;
   });
 
@@ -1213,9 +1253,12 @@ $(function () {
     currentInvoiceID =
       typeof currentInvoiceID == "undefined" ? "" : currentInvoiceID;
 
-    requestGetJSON(
-      "invoices/client_change_data/" + val + "/" + currentInvoiceID
-    ).done(function (response) {
+    var salesContext = native_sales_editor_context(), salesSequence = ++nativeSalesCustomerSerial;
+    var customerEndpoint = salesContext && salesContext.native_editor === 'estimate'
+      ? "estimates/client_change_data/" + val : "invoices/client_change_data/" + val + "/" + currentInvoiceID;
+    requestGetJSON(customerEndpoint, salesContext ? {data: salesContext} : undefined).done(function (response) {
+      if (salesContext && (salesSequence !== nativeSalesCustomerSerial || String($('#clientid').val()) !== String(val)
+        || (window.NativeCompanyContextGuard && !window.NativeCompanyContextGuard.isCurrent()))) return;
       $("#merge").html(response.merge_info);
       var $billExpenses = $("#expenses_to_bill");
       // Invoice from project, in invoice_template this is not shown

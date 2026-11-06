@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(!empty($native_expense_index)){require __DIR__.'/native_manage.php';return;} ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

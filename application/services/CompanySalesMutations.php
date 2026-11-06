@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanySalesMutationsSchema.php';
+require_once __DIR__.'/NativeCompanySalesProjectionSchema.php';
 
 /** Reviewed mutations of canonical private sales documents; never writes a native invoice. */
 trait CompanySalesMutations
@@ -10,7 +11,9 @@ trait CompanySalesMutations
     private function requireMutations():void{if(!$this->mutationsReady())throw new DomainException('company_sales_mutations_unavailable');}
     protected function participantTables():array
     {
-        $tables=array_merge(parent::participantTables(),['itemable','item_tax','invoicepaymentrecords','credits','company_financial_events']);if($this->mutationsReady())$tables=array_merge($tables,array_keys(CompanySalesMutationsSchema::definitions()));return $tables;
+        $tables=array_merge(parent::participantTables(),['itemable','item_tax','invoicepaymentrecords','credits','company_financial_events']);if($this->mutationsReady())$tables=array_merge($tables,array_keys(CompanySalesMutationsSchema::definitions()));
+        if(NativeCompanySalesProjectionSchema::available($this->db,$this->prefix))$tables[]='company_sales_projection';
+        return $tables;
     }
     /** Read-only final commit frame. Audits/triggers are part of the same transaction. */
     private function boundaryReferences(int $issuer,int $actor,array $documents):array
@@ -40,6 +43,13 @@ trait CompanySalesMutations
     }
     private function confirmBoundary(int $issuer,int $actor,array $references,array $documents,array $sequences,array $records=[]):void
     {
+        // Every canonical create/edit/copy/decision/conversion passes this final boundary.
+        // Update the rebuildable read amounts before rechecking source rows and authority frames.
+        if(NativeCompanySalesProjectionSchema::available($this->db,$this->prefix)){
+            require_once __DIR__.'/NativeCompanySalesProjection.php';
+            $projection=new NativeCompanySalesProjection($this->db,$this->prefix);
+            foreach($documents as $row)$projection->syncInOwned($row);
+        }
         foreach($references['queries']as$i=>[$table,$where,$args])if($this->rows('SELECT * FROM '.$this->prefix.$table.' WHERE '.$where.' FOR UPDATE',$args)!==$references['snapshot'][$i])throw new RuntimeException('issuer_sales_write_unconfirmed');
         foreach($documents as$r)self::boundaryRow($this->owned($issuer,$actor,(int)$r['id'],true),$r);
         $actual=$this->boundarySequences($issuer);if(count($actual)!==count($sequences))throw new RuntimeException('issuer_sales_write_unconfirmed');foreach($actual as$i=>$r)self::boundaryRow($r,$sequences[$i]);
@@ -112,9 +122,9 @@ trait CompanySalesMutations
     }
     private function copyTags(int $issuer,int $actor,array $row):?array
     {
-        if($row['kind']!=='estimates')return null;
+        $type=$row['kind']==='estimates'?'estimate':'proposal';
         if($this->copyTagTables()===[]){if(($this->decode($row['payload_json'])['native_tags']??[])!==[])throw new DomainException('native_estimate_form_tags_unavailable');return null;}
-        return (new NativeCompanyResourceTags($this->db,$this->prefix))->read($issuer,$actor,'estimate',NativeCompanyResourceId::encode('company_estimate',$row['id']));
+        return (new NativeCompanyResourceTags($this->db,$this->prefix))->read($issuer,$actor,$type,NativeCompanyResourceId::encode('company_'.$type,$row['id']));
     }
     private function copyCustomTables():array
     {
@@ -123,12 +133,12 @@ trait CompanySalesMutations
     }
     private function copyCustomFields(int $issuer,int $actor,array $row):?array
     {
-        if($row['kind']!=='estimates')return null;
+        $type=$row['kind']==='estimates'?'estimate':'proposal';
         if($this->copyCustomTables()===[]){if(array_key_exists('native_custom_fields',$this->decode($row['payload_json'])))throw new DomainException('native_estimate_form_fields_unavailable');return null;}
-        $fields=new NativeCompanyCustomFields($this->db,$this->prefix);$id=NativeCompanyResourceId::encode('company_estimate',$row['id']);
-        $definitions=$fields->definitionsForResource($issuer,$actor,'estimate',$id,['active'=>1],'view');$values=$fields->storedInput($issuer,$actor,'estimate',$id);
+        $fields=new NativeCompanyCustomFields($this->db,$this->prefix);$id=NativeCompanyResourceId::encode('company_'.$type,$row['id']);
+        $definitions=$fields->definitionsForResource($issuer,$actor,$type,$id,['active'=>1],'view');$values=$fields->storedInput($issuer,$actor,$type,$id);
         // Hidden or inactive data cannot be silently omitted from a reviewed copy.
-        $all=$this->rows("SELECT COUNT(*) n FROM {$this->prefix}company_custom_field_values WHERE issuer_id=? AND source_kind='company_estimate' AND source_id=?",[$issuer,$row['id']]);
+        $all=$this->rows("SELECT COUNT(*) n FROM {$this->prefix}company_custom_field_values WHERE issuer_id=? AND source_kind=? AND source_id=?",[$issuer,'company_'.$type,$row['id']]);
         if((int)($all[0]['n']??0)!==count($values))throw new DomainException('native_estimate_custom_copy_denied');
         return ['definitions'=>$definitions,'values'=>$values];
     }
@@ -139,27 +149,37 @@ trait CompanySalesMutations
     public function review($issuer,$actor,$id,string $action,?array $destination=null):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);if(!in_array($action,['edit','copy'],true)||$action==='edit'&&$destination!==null)throw new DomainException('company_sales_invalid');$this->requireMutations();
-        return $this->tx($issuer,$actor,function()use($issuer,$actor,$id,$action,$destination){$r=$this->owned($issuer,$actor,$id,true);$this->auth($issuer,$actor,$r['kind'],$action==='edit'?'edit':'create');if($action==='edit'&&$r['state']!=='open'||$action==='copy'&&$r['state']==='converting')throw new DomainException('company_sales_state_conflict');$history=$this->revisionHistory($r);$payload=$destination===null?$this->decode($r['payload_json']):self::input($destination);if($action==='edit'&&array_key_exists('native_custom_fields',$payload))$this->copyCustomFields($issuer,$actor,$r);$tags=$action==='copy'?$this->copyTags($issuer,$actor,$r):null;$fields=$action==='copy'?$this->copyCustomFields($issuer,$actor,$r):null;if($tags!==null&&$destination===null){$labels=array_column($tags['tags'],'name');if($labels===[])unset($payload['native_tags']);else $payload['native_tags']=$labels;}if($fields!==null&&$destination===null&&(array_key_exists('native_custom_fields',$payload)||$fields['values']!==[]))$payload['native_custom_fields']=$fields['values'];$out=['id'=>$id,'kind'=>$r['kind'],'number'=>(int)$r['number'],'payload'=>$payload,'context'=>$this->decode($r['context_json']),'source_revision'=>$action==='copy'?self::copySourceRevision($r,$history['number'],$tags,$fields):self::revisionToken($r,$history['number']),'revision_number'=>$history['number']];
-            if($action==='copy'){$this->assertNativeFields($issuer,$actor,$r['kind'],$payload);$current=$this->context($issuer,$actor,$payload['client_id'],$payload['currency'],$r['kind'],false,array_key_exists('native_fields',$payload));$out['destination_context']=$current;$out['destination_revision']=self::hash([$payload,$current]);}return$out;},$action==='copy'?array_values(array_unique(array_merge($this->copyTagTables(),$this->copyCustomTables()))):$this->copyCustomTables());
+        return $this->tx($issuer,$actor,function()use($issuer,$actor,$id,$action,$destination){$r=$this->owned($issuer,$actor,$id,true);$this->auth($issuer,$actor,$r['kind'],$action==='edit'?'edit':'create');if($action==='edit'&&$r['state']!=='open'||$action==='copy'&&$r['state']==='converting')throw new DomainException('company_sales_state_conflict');$history=$this->revisionHistory($r);$payload=$destination===null?$this->decode($r['payload_json']):self::input($destination);if($action==='edit'&&array_key_exists('native_custom_fields',$payload))$this->copyCustomFields($issuer,$actor,$r);$tags=$this->copyTags($issuer,$actor,$r);$fields=$this->copyCustomFields($issuer,$actor,$r);if($tags!==null&&$destination===null){$labels=array_column($tags['tags'],'name');if($labels===[])unset($payload['native_tags']);else $payload['native_tags']=$labels;}if($fields!==null&&$destination===null&&(array_key_exists('native_custom_fields',$payload)||$fields['values']!==[]))$payload['native_custom_fields']=$fields['values'];$out=['id'=>$id,'kind'=>$r['kind'],'number'=>(int)$r['number'],'payload'=>$payload,'context'=>$this->decode($r['context_json']),'source_revision'=>$action==='copy'?self::copySourceRevision($r,$history['number'],$tags,$fields):self::revisionToken($r,$history['number']),'revision_number'=>$history['number'],'metadata_revision'=>self::hash([$tags,$fields])];
+            if($action==='copy'){$this->assertNativeFields($issuer,$actor,$r['kind'],$payload);$current=$this->context($issuer,$actor,$payload['client_id'],$payload['currency'],$r['kind'],false,array_key_exists('native_fields',$payload));$out['destination_context']=$current;$out['destination_revision']=self::hash([$payload,$current]);}return$out;},array_values(array_unique(array_merge($this->copyTagTables(),$this->copyCustomTables()))));
     }
-    public function edit($issuer,$actor,$id,array $input,array $review,string $key):int
+    public function edit($issuer,$actor,$id,array $input,array $review,string $key,?string $metadataRevision=null,?callable $originGuard=null):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);self::key($key);$payload=self::input($input);$intent=self::mutationIntent($review,'edit');$form=self::hash([$payload,$intent]);$this->requireMutations();
-        return $this->tx($issuer,$actor,function()use($issuer,$actor,$id,$payload,$intent,$form,$key){$r=$this->owned($issuer,$actor,$id,true);$this->auth($issuer,$actor,$r['kind'],'edit');$history=$this->revisionHistory($r);$old=$this->rows('SELECT * FROM '.$this->prefix.'company_sales_revisions WHERE request_key=? FOR UPDATE',[$key])[0]??null;
+        return $this->tx($issuer,$actor,function()use($issuer,$actor,$id,$payload,$intent,$form,$key,$metadataRevision,$originGuard){if($originGuard!==null)$originGuard();$r=$this->owned($issuer,$actor,$id,true);$this->auth($issuer,$actor,$r['kind'],'edit');$history=$this->revisionHistory($r);$old=$this->rows('SELECT * FROM '.$this->prefix.'company_sales_revisions WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($old){if((int)$old['issuer_id']!==$issuer||(int)$old['document_id']!==$id||(int)$old['actor_id']!==$actor||$old['form_hash']!==$form)throw new DomainException('company_sales_conflict');return$id;}
             if($r['state']!=='open')throw new DomainException('company_sales_state_conflict');if(!hash_equals(self::revisionToken($r,$history['number']),$intent['source_revision']))throw new DomainException('company_sales_stale');if($history['number']>=1000)throw new DomainException('company_sales_revision_limit');
             if($payload['client_id']!==(int)$r['client_id']||$payload['currency']!==(int)$r['currency'])throw new DomainException('company_sales_recipient_denied');
-            // The estimate tag catalogue is written separately. Until edits update both
-            // records atomically, never allow an edit to change or discard the tags.
-            $previousPayload=$this->decode($r['payload_json']);
-            if(($previousPayload['native_tags']??[])!==($payload['native_tags']??[]))throw new DomainException('native_estimate_tag_edit_unavailable');
-            if(($previousPayload['native_custom_fields']??[])!==($payload['native_custom_fields']??[]))throw new DomainException('native_estimate_custom_edit_unavailable');
-            $this->assertNativeFields($issuer,$actor,$r['kind'],$payload);
+            $previousPayload=$this->decode($r['payload_json']);$metadata=null;
+            $tagsChanged=($previousPayload['native_tags']??[])!==($payload['native_tags']??[]);
+            $fieldsChanged=($previousPayload['native_custom_fields']??[])!==($payload['native_custom_fields']??[]);
+            if($metadataRevision!==null||$tagsChanged||$fieldsChanged){
+                if($metadataRevision===null)throw new DomainException($tagsChanged?'native_estimate_tag_edit_unavailable':'native_estimate_custom_edit_unavailable');
+                $metadata=['tags'=>$this->copyTags($issuer,$actor,$r),'fields'=>$this->copyCustomFields($issuer,$actor,$r)];
+                if(!preg_match('/^[a-f0-9]{64}$/D',$metadataRevision)||!hash_equals(self::hash([$metadata['tags'],$metadata['fields']]),$metadataRevision))throw new DomainException('native_sales_metadata_stale');
+                $type=$r['kind']==='estimates'?'estimate':'proposal';$canonical=NativeCompanyResourceId::encode('company_'.$type,$id);
+                if(array_key_exists('native_custom_fields',$payload))(new NativeCompanyCustomFields($this->db,$this->prefix))->validateValuesForResource($issuer,$actor,$type,$canonical,$payload['native_custom_fields'],'edit');
+            }
+            $this->assertNativeFields($issuer,$actor,$r['kind'],$payload);$this->assertNativeItemFields($issuer,$actor,$r['kind'],$payload,'edit');
             // An edit preserves the original fiscal snapshot; a reviewed copy can capture current identity.
             $this->assertOrigin($issuer,$actor,$payload,$r['origin_hash'],$this->decode($r['context_json']));$references=$this->boundaryReferences($issuer,$actor,[$r]);$sequences=$this->boundarySequences($issuer);
             if(!$this->rows("SELECT id FROM {$this->prefix}issuers_audit WHERE issuer_id=? AND subject_id=? AND event='company_sales_creation_recorded'",[$issuer,$id]))$this->recordCreation($r,$actor);
             $after=self::encode($payload);if(($history['bytes']??0)+strlen($r['payload_json'])+strlen($after)>8388608)throw new DomainException('company_sales_revision_limit');$hash=self::hash([$r['kind'],$payload]);$record=['request_key'=>$key,'issuer_id'=>$issuer,'document_id'=>$id,'actor_id'=>$actor,'revision_no'=>$history['number']+1,'source_revision'=>$intent['source_revision'],'before_payload_json'=>$r['payload_json'],'after_payload_json'=>$after,'before_hash'=>$r['input_hash'],'after_hash'=>$hash,'origin_hash'=>$r['origin_hash'],'creation_key'=>$r['request_key'],'creation_actor_id'=>(int)$r['actor_id'],'reason'=>$intent['reason'],'form_hash'=>$form,'created_at'=>gmdate('Y-m-d H:i:s')];$record['record_hash']=self::hash($record);
-            $amounts=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_sales_documents SET payload_json=?,input_hash=?,total=? WHERE issuer_id=? AND id=?',[$after,$hash,$amounts['total'],$issuer,$id]);$this->insert('company_sales_revisions',$record);$expected=array_replace($r,['payload_json'=>$after,'input_hash'=>$hash,'total'=>$amounts['total']]);$expected['total']=$this->rows('SELECT total FROM '.$this->prefix.'company_sales_documents WHERE id=?',[$id])[0]['total'];if(CompanyInvoiceAmounts::minor((string)$expected['total'])!==CompanyInvoiceAmounts::minor($amounts['total']))throw new RuntimeException('issuer_sales_write_unconfirmed');$this->mutationAudit($issuer,$actor,$id,'company_sales_revised',['request_key'=>$key,'record_hash'=>$record['record_hash'],'revision'=>$record['revision_no']]);$saved=$this->owned($issuer,$actor,$id,true);if($saved['payload_json']!==$after||$saved['input_hash']!==$hash)throw new RuntimeException('issuer_sales_mutation_unconfirmed');$this->confirmBoundary($issuer,$actor,$references,[$expected],$sequences,[['company_sales_revisions','request_key=?',[$key],$record]]);$this->assertOrigin($issuer,$actor,$payload,$r['origin_hash'],$this->decode($r['context_json']));$this->assertNativeFields($issuer,$actor,$r['kind'],$payload);$this->auth($issuer,$actor,$r['kind'],'view');$this->auth($issuer,$actor,$r['kind'],'edit');return$id;});
+            $amounts=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_sales_documents SET payload_json=?,input_hash=?,total=? WHERE issuer_id=? AND id=?',[$after,$hash,$amounts['total'],$issuer,$id]);$this->insert('company_sales_revisions',$record);$expected=array_replace($r,['payload_json'=>$after,'input_hash'=>$hash,'total'=>$amounts['total']]);$expected['total']=$this->rows('SELECT total FROM '.$this->prefix.'company_sales_documents WHERE id=?',[$id])[0]['total'];if(CompanyInvoiceAmounts::minor((string)$expected['total'])!==CompanyInvoiceAmounts::minor($amounts['total']))throw new RuntimeException('issuer_sales_write_unconfirmed');$this->mutationAudit($issuer,$actor,$id,'company_sales_revised',['request_key'=>$key,'record_hash'=>$record['record_hash'],'revision'=>$record['revision_no']]);if($metadata!==null){
+                $type=$r['kind']==='estimates'?'estimate':'proposal';$canonical=NativeCompanyResourceId::encode('company_'.$type,$id);
+                if($metadata['tags']!==null&&(array_column($metadata['tags']['tags'],'name')!==($payload['native_tags']??[])))(new NativeCompanyResourceTags($this->db,$this->prefix))->replaceInOwnedTransaction($issuer,$actor,$type,$canonical,$metadata['tags']['revision'],$payload['native_tags']??[]);
+                if($metadata['fields']!==null&&array_key_exists('native_custom_fields',$payload))(new NativeCompanyCustomFields($this->db,$this->prefix))->saveInOwnedTransaction($issuer,$actor,$type,$canonical,$payload['native_custom_fields']);
+            }
+            $saved=$this->owned($issuer,$actor,$id,true);if($saved['payload_json']!==$after||$saved['input_hash']!==$hash)throw new RuntimeException('issuer_sales_mutation_unconfirmed');$this->confirmBoundary($issuer,$actor,$references,[$expected],$sequences,[['company_sales_revisions','request_key=?',[$key],$record]]);$this->assertOrigin($issuer,$actor,$payload,$r['origin_hash'],$this->decode($r['context_json']));$this->assertNativeFields($issuer,$actor,$r['kind'],$payload);$this->assertNativeItemFields($issuer,$actor,$r['kind'],$payload,'edit');$this->auth($issuer,$actor,$r['kind'],'view');$this->auth($issuer,$actor,$r['kind'],'edit');if($originGuard!==null)$originGuard();return$id;},array_values(array_unique(array_merge($this->customTablesForPayload($payload),$this->copyTagTables(),$this->copyCustomTables()))));
     }
     public function copy($issuer,$actor,$id,array $input,array $review,string $key):int
     {

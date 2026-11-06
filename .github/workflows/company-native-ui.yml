@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main, develop]
-    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'tests/native_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'tests/native_*', 'tests/pige_bridge_settings*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
 permissions:
   contents: read
 concurrency:
@@ -45,6 +45,14 @@ jobs:
           php tests/native_operational_layout.php
           node --test tests/native_shell_controls.test.cjs tests/native_navigation_tabs.test.cjs
           php tests/native_settings_certificate_link.php
+      - name: Regressões de definições da principal e isolamento
+        run: |
+          php tests/settings/primary_settings_dispatch.php
+          php tests/settings/primary_settings_scope.php
+          php tests/native_company/google_settings_missing_options.php
+          php tests/settings/oauth_configuration_http.php
+          php tests/settings/bb_channel_http_boundary.php
+          python3 tests/pige_bridge_settings_ui.py
       - name: Fluxos desktop/mobile, grid e modal
         env:
           SCREENSHOT_DIR: artifacts/company-native-ui
@@ -58,6 +66,7 @@ jobs:
           node tests/native_registry_modal_browser.cjs
           node tests/native_settings_layout.browser.cjs
           node tests/native_settings_native_browser.cjs
+          node tests/pige_bridge_settings.browser.cjs
       # Repetição é um teste de estabilidade opcional, não cobertura adicional da PR.
       - name: Verificar estabilidade do modal em execução manual
         if: github.event_name == 'workflow_dispatch'

@@ -1,4 +1,6 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+if(!empty($native_original_leads)){require __DIR__.'/native_manage.php';return;}
+?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content" id="vueApp">

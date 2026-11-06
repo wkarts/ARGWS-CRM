@@ -18,4 +18,4 @@ $table_data = [
     'th_attrs'=>['class'=>'next-recurring-date']
   ],
 ];
-render_datatable($table_data, 'invoices');
+render_datatable($table_data, ($native_recurring??false)?'recurring-invoices':'invoices');

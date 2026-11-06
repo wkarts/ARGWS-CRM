@@ -24,6 +24,20 @@ if($db->driver()==='sqlite'){
 }else{NativeCompanyAuxiliarySchema::ensure($db,$p);NativeCompanyAuxiliarySchema::ensure($db,$p);}
 require_once APPPATH.'services/NativeCompanyCustomFieldSchema.php';
 NativeCompanyCustomFieldSchema::ensure($db,$p);
+if($db->driver()==='mysql'){
+    // Catalogue writes enlist both currency tables even when no extra rate is
+    // submitted. The minimal settings fixture predates those prerequisites.
+    // Install their real DDL in this disposable prefix; do not relax the writer.
+    require_once dirname(__DIR__).'/support/NativeInstalledSchemaFixture.php';
+    require_once APPPATH.'services/CompanyCurrencyUnitSchema.php';
+    $currencyPlan=NativeInstalledSchemaFixture::plan(file_get_contents(dirname(__DIR__,2).'/install/database.sql'),$p)['currencies'];
+    if(!$db->table_exists($p.'currencies')){
+        $db->query($currencyPlan['create']);
+        foreach($currencyPlan['alters']as$ddl)$db->query($ddl);
+        unset($db->data_cache['table_names']);
+    }
+    CompanyCurrencyUnitSchema::ensure($db,$p);
+}
 foreach([41,82]as$issuer)foreach(['items','taxes','announcements','reports']as$feature)foreach(['view','create','edit','delete']as$cap)$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,?,?)",[$issuer,$feature,$cap]);
 $a=new NativeCompanyAuxiliary($db,$p,41,12);$b=new NativeCompanyAuxiliary($db,$p,82,12);$other=new NativeCompanyAuxiliary($db,$p,41,14);
 $id=$a->saveTodo(['description'=>'A private <script>test</script>']);
