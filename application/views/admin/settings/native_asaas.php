@@ -76,4 +76,5 @@ window.addEventListener('pagehide',function(){document.querySelectorAll('[data-a
 <section id="events"><h2>Eventos e revisão</h2><p>Eventos adversos, divergências, parciais, refunds e chargebacks exigem revisão. Não há estorno financeiro automático nem botão de exceção.</p><table><thead><tr><th>Evento</th><th>Tipo</th><th>Cobrança</th><th>Ambiente</th><th>Estado</th></tr></thead><tbody><?php foreach($events as $event){?><tr><td><?= $e($event['event_id']); ?></td><td><?= $e($event['event_type']); ?></td><td><?= $e($event['remote_id']); ?></td><td><?= $e($environmentLabel($event['environment'])); ?></td><td><?= $e($event['state']); ?></td></tr><?php } ?></tbody></table></section>
 <?php if($refund_ready??false)require APPPATH.'views/admin/settings/native_asaas_refunds.php'; ?>
 <script src="<?= $e(base_url('assets/js/native-asaas-settings.js')); ?>"></script>
+<script src="<?= $e(base_url('assets/js/native-asaas-batch.js')); ?>"></script>
 <?php require APPPATH.'views/admin/includes/native_company_layout_tail.php'; ?>

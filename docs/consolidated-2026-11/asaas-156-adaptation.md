@@ -138,3 +138,51 @@ não são usados como fallback por falta de escopo verificável. O monitor mostr
 estado local e explica que evento processado não comprova pagamento atual.
 Nenhuma migration/dado/provedor externo alterado por leitura; rollback de view
 não exige remoção de schema. Nenhuma homologação de provedor foi realizada.
+
+## Consulta remota e fila de conciliação — módulo1.7.5/175
+
+Consulta pontual por conta/ambiente, POST administrativo protegido que executa
+somente GET remoto: carteira e `/payments?limit=50&offset=...`. Filtros de situação
+e intervalo de pagamento/vencimento/criação seguem a fonte e o contrato oficial
+[Listar cobranças](https://docs.asaas.com/reference/listar-cobrancas), consultado
+em6/11/2026. Caminho/query canônicos, datas válidas, limites e ausência de corpo
+são revalidados no transporte. Não há host escolhido pelo usuário, redirect,
+retry automático ou consulta remota ao simplesmente abrir a tela.
+
+A carteira deve corresponder à conta salva. Revisão, habilitação e permissões são
+revalidadas entre as chamadas e após a resposta. Rede fora de transação SQL.
+Resposta paginada incompleta/duplicada é recusada; DTO descarta clientes,
+descrições, externalReference, cartões e demais campos brutos. Só exibe vínculo
+quando já existe uma única origem com mesmo ID remoto/conta/empresa. Uma cobrança
+sem vínculo continua sem associação, mesmo que sua referência pareça semelhante.
+
+Fila visual de até20 origens explícitas; um item por POST, sequencialmente.
+Comparar observa sem baixa. Conciliar exige confirmação e usa o escritor nativo
+com prova canônica fresca. ACL de monitor também é conferida dentro da transação
+de recebimento pelo adaptador Asaas autorizado; a allowlist do writer não mudou.
+Retry preserva o pagamento canônico. Recusas ficam em revisão; resultado incerto
+interrompe a fila sem repetir ou iniciar próximo item. Parar aguarda o item em
+andamento; não aborta nem desfaz operação confirmada. Nenhum corpo/segredo é salvo
+em browser storage. Migration175 NOOP; não cria novos consentimentos ou filas
+financeiras persistentes. Recarregar não retoma automaticamente uma seleção.
+
+Testes executados:
+- Leitura remota:24 checks novos SQLite e MySQL, transporte simulado, com wallet,
+  DTO mínimo, isolamento, caminho malformado, duplicidade e desativação durante GET.
+- Conciliação por item:8 novos MySQL após38 de edição e118 da cadeia; comparar,
+  PENDING recusado, recebimento único/retry, empresa estrangeira e ACL revogada,
+  incluindo chamada direta ao writer sem settings.view. Fixture MySQL usa dois
+  processos na cadeia de edição; não se declara concorrência específica de lote.
+- Fila JS:5 testes de ordem, parada, resultado incerto, revisão e seleção inválida;
+  12 contratos do driver original passaram. Controller/MySQL permanece separado
+  da simulação de respostas da interface.
+- HTTP autenticado local: runner175; confirmação ausente422 JSON e data inválida422
+  antes de provedor. View/JS originais processaram resposta simulada de um item.
+- Runner nativo MySQL321 checks, falha175 conserva174, retry/replay. Callback13 e
+  históricos154/155:48/101 passaram. CI final ainda pendente.
+
+Limites: lote opera origens já vinculadas e os critérios nominais conservadores
+do escritor atual. Parcial remoto, CONFIRMED sem elegibilidade canônica,
+parcelamentos com encargos e descoberta/associação legada permanecem para revisão;
+não são convertidos em baixa integral. Não há captura de cartão, solicitação de
+antecipação, cobrança real ou homologação Asaas. Ampliação da SDK não realizada.

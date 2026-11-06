@@ -8,6 +8,19 @@ require_once __DIR__.'/CompanyService.php';
 /** No public payload or callback can directly supply a receipt; source selects persisted canonical proof. */
 final class CompanyReceivedReceipt implements \CompanyReceiptSource
 {
+    private bool $monitorScope=false;
+    public static function forMonitor(int $origin,int $proof):self
+    {
+        $source=new self($origin,$proof);$source->monitorScope=true;return $source;
+    }
+    private function assertMonitorScope($db,string $p,int $issuer,int $actor):void
+    {
+        if(!$this->monitorScope)return;
+        if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+        (new CompanyService($db,$p))->authorize($issuer,$actor,'configuration');
+        $row=\IssuerStorage::query($db,'SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])->row_array();
+        if(version_compare($row['installed_version']??'0','1.7.5','<'))throw new \DomainException('asaas_module_175_required');
+    }
     private ?array $claim=null;
     private $explicitGuard=null;
     private ?string $explicitReference=null;
@@ -29,6 +42,7 @@ final class CompanyReceivedReceipt implements \CompanyReceiptSource
     public function tables():array{return array_merge($this->guardTables,CompanyService::tables(),$this->hasEdits?[CompanyInvoiceEditJournal::TABLE]:[],$this->hasManual?['asaas_company_manual_settlements']:[],$this->hasOriginPolicy?[CompanyOriginPolicy::TABLE]:[],$this->hasBb?['bb_origins']:[],$this->hasRemoteOperations?['asaas_company_remote_operations']:[],$this->hasRefunds?array_keys(CompanyRefundSchema::definitions()):[]);}
     public function claim($db,string $p,int $issuer,int $actor):array
     {
+        $this->assertMonitorScope($db,$p,$issuer,$actor);
         if($this->hasRemoteOperations&&\IssuerStorage::query($db,'SELECT origin_id FROM '.$p.'asaas_company_remote_operations WHERE origin_id=? AND issuer_id=? FOR UPDATE',[$this->origin,$issuer])->row_array())throw new \DomainException('asaas_company_remote_operation_pending');
         if($this->jobEvent!==null){
             \IssuerTransaction::assertOwned($db,$p,CompanyService::tables());
@@ -41,9 +55,11 @@ final class CompanyReceivedReceipt implements \CompanyReceiptSource
     }
     public function applied($db,string $p,int $issuer,int $actor,int $payment):void
     {
+        $this->assertMonitorScope($db,$p,$issuer,$actor);
         if($this->claim===null)throw new \DomainException('asaas_company_claim_required');$service=new CompanyService($db,$p);
         if($this->explicitGuard!==null){$service->assertExplicitReceiptInOwned($issuer,$actor,$this->origin,$this->explicitReference,$this->explicitGuard,$this->guardTables);$service->confirmExplicitClaimInOwned($issuer,$actor,$this->origin,$this->claim);}
         $service->receiptApplied($issuer,$actor,$this->origin,$this->claim,$payment);
+        $this->assertMonitorScope($db,$p,$issuer,$actor);
         if($this->explicitGuard!==null){$service->assertExplicitReceiptInOwned($issuer,$actor,$this->origin,$this->explicitReference,$this->explicitGuard,$this->guardTables);$service->confirmExplicitClaimInOwned($issuer,$actor,$this->origin,$this->claim);}
     }
 }

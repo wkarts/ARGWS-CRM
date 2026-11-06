@@ -155,6 +155,34 @@ final class CompanyService
         $response=$client->request('GET','wallets/');$rows=$response['data']??null;
         if(!is_array($rows)||count($rows)!==1||($response['hasMore']??false)!==false||($rows[0]['id']??null)!==$account['account_id'])throw new \DomainException('asaas_company_account_unverified');
     }
+    /** Explicit read-only monitor. Scope is revalidated around each external request. */
+    public function remotePayments($issuer,$actor,$account,string $revision,array $filters,callable $decrypt,?callable $transport=null):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
+        CompanySchema::ensure($this->db,$this->p,false);
+        require_once __DIR__.'/PaymentListResult.php';$path=PaymentListQuery::path($filters);
+        $guard=function()use($issuer,$actor,$account,$revision):array{
+            if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+            $this->authorize($issuer,$actor,'configuration');$this->authorize($issuer,$actor,'query');
+            $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+            if(version_compare($version,'1.7.5','<'))throw new \DomainException('asaas_module_175_required');
+            $row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            return $row;
+        };
+        $run=fn(callable $work)=>\IssuerTransaction::run($this->db,$this->p,array_merge(CompanyPreferences::tables(),['asaas_payment_origins','asaas_company_origin_meta']),$work);
+        $snapshot=$run($guard);$client=$this->client($snapshot,$decrypt,$transport);
+        self::wallet($client,$snapshot);$run($guard);
+        $response=$client->request('GET',$path);
+        return $run(function()use($guard,$response,$filters,$issuer,$account):array{
+            $guard();$result=PaymentListResult::read($response,(int)($filters['offset']??0));
+            foreach($result['items'] as &$item){
+                $matches=$this->rows('SELECT o.id,o.invoice_id FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? AND m.account_row=? AND o.remote_id=?',[$issuer,$account,$item['remote_id']]);
+                if(count($matches)===1){$item['origin_id']=(int)$matches[0]['id'];$item['invoice_id']=(int)$matches[0]['invoice_id'];}
+            }unset($item);
+            return $result;
+        });
+    }
     public function verifyAccount($issuer,$actor,$account,string $revision,callable $decrypt,?callable $transport=null):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorize($issuer,$actor,'configure');

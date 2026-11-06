@@ -104,6 +104,24 @@ try{
   assert.equal(await page.locator('#monitor').isVisible(),true,'native tab opens filtered local history');
   assert.ok((await page.locator('#monitor').innerText()).includes(x.remote),'owned origin is visible in local monitor');
   if(letter==='b')assert.ok(!(await page.locator('#monitor').innerText()).includes(prepared[a].remote),'monitor hides other company origins');
+  const batchForm=page.locator('#asaas-batch-form'),batchHidden=await hidden(batchForm);
+  const deniedBatch=await context.request.post(url+'/admin/settings/asaas',{form:{...batchHidden,action:'batch_reconcile',origin_id:String(x.origin)}});
+  assert.equal(deniedBatch.status(),422,'batch application requires explicit confirmation');
+  assert.deepEqual(await deniedBatch.json(),{ok:false,outcome:'review_required'});
+  let batchUiCalls=0;
+  const batchUiRoute=async route=>{
+   const data=new URLSearchParams(route.request().postData()||'');
+   if(data.get('action')!=='batch_compare')return route.continue();
+   batchUiCalls++;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,item:{origin_id:Number(data.get('origin_id')),outcome:'compared'}})});
+  };
+  await page.route('**/admin/settings/asaas',batchUiRoute);
+  try{
+   await batchForm.locator('[name=batch_origin][value="'+x.origin+'"]').check();
+   await batchForm.locator('[data-batch-start]').click();
+   await page.waitForFunction(()=>document.querySelector('[data-batch-log]').textContent.includes('Processamento da seleção encerrado'));
+   assert.equal(batchUiCalls,1,'real batch view and JS consume one simulated response without provider call');
+  }finally{await page.unroute('**/admin/settings/asaas',batchUiRoute);}
+
   await openCompany(page,url,trace,letter+':refresh-worker');
   if(letter==='a')oldForm={...await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}))};
  }

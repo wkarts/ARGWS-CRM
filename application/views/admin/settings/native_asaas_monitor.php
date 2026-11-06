@@ -16,4 +16,6 @@
 </tbody></table></div>
 <?php if($monitor['next_before']!==null){$next=http_build_query(['monitor_kind'=>$monitor['kind'],'monitor_account'=>$monitor['account']??'','monitor_state'=>$monitor['state'],'monitor_before'=>$monitor['next_before']],'','&',PHP_QUERY_RFC3986); ?><a class="btn btn-default" href="<?= $e($action_url.'?'.$next.'#monitor'); ?>">Próxima página</a><?php } ?>
 <?php }else{ ?><p>Escolha os filtros e consulte para carregar os registros.</p><?php } ?>
+<?php require APPPATH.'views/admin/settings/native_asaas_remote_monitor.php'; ?>
+<?php if(isset($origins,$can_settle)&&CompanySettingsRuntime::canResource('settings','view'))require APPPATH.'views/admin/settings/native_asaas_batch.php'; ?>
 </section>

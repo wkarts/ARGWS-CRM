@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "c09c5956a59e38dc5db5a22ad17493f91dc8ccf115ff3429957b79444c7c0b4c",
+    "source_manifest_sha256": "396777c87e9b28859a66baffa44e405d86ab8ea4ce0a547d2095c7cd4a21c05c",
     "counts": {
         "modules": 38,
-        "source_files": 4856,
+        "source_files": 4871,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 304,
-        "table_name_candidates": 938,
+        "table_name_candidates": 939,
         "database_call_candidates": 12542
     },
     "infrastructure_options": [
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.7.2",
+            "version": "1.7.5",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -501,6 +501,7 @@
                 "asaas_company_",
                 "asaas_company_accounts",
                 "asaas_company_card_payments",
+                "asaas_company_card_pricing",
                 "asaas_company_events",
                 "asaas_company_fee_expenses",
                 "asaas_company_hosted_links",
@@ -26235,12 +26236,12 @@
         {
             "name": "asaas_company_",
             "state": "not_verified",
-            "reference_count": 5
+            "reference_count": 6
         },
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 26
+            "reference_count": 31
         },
         {
             "name": "asaas_company_card_payments",
@@ -26248,9 +26249,14 @@
             "reference_count": 2
         },
         {
+            "name": "asaas_company_card_pricing",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
             "name": "asaas_company_events",
             "state": "not_verified",
-            "reference_count": 26
+            "reference_count": 28
         },
         {
             "name": "asaas_company_fee_expenses",
@@ -26270,7 +26276,7 @@
         {
             "name": "asaas_company_jobs",
             "state": "not_verified",
-            "reference_count": 20
+            "reference_count": 21
         },
         {
             "name": "asaas_company_manual_policies",
@@ -26285,7 +26291,7 @@
         {
             "name": "asaas_company_origin_meta",
             "state": "not_verified",
-            "reference_count": 16
+            "reference_count": 18
         },
         {
             "name": "asaas_company_origin_policy",
@@ -26365,7 +26371,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 74
+            "reference_count": 76
         },
         {
             "name": "asaas_payments_map",
@@ -29040,7 +29046,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 290
+            "reference_count": 291
         },
         {
             "name": "issuers_client_links",
@@ -29490,7 +29496,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 123
+            "reference_count": 128
         },
         {
             "name": "mrp_manufacturing_orders",

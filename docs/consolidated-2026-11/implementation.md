@@ -5,9 +5,8 @@
 Retomada após desconexão: arquivos locais preservados e comparados ao remoto8bcff568.
 Asaas1.5.6 confirmado emc3f169e7 é a fonte funcional vigente. A SDK fixada pela
 fonte foi consumida em172;173 adapta parâmetros/simulação de cartão por conta,
-174 acrescenta monitor local paginado. [Matriz específica e evidências](asaas-156-adaptation.md).
-Parâmetros ainda não alimentam captura/oferta parcelada. Monitor ainda não inclui
-consulta remota paginada/associação legada/lote de conciliação. Trânsito de dados
+174 acrescenta monitor local paginado;175 inclui consulta remota por conta e fila de comparação/conciliação para origens vinculadas. [Matriz específica e evidências](asaas-156-adaptation.md).
+Parâmetros ainda não alimentam captura/oferta parcelada. Associação legada, recebimentos remotos parciais e composição de encargos continuam pendentes. Trânsito de dados
 de cartão continua aguardando decisão; a ampliação remota da SDK permanece pausada.
 
 ## Fonte e bases verificadas
@@ -61,7 +60,7 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 | R03 Orçamentos | `NativeCompanyEstimateForm`, matriz AC08–13 | Paridade integral e conflitos documentados | Corrigidas chamadas a helpers de status ausentes no formulário e no resumo da listagem | MySQL: formulário36, views75, resumo8; HTTP local autenticado: criação, replay, preview, aceite e conversão100.00 passaram; suíte CI completa e paridade integral ainda pendentes |
 | R04 Faturas | `CompanyInvoices`, `NativeCompanyInvoiceCommands` e snapshots | Edição de emitidas não equivale ao legado; ciclo Asaas completo pendente | Preservado | Testes Asaas financeiros delimitados abaixo |
 | R05 Recorrências | CompanyInvoiceRecurring + Modes | Validação autenticada integral continua pendente | Journal futuro consumido pelo emissor e leitor | SQLite/MySQL + corrida de processos; HTTP local criou/emitiu sem envio/pausou/retomou série sintética |
-| R06 Pagamentos | Escritor nativo e contexto | Travamento relatado não reproduzido em instalação autenticada | Preservado | MySQL escritor, 34 asserts; não é reprodução do menu |
+| R06 Pagamentos | Escritor nativo e contexto | Causa do travamento original não reproduzida; paridade integral pendente | Preservado; driver autenticado agora exige tabela/AJAX/busca sem processamento preso | HTTP local principal e empresa2: página, tabela POST e busca200, zero erros JS; não reproduziu o travamento. Mesmo driver integrado à suíte A/B, CI pendente |
 | R07 Créditos | `NativeCompanyCreditsController` e ledger | Conflitos de edição/reabertura da matriz anterior | Preservado | Controller MySQL:118 cumulativas; checkbox de linha corrigido com reprodução PHP/CSS/Chromium desktop/mobile; homologação completa pendente |
 | R08 Itens | Catálogo próprio | Paridade geral de Itens não encerrada | Vínculo revisado por ID em recorrências; sem equivalência por descrição | Item estrangeiro e ausência de revisão recusados |
 | R09 Todo Vendas | Inventário e adaptadores da PR61 | Cobertura integral de módulos/ações não comprovada | Asaas em pagamento nativo | Testes de view/controlador/browser Asaas |

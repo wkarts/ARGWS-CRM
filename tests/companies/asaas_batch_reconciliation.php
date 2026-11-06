@@ -1,0 +1,23 @@
+<?php
+require __DIR__.'/asaas_invoice_edits.php';
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyBatchReconciliation.php';
+$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.7.5','asaas']);
+$batch=new \Asaas\CompanyBatchReconciliation($db,$p);
+$newInvoice=$s->create($b,7,array_replace($input,['client_id'=>$customerB]),hash('sha256','batch-fresh-invoice'));
+$newOrigin=asaasFixtureIssue($asaas,$b,7,$newInvoice,$accounts[$b],'cus_b','PIX',$s->revision($b,7,$newInvoice),hash('sha256','batch-fresh-origin'),$dec,$mock);
+$newRemote=$db->query('SELECT remote_id FROM '.$p.'asaas_payment_origins WHERE id=?',[$newOrigin])->row()->remote_id;
+$count=fn()=>(int)$db->query('SELECT COUNT(*) n FROM '.$p.'invoicepaymentrecords WHERE invoiceid=?',[$newInvoice])->row()->n;
+essentialCheck($batch->item($b,7,$newOrigin,false,$dec,$mock)['outcome']==='compared'&&$count()===0,'compare observes without recording receipt');
+essentialThrows(fn()=>$batch->item($b,7,$newOrigin,true,$dec,$mock),'asaas_company_receipt_requires_review','pending is not eligible to reconcile');
+$responses[$newRemote]['status']='RECEIVED';$responses[$newRemote]['paymentDate']=$input['date'];$responses[$newRemote]['creditDate']=$input['date'];
+$done=$batch->item($b,7,$newOrigin,true,$dec,$mock);
+essentialCheck($done['outcome']==='reconciled'&&$count()===1,'eligible item uses native writer once');
+essentialCheck($batch->item($b,7,$newOrigin,true,$dec,$mock)['payment_id']===$done['payment_id']&&$count()===1,'repeated item preserves canonical payment');
+$n=count($calls);essentialThrows(fn()=>$batch->item($a,7,$newOrigin,true,$dec,$mock),'asaas_company_origin_denied','foreign batch origin denied');essentialCheck(count($calls)===$n,'foreign batch item never reaches provider');
+$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');
+essentialThrows(fn()=>$batch->item($b,7,$newOrigin,true,$dec,$mock),'asaas_company_access_denied','revoked actor cannot replay item');$db->query('UPDATE '.$p.'staff SET active=1 WHERE staffid=7');
+$db->query('INSERT INTO '.$p.'staff(staffid,active,admin) VALUES(30,1,0)');
+$db->query('INSERT INTO '.$p.'issuers_staff(issuer_id,staff_id,can_view) VALUES(?,30,1)',[$b]);
+foreach([['invoices','view'],['payments','create'],['customers','view']] as [$feature,$capability])$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,30,?,?)',[$b,$feature,$capability]);
+essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($b,30,\Asaas\CompanyReceivedReceipt::forMonitor($newOrigin,$done['proof_id'])),'asaas_company_access_denied','writer revalidates monitor settings ACL inside receipt transaction even on retry');
+echo 'Batch reconciliation items: '.($GLOBALS['essentialChecks']-$start).' additional checks ('.$db->driver().'), provider simulated.'.PHP_EOL;

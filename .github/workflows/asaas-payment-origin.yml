@@ -147,6 +147,8 @@ jobs:
           php tests/companies/asaas_card_pricing_controller.php
           php tests/companies/asaas_card_pricing_concurrency.php
           php tests/companies/asaas_monitor.php
+          php tests/companies/asaas_remote_monitor.php
+          php tests/companies/asaas_batch_reconciliation.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:
@@ -158,6 +160,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Validar abas em JavaScript e DOM Chromium pareado
         run: |
+          node --test tests/asaas_batch_queue.test.cjs
           node --test tests/asaas_settings_browser_runtime.test.cjs
           node --test tests/asaas_settings_dom_harness.test.cjs
           node --check modules/asaas/assets/js/settings-tabs.js
