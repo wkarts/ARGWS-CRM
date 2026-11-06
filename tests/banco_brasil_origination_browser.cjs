@@ -55,8 +55,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(await page.locator('body.native-company-admin #header').count(),1,'BB uses the original CRM header');
    assert.equal(await page.locator('body.company-context-shell').count(),0,'BB no longer uses the company application shell');
    assert.equal(await page.locator('#bb_issuer').count(),0,'sidebar is the sole company selector');
-   await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');
-   await page.locator('[href="#bb-settings-api"]').click();
+   await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');
+   await page.locator('[href="#bb-settings-account"]').click();
    for(const channel of ['api','cnab']){
     const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});
     assert.equal(await form.count(),1,'each company has two independent native channel controls');
@@ -67,8 +67,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+id),'true');
    if(id===b)assert.equal((await context.request.post(url+'/admin/banco_brasil/save_channel_preferences',{form:capturedChannelA})).status(),409,'A channel form cannot change B after company switch');
   }
-  await select(a);await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');
-  await page.locator('[href="#bb-settings-api"]').click();
+  await select(a);await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');
+  await page.locator('[href="#bb-settings-account"]').click();
   const apiToggle=()=>page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value=api]')});
   await navigate(page,apiToggle().locator('button'));
   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+a),'false');

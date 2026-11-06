@@ -2,7 +2,7 @@
 const { openNativeExpenseWorkspace } = require('./helpers/native_expense_driver.cjs');
 const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
-const { formatDate } = require('./helpers/native_invoice_driver.cjs');
+const { formatDate, picker } = require('./helpers/native_invoice_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser; bank and SMTP operations are never invoked.
 const assert=require('node:assert/strict');const {execFileSync}=require('node:child_process');const fs=require('node:fs');const {chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(db||'',/^argws-crm-provision-db-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -20,7 +20,7 @@ try{await page.goto(url+'/admin/authentication');await page.locator('input[name=
   const name='Original expense '+letter+' <script>literal</script>',categoryName='Inline original '+letter+' '+Date.now();
   await form.locator('[name=expense_name]').fill(name);await form.locator('[name=amount]').fill('0.05');
   const dateFormat=await page.evaluate(()=>window.app.options.date_format);await form.locator('[name=date]').fill(formatDate('2026-11-05',dateFormat));
-  await form.locator('[name=category]').selectOption(String(53n*4294967296n+BigInt(sourceCategory)));
+  await picker(page, '#expense-form [name=category]', String(53n*4294967296n+BigInt(sourceCategory)));
   await form.locator('[data-native-expense-category=new]').click();const modal=page.locator('#expense-category-modal');await modal.waitFor({state:'visible'});
   await modal.locator('[name=name]').fill(categoryName);await modal.locator('[name=description]').fill('Original description <img src=x onerror=alert(1)>');
   const categoryReply=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/expenses/category'&&r.request().method()==='POST');await modal.locator('button[type=submit]').click();const categoryResponse=await categoryReply;assert.equal(categoryResponse.status(),200,await categoryResponse.text());const category=await categoryResponse.json();assert.equal(BigInt(category.id)/4294967296n,53n);await modal.waitFor({state:'hidden'});

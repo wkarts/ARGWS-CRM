@@ -798,3 +798,36 @@ formulário, 75 de views, 53 de controlador e 2 de redação de diagnóstico),
 incluindo a ampliação final dos asserts de status.
 Isso não substitui a execução autenticada de navegador nem comprova resolução
 de todos os erros posteriores do fluxo de Vendas.
+
+### Continuação autenticada de 6/11: resposta AJAX e contratos PIGE
+
+No run `42250706058`, SHA `3debbcf4937fe3bc4ba61847f46133001fcaa59a`,
+o formulário original de Orçamento abriu e o POST respondeu 200. O passo seguinte
+falhou ao ler o corpo AJAX após a navegação (`Network.getResponseBody`). O mesmo
+problema apareceu em `projects`. Um servidor HTTP sintético com Chromium
+reproduziu a perda; o driver agora observa o corpo com o buffer durável do CDP,
+sem substituir respostas ou alterar o DOM. A regressão verifica sucesso, ID,
+destino, preview e repetição exata da requisição. Passou localmente e foi incluída
+no prepare do workflow; não equivale a concluir o fluxo autenticado de Vendas.
+
+No Banco do Brasil, o teste tentava usar os botões de canais na guia API, embora
+pertençam à guia Conta. O driver abre a guia correta; o teste da view PHP real em
+Chromium confirma a visibilidade desses controles. Despesas passa a selecionar a
+categoria pelo dropdown visível nativo, conservando o valor e os asserts SQL.
+O helper de checklist aguarda e verifica o GET de atualização do modal antes de
+recarregar e testar persistência. Essas alterações aguardam nova execução HTTP.
+
+PIGE: 85 testes do backend de referência e um teste adicional do payload de
+preparação do CRM passaram; contrato, SHA, comandos e limites estão registrados
+em `pige-discovery.md`. A referência permanece sem alterações.
+
+O erro 503 ao registrar tarifa Asaas continua em investigação: o escritor passou
+em MySQL com os schemas de categorias, formulário, meios e billability instalados
+(157 verificações cumulativas, provedor simulado). O controlador passa a registrar
+somente localização de código e classe engine/runtime para distinguir o erro do
+ambiente HTTP. Não registra mensagem, argumentos, payload ou segredos.
+
+Ainda falharam no mesmo run: botão de tipo em Contratos, abertura de Nova
+recorrência e persistência do detalhe de checklist. Não são marcados como
+resolvidos por estes testes locais. Cartão continua aguardando decisão específica;
+SDK pausado, sem merge, deploy ou operações financeiras reais.

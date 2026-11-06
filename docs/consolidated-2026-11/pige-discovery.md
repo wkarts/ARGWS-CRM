@@ -160,3 +160,47 @@ cadeias anteriores; transportes remotos simulados. Sem execução contra PIGE re
 Preparação desativada110 e diagnóstico111 do CRM permanecem compatíveis.
 Diagnóstico prévio desativado e ativação bilateral atômica não estão implementados
 por esse contrato; não foi alterado o repositório PIGE nem o SDK.
+
+## Execução da referência bilateral — Python3.13
+
+Na continuação da PR63, os cinco grupos do próprio backend de referência foram
+executados no commit `f47b8916b92231ac29b56862b133c9d2b2eec851`, sem alterar suas
+fontes. Ambiente virtual descartável Python3.13, dependências fixadas em
+`backend/requirements-dev.txt`, SQLite temporário, FastAPI TestClient e
+credenciais exclusivamente sintéticas do fixture existente:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3.13 -m pytest -q \
+  -o cache_dir=/tmp/argws-pige-pytest-cache \
+  tests/test_crm_bridge.py tests/test_crm_bridge_diagnostics.py \
+  tests/test_crm_bridge_invoices.py tests/test_crm_bridge_external.py \
+  tests/test_crm_bridge_bb.py
+```
+
+Resultado: **85 passed**,43.38s; um aviso de depreciação do alias BlockingPortal
+em Starlette/AnyIO. Inclui configuração por rota administrativa, isolamento,
+revisão, assinatura/caminho/nonce do diagnóstico e bloqueio pelo master switch.
+O transporte de saída permanece simulado pelos testes de referência. Não houve
+chamada ao PIGE publicado, alteração de configurações reais ou cobrança; isso
+não substitui teste HTTPS entre as duas aplicações nem implementa diagnóstico
+remoto com conexão desativada. Checkout de referência permaneceu limpo.
+
+O teste adicional `tests/pige_bridge_reference_contract.py` no CRM exercita o
+payload da preparação110 contra a rota real do backend de referência: criação
+com `version:null`/`enabled:false`, resposta minimizada e revisão1, repetição409,
+diagnóstico409 mesmo com master switch ativo, estado remoto intacto e ausência
+de solicitações financeiras. Também verifica401 ao usar o HMAC como Bearer.
+Resultado: **1 passed**,5.95s. Execução opcional, fora da CI exclusiva do CRM:
+
+```sh
+# PIGE_BACKEND aponta para o backend do commit de referência; CRM_ROOT para o CRM.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PIGE_BACKEND/tests:$PIGE_BACKEND" \
+  python3.13 -m pytest -q -p conftest \
+  -o cache_dir=/tmp/argws-pige-crm-pytest-cache \
+  "$CRM_ROOT/tests/pige_bridge_reference_contract.py"
+```
+
+O `conftest` da referência fornece exclusivamente fixtures locais descartáveis.
+Este teste executa a API PIGE, não o transporte PHP/HTTPS do CRM; o contrato PHP
+continua coberto separadamente. Nenhuma fonte ou configuração do repositório
+PIGE foi modificada.
