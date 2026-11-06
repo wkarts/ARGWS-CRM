@@ -19,7 +19,7 @@ jobs:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_DATABASE: repricing_test
+          MYSQL_DATABASE: issuer_tests
           MYSQL_ROOT_PASSWORD: ephemeral-test-only
         options: >-
           --health-cmd="mysqladmin ping -h localhost -pephemeral-test-only"
@@ -30,7 +30,7 @@ jobs:
         run: php tests/companies/invoice_repricing.php
       - name: MySQL — schema, transações e snapshots reais
         env:
-          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=repricing_test;charset=utf8mb4
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: ephemeral-test-only
         run: php tests/companies/invoice_repricing_concurrency.php
