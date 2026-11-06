@@ -17,7 +17,7 @@ Module Name: Asaas - Módulo de Pagamento
 Description: Integração com Sistema Financeiro Asaas com a função de recebimento via catão de crédito, Boleto e Pix.
 Author: WWSoft -> Wallace Kleiton - argws/asaas-sdk-php v0.2.61
 Version: 1.7.0
-Requires at least: 4.5.8
+Requires at least: 4.9.2
 Author URI: https://t.me/wkartspro
 */
 

@@ -50,6 +50,6 @@
     "module:wiki": 78,
     "module:zillapage": 33
   },
-  "source_sha256": "46a629cf009c219ecc9e06cebcb23da476a0fcbf750bb888c092146a697ab551",
+  "source_sha256": "25437570427edfcf505e7c106e91440413b2624009bd9fc2dd3fe3026d67c341",
   "detail_generation": "python scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json"
 }

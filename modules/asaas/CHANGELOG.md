@@ -5,6 +5,7 @@
 - Edição pelo formulário nativo de cobranças Pix/boleto não pagas: simulação transacional, intenção durável, PUT único e confirmação por consulta antes de gravar a fatura. Recuperação em Transações, com ACL, CSRF e identidade do solicitante.
 - Revisões verificáveis de valor/vencimento preservam origem, snapshot e provas anteriores. Históricos financeiros, contratos não elegíveis e eventos conflitantes impedem a operação; cartão permanece fora deste fluxo.
 - Exclusão nativa propaga a remoção remota e conserva a fatura cancelada e seus vínculos; não há exclusão física do histórico.
+- Requer núcleo4.9.2, que fornece a autoridade fechada e o escritor nativo da edição; a versão mínima anterior4.5.8 não contém esse contrato.
 - Migration170 aditiva, sem backfill. Não reverter para leitor que ignore as revisões após usar o recurso.
 
 ## 1.6.9 — 2026-11-06
