@@ -402,3 +402,10 @@ Após o lock explícito da identidade e do marcador do módulo, a suíte142 foi
 reexecutada:30 verificações adicionais aprovadas. Também passaram o controller
 real da recorrência com CSRF/ator atual (130 cumulativas, SQLite) e o renderizador
 da view original de fatura (217 cumulativas; shell sintético declarado).
+
+Roteiro autenticado `banco_brasil_origination_browser.cjs` atualizado para acessar
+configurações no endereço nativo atual e esperar lote aberto antes do primeiro
+download. Foi acrescentado o fluxo pela nova fatura: escolher CNAB/configuração,
+preencher pagador/fuso, salvar pelo formulário real, confirmar vínculo único e
+imprimir antes de baixar, sem pagamento. Sintaxe Node passou; a execução integral
+desse roteiro permanece no grupo banking do CI, sem alegação de aprovação local.
