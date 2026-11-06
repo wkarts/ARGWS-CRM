@@ -409,3 +409,24 @@ download. Foi acrescentado o fluxo pela nova fatura: escolher CNAB/configuraçã
 preencher pagador/fuso, salvar pelo formulário real, confirmar vínculo único e
 imprimir antes de baixar, sem pagamento. Sintaxe Node passou; a execução integral
 desse roteiro permanece no grupo banking do CI, sem alegação de aprovação local.
+
+## Propostas, orçamentos e créditos — validação adicional
+
+MySQL8.4/PHP8.3 descartáveis: `native_estimate_form_create.php` passou18
+verificações adicionais, precedidas por17 de campos/persistência/conversão;
+`native_credit_controller.php` passou118 cumulativas.
+`native_portal_proposals_controller.php` passou18 verificações próprias, além
+da cadeia de vendas/anexos244 cumulativas: listagem, número imutável, PDF, anexo
+publicado, hash incorreto, contexto e acesso cruzado. Incluído na fase MySQL do CI.
+
+A primeira execução MySQL de Propostas falhou porque o fixture criava a tabela
+de anexos depois de aquecer o cache de metadados, mantendo esse cache ao simular
+outra requisição. O fixture agora descarta apenas o cache de nomes de tabelas
+antes do controller e exige explicitamente a tabela e o anexo real. As três
+asserções de número/anexo/PDF foram separadas, sem remover cobertura. Nenhum
+código de produção foi alterado por essa falha.
+
+SQLite: listagem/ACL de propostas, decisão de orçamento e conversão automática
+passaram, incluindo assinatura, PDF, corrupção, recuperação e corrida de grant.
+Esses testes executam serviços/controllers com banco real e fronteiras sintéticas;
+não equivalem a navegador autenticado nem comprovam toda a paridade com4.0.2.

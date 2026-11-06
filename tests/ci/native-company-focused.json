@@ -3083,6 +3083,10 @@
     [
       "php",
       "tests/companies/native_expense_original_render.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_proposals_controller.php"
     ]
   ],
   "browser": [

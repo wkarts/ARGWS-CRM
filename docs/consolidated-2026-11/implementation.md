@@ -48,13 +48,13 @@ suas pendências não foram apagadas pelo merge nem pelo delta desta PR.
 
 | Requisito | Código existente / limite observado | Lacuna atual | Implementação desta PR | Teste/evidência atual |
 |---|---|---|---|---|
-| R01 Propostas | Adaptadores nativos; matriz AC01–06 | Paridade de ações e comparação 4.0.2 completa não comprovadas | Preservado | Sem nova homologação de propostas |
+| R01 Propostas | Adaptadores nativos; matriz AC01–06 | Paridade de ações e comparação 4.0.2 completa não comprovadas | Preservado | Controller portal MySQL:18 verificações; paridade completa ainda pendente |
 | R02 Marca/PWA | `NativePwaIdentity`, shell nativo | Browser/PWA de todas as empresas e estados | Preservado | `tests/native_company/presentation.php` |
-| R03 Orçamentos | `NativeCompanyEstimateForm`, matriz AC08–13 | Paridade integral e conflitos documentados | Preservado | Não revalidado integralmente |
+| R03 Orçamentos | `NativeCompanyEstimateForm`, matriz AC08–13 | Paridade integral e conflitos documentados | Preservado | Formulário MySQL:18 verificações; decisão/conversão SQLite passaram; não integral |
 | R04 Faturas | `CompanyInvoices`, `NativeCompanyInvoiceCommands` e snapshots | Edição de emitidas não equivale ao legado; ciclo Asaas completo pendente | Preservado | Testes Asaas financeiros delimitados abaixo |
 | R05 Recorrências | CompanyInvoiceRecurring + Modes | Validação autenticada integral continua pendente | Journal futuro consumido pelo emissor e leitor | SQLite/MySQL + corrida de processos |
 | R06 Pagamentos | Escritor nativo e contexto | Travamento relatado não reproduzido em instalação autenticada | Preservado | MySQL escritor, 34 asserts; não é reprodução do menu |
-| R07 Créditos | `NativeCompanyCreditsController` e ledger | Conflitos de edição/reabertura da matriz anterior | Preservado | Sem nova homologação completa |
+| R07 Créditos | `NativeCompanyCreditsController` e ledger | Conflitos de edição/reabertura da matriz anterior | Preservado | Controller MySQL:118 cumulativas; homologação completa pendente |
 | R08 Itens | Catálogo próprio | Paridade geral de Itens não encerrada | Vínculo revisado por ID em recorrências; sem equivalência por descrição | Item estrangeiro e ausência de revisão recusados |
 | R09 Todo Vendas | Inventário e adaptadores da PR61 | Cobertura integral de módulos/ações não comprovada | Asaas em pagamento nativo | Testes de view/controlador/browser Asaas |
 | R10 Outras áreas | Controllers nativos e contratos globais da PR61 | Áreas NA01–NA09 e propriedade das integrações continuam na matriz anterior | Busca Unicode de leads corrigida sem mudar dados; nenhum módulo global aberto em secundária | MySQL:53 verificações de metadados, mais28 de diretório e31 de controlador; navegação autenticada ainda pendente |
