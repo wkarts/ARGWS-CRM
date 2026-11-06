@@ -143,6 +143,9 @@ jobs:
           node --test tests/asaas_settings_browser_runtime.test.cjs
           node --test tests/asaas_settings_dom_harness.test.cjs
           node --check modules/asaas/assets/js/settings-tabs.js
+          node --check assets/js/native-asaas-settings.js
+          php tests/companies/asaas_card_settings.php
+          node tests/browser/asaas_settings.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
           chrome="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"

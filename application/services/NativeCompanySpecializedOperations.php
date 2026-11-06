@@ -170,7 +170,7 @@ trait NativeCompanySpecializedOperations
                         if($action==='rotate'&&($post['confirm']??null)!=='1'){show_error('Confirme a substituição do token desta conta.',403);return;}
                         foreach(['token','webhook_token','one_time_token','api_key'] as $field)if(array_key_exists($field,$post)){show_error('O token é gerado exclusivamente pelo CRM.',400);return;}
                     }
-                    if(in_array($action,['save_profile','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
+                    if(in_array($action,['save_profile','save_card_settings','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
                     if(str_starts_with($action,'refund_')){if(($post['confirm']??null)!=='1'||!is_string($post['company_asaas_refund_csrf']??null)||!hash_equals($refundCsrf,$post['company_asaas_refund_csrf'])){show_error('Reabra o formulário e confirme esta ação no reembolso.',403);return;}}
                     $this->load->library('encryption');
                     $decrypt=fn($value)=>$this->encryption->decrypt($value);
@@ -179,12 +179,15 @@ trait NativeCompanySpecializedOperations
                             if(!is_array($post['profile']??null))throw new DomainException('asaas_company_profile_invalid');
                             foreach(['environment','profile_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
                             (new \Asaas\CompanyPreferences($this->db,db_prefix()))->saveProfile($issuer,$actor,(string)($post['environment']??''),$post['profile'],(string)($post['profile_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_saved');break;
+                        case 'save_card_settings':
+                            require_once APPPATH.'services/NativeCompanyAsaasCardPreferences.php';
+                            NativeCompanyAsaasCardPreferences::save($this->db,db_prefix(),$issuer,$actor,$post);$saved='Configuração de cartão salva somente neste ambiente.';break;
                         case 'select_environment':
                             foreach(['environment','selection_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
                             (new \Asaas\CompanyPreferences($this->db,db_prefix()))->selectEnvironment($issuer,$actor,(string)($post['environment']??''),(string)($post['selection_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_environment_saved');break;
                         case 'save_account':$service->saveAccount($issuer,$actor,(string)($post['environment']??''),(string)($post['account_id']??''),(string)($post['api_key']??''),(string)($post['revision']??''),fn($value)=>$this->encryption->encrypt($value));$saved='Credencial protegida. Confira a conta por API antes de emitir.';break;
                         case 'verify':$service->verifyAccount($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='A credencial confirmou a carteira configurada para este ambiente.';break;
-                        case 'reveal_api_key':$revealedApiKey=$service->revealApiKey($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='Chave API recuperada desta conta e ambiente; a credencial não foi alterada.';break;
+                        case 'reveal_api_key':throw new DomainException('asaas_company_secret_export_disabled');
                         case 'remote_webhook':
                             require_once FCPATH.'modules/asaas/libraries/Asaas/RemoteWebhook.php';
                             $remoteAction=$post['remote_action']??null;$remoteInput=$post['remote_config']??[];
