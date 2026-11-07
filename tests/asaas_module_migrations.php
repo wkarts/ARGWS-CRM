@@ -325,7 +325,10 @@ verify((string)(new App_module_migration('asaas'))->version('182')==='182','182 
 $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('183')===false,'183 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.2','183 tracking failure preserves182');
 verify((string)(new App_module_migration('asaas'))->version('183')==='183','183 retry confirmed');verify((new App_module_migration('asaas'))->version('183')===true,'183 replay no-op');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'184 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('184')===false,'184 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.3','184 tracking failure preserves183');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='184','184 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'184 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('184')==='184','184 retry confirmed');verify((new App_module_migration('asaas'))->version('184')===true,'184 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'185 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.4','185 tracking failure preserves184');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='185','185 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'185 replay no-op');
 echo "OK: {$n} native module migration MySQL assertions.\n";

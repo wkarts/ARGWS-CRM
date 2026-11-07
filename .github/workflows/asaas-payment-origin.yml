@@ -149,6 +149,7 @@ jobs:
           php tests/companies/asaas_card_pricing_concurrency.php
           php tests/companies/asaas_monitor.php
           php tests/companies/asaas_remote_monitor.php
+          php tests/companies/asaas_payment_report.php
           php tests/companies/asaas_batch_concurrency.php
           php tests/companies/asaas_legacy_binding_concurrency.php
           php tests/companies/asaas_legacy_binding_controller.php
@@ -176,6 +177,7 @@ jobs:
           php tests/companies/asaas_card_payment_controller.php
           node tests/browser/asaas_settings.cjs
           node tests/browser/asaas_installments.cjs
+          node tests/browser/asaas_payment_report.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
           chrome="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"

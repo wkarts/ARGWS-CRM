@@ -5963,26 +5963,26 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "ae9ff66e085a2452b8a01a779b44d5f938a9fd9f707b81bff85ae2fec1b70c3f",
+      "sha256": "7b6a5e606b6c6e61b726c0d8e98dd674aabbdb066c53e17425c1979f4909a7c7",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        340,
-        343,
-        366,
-        371,
-        383,
+        347,
+        350,
+        373,
+        378,
         390,
-        423,
-        427,
-        455,
-        563,
-        567,
-        704,
-        901,
-        904,
-        916
+        397,
+        430,
+        434,
+        462,
+        570,
+        574,
+        711,
+        908,
+        911,
+        923
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "efb989eb814b99471076eb0b0d5ebe26860d1637c070a4fe74b8314b40ce8810",
+      "sha256": "d82996b0868c7d3dc475e4cf21cbc3969305e1cd9a184bd72718d34a343f249c",
       "categories": [
         "customer_privacy",
         "invoice_model",

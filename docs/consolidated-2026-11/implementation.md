@@ -240,3 +240,7 @@ SDK sem ampliação. Sem merge/deploy/operações financeiras reais.
 
 Migration184 NOOP. Remoção conjunta por membros não equivale a DELETE do recurso
 installment nem a operação remota atômica. Sem alterações de SDK ou fluxo de cartão.
+
+## Atualização de referência1.5.8 / módulo CRM1.8.5
+
+A nova referência funcional é a release Asaas1.5.8, inventariada por arquivo em `asaas-158-source-manifest.json`. A matriz de adaptação e os limites estão em `asaas-158-adaptation.md`. Primeira capacidade adaptada nesta etapa: exportação paginada das cobranças da conta/ambiente verificados, pela tela nativa, com ACL/CSRF, arquivo privado e descarte em falha. Não representa adaptação completa dos relatórios, Pix Automático, SDK0.3.0, grupos ou R01–R11. Migrations e isolamento anteriores preservados; migration185 NOOP.
