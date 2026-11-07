@@ -1019,3 +1019,7 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 - Runner nativo:407 verificações MySQL, incluindo falha/retry/replay196. Migrations154/155:48/101; callback13; todos os26 scripts de contratos sem rede do workflow Asaas passaram. Contadores de suites encadeadas não devem ser somados como cenários independentes.
 - Regressão `asaas_checkout_portal.php`:24 verificações adicionais passaram (174 cumulativas) com instalação antiga. No CI195, registry-shards(8.1,1), job128336479450, falhou ao consultar active_slot antes do gate de versão. O aggregate cancelou a execução Asaas42349918085. A correção196 antecipa o gate; esses resultados locais não comprovam CI remoto196.
 - Inventários continuam com rollout bloqueado; nenhuma homologação bancária, implantação, cobrança, transmissão ou operação real foi realizada.
+
+### Regressão visual196 — fixture e novos formulários
+
+O teste da guia isolada falhou por ausência de APPPATH no fixture após a inclusão do painel operacional. O fixture passou a reproduzir essa constante do runtime; nenhum guard de produção foi reduzido. `tests/browser/asaas_automatic_pix.cjs` passou em8 cenários Chromium: os4 anteriores preservados mais desktop/mobile com operações permitidas/negadas. Confere CSRF/revisão, ausência de frequência preselecionada, confirmação financeira desmarcada e revisão independente do worker. Esses testes são apresentação sobre HTML real, não uma sessão HTTP completa.
