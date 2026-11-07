@@ -76,4 +76,17 @@ try{
  essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'installment_delete_calls')->row()->n===1,'two actual processes dispatch only one DELETE');
  essentialCheck($s->position($b,7,$raceInvoice)['received']==='0.00','deletion contenders never write a receipt');
 }finally{if($db->pdo->inTransaction())$db->trans_rollback();foreach($workers as [$proc,$pipes])if(is_resource($proc)){if(proc_get_status($proc)['running'])proc_terminate($proc);foreach($pipes as $pipe)if(is_resource($pipe))fclose($pipe);proc_close($proc);}}
+$successDeletes=0;
+$successTransport=function($env,$method,$path,$payload,$secret)use(&$second,&$successDeletes,$raceTransport){
+ if($path==='payments/pay_race_two'){
+  if($method==='DELETE'){$successDeletes++;$second['deleted']=true;return ['id'=>$second['id'],'deleted'=>true];}
+  if($method==='GET')return $second;
+ }
+ return $raceTransport($env,$method,$path,$payload,$secret);
+};
+$successKey=hash('sha256','race-second-member');
+$success=$asaas->removeInstallment($b,7,$raceRoot,'pay_race_two',$successKey,$dec,$successTransport);
+essentialCheck($success['state']==='deleted'&&$successDeletes===1,'successful DELETE response is confirmed through canonical GET');
+essentialCheck($asaas->removeInstallment($b,7,$raceRoot,'pay_race_two',$successKey,$dec,$successTransport)['state']==='deleted'&&$successDeletes===1,'confirmed deletion retry remains local');
+essentialCheck($s->position($b,7,$raceInvoice)['receivable']==='105.53','removing every member does not cancel native invoice or erase receivable');
 echo 'Installment removal: '.($GLOBALS['essentialChecks']-$start).' additional MySQL checks; all provider calls simulated.'.PHP_EOL;

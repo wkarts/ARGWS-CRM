@@ -8,5 +8,6 @@ $installment_panel=['origin_id'=>10,'group_id'=>'<img src=x onerror=alert(1)>','
  ['number'=>1,'id'=>'pay_first','due_date'=>'2026-11-20','value'=>'40.00','status'=>'PENDING','payment_id'=>null],
  ['number'=>2,'id'=>'pay_second','due_date'=>'2026-12-20','value'=>'65.53','status'=>'RECEIVED','payment_id'=>20],
 ]];
+if(($argv[1]??'')==='removing')$installment_panel['members'][0]['removal']=['state'=>'uncertain'];
 echo '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Parcelas sintéticas</title><body>';
 require __DIR__.'/../../application/views/admin/settings/native_asaas_installments.php';echo '</body></html>';

@@ -192,3 +192,9 @@ Reprodução local confirmou. A fixture agora testa a recusa com schema ausente,
 depois instala journal170/política157 antes de simular a configuração1.7.4.
 Monitor remoto independente:24 verificações MySQL adicionais após172 cumulativas.
 Monitor local corrigido:17 verificações MySQL adicionais após179 cumulativas.
+
+Fechamento da regressão183:52 checks MySQL adicionais incluem também resposta
+DELETE bem-sucedida seguida de GET, retry local após confirmação e preservação
+do saldo nativo quando todas as parcelas são removidas. Chromium ampliado para
+seis cenários:1280/390px × escrita/leitura/exclusão incerta; estado incerto não
+oferece novo DELETE nem conciliação, somente consulta de recuperação com CSRF.
