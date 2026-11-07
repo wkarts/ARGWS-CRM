@@ -155,6 +155,7 @@ jobs:
           php tests/companies/asaas_payment_report.php
           php tests/companies/asaas_automatic_pix_monitor.php
           php tests/companies/asaas_pix_inbox.php
+          php tests/companies/asaas_pix_reservations.php
           php tests/companies/asaas_pix_inbox_controller.php
           php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php

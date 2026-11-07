@@ -14,6 +14,7 @@ require_once __DIR__.'/CompanyOriginPolicy.php';
 require_once __DIR__.'/CompanyInstruments.php';
 require_once __DIR__.'/CompanyRemoteOperationsSchema.php';
 require_once __DIR__.'/CompanyClient.php';
+require_once __DIR__.'/CompanyPixReservations.php';
 require_once __DIR__.'/CompanyCardSettlement.php';
 require_once __DIR__.'/CompanyCheckoutSchema.php';
 require_once __DIR__.'/HostedCardCheckout.php';
@@ -30,7 +31,7 @@ require_once APPPATH.'services/CompanyCurrencyUnits.php';
 /** Named-company adapter. Never enters the legacy gateway, global configuration or invoice map. */
 final class CompanyService
 {
-    use CompanyLegacyBinding, CompanyInstallmentBindings, CompanyInstallmentRemoval, CompanyInstallmentBatchRemoval;
+    use CompanyPixReservations, CompanyLegacyBinding, CompanyInstallmentBindings, CompanyInstallmentRemoval, CompanyInstallmentBatchRemoval;
     public function __construct(private $db,private string $p,private ?WebhookTokenCipher $webhookCipher=null)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('asaas_company_prefix_invalid');
@@ -474,8 +475,9 @@ final class CompanyService
     }
     private function existingIssuance(int $invoice,int $account,string $requestKey,string $customer,string $billingType,array $parent):?int
     {
-        $old=$this->rows('SELECT o.id,o.issuer_id,o.environment,m.request_key,m.account_row,m.customer_id,m.billing_type,m.snapshot_hash,m.snapshot_json FROM '.$this->p.'asaas_payment_origins o LEFT JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.invoice_id=?'.CompanyOriginGenerations::predicate($this->db,$this->p,'o.').' FOR UPDATE',[$invoice])[0]??null;
+        $old=$this->rows('SELECT o.id,o.channel,o.issuer_id,o.environment,m.request_key,m.account_row,m.customer_id,m.billing_type,m.snapshot_hash,m.snapshot_json FROM '.$this->p.'asaas_payment_origins o LEFT JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.invoice_id=?'.CompanyOriginGenerations::predicate($this->db,$this->p,'o.').' FOR UPDATE',[$invoice])[0]??null;
         if(!$old)return null;
+        if($old['channel']!=='api')throw new \DomainException('asaas_company_origin_conflict');
         if((int)$old['issuer_id']!==(int)$parent['issuer_id']||(int)$old['account_row']!==$account||$old['request_key']!==$requestKey||$old['customer_id']!==$customer||$old['billing_type']!==$billingType)throw new \DomainException('asaas_company_origin_conflict');
         $this->unchanged($old,$parent);(new CompanyPreferences($this->db,$this->p))->originSnapshot($old,$old);
         return (int)$old['id'];

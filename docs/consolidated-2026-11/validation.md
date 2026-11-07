@@ -986,3 +986,10 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 - 391 verificações do runner nativo em MySQL descartável, incluindo falha/retry/replay192 sem reduzir191.
 - Regressões: callback-version13, política de retry847 (middleware real com transporte sintético) e instrumentos/allowlist aprovados.
 - CI Asaas do SHA anterior6429371300bd0f6913b1b251b046b11eadc53f2a aprovado. Não comprova CI deste incremento nem adesão financeira integrada.
+
+### Asaas193 — reserva e recuperação integradas ao journal de faturas
+
+- `tests/companies/asaas_pix_reservations.php`:31 verificações adicionais MySQL após a base financeira existente. Duas conexões aguardam o lock InnoDB: retry converge para uma origem e revogação bloqueia ambos. Cobertos rollback tardio, chave divergente, bloqueio de emissão comum/recebimento manual, conta estrangeira, contrato remoto divergente, revogação pós-GET, estado fora de ordem, prova corrompida e preservação de pagamentos/jobs/identidade da origem. Provedor inteiramente simulado, apenas GET.
+- Runner nativo:395 verificações MySQL; migration154:48; migration155:101; callback-version:13. Falha/retry/replay193 preserva192.
+- CI Asaas do SHA anterior3ee0699b5bde125c0c1a7aa7b84b4026fd636775 aprovado em contracts8.1/8.5, MySQL e settings-ui. Não representa aprovação do próximo SHA.
+- A sequência local de33 scripts iniciada antes deste incremento continua separada: a árvore mudou durante sua execução, portanto não é usada como prova de um único SHA final. Sem testes HTTP/browser novos porque nenhuma rota/view de adesão foi exposta neste incremento.
