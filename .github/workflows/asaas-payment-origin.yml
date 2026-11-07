@@ -178,6 +178,7 @@ jobs:
           php tests/companies/asaas_installment_refunds.php
           php tests/companies/asaas_installment_edits.php
           php tests/companies/asaas_installment_recreation.php
+          php tests/companies/asaas_installment_post_refund_recreation.php
           php tests/companies/asaas_installment_removal.php
           php tests/companies/asaas_installment_batch_removal.php
           php tests/companies/asaas_card_payments_concurrency.php

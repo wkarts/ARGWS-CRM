@@ -27,14 +27,14 @@ trait CompanyInstallmentRemoval
     {return $this->rows('SELECT * FROM '.$this->p.'asaas_company_remote_operations WHERE origin_id=? FOR UPDATE',[$origin])[0]??null;}
     private function installmentRemovalPublic(array $op):array
     {return array_intersect_key($op,array_flip(['origin_id','state','last_code','updated_at']));}
-    private function installmentRemovalProof(array $source,string $remote,bool $deleted):array
+    private function installmentRemovalProof(array $source,string $remote,bool $deleted,int $actor):array
     {
         [$root,$meta,$account,$parent,$review,$members]=$source;$member=$members[$remote];$origin=(int)$member['origin']['id'];
         if($this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? FOR UPDATE',[$origin])||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=? FOR UPDATE',[$root['invoice_id']]))throw new \DomainException('asaas_company_remote_financial_history');
         // Only receipts belonging to other reviewed members may coexist with this deletion.
         foreach($this->rows('SELECT id FROM '.$this->p.'invoicepaymentrecords WHERE invoiceid=? FOR UPDATE',[$root['invoice_id']]) as $payment){
             $receipt=$this->rows('SELECT r.origin_id FROM '.$this->p.'asaas_company_receipts r JOIN '.$this->p.'asaas_payment_origins o ON o.id=r.origin_id WHERE r.payment_id=? AND r.issuer_id=? AND o.invoice_id=? AND o.channel=? AND o.batch_id=? FOR UPDATE',[$payment['id'],$root['issuer_id'],$root['invoice_id'],'installment',$root['batch_id']]);
-            if(count($receipt)!==1||(int)$receipt[0]['origin_id']===$origin)throw new \DomainException('asaas_company_remote_financial_history');
+            if(count($receipt)!==1){$closed=(new \CompanyAsaasRefundPostings($this->db,$this->p))->forInvoiceInOwned((int)$root['issuer_id'],$actor,(int)$root['invoice_id']);if(!isset($closed[(int)$payment['id']]))throw new \DomainException('asaas_company_remote_financial_history');}elseif((int)$receipt[0]['origin_id']===$origin)throw new \DomainException('asaas_company_remote_financial_history');
         }
         foreach(['bb_origins','efi_company_origins'] as $table)if($this->db->table_exists($this->p.$table)&&$this->rows('SELECT id FROM '.$this->p.$table.' WHERE invoice_id=? FOR UPDATE',[$root['invoice_id']]))throw new \DomainException('asaas_company_multiple_providers');
         $proof=$this->rows("SELECT * FROM {$this->p}asaas_company_proofs WHERE origin_id=? AND operation='parcel_query' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$origin])[0]??null;
@@ -60,7 +60,7 @@ trait CompanyInstallmentRemoval
         $prepared=$this->transaction(function()use($read,$remote,$key,$issuer,$actor){
             $s=$read();$origin=(int)$s[5][$remote]['origin']['id'];$old=$this->installmentRemovalLedger($origin);
             if($old){if(!hash_equals($old['request_key'],$key))throw new \DomainException('asaas_company_remote_request_conflict');return ['existing'=>$this->installmentRemovalPublic($old)];}
-            $proof=$this->installmentRemovalProof($s,$remote,false);$now=gmdate('Y-m-d H:i:s');
+            $proof=$this->installmentRemovalProof($s,$remote,false,$actor);$now=gmdate('Y-m-d H:i:s');
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_remote_operations(origin_id,issuer_id,actor_id,account_revision,request_key,proof_id,state,last_code,created_at,updated_at,sent_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[$origin,$issuer,$actor,$s[2]['revision'],$key,$proof['id'],'sending','delete_started',$now,$now,$now]);
             $this->audit($issuer,$actor,'company_asaas_parcel_sending',$origin);return ['origin'=>$origin,'account'=>$s[2]];
         });
@@ -75,6 +75,6 @@ trait CompanyInstallmentRemoval
     {
         $remote=self::opaque($remote,64);$read=function()use($issuer,$actor,$group,$remote){$s=$this->installmentRemovalSource($issuer,$actor,$group,$remote);$op=$this->installmentRemovalLedger((int)$s[5][$remote]['origin']['id']);if(!$op||$op['sent_at']===null||(int)$op['issuer_id']!==$issuer||$op['account_revision']!==$s[2]['revision'])throw new \DomainException('asaas_company_remote_intent_conflict');return [$s,$op];};
         $this->transaction($read);$this->observeInstallment($issuer,$actor,$group,$remote,$decrypt,$transport);
-        return $this->transaction(function()use($read,$issuer,$actor,$remote){[$s,$op]=$read();try{$this->installmentRemovalProof($s,$remote,true);$state='deleted';$code='canonical_deleted_confirmed';}catch(\DomainException $e){$state='review_required';$code='canonical_deletion_not_confirmed';}return $this->installmentRemovalTransition($issuer,$actor,(int)$op['origin_id'],$state,$code);});
+        return $this->transaction(function()use($read,$issuer,$actor,$remote){[$s,$op]=$read();try{$this->installmentRemovalProof($s,$remote,true,$actor);$state='deleted';$code='canonical_deleted_confirmed';}catch(\DomainException $e){$state='review_required';$code='canonical_deletion_not_confirmed';}return $this->installmentRemovalTransition($issuer,$actor,(int)$op['origin_id'],$state,$code);});
     }
 }

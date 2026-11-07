@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "8182d2ac898f2423cb9046e5026dc9d5a9b085eea0b789ff32fe381f6adabc27",
+    "source_manifest_sha256": "39474229834608ac083d10e3f721aa9522ed4023b9b2ecaf1a61abfc6b3f7d60",
     "counts": {
         "modules": 38,
-        "source_files": 4943,
+        "source_files": 4945,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "2.0.3",
+            "version": "2.0.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26272,7 +26272,7 @@
         {
             "name": "asaas_company_events",
             "state": "not_verified",
-            "reference_count": 37
+            "reference_count": 38
         },
         {
             "name": "asaas_company_fee_expenses",
@@ -26377,7 +26377,7 @@
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
-            "reference_count": 27
+            "reference_count": 29
         },
         {
             "name": "asaas_company_recreations",
@@ -26392,12 +26392,12 @@
         {
             "name": "asaas_company_refund_observations",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 8
         },
         {
             "name": "asaas_company_refund_requests",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 16
         },
         {
             "name": "asaas_company_remote_operations",
@@ -26747,7 +26747,7 @@
         {
             "name": "company_asaas_refund_postings",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 12
         },
         {
             "name": "company_bank_receipt_components",

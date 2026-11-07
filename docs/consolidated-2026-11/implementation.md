@@ -401,3 +401,15 @@ Asaas2.0.2/202 é sequência nativa do CRM, não versão upstream. Migration NOO
 Antes de reservar, enviar ou confirmar reembolso de uma parcela, a composição privada valida também a cadeia do grupo ativo e suas provas pareadas de sucessão/exclusão. A identidade histórica do membro permanece imutável e a leitura histórica continua disponível; nenhuma prova202 é reescrita. Uma cadeia adulterada falha antes de reservar intenção ou chamar o provedor. Isso fecha uma diferença entre a autoridade de conciliação e a de reembolso dos grupos sucessores.
 
 Asaas2.0.3/203, migration NOOP, sem DDL, seed, backfill ou grants. Preservar journals e marcadores em implantação futura; rollback não desfaz operações financeiras e deve manter o guard de autoridade. Recriação de grupos parcialmente pagos/reembolsados, reversão parcial e paridade integral1.5.8/R01–R11 permanecem pendentes de implementação/validação; não são bloqueios externos presumidos. Cartão continua aguardando decisão.
+
+## Incremento204 — sucessão após devolução integral
+
+A recriação também admite grupo com parcelas integralmente reembolsadas e outras excluídas sem recebimento. Toda parcela recebida precisa de devolução integral canônica e declaração de reversão já registrada pelo escritor financeiro nativo, com recibo/prova próprios. Todos os pagamentos da fatura devem estar integralmente revertidos e o saldo inteiro reaberto. A criação do novo grupo não registra devolução, crédito, recebimento ou despesa por inferência; reembolso parcial ou principal ainda recebido continuam impedindo a operação.
+
+A sucessão congela separadamente a prova de exclusão ou a prova de reembolso junto ao hash do lançamento nativo. A cadeia valida essas provas nas operações posteriores. Eventos novos ou conflitantes no predecessor bloqueiam a continuação para revisão; uma marca de evento adverso sem evento de reembolso correspondente não é aceita. O retry da declaração financeira antiga permanece idempotente após retirar a seleção ativa do grupo. Os recibos e reversões anteriores conservam todos os bytes.
+
+Parcelas da nova geração podem ser recebidas e as pendentes editadas/removidas, sem confundir recibos históricos integralmente revertidos com recebimentos ativos. A interface explica o saldo totalmente reaberto e a diferença entre exclusão e reembolso. Não altera a fatura emitida, calendário, Produtos, conta/ambiente ou dados de cartão.
+
+Asaas2.0.4/204, migration NOOP, sem DDL/backfill/grants. Backup, runner nativo e marcador204 são pré-requisitos de futura implantação. Rollback não apaga devoluções ou cobranças: preservar os pares de sucessão, provas, claims e lançamentos; suspender uso e corrigir aditivamente. Nenhum merge/deploy ou operação financeira real.
+
+Ainda pendentes: sucessão mantendo parcelas efetivamente pagas, reversão parcial canônica e ciclo integral de alocações avulsas, paridade integral Asaas1.5.8/R01–R11 e homologação financeira. O suporte ao grupo com devolução integral não encerra essas lacunas. Cartão aguarda decisão específica.

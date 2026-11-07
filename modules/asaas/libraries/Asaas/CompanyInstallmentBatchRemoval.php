@@ -42,7 +42,7 @@ trait CompanyInstallmentBatchRemoval
                 if(!$proof)throw new \DomainException('asaas_company_remote_fresh_query_required');$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);
                 if(!hash_equals($proof['evidence_hash'],self::hash($safe)))throw new \DomainException('asaas_installment_batch_conflict');
                 if(in_array($safe['status']??'', ['RECEIVED','CONFIRMED'],true)){$excluded[]=['id'=>$remote,'reason'=>'received_remote'];continue;}
-                $this->installmentRemovalProof($source,$remote,false);$selected[]=$member['member'];
+                $this->installmentRemovalProof($source,$remote,false,$actor);$selected[]=$member['member'];
             }
             if(!$selected)throw new \DomainException('asaas_installment_batch_empty');
             $plan=['issuer_id'=>$issuer,'actor_id'=>$actor,'group_origin'=>$group,'group_id'=>$source[0]['batch_id'],'invoice_id'=>(int)$source[0]['invoice_id'],'account_revision'=>$source[2]['revision'],'snapshot_hash'=>$source[1]['snapshot_hash'],'members'=>$selected,'excluded'=>$excluded];$plan['review_hash']=self::hash($plan);
@@ -58,7 +58,7 @@ trait CompanyInstallmentBatchRemoval
         $intent=$this->transaction(function()use($issuer,$actor,$group,$review,$approval){
             $source=$this->installmentBatchSource($issuer,$actor,$group);$existing=$this->installmentBatchIntent($issuer,$actor,$source);if($existing){if($existing['plan']['review_hash']!==$approval)throw new \DomainException('asaas_legacy_review_changed');return $existing;}
             if($source[2]['revision']!==$review['account_revision'])throw new \DomainException('asaas_company_stale');
-            foreach($review['members'] as $member){$this->installmentRemovalProof($source,$member['id'],false);if($this->installmentRemovalLedger((int)$source[5][$member['id']]['origin']['id'])!==null)throw new \DomainException('asaas_legacy_review_changed');}
+            foreach($review['members'] as $member){$this->installmentRemovalProof($source,$member['id'],false,$actor);if($this->installmentRemovalLedger((int)$source[5][$member['id']]['origin']['id'])!==null)throw new \DomainException('asaas_legacy_review_changed');}
             $plan=$review;unset($plan['reserved']);$hash=self::hash($plan);$now=gmdate('Y-m-d H:i:s');
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$group,$source[2]['revision'],$actor,'group_remove',json_encode($plan,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),$hash,'group_removal',$now]);$id=(int)$this->db->insert_id();
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(?,?,?,?,?,?)',[$actor,'company_asaas_group_removal',$issuer,$group,self::legacyAudit($id,$hash),$now]);

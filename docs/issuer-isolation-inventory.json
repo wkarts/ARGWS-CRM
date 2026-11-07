@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "fb14ef316b3db48b37a97ccda16bf898673cf10779aaea27f5a087b55ba1d2f8",
+      "sha256": "9f32acc52178f99c4d2afa53403a83def048fb11d46c4dcfbe00fdc780352310",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8713,20 +8713,20 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentBindings.php": {
-      "sha256": "bcd0f245ff9e057ba1571718ac2e9387a3cb13a9be40e46f3b8df09ae0300f4c",
+      "sha256": "0b5557e4f1a66158b4db0beb35b096071862a6b324c62a43c5ce7c63135d4445",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        62,
-        124
+        63,
+        125
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentEdits.php": {
-      "sha256": "d47abf88b9f97d7c19a616c69d4b099b3d5a627de811a1ffd714d031510fc5a8",
+      "sha256": "e5c92bb749a6640dca1aa08069c68048d3edf2d6797461559931b2c2d8b36696",
       "categories": [
         "payments"
       ],
@@ -8737,18 +8737,18 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRecreation.php": {
-      "sha256": "3bb1560676a4381ae3b48f570032495078db1f77291a45f7089037fc1b894ed3",
+      "sha256": "2c7e94db8f5d1998f8a64452815393aa3a9a7a0363f05a55cddf801ff5222d68",
       "categories": [
         "payments"
       ],
       "signal_lines": [
-        13
+        14
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRemoval.php": {
-      "sha256": "6341a2cb3b871d6c5e98b9c903f2000e0c52ae3852579f63a97552f2a95bd08f",
+      "sha256": "fcfb95c602570e1e2b8816b0a641baa645b909d29fc5626a3eea3cc696b65fdd",
       "categories": [
         "payments"
       ],
@@ -8945,7 +8945,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "cc53247857120d4deed3f257eedbcf17dbc2118467b00a17583c39be494280e0",
+      "sha256": "33230c4175b433d1fb4b348f2f80bf9664a8b436d54d3e8aaa393a5b14e0deae",
       "categories": [
         "customer_privacy",
         "invoice_table",

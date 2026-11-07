@@ -37,12 +37,12 @@ trait CompanyInstallmentBindings
         if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
         $root=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND channel=? FOR UPDATE',[$groupOrigin,$issuer,'installments'])[0]??null;
         if(!$root)throw new \DomainException('asaas_installment_origin_denied');CompanyOriginGenerations::assertActive($root);
-        $all=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? ORDER BY id FOR UPDATE',[$root['invoice_id']]);$all=CompanyInstallmentGenerations::currentMembers($this->db,$this->p,$root,$all);$members=[];$review=null;$rootMeta=null;$config=null;
+        $all=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? ORDER BY id FOR UPDATE',[$root['invoice_id']]);$all=CompanyInstallmentGenerations::currentMembers($this->db,$this->p,$root,$all,$actor);$members=[];$review=null;$rootMeta=null;$config=null;
         foreach($all as $row){
             $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$row['id']])[0]??null;
             $proofs=$this->rows("SELECT * FROM {$this->p}asaas_company_proofs WHERE origin_id=? AND operation='installment_bind' FOR UPDATE",[$row['id']]);
             $audits=$this->rows("SELECT * FROM {$this->p}issuers_audit WHERE issuer_id=? AND subject_id=? AND event='company_asaas_installment_bound' FOR UPDATE",[$issuer,$row['id']]);
-            if(!$meta||count($proofs)!==1||count($audits)!==1||$proofs[0]['state']!=='installment_bound'||!$this->installmentRemovalState($row)||$row['provider']!=='asaas')throw new \DomainException('asaas_installment_binding_conflict');
+            if(!$meta||count($proofs)!==1||count($audits)!==1||$proofs[0]['state']!=='installment_bound'||(!$this->installmentRemovalState($row)&&!($row['channel']==='installment'&&$row['state']==='review_required'&&$row['last_code']==='company_adverse_event'))||$row['provider']!=='asaas')throw new \DomainException('asaas_installment_binding_conflict');
             $proof=$proofs[0];$safe=json_decode($proof['result_json'],true,64,JSON_THROW_ON_ERROR);
             foreach(['issuer_id','invoice_id','invoice_hash','invoice_total','account_id','environment','batch_id'] as $field)if((string)$row[$field]!== (string)$root[$field])throw new \DomainException('asaas_installment_binding_conflict');
             if(!hash_equals($proof['evidence_hash'],self::hash($safe))||($safe['group_origin']??null)!==$groupOrigin||($safe['origin_id']??null)!==(int)$row['id']||($safe['issuer_id']??null)!==$issuer||($safe['account_row']??null)!==(int)$meta['account_row']||($safe['snapshot_hash']??null)!==$meta['snapshot_hash']||!hash_equals($meta['snapshot_hash'],hash('sha256',$meta['snapshot_json']))||(int)$proof['actor_id']!==(int)$meta['created_by']||(int)$audits[0]['actor_id']!==(int)$meta['created_by']||$audits[0]['metadata_json']!==self::legacyAudit((int)$proof['id'],$proof['evidence_hash']))throw new \DomainException('asaas_installment_binding_conflict');
@@ -55,6 +55,7 @@ trait CompanyInstallmentBindings
         if(!(int)$config['enabled']||$config['verified_at']===null||$root['account_id']!==$config['account_id']||$root['environment']!==$config['environment'])throw new \DomainException('asaas_company_account_unverified');
         $parent=$this->parent($issuer,(int)$root['invoice_id']);$this->unchanged($rootMeta,$parent);if($root['invoice_hash']!==$parent['hash']||self::money($root['invoice_total'])!==self::money($parent['total'])||$root['invoice_due_date']!==$parent['duedate'])throw new \DomainException('asaas_installment_binding_conflict');
         [$review,$members]=CompanyInstallmentEditJournal::effective($this->db,$this->p,$root,$review,$members,$ownEdit);
+        foreach($members as $member)if(!$this->installmentRemovalState($member['origin']))CompanyInstallmentRefundClosure::evidence($this->db,$this->p,$issuer,$actor,$member,$config['revision'],false);
         return [$root,$rootMeta,$config,$parent,$review,$members];
     }
     public function installmentGroups(int $issuer,int $actor):array
