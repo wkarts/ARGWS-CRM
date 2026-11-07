@@ -10,7 +10,7 @@ trait CompanyInstallmentBindings
         if(version_compare($v,'1.8.2','<'))throw new \DomainException('asaas_module_182_required');
         CompanyOriginGenerations::ensure($this->db,$this->p,false);
     }
-    private function bindInstallmentReview(int $issuer,int $actor,array $review,array $config,array $parent,string $approval):array
+    private function bindInstallmentReview(int $issuer,int $actor,array $review,array $config,array $parent,string $approval,bool $verify=true):array
     {
         $this->installmentModule();$this->legacyAccess($issuer,$actor);
         if(!hash_equals($review['review_hash'],$approval))throw new \DomainException('asaas_legacy_review_changed');
@@ -28,7 +28,7 @@ trait CompanyInstallmentBindings
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$origin,$config['revision'],$actor,'installment_bind',json_encode($proof,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),$hash,'installment_bound',$now]);$proofId=(int)$this->db->insert_id();
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(?,?,?,?,?,?)',[$actor,'company_asaas_installment_bound',$issuer,$origin,self::legacyAudit($proofId,$hash),$now]);
         }
-        $this->installmentGroupInOwned($issuer,$actor,$groupOrigin);
+        if($verify)$this->installmentGroupInOwned($issuer,$actor,$groupOrigin);
         return ['bound'=>true,'origin_id'=>$groupOrigin];
     }
     public function installmentGroupInOwned(int $issuer,int $actor,int $groupOrigin,?string $ownEdit=null):array
@@ -37,7 +37,7 @@ trait CompanyInstallmentBindings
         if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
         $root=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND channel=? FOR UPDATE',[$groupOrigin,$issuer,'installments'])[0]??null;
         if(!$root)throw new \DomainException('asaas_installment_origin_denied');CompanyOriginGenerations::assertActive($root);
-        $all=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? ORDER BY id FOR UPDATE',[$root['invoice_id']]);$members=[];$review=null;$rootMeta=null;$config=null;
+        $all=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? ORDER BY id FOR UPDATE',[$root['invoice_id']]);$all=CompanyInstallmentGenerations::currentMembers($this->db,$this->p,$root,$all);$members=[];$review=null;$rootMeta=null;$config=null;
         foreach($all as $row){
             $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$row['id']])[0]??null;
             $proofs=$this->rows("SELECT * FROM {$this->p}asaas_company_proofs WHERE origin_id=? AND operation='installment_bind' FOR UPDATE",[$row['id']]);
@@ -59,7 +59,7 @@ trait CompanyInstallmentBindings
     }
     public function installmentGroups(int $issuer,int $actor):array
     {
-        return $this->transaction(function()use($issuer,$actor){$acl=new \IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'settings','view')||!$acl->can($issuer,$actor,'invoices','view'))return [];$version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.8.2','<'))return [];return $this->rows("SELECT id,invoice_id,batch_id,account_id,environment FROM {$this->p}asaas_payment_origins WHERE issuer_id=? AND channel='installments' AND active_slot=1 ORDER BY id DESC LIMIT 100",[$issuer]);});
+        return $this->transaction(function()use($issuer,$actor){$acl=new \IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'settings','view')||!$acl->can($issuer,$actor,'invoices','view'))return [];$version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.8.2','<'))return [];return $this->rows("SELECT id,invoice_id,batch_id,account_id,environment,active_slot FROM {$this->p}asaas_payment_origins WHERE issuer_id=? AND channel='installments' ORDER BY id DESC LIMIT 100",[$issuer]);});
     }
     public function installmentGroupPage(int $issuer,int $actor,int $groupOrigin):array
     {
@@ -79,7 +79,7 @@ trait CompanyInstallmentBindings
                 if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);if(!hash_equals($proof['evidence_hash'],self::hash($safe)))throw new \DomainException('asaas_installment_binding_conflict');$member['status']=$safe['status'];}
                 $receipt=$this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=?',[$origin])[0]??null;$member['origin_id']=$origin;$member['payment_id']=$receipt?(int)$receipt['payment_id']:null;$op=$this->installmentRemovalLedger($origin);$member['removal']=$op?$this->installmentRemovalPublic($op):null;$out[]=$member;
             }
-            return ['origin_id'=>$groupOrigin,'invoice_id'=>(int)$root['invoice_id'],'group_id'=>$root['batch_id'],'account_id'=>$config['account_id'],'environment'=>$config['environment'],'members'=>$out];
+            return ['retired'=>$root['active_slot']===null,'origin_id'=>$groupOrigin,'invoice_id'=>(int)$root['invoice_id'],'group_id'=>$root['batch_id'],'account_id'=>$config['account_id'],'environment'=>$config['environment'],'members'=>$out];
         });
     }
     public function observeInstallment(int $issuer,int $actor,int $groupOrigin,string $remote,callable $decrypt,?callable $transport=null):int
@@ -90,7 +90,7 @@ trait CompanyInstallmentBindings
         $client=$this->client($config,$decrypt,$transport);self::wallet($client,$config);$this->transaction($read);self::customer($client,$meta['customer_id'],$parent);$this->transaction($read);
         $response=$client->request('GET','payments/'.$remote);$member=$members[$remote]['member'];
         if(($response['installment']??null)!==$review['group_id']||($response['installmentNumber']??null)!==$member['number'])throw new \DomainException('asaas_installment_binding_conflict');
-        unset($response['installment']);$local=$parent;$local['duedate']=$member['due_date'];
+        unset($response['installment']);$local=$parent;$local['hash']=$member['external_reference'];$local['duedate']=$member['due_date'];
         $safe=self::normalize($response,['remote_id'=>$remote],['customer_id'=>$meta['customer_id'],'billing_type'=>$meta['billing_type'],'reviewed_amount'=>$member['value']],$local,$remote);
         return $this->transaction(function()use($read,$config,$parent,$safe,$remote,$actor){
             [$root,$meta,$now,$current,,$members]=$read();if($now['revision']!==$config['revision']||self::snapshot($parent)!==self::snapshot($current))throw new \DomainException('asaas_company_stale');
@@ -107,7 +107,7 @@ trait CompanyInstallmentBindings
         $proof=$this->rows("SELECT * FROM {$this->p}asaas_company_proofs WHERE origin_id=? AND operation='parcel_query' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$origin])[0]??null;
         if(!$proof||(int)$proof['id']!==$proofId||$proof['state']!=='installment_observed'||$proof['created_at']>gmdate('Y-m-d H:i:s')||$proof['account_revision']!==$config['revision'])throw new \DomainException('asaas_company_receipt_requires_review');
         $safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);
-        if(!hash_equals($proof['evidence_hash'],self::hash($safe))||$safe['id']!==$remote||$safe['external_reference']!==$parent['hash']||$safe['customer']!==$meta['customer_id']||$safe['billing_type']!==$meta['billing_type']||$safe['due_date']!==$member['due_date']||$safe['value']!==$member['value']||$safe['status']!=='RECEIVED'||$safe['adverse']||$safe['deleted']||$safe['fee']===''||$safe['net_value']==='')throw new \DomainException('asaas_company_receipt_requires_review');
+        if(!hash_equals($proof['evidence_hash'],self::hash($safe))||$safe['id']!==$remote||$safe['external_reference']!==$member['external_reference']||$safe['customer']!==$meta['customer_id']||$safe['billing_type']!==$meta['billing_type']||$safe['due_date']!==$member['due_date']||$safe['value']!==$member['value']||$safe['status']!=='RECEIVED'||$safe['adverse']||$safe['deleted']||$safe['fee']===''||$safe['net_value']==='')throw new \DomainException('asaas_company_receipt_requires_review');
         $date=$safe['payment_date'];$parsed=\DateTimeImmutable::createFromFormat('!Y-m-d',$date);$today=(new \DateTimeImmutable('now',new \DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');
         if(!$parsed||$parsed->format('Y-m-d')!==$date||$date<$parent['date']||$date>$today)throw new \DomainException('asaas_company_receipt_requires_review');
         foreach($this->rows('SELECT event_type,state,created_at FROM '.$this->p.'asaas_company_events WHERE account_row=? AND remote_id=? FOR UPDATE',[$config['id'],$remote]) as $event)if(!in_array($event['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_RECEIVED'],true)||in_array($event['state'],['conflict','review_required'],true)||$event['created_at']>$proof['created_at'])throw new \DomainException('asaas_company_adverse_history');

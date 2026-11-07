@@ -5963,26 +5963,26 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "f91e2c034657a54a2eee039fc735506c80b70c16eb194e6aab8ce4dba0da0e82",
+      "sha256": "86226f60b047aa03cdae4f5086f3adda4a16e71873f46af81fec189e247d27c7",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        441,
-        444,
-        467,
-        472,
-        491,
-        498,
-        531,
-        535,
-        563,
-        671,
-        675,
-        812,
-        1009,
-        1012,
-        1024
+        453,
+        456,
+        479,
+        484,
+        503,
+        510,
+        543,
+        547,
+        575,
+        683,
+        687,
+        824,
+        1021,
+        1024,
+        1036
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "b2899177164ccbbc68239d8b798b8f34bf778793c31cd2349d969ee83de64537",
+      "sha256": "c6c6c223b6f9e8fc8c70c86541c9e1cfa198258646006709081363cecb380e3f",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8713,7 +8713,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentBindings.php": {
-      "sha256": "05656a58dd8f562de4bece289c9c2920cb1b0e173893478b7bf5d3595184a5d9",
+      "sha256": "bcd0f245ff9e057ba1571718ac2e9387a3cb13a9be40e46f3b8df09ae0300f4c",
       "categories": [
         "invoice_table",
         "payments"
@@ -8726,7 +8726,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentEdits.php": {
-      "sha256": "d33c1f33289f0e36b92a9028aea72525167eabb33cc8bf0b39bf6f93f24fddbb",
+      "sha256": "d47abf88b9f97d7c19a616c69d4b099b3d5a627de811a1ffd714d031510fc5a8",
       "categories": [
         "payments"
       ],
@@ -8736,8 +8736,19 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/asaas/libraries/Asaas/CompanyInstallmentRecreation.php": {
+      "sha256": "3bb1560676a4381ae3b48f570032495078db1f77291a45f7089037fc1b894ed3",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRemoval.php": {
-      "sha256": "a18c47dbd822ba01a82474d0873cc072c3dd28676cc943e00976de6da4d6f248",
+      "sha256": "6341a2cb3b871d6c5e98b9c903f2000e0c52ae3852579f63a97552f2a95bd08f",
       "categories": [
         "payments"
       ],
@@ -8896,7 +8907,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRefundStorage.php": {
-      "sha256": "42298038bd75a0ecad3ea281f35412982312a1ecdc258a0ddeb06dc7567ed436",
+      "sha256": "d29789d94da25a11a3a3c56877db1b8bf0ee5b0b1d0305fecf30fb0fb18df8ad",
       "categories": [
         "invoice_table",
         "payments"
@@ -8934,24 +8945,24 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "8f74d37aa1fc3db62afb91305a1d0819d96a73cf028f70336a2b7725a9d26950",
+      "sha256": "e6b050fa377d9a8ef680931b583de04e41fc773aa3b18cd9304693b939564e02",
       "categories": [
         "customer_privacy",
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        49,
-        68,
-        70,
+        50,
+        69,
         71,
         72,
-        349,
-        365,
-        435,
-        544,
-        726,
-        795
+        73,
+        350,
+        366,
+        436,
+        545,
+        727,
+        796
       ],
       "state": "unreviewed",
       "evidence": ""

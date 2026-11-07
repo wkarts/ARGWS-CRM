@@ -1,8 +1,6 @@
 # Parcelamentos Asaas: revisão por empresa e conta
 
-Estado atual: adaptação1.8.4. Associação, baixa individual, exclusão individual e
-remoção conjunta revisada estão implementadas. As seções181–183 abaixo preservam
-o histórico; edição, reembolso e recriação de grupos permanecem pendentes.
+Estado atual: adaptação2.0.2/202, referência funcional upstream1.5.8. Associação, baixa e remoção por parcela, remoção conjunta, reembolso com identidade histórica, edição revisada de valores/vencimentos e recriação de grupos integralmente excluídos e não pagos estão implementados. As seções numeradas abaixo preservam a evolução; prevalecem os limites da seção202. Recriação com parcelas já pagas e reversão parcial canônica continuam pendentes.
 
 Referência funcional: módulo1.5.7, commit e790c33ade267b73027c167b468f06309d5d61e6,
 `AsaasReconciliation::expandInstallments`. Adaptador ARGWS: módulo1.8.1/181.
@@ -260,3 +258,15 @@ asserção do token dedicado nos formulários reais. Resultado:18 checks adicion
 ## Edição e redistribuição — módulo2.0.1/201
 
 Implementada edição revisada de valor/vencimento dos membros pendentes com total fixo, journal imutável, envio único por parcela e recuperação de resultado incerto. A UI nativa oferece revisão/confirmacão/retomada; recebimentos e reembolsos usam a identidade efetiva comprovada, preservando os vínculos originais. Detalhes e limitações atuais em `implementation.md` e resultados em `validation.md`, incremento201. As seções anteriores são históricas. Recriação de grupos e reversão parcial continuam incompletas.
+
+## Incremento202 — recriação de grupos excluídos sem recebimentos
+
+A configuração nativa revisa quantidade e primeiro vencimento de um novo parcelamento PIX/BOLETO. Exige exclusão canônica de todos os membros anteriores, nenhuma baixa/crédito nativo e nenhuma intenção de reembolso. O total original permanece exato. A confirmação explícita reserva intenção e claim duráveis antes de um único POST. Resposta perdida ou rejeitada não autoriza repetir a criação; a recuperação procura exclusivamente a referência exclusiva derivada da intenção e valida conta/carteira, cliente, grupo, cada parcela, valores e datas. Estado não confirmado continua pendente, sem falso sucesso.
+
+Contrato utilizado: [criar cobrança parcelada](https://docs.asaas.com/docs/criar-uma-cobranca-parcelada), POST payments com installmentCount e totalValue. A divisão em centavos vem da resposta canônica; não se envia installmentValue junto nem se inventa restauração de grupo excluído. Consultas completas e coerentes são obrigatórias. Nenhum dado de cartão transita neste fluxo.
+
+Só após confirmação canônica de todas as parcelas uma transação nativa retira a seleção ativa anterior, cria vínculos novos e grava provas pareadas de sucessão. Falha tardia reverte toda a troca local; o claim remoto permanece recuperável. O journal valida a cadeia inteira, auditorias e provas de exclusão imutáveis. Origens, baixas e snapshots anteriores não são reescritos. O histórico aparece na grade sem botões financeiros de grupo ativo. Recebimento ocorrido remotamente antes do vínculo não gera baixa automática: exige consulta/recebimento nativo separado. Reembolso distingue a referência remota exclusiva da identidade nativa da fatura.
+
+Limites: recriação de grupos parcialmente pagos, reaproveitamento de parcelas pagas, alteração irrestrita do total e reversão parcial canônica não estão concluídos. Os bloqueios são de implementação explícita, não indisponibilidade externa. A paridade integral Asaas1.5.8 e R01–R11 continua aberta; cartão aguarda decisão específica. Sem alterações no SDK ou no repositório Perfex.
+
+Asaas2.0.2/202 é sequência nativa do CRM, não versão upstream. Migration NOOP, sem DDL, backfill, grant ou ativação. Implantação futura requer backup consistente e runner nativo com marcador202. Reverter código não desfaz criação remota: preservar claims/provas/vínculos e recuperar por consulta, sem baixar marcador ou apagar histórico. Nenhum merge, deploy ou operação real foi executado.

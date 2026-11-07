@@ -5,6 +5,14 @@ $controller->input->verb='GET';$controller->output->status=200;$run();
 $csrf=$controller->session->data['company_asaas_preferences_csrf'];
 $before=$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array();
 foreach([
+ ['action'=>'open_installment_recreation','group_origin'=>1],
+ ['action'=>'review_installment_recreation','group_origin'=>1],
+ ['action'=>'execute_installment_recreation','group_origin'=>1],
+ ['action'=>'recover_installment_recreation','group_origin'=>1],
+ ['action'=>'review_installment_recreation','group_origin'=>1,'installment_count'=>[],'due_date'=>'2027-01-05','company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'execute_installment_recreation','group_origin'=>1,'installment_count'=>'2','due_date'=>'2027-01-05','review_hash'=>[],'confirm'=>'1','company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'execute_installment_recreation','group_origin'=>1,'installment_count'=>'2','due_date'=>'2027-01-05','review_hash'=>str_repeat('a',64),'company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'recover_installment_recreation','group_origin'=>1,'review_hash'=>str_repeat('a',64),'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'open_installment_edit','group_origin'=>1],
  ['action'=>'review_installment_edit','group_origin'=>1],
  ['action'=>'execute_installment_edit','group_origin'=>1],

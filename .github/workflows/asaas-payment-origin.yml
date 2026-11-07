@@ -177,6 +177,7 @@ jobs:
           php tests/companies/asaas_installment_receipts.php
           php tests/companies/asaas_installment_refunds.php
           php tests/companies/asaas_installment_edits.php
+          php tests/companies/asaas_installment_recreation.php
           php tests/companies/asaas_installment_removal.php
           php tests/companies/asaas_installment_batch_removal.php
           php tests/companies/asaas_card_payments_concurrency.php
@@ -199,6 +200,7 @@ jobs:
           node tests/browser/asaas_settings.cjs
           node tests/browser/asaas_installments.cjs
           node tests/browser/asaas_installment_edits.cjs
+          node tests/browser/asaas_installment_recreation.cjs
           node tests/browser/asaas_payment_report.cjs
           node tests/browser/asaas_automatic_pix.cjs
           node tests/asaas_pix_future.browser.cjs

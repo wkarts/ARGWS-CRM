@@ -26,7 +26,7 @@ trait CompanyInstallmentEdits
  {
   if(($response['installment']??null)!==$s[0]['batch_id']||($response['installmentNumber']??null)!==$member['number'])throw new \DomainException('asaas_installment_edit_remote_conflict');
   if(!empty($response['dunning']))throw new \DomainException('asaas_installment_edit_remote_conflict');
-  unset($response['installment']);$parent=$s[3];$parent['duedate']=$member['due_date'];
+  unset($response['installment']);$parent=$s[3];$parent['hash']=$member['external_reference'];$parent['duedate']=$member['due_date'];
   $safe=self::normalize($response,['remote_id'=>$member['id']],['customer_id'=>$s[1]['customer_id'],'billing_type'=>$s[1]['billing_type'],'reviewed_amount'=>$member['value']],$parent,$member['id']);
   if(!in_array($safe['status'],['PENDING','OVERDUE'],true)||$safe['deleted']||$safe['adverse']||$safe['payment_date']!==''||$safe['credit_date']!=='')throw new \DomainException('asaas_installment_edit_unpaid_required');return $safe;
  }

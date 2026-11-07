@@ -42,6 +42,7 @@ final class CompanyInstallmentIdentity
   [$review,$members,$editHistory]=CompanyInstallmentEditJournal::effective($db,$p,$root,$review,$members);
   $member=$members[$selected['remote_id']]['member'];
   $identity=['group_origin'=>$rootId,'group_id'=>$root['batch_id'],'member_origin'=>$origin,'member_id'=>$member['id'],'member_number'=>$member['number'],'member_value'=>$member['value'],'member_due_date'=>$member['due_date'],'issuer_id'=>$issuer,'account_row'=>(int)$account['id'],'account_id'=>$account['account_id'],'environment'=>$account['environment'],'invoice_id'=>(int)$root['invoice_id'],'invoice_hash'=>$root['invoice_hash'],'invoice_total'=>$root['invoice_total'],'snapshot_hash'=>$rootMeta['snapshot_hash'],'bindings'=>$evidence];
+  if($member['external_reference']!==$root['invoice_hash'])$identity['remote_reference']=$member['external_reference'];
   if(isset($editHistory[$selected['remote_id']]))$identity['edits']=$editHistory[$selected['remote_id']];
   return ['review'=>$review,'members'=>$members,'root_meta'=>$rootMeta,'identity'=>$identity,'root'=>$root,'origin'=>$selected,'meta'=>$members[$selected['remote_id']]['meta'],'account'=>$account,'snapshot'=>$snapshot];
  }

@@ -1067,3 +1067,11 @@ Runner nativo201:428 assertions MySQL, preservando200 e cobrindo falha/tracking/
 CI do SHA200 `604abb09`: workflow Asaas42356488596 aprovado integralmente (contratos8.1/8.5, interface e MySQL). A rodada agregada ainda estava em andamento. Esses resultados não são CI do incremento201.
 
 Regressão201: reembolso por parcela33 verificações MySQL adicionais e baixas39 passaram; upgrades históricos154/15548/101; callback13; dez cenários Chromium da grade anterior preservados. Sintaxe dos PHPs alterados e diff passaram. Inventários regenerados conservadoramente:710 fronteiras,681 não revisadas e29 parciais; operational_rollout continua bloqueado. Nenhum gate foi afrouxado.
+
+## Incremento202 — recriação com cadeia histórica
+
+MySQL descartável e API simulada:155 verificações adicionais de recriação, incluindo duas conexões/processos sob mutex InnoDB com exatamente um POST; confirmação obrigatória; empresa estrangeira; timeout; referência remota divergente; rollback tardio do vínculo; replay; recebimento remoto anterior ao vínculo sem baixa automática; principal exato52.76/52.77; histórico adulterado; reembolso da parcela sucessora, falha de auditoria e preservação byte a byte do recibo. Regressões: edição69 e reembolso de parcelas33 verificações adicionais, com suas cadeias anteriores. Contagens encadeadas não são cenários independentes somáveis.
+
+Runner nativo:432 assertions MySQL com tracking202, retry e replay; migrations154/15548/101(SQLite); callback13; controller real44 guards após179 cumulativos; transporte22 sem rede, incluindo totalValue exclusivo e paginação limitada. Chromium:8 estados da view PHP de recriação e12 da grade, em desktop/mobile e perfis negados/históricos; apresentação real com dados sintéticos, não sessão HTTP autenticada completa nem homologação financeira. Sintaxe dos25 arquivos PHP alterados/novos aprovada e diff sem whitespace inválido.
+
+CI201 remoto30f4a439: workflow Asaas42358241912 aprovado, assim como núcleo/módulos e interfaces; stacks/HTTP e agregado ainda em execução na consulta desta etapa. Não equivale ao CI202. Inventários conservadores continuam com rollout bloqueado; as lacunas funcionais e a paridade integral R01–R11 não foram marcadas como concluídas. Nenhuma chamada financeira real, merge ou implantação.

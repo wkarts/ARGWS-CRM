@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php if(($can_remove??false)&&($installment_panel??null)!==null){ ?>
+<?php if(empty($installment_panel['retired'])&&($can_remove??false)&&($installment_panel??null)!==null){ ?>
 <form method="post" action="<?= $e($action_url); ?>#monitor"><?php $hidden(['action'=>'review_installment_batch_removal','group_origin'=>$installment_panel['origin_id'],'company_asaas_preferences_csrf'=>$preferences_csrf]); ?><button class="btn btn-default" type="submit">Revisar exclusão das parcelas pendentes</button></form>
 <?php } ?>
 <?php if(($installment_batch_review??null)!==null){ $batch=$installment_batch_review; ?>

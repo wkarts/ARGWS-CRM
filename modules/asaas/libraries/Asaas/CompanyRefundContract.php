@@ -29,7 +29,8 @@ final class CompanyRefundContract
     }
     public static function normalize(array $response,array $source):array
     {
-        foreach(['id'=>'remote_id','customer'=>'customer_id','externalReference'=>'invoice_hash','dueDate'=>'due_date','billingType'=>'billing_type'] as $remote=>$field)if(($response[$remote]??null)!==$source[$field])throw new \DomainException('asaas_refund_response_conflict');
+        if(($source['external_reference']??$source['invoice_hash'])!==($source['installment_identity']['remote_reference']??$source['invoice_hash']))throw new \DomainException('asaas_refund_response_conflict');
+        foreach(['id'=>'remote_id','customer'=>'customer_id','externalReference'=>isset($source['external_reference'])?'external_reference':'invoice_hash','dueDate'=>'due_date','billingType'=>'billing_type'] as $remote=>$field)if(($response[$remote]??null)!==$source[$field])throw new \DomainException('asaas_refund_response_conflict');
         if(self::money($response['value']??null)!==$source['nominal']||isset($response['deleted'])&&!is_bool($response['deleted']))throw new \DomainException('asaas_refund_response_conflict');
         $status=self::text($response['status']??null,32);if(!preg_match('/^[A-Z_]+$/D',$status))throw new \DomainException('asaas_refund_response_conflict');
         if(isset($source['installment_identity'])){
