@@ -282,3 +282,45 @@ Rollback: suspender uso da nova ação se necessário e corrigir adiante, preser
 origens, prova de revisão, auditoria, recebimentos e marcadores. Reverter somente
 view não desfaz vínculos ou baixas já confirmadas. Não apagar registros para
 "liberar" outra associação ou repetir um resultado incerto.
+
+## Ciclo legado revisado — módulo 1.7.8/178
+
+O delta mantém a aprovação original do vínculo e a política `manual_only`.
+Remoção usa o outbox existente: somente cobrança sem pagamento/crédito/evento
+adverso, DELETE único, resultado incerto recuperado por GET. Não cancela nem
+apaga a fatura por efeito de uma resposta remota.
+
+Reembolso usa o principal revisado da cobrança, inclusive quando menor que o
+total da fatura. A autorização por ator/conta continua desligada por padrão.
+Observação remota não é baixa financeira: a declaração nativa exige prova
+independente e valor integral do recebimento original. O writer mantém total e
+hash da fatura, recibo canônico, origem, prova de pagamento e observação de
+reembolso; restitui somente o principal comprovado, preservando outros pagamentos.
+
+Edição explícita admite vínculo legado que cobria integralmente a fatura. A
+projeção da cadeia auditada de edições fica separada da aprovação original, que
+não é reescrita. PUT incerto exige recuperação; o vínculo continua manual.
+Cobrança parcial requer uma regra de alocação própria e permanece bloqueada para
+edição do total, sem multiplicar sua cobrança pelo valor total da fatura.
+
+Migration178 é NOOP. Nenhum backfill, adoção automática, concessão de permissão,
+trânsito de dados de cartão ou alteração no SDK. Os testes usam MySQL descartável
+e transportes simulados; não constituem homologação no Asaas.
+
+Ainda pendentes: grupos/parcelamentos, edição de alocações parciais e sucessores
+legados com preservação de sua autoridade manual. Esses são trabalhos de código,
+não bloqueios externos nem capacidades concluídas por este delta. A adaptação
+integral da fonte1.5.6 e a paridade R01–R11 continuam abertas.
+
+Validação local178: `asaas_legacy_lifecycle.php` passou em MySQL8.4 com53
+checks adicionais após74 da associação,11 do lote,38 da edição e118 da cadeia.
+Inclui reembolso após edição, falha do journal, dois processos concorrentes,
+replay e preservação dos recebimentos originais. Runner nativo:333 assertions.
+Regressão de reembolso/concorrência:204 cumulativos; controlador real:205
+cumulativos. Callback13, migrations históricas154/155:48/101. Sem Asaas real.
+
+CI do SHA32c58d11: falha no registry-shards(8.1,2), run42299138405,
+job128173445130. O fixture `asaas_refund_controller.php` renderizava a view fora
+de `CompanySettingsRuntime`, causando `company_settings_context_required`.
+Correção: render dentro do runtime real; nenhuma barreira da aplicação removida.
+A execução local MySQL corrigida passou. CI do novo SHA deve ser acompanhado.

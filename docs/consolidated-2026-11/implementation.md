@@ -181,3 +181,11 @@ Portal de orçamento/proposta carrega explicitamente o validador de campos nativ
 ### R01 — composição do conteúdo da Proposta no PDF
 
 `CompanySalesPdf` passa a incluir assunto e HTML do snapshot nativo, com tabela na posição de `{proposal_items}` ou ao final quando ausente. `NativeCompanyContentHtml::forPdf` aplica o sanitizador existente com imagens/recursos externos proibidos no PDF. Regressão de processo independente usa TCPDF e extração real de texto: reproduziu a omissão e passou após a correção. Imagens do corpo, autosave e demais conflitos de paridade continuam explicitamente fora deste delta; nenhuma alteração financeira ou de histórico.
+
+### Continuidade 178 — ciclo de vínculos legados
+
+Ver `asaas-156-adaptation.md`, seção1.7.8. Remoção com recuperação de DELETE
+incerto, reembolso do principal revisado e edição de cobrança que cobre toda a
+fatura preservam a evidência inicial e a revisão explícita. Grupos/parcelamentos,
+alocações parciais editáveis e recriação legada ainda exigem implementação.
+Não há merge, deploy, chamadas financeiras reais ou ampliação do SDK neste delta.

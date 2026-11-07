@@ -2886,7 +2886,7 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasRefundPostings.php": {
-      "sha256": "35ecbd357aff4922fbe9322dd425b811f4a7a62907e811855284b408083f7205",
+      "sha256": "4b0deaccc9c55bbdb5c6910f637bedb9d5fdd950c451bb445d36dc5cffe63517",
       "categories": [
         "invoice_table",
         "payments"
@@ -2894,8 +2894,8 @@
       "signal_lines": [
         10,
         19,
-        39,
-        44
+        49,
+        54
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "142cb9a46cb9196e31d08869d87da272e61edb7fed71fde50204c463e26734b9",
+      "sha256": "04cc2eb31f13276b987a286f76234f0e4726e9da519466d9d822fec6610f3f59",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8713,23 +8713,23 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInvoiceEdits.php": {
-      "sha256": "f9ef686b2cba230a230bf900c33e1647b19def5d1859073a0e664dfe2d3c92c1",
+      "sha256": "5d2ba76619f52bd19cfc31af126c9f4ba8893aad9da57b7d62e59371c0ef9218",
       "categories": [
         "payments"
       ],
       "signal_lines": [
-        42
+        43
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyLegacyBinding.php": {
-      "sha256": "a3168195adca02ca29dfde65c4fce1a9f23110cca899caf02543334c941cc706",
+      "sha256": "cb792dbaec93db759a5175b592971c880c83842e6ae4d0bd77d410ddf79f7933",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        42
+        49
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8779,7 +8779,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRefundStorage.php": {
-      "sha256": "c55f425078b3f8ced42deee86c615cceaff967b503a74c00ccf23a9a8deaca21",
+      "sha256": "8a26fe962bcd228a925cf30a3a617bcd21f972930a3f18699e76b3760e95c46d",
       "categories": [
         "invoice_table",
         "payments"
@@ -8817,7 +8817,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "39a0ceb9abf143a51638f62a1ca3becba9690ae1b81296e5e4b2c46f967bf522",
+      "sha256": "c86f5c80feecb42bcdf8033b299e9cb12bdffd11a52740e2189bfb955a5cb7e3",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -8832,9 +8832,9 @@
         294,
         310,
         375,
-        469,
-        622,
-        691
+        473,
+        626,
+        695
       ],
       "state": "unreviewed",
       "evidence": ""

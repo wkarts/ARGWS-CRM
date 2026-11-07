@@ -36,7 +36,8 @@ final class CompanyInvoiceEdits
         \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
         [$o,$m,$account,$parent]=(new CompanyService($this->db,$this->p))->editSourceInOwnedTransaction($i,$a,$origin,$command['request_key']??null);
         if((int)$o['invoice_id']!==$request['invoice']||$o['state']!=='issued'||!in_array((int)$parent['status'],[1,4],true)||!in_array($m['billing_type'],['PIX','BOLETO'],true))throw new \DomainException('asaas_invoice_edit_unpaid_required');
-        (new CompanyService($this->db,$this->p))->assertAutomaticAllowed($origin);
+        // A reviewed full-invoice legacy binding authorizes this explicit command only.
+        if(!isset($m['legacy_reference']))(new CompanyService($this->db,$this->p))->assertAutomaticAllowed($origin);
         if(!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($i,$a,$request['invoice']),$request['revision']))throw new \DomainException('company_invoice_stale');
         if(count($this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$request['invoice']]))>1)CompanyOriginGenerations::postRefundOriginInOwned($this->db,$this->p,$i,$request['invoice'],$origin);
         foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT id FROM '.$this->p.$table.' WHERE '.$column.'=? FOR UPDATE',[$request['invoice']]))throw new \DomainException('asaas_invoice_edit_financial_history');

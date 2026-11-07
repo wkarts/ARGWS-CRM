@@ -28,6 +28,13 @@ trait CompanyLegacyBinding
         $amount=self::money($safe['value']??null);if(\CompanyInvoiceAmounts::minor($amount)<1||\CompanyInvoiceAmounts::minor($amount)>\CompanyInvoiceAmounts::minor((string)$row['invoice_total']))throw new \DomainException('asaas_legacy_binding_conflict');
         $meta['reviewed_amount']=$amount;$meta['legacy_reference']=$meta['request_key'];return $meta;
     }
+    /** Capability gate only; callers must still prove their own remote/financial authority. */
+    private function legacyLifecycleVersion(array $meta):void
+    {
+        if(!isset($meta['legacy_reference']))return;
+        $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+        if(version_compare($version,'1.7.8','<'))throw new \DomainException('asaas_module_178_required');
+    }
     private static function legacyAudit(int $proof,string $hash):string{return json_encode(['proof_id'=>$proof,'evidence_hash'=>$hash],JSON_THROW_ON_ERROR);}
     public function legacyReferenceInOwned(int $issuer,int $actor,int $origin):?string
     {

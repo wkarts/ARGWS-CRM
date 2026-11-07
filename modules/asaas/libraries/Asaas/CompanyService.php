@@ -438,13 +438,17 @@ final class CompanyService
             foreach($this->rows('SELECT e.event_type,e.state FROM '.$this->p.'asaas_payment_origins old JOIN '.$this->p.'asaas_company_origin_meta om ON om.origin_id=old.id JOIN '.$this->p.'asaas_company_events e ON e.account_row=om.account_row AND e.remote_id=old.remote_id WHERE old.invoice_id=? AND old.issuer_id=? AND old.active_slot IS NULL FOR UPDATE',[$row['invoice_id'],$issuer]) as $historical)
                 if(!in_array($historical['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true)||$historical['state']==='conflict')throw new \DomainException('asaas_recreation_historical_event_review');
         }
+        // Validate original legacy approval before projecting the separately audited edit chain.
+        $legacy=$this->legacyMeta($row,$meta,$allowLegacy);
+        $legacyFull=isset($legacy['reviewed_amount'])&&self::money($legacy['reviewed_amount'])===self::money($row['invoice_total']);
         [$row,$meta]=CompanyInvoiceEditJournal::effective($this->db,$this->p,$row,$meta,$editKey);
-        $parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);$meta['profile']=(new CompanyPreferences($this->db,$this->p))->originSnapshot($row,$meta);$meta=$this->legacyMeta($row,$meta,$allowLegacy);return [$row,$meta,$account,$parent];
+        if(isset($legacy['legacy_reference'])){$meta['legacy_reference']=$legacy['legacy_reference'];$meta['legacy_full_invoice']=$legacyFull;$meta['reviewed_amount']=$legacyFull?self::money($row['invoice_total']):$legacy['reviewed_amount'];}
+        $parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);$meta['profile']=(new CompanyPreferences($this->db,$this->p))->originSnapshot($row,$meta);return [$row,$meta,$account,$parent];
     }
     /** Closed invoice-edit composition; pending-key bypass remains internal to the edit writer. */
     public function editSourceInOwnedTransaction(int $issuer,int $actor,int $origin,?string $key=null):array
     {
-        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');return $this->source($issuer,$origin,$key);
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');$source=$this->source($issuer,$origin,$key,true);$this->legacyLifecycleVersion($source[1]);if(isset($source[1]['legacy_reference'])&&!$source[1]['legacy_full_invoice'])throw new \DomainException('asaas_legacy_partial_edit_allocation_required');return $source;
     }
     public function editSnapshotInOwnedTransaction(int $issuer,int $actor,int $invoice,bool $profile):array
     {
@@ -453,7 +457,7 @@ final class CompanyService
     /** Internal composition: private credentials never leave a transaction-owning service. */
     public function remoteSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
     {
-        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');if($this->db->table_exists($this->p.'asaas_company_manual_settlements')){\IssuerTransaction::assertOwned($this->db,$this->p,['asaas_company_manual_settlements']);if($this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_manual_settlements WHERE origin_id=? FOR UPDATE',[$origin]))throw new \DomainException('asaas_manual_command_pending');}$source=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');if($this->db->table_exists($this->p.'asaas_company_manual_settlements')){\IssuerTransaction::assertOwned($this->db,$this->p,['asaas_company_manual_settlements']);if($this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_manual_settlements WHERE origin_id=? FOR UPDATE',[$origin]))throw new \DomainException('asaas_manual_command_pending');}$source=$this->source($issuer,$origin,null,true);$this->legacyLifecycleVersion($source[1]);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
     }
     /** Read-only authority for the closed native partial-manual writer. */
     public function manualSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
@@ -467,14 +471,14 @@ final class CompanyService
         \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());
         if($write)$this->authorize($issuer,$actor,'refund');
         elseif(!(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','view'))throw new \DomainException('asaas_company_access_denied');
-        if($write)$source=$this->source($issuer,$origin);
+        if($write){$source=$this->source($issuer,$origin,null,true);$this->legacyLifecycleVersion($source[1]);}
         else{
             // Historical private metadata remains readable after an account is disabled or rotated.
             $row=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND provider=? AND channel=? FOR UPDATE',[$origin,$issuer,'asaas','api'])[0]??null;
             $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$origin])[0]??null;
             if(!$row||!$meta)throw new \DomainException('asaas_company_origin_denied');$account=$this->account($issuer,(int)$meta['account_row']);
             if($row['account_id']!==$account['account_id']||$row['environment']!==$account['environment'])throw new \DomainException('asaas_company_origin_denied');
-            $source=[$row,$meta,$account,$this->parent($issuer,(int)$row['invoice_id'])];
+            $legacy=$this->legacyMeta($row,$meta,true);$this->legacyLifecycleVersion($legacy);$full=isset($legacy['reviewed_amount'])&&self::money($legacy['reviewed_amount'])===self::money($row['invoice_total']);[$row,$meta]=CompanyInvoiceEditJournal::effective($this->db,$this->p,$row,$meta);if(isset($legacy['legacy_reference'])){$meta['legacy_reference']=$legacy['legacy_reference'];$meta['reviewed_amount']=$full?self::money($row['invoice_total']):$legacy['reviewed_amount'];}$source=[$row,$meta,$account,$this->parent($issuer,(int)$row['invoice_id'])];
         }
         (new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);
         return $source;
