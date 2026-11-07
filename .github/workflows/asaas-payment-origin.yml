@@ -100,6 +100,7 @@ jobs:
           php tests/asaas_sdk_030.php
           php tests/asaas_account_report_contract.php
           php tests/asaas_pix_authorization_contract.php
+          php tests/asaas_pix_recovery.php
           php tests/asaas_settings_policy.php
           php tests/asaas_environment_profiles.php
           php tests/asaas_settings_presentation.php
@@ -156,6 +157,8 @@ jobs:
           php tests/companies/asaas_automatic_pix_monitor.php
           php tests/companies/asaas_pix_inbox.php
           php tests/companies/asaas_pix_reservations.php
+          php tests/companies/asaas_pix_recovery.php
+          php tests/companies/asaas_pix_consent.php
           php tests/companies/asaas_pix_inbox_controller.php
           php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php

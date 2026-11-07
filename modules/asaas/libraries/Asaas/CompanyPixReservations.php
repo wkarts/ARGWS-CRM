@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Asaas;
 require_once __DIR__.'/CompanyPixAuthorizationContract.php';
+require_once __DIR__.'/AutomaticPixRecovery.php';
 /** Durable invoice exclusion and canonical GET recovery. A reservation is not customer consent. */
 trait CompanyPixReservations
 {
@@ -25,6 +26,13 @@ trait CompanyPixReservations
   if(!is_array($source)||self::hash($source)!==$proof['evidence_hash']||$proof['account_revision']!==$account['revision']||($source['issuer_id']??null)!==$issuer||($source['account_row']??null)!==(int)$account['id']||($source['invoice_id']??null)!==(int)$parent['id']||($source['invoice_hash']??null)!==$parent['hash']||($source['amount']??null)!==self::money($parent['total'])||($source['customer_id']??null)!==$meta['customer_id']||($source['request_key']??null)!==$meta['request_key'])throw new \DomainException('asaas_pix_reservation_conflict');
   CompanyPixAuthorizationContract::request($source);CompanyOriginPolicy::assertManual($this->db,$this->p,$origin,$issuer,$meta['request_key']);
   return [$row,$meta,$account,$parent,$source];
+ }
+ /** Internal portal composition; the caller must own native financial/identity tables. */
+ public function pixConsentSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
+ {
+  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());
+  $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.9.4','<'))throw new \DomainException('asaas_module_194_required');
+  return $this->pixReservationSource($issuer,$actor,$origin);
  }
  public function reservePixAuthorization(int $issuer,int $actor,int $invoice,int $account,string $customer,string $revision,string $key,string $frequency,string $startDate):int
  {
@@ -50,10 +58,15 @@ trait CompanyPixReservations
  /** Recovery observes an exact contract on the authenticated account. Never retries POST or activates jobs. */
  public function recoverPixAuthorization(int $issuer,int $actor,int $origin,string $remote,callable $decrypt,?callable $transport=null):array
  {
-  self::opaque($remote,120);$read=fn()=>$this->pixReservationSource($issuer,$actor,$origin);[$row,$meta,$account,$parent,$source]=$this->transaction($read);
+  if($remote!=='')self::opaque($remote,120);$read=fn()=>$this->pixReservationSource($issuer,$actor,$origin);[$row,$meta,$account,$parent,$source]=$this->transaction($read);
   $client=$this->client($account,$decrypt,$transport);self::wallet($client,$account);$this->transaction($read);self::customer($client,$meta['customer_id'],$parent);$this->transaction($read);
   $previous=$this->transaction(function()use($read,$origin){$read();return $this->rows('SELECT result_json,evidence_hash FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? AND operation=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin,'pix_recover'])[0]??null;});
   if($previous){$old=json_decode($previous['result_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($old)||self::hash($old)!==$previous['evidence_hash'])throw new \DomainException('asaas_pix_reservation_conflict');$source+=array_intersect_key($old,array_flip(['remote_id','status','conciliation_id']));}
+  if($remote===''){
+   $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.9.4','<'))throw new \DomainException('asaas_module_194_required');
+   $remote=$source['remote_id']??AutomaticPixRecovery::find($source,function(string $path)use($read,$client):array{$this->transaction($read);$response=$client->request('GET',$path);$this->transaction($read);return $response;});
+  }
+  $this->transaction($read);
   $safe=CompanyPixAuthorizationContract::response($source,$client->request('GET','pix/automatic/authorizations/'.$remote));unset($safe['qr']);
   if($safe['remote_id']!==$remote)throw new \DomainException('asaas_pix_authorization_conflict');
   return $this->transaction(function()use($read,$issuer,$actor,$origin,$safe,$account,$previous){[$row,,$current]=$read();if($current['revision']!==$account['revision'])throw new \DomainException('asaas_company_stale');$latest=$this->rows('SELECT result_json,evidence_hash FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? AND operation=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin,'pix_recover'])[0]??null;if($latest!==$previous)throw new \DomainException('asaas_company_stale');

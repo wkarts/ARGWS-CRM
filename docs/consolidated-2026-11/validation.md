@@ -993,3 +993,11 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 - Runner nativo:395 verificações MySQL; migration154:48; migration155:101; callback-version:13. Falha/retry/replay193 preserva192.
 - CI Asaas do SHA anterior3ee0699b5bde125c0c1a7aa7b84b4026fd636775 aprovado em contracts8.1/8.5, MySQL e settings-ui. Não representa aprovação do próximo SHA.
 - A sequência local de33 scripts iniciada antes deste incremento continua separada: a árvore mudou durante sua execução, portanto não é usada como prova de um único SHA final. Sem testes HTTP/browser novos porque nenhuma rota/view de adesão foi exposta neste incremento.
+
+### Asaas194 — recuperação automática, consentimento e claim
+
+- `tests/asaas_pix_recovery.php`:10 verificações com leitores sintéticos; paginação, contratos duplicados, cliente divergente, ausência, limite e consistência.
+- `tests/companies/asaas_pix_recovery.php`:8 verificações MySQL adicionais à suíte193; busca seguida de GET canônico, ausência/conflito sem reenvio, revogação entre consultas, retry por ID conhecido e preservação da reserva.
+- `tests/companies/asaas_pix_consent.php`:45 verificações MySQL adicionais; contato/empresa/permite financeiro, email verificado, aceite estrito sem coerção, revisão obsoleta, rollback da auditoria, idempotência, ator revogado, autorização já observada impedindo POST novo e dois processos concorrentes aguardando lock real. Apenas um recebe claimed=true; revogação sob lock impede ambos. Executor de POST testado com provedor sintético em sucesso, timeout e revogação durante HTTP; retry nunca duplica e recuperação usa GET. Evidência técnica exclui QR e exception do provedor. Nenhuma operação bancária real.
+- Runner:399 verificações MySQL;154/155:48/101; callback13. Sintaxe PHP e contrato de recuperação passaram localmente. Suites encadeadas não devem ter seus contadores cumulativos somados como cenários independentes.
+- CI Asaas do anteriorc056bcf18ef612ce15755822ef669467e4e7f776 passou em contracts8.1/8.5, MySQL e settings-ui. UI/HTTP de adesão permanecem sem implementação e sem comprovação neste incremento.
