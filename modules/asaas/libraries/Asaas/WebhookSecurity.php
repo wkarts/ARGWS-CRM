@@ -61,6 +61,10 @@ final class WebhookSecurity
             }
             $safe['payment'] = ['id' => $p['id']];
         }
+        if(str_starts_with($event,'PIX_AUTOMATIC_RECURRING_')){
+            require_once __DIR__.'/PixEvent.php';
+            try{$safe['pix']=PixEvent::read($event,$payload);}catch(\DomainException $invalid){return self::error(400,'Evento Pix inválido.');}
+        }
         return ['ok' => true, 'status' => 200, 'message' => 'Evento autenticado.',
             'event_id' => $id, 'event' => $event, 'payload' => $safe,
             'payload_hash' => hash('sha256', json_encode($safe, JSON_UNESCAPED_SLASHES))];

@@ -960,3 +960,14 @@ Consulta pontual por conta/ambiente na configuração nativa; somente GET e DTO 
 ## Relatórios integrais da conta189
 
 Executados:24 scripts de contratos do workflow Asaas em PHP8.3.36 (incluindo155 assertions novas dos20 tipos de relatório e falhas de exportação); MySQL8.4 com26 verificações adicionais de isolamento e permissões; controlador28 guards; runner nativo377 asserts; históricas154/155:48/101; seis cenários Chromium1280/390 de catálogo, ACL, escape e formulários. Sintaxe e diff verificados. Provedor simulado em todos os casos; nenhuma consulta a conta real. Inventários continuam `operational_ready=false`/rollout bloqueado, sem confundir inventário com homologação.
+
+### Validação190 — Pix observacional (provedor simulado)
+
+- `tests/asaas_module_migrations.php`:383 verificações MySQL; DDL parcial, tracking, retry e replay190.
+- `tests/companies/asaas_pix_inbox.php`:57 verificações adicionais MySQL; autenticação, dedup/conflito, IDs iguais por conta, ACL, lease concorrente, revogação antes/depois de HTTP, instrução/autorização divergente, retry limitado, rollback de prova e ausência de efeitos financeiros.
+- `tests/browser/asaas_automatic_pix.cjs`:4 cenários Chromium, permissões, POST, revisão/CSRF, escaping e responsividade390/1280.
+- Contratos webhook171, callback-version13, callback-route29, webhook-route32 e protocolo remoto passaram localmente.
+- CI do commit anterior3e087b8c: workflow Asaas concluído com sucesso; demais workflows ainda pendentes na consulta. Não representa CI do próximo SHA.
+- Inventários continuam operational_ready=false/operational_rollout=blocked. Nenhum gate foi removido; inventário não é homologação R01–R11.
+
+Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migrations de origem/edição presentes; nenhuma chamada externa.

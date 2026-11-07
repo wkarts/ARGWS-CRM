@@ -8,7 +8,7 @@ try{for(const width of [1280,390])for(const mode of ['allowed','denied']){
  assert.equal(await page.locator('img,script').count(),0);
  await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/native-asaas-settings.js'),'utf8')});await page.click('a[href="#automatic-pix"]');assert(await page.locator('#automatic-pix').isVisible());assert(!(await page.locator('#accounts').isVisible()));
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
- const forms=page.locator('#automatic-pix form');assert.equal(await forms.count(),mode==='allowed'?3:0);
- if(mode==='allowed')for(const form of await forms.all()){const data=await form.evaluate(f=>Object.fromEntries(new FormData(f)));assert.equal(data.account_row,'10');assert.equal(data.account_revision,'a'.repeat(64));assert.equal(data.company_asaas_preferences_csrf,'synthetic-csrf');assert.equal(data.action,'automatic_pix_monitor');assert.equal(await form.getAttribute('method'),'post');}
+ const forms=page.locator('#automatic-pix form');assert.equal(await forms.count(),mode==='allowed'?5:0);
+ if(mode==='allowed')for(const form of await forms.all()){const data=await form.evaluate(f=>Object.fromEntries(new FormData(f)));if(data.action!=='pix_observe')assert.equal(data.account_row,'10');assert.equal(data.account_revision,'a'.repeat(64));assert.equal(data.company_asaas_preferences_csrf,'synthetic-csrf');assert(['automatic_pix_monitor','pix_worker','pix_observe'].includes(data.action));if(data.action==='pix_worker'){assert.equal(data.worker_revision,'0'.repeat(64));assert.equal(data.enabled,'1');}if(data.action==='pix_observe')assert.equal(data.event_id,'1');assert.equal(await form.getAttribute('method'),'post');}
  await page.close();
 }console.log('Automatic Pix: 4 Chromium native tab/permission/responsive scenarios passed.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

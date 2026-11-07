@@ -665,6 +665,10 @@ final class CompanyService
         $account=$this->rows('SELECT * FROM '.$this->p.'asaas_company_accounts WHERE webhook_public_id=?',[$publicId])[0]??null;
         if(!$account||(int)$account['enabled']!==1||$account['token_hash']===null)return ['status'=>401];
         $verified=WebhookSecurity::validateDigest($account['token_hash'],$headers,$body);if(!$verified['ok'])return ['status'=>$verified['status']];
+        if(isset($verified['payload']['pix'])){
+            require_once __DIR__.'/CompanyPixInbox.php';
+            return (new CompanyPixInbox($this->db,$this->p))->receive($publicId,$headers,$body);
+        }
         if(!isset($verified['payload']['payment']['id']))return ['status'=>422];
         return $this->transaction(function()use($account,$verified,$headers,$body):array{
             $current=$this->account((int)$account['issuer_id'],(int)$account['id']);

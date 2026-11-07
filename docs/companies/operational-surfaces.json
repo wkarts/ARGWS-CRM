@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "1a7cf6790aa8e5c39bbe08c3eea4b1c514d52c9d12b22463c4f5552bb14683af",
+    "source_manifest_sha256": "e82f8cee15d93f9541033404a6c03c1eb6ebb811f91def1a6ae5f667bb999044",
     "counts": {
         "modules": 38,
-        "source_files": 4901,
+        "source_files": 4905,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
         "report_file_candidates": 310,
-        "table_name_candidates": 939,
+        "table_name_candidates": 943,
         "database_call_candidates": 12542
     },
     "infrastructure_options": [
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.8.9",
+            "version": "1.9.0",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -519,6 +519,10 @@
                 "asaas_company_origin_policy",
                 "asaas_company_origin_profiles",
                 "asaas_company_payers",
+                "asaas_company_pix_event_jobs",
+                "asaas_company_pix_events",
+                "asaas_company_pix_observations",
+                "asaas_company_pix_workers",
                 "asaas_company_preferences",
                 "asaas_company_profiles",
                 "asaas_company_proofs",
@@ -26248,7 +26252,7 @@
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 32
+            "reference_count": 35
         },
         {
             "name": "asaas_company_card_payments",
@@ -26314,6 +26318,26 @@
             "name": "asaas_company_payers",
             "state": "not_verified",
             "reference_count": 8
+        },
+        {
+            "name": "asaas_company_pix_event_jobs",
+            "state": "not_verified",
+            "reference_count": 8
+        },
+        {
+            "name": "asaas_company_pix_events",
+            "state": "not_verified",
+            "reference_count": 6
+        },
+        {
+            "name": "asaas_company_pix_observations",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "asaas_company_pix_workers",
+            "state": "not_verified",
+            "reference_count": 5
         },
         {
             "name": "asaas_company_preferences",
@@ -29088,7 +29112,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 274
+            "reference_count": 275
         },
         {
             "name": "issuers_resource_permissions",
@@ -29503,7 +29527,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 141
+            "reference_count": 142
         },
         {
             "name": "mrp_manufacturing_orders",

@@ -259,3 +259,13 @@ A guia Pix Automático consulta autorizações existentes por página ou ID sob 
 ### Relatórios da conta189
 
 Catálogo completo de20 relatórios da fonte1.5.8 adaptado na configuração nativa, com consulta e CSV, permissão específica de conta inteira, verificação de carteira/ACL/revisão em cada página e auditoria da empresa. Sem gateway/log global, concessão automática ou escrita financeira. CSV inclui empresa/conta/ambiente; consulta não produz snapshot remoto. Rota delegada fora de Configurações e homologação de disponibilidade dos20 recursos continuam pendentes.
+
+### Asaas190 — eventos Pix autenticados e fila de observação
+
+Referência funcional1.5.8; adaptação do contrato de eventos e GET de instruções documentados pelo Asaas. Callback autentica a rota/token da conta antes de interpretar Pix; registra somente IDs mínimos, empresa, conta, carteira, ambiente e digest. Evento repetido é idempotente; conteúdo conflitante exige revisão. Não usa externalReference ausente para inferir fatura.
+
+Migration190 aditiva cria inbox, jobs, observações e configuração explícita do observador. Nenhuma adesão ou concessão é criada. Worker por conta/ator, desabilitado por padrão, revalida permissões e revisão antes/depois de HTTP; lease120s, até5 tentativas GET, intervalo60s e limite por rodada. Credencial é conferida por carteira; instrução deve confirmar autorização/paymentId. Provas canônicas são mínimas e append-only. Estado ACTIVE/DONE nunca emite cobrança nem baixa fatura. A interface nativa permite habilitar/desabilitar somente observação e consultar evento pendente com contexto/CSRF.
+
+**Pendências preservadas:** adesão/consentimento Pix no portal, intenção durável de criação, jobs financeiros e vínculo do primeiro Pix ainda não implementados. A fila190 é observacional, não comprova esses requisitos. Reembolso/edição/recriação de grupos e ciclo integral de alocações continuam pendentes; prova imutável do grupo ainda precisa ser integrada ao reembolso. Não há homologação Asaas/bancária. Cartão com trânsito de dados permanece aguardando decisão.
+
+Deploy futuro pelo runner nativo após backup, sem executar nesta tarefa. Falha de DDL/tracking não promove marcador; retry valida esquema parcial. Rollback de código não deve remover tabelas, provas ou reduzir marcador; suspender observador e corrigir aditivamente.
