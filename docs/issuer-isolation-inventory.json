@@ -5963,26 +5963,26 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "94b2458229d67a44999ade0f40acce143d229c60021d5e4072bb344021140be5",
+      "sha256": "4cc71f0df201f26e16e1af8ac8b5c96ab9023176184edc6fe0645bc6bd720900",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        308,
         311,
-        334,
-        339,
-        351,
-        358,
-        391,
-        395,
-        423,
-        531,
-        535,
-        672,
-        869,
+        314,
+        337,
+        342,
+        354,
+        361,
+        394,
+        398,
+        426,
+        534,
+        538,
+        675,
         872,
-        884
+        875,
+        887
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "8da37b805822b5cb17d5665c7a6e6a8073dc308fd280b9bcbe6888e69c886733",
+      "sha256": "8e26135cf9b64e2fecdb880bf0d04549a780f684be88b25cf5c13ea89bdb78b1",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8724,12 +8724,12 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyLegacyBinding.php": {
-      "sha256": "d96ce3c4e04388c99faee4431ae3f22e03e8cdc207bbc8911d85fc766fb696a7",
+      "sha256": "f42d080f8d87d1a108c94f399c498cee03f778931e43c9281cfbaff59c84d95f",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        68
+        109
       ],
       "state": "unreviewed",
       "evidence": ""

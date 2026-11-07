@@ -170,7 +170,7 @@ trait NativeCompanySpecializedOperations
                         if($action==='rotate'&&($post['confirm']??null)!=='1'){show_error('Confirme a substituição do token desta conta.',403);return;}
                         foreach(['token','webhook_token','one_time_token','api_key'] as $field)if(array_key_exists($field,$post)){show_error('O token é gerado exclusivamente pelo CRM.',400);return;}
                     }
-                    if(in_array($action,['preview_legacy_binding','confirm_legacy_binding','batch_compare','batch_reconcile','remote_monitor','save_profile','save_card_settings','save_card_pricing','preview_card_pricing','save_manual_policy','recover_manual','recover_invoice_edit','card_pay','card_query','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
+                    if(in_array($action,['preview_legacy_installments','preview_legacy_binding','confirm_legacy_binding','batch_compare','batch_reconcile','remote_monitor','save_profile','save_card_settings','save_card_pricing','preview_card_pricing','save_manual_policy','recover_manual','recover_invoice_edit','card_pay','card_query','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
                     if(str_starts_with($action,'refund_')){if(($post['confirm']??null)!=='1'||!is_string($post['company_asaas_refund_csrf']??null)||!hash_equals($refundCsrf,$post['company_asaas_refund_csrf'])){show_error('Reabra o formulário e confirme esta ação no reembolso.',403);return;}}
                     $this->load->library('encryption');
                     $decrypt=fn($value)=>$this->encryption->decrypt($value);
@@ -202,6 +202,9 @@ trait NativeCompanySpecializedOperations
                             }catch(DomainException $failure){$payload=['ok'=>false,'outcome'=>'review_required'];$status=422;}
                             catch(Throwable $failure){$payload=['ok'=>false,'outcome'=>'unconfirmed'];$status=503;}
                             $this->output->set_status_header($status);$this->output->set_content_type('application/json');$this->output->set_output(json_encode($payload,JSON_THROW_ON_ERROR));return;
+                        case 'preview_legacy_installments':
+                            if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            $legacyReview=$service->reviewLegacyInstallments($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,$post['remote_id'],$decrypt);break;
                         case 'preview_legacy_binding':case 'confirm_legacy_binding':
                             if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
                             $approval='';if($action==='confirm_legacy_binding'){if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null)||$post['review_hash']==='')throw new DomainException('asaas_company_confirmation_required');$approval=$post['review_hash'];}

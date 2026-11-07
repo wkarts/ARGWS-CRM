@@ -87,6 +87,7 @@ jobs:
           php tests/asaas_webhook_route.php
           php tests/asaas_callback_route.php
           php tests/asaas_callback_version.php
+          php tests/asaas_installment_transport.php
           php tests/asaas_sdk_reference.php
           php tests/asaas_card_pricing_reference.php
           php tests/asaas_webhook_admin.php
@@ -153,6 +154,7 @@ jobs:
           php tests/companies/asaas_legacy_binding_controller.php
           php tests/companies/asaas_legacy_successors.php
           php tests/companies/asaas_legacy_primary_scope.php
+          php tests/companies/asaas_installment_review.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:

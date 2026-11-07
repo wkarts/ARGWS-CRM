@@ -203,3 +203,10 @@ A edição explícita valida a cadeia revisada e conserva autoridade manual.
 Journal de edição permite recuperar PUT incerto sem repetir envio e mantém
 snapshots originais. Testes cobrem edição seguida de outra recriação/recebimento.
 Migration180 NOOP; alocações parciais e grupos continuam pendentes.
+
+### Continuidade181 — consulta de parcelamentos por conta
+
+O monitor nativo consulta grupo e parcelas por GET, valida o conjunto completo e
+apresenta os IDs individuais. Não aplica vínculo nem baixa. Matriz, limites,
+contratos oficiais e resultados: `asaas-installment-groups.md`. Associação e ciclo
+financeiro dos grupos continuam pendentes; não equivaler consulta a conciliação.

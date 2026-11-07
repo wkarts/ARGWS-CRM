@@ -60,6 +60,47 @@ trait CompanyLegacyBinding
         }
         return $meta['request_key'];
     }
+    /** Read-only group review. Its digest never authorizes single-charge binding or settlement. */
+    public function reviewLegacyInstallments($issuer,$actor,$invoice,$account,string $remote,callable $decrypt,?callable $transport=null):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$invoice=\IssuerPolicy::id($invoice);$account=\IssuerPolicy::id($account);$remote=self::opaque($remote,64);
+        [$config,$parent,$balance]=$this->legacyTransaction(fn()=>$this->legacyLocal($issuer,$actor,$invoice,$account,$remote));
+        $guard=function()use($issuer,$actor,$invoice,$account,$remote,$config,$parent,$balance):void{
+            [$now,$current,$position]=$this->legacyLocal($issuer,$actor,$invoice,$account,$remote);
+            $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+            if(version_compare($version,'1.8.1','<'))throw new \DomainException('asaas_module_181_required');
+            if($now['revision']!==$config['revision']||self::snapshot($current)!==self::snapshot($parent)||$position!==$balance)throw new \DomainException('asaas_legacy_review_changed');
+        };
+        $this->legacyTransaction($guard);$client=$this->client($config,$decrypt,$transport);
+        $get=function(string $path)use($client,$guard):array{$this->legacyTransaction($guard);return $client->request('GET',$path);};
+        self::wallet($client,$config);$member=$get('payments/'.$remote);
+        $groupId=self::opaque($member['installment']??null,120);$customer=self::opaque($member['customer']??null,64);
+        $group=$get('installments/'.$groupId);$count=$group['installmentCount']??null;
+        if(($member['id']??null)!==$remote||($group['id']??null)!==$groupId||($group['customer']??null)!==$customer||($group['billingType']??null)!==($member['billingType']??null)||!in_array($group['billingType']??null,['PIX','BOLETO'],true)||($group['deleted']??false)!==false||!is_int($count)||$count<2||$count>100)throw new \DomainException('asaas_installment_review_invalid');
+        $total=self::money($group['value']??null);$totalMinor=\CompanyInvoiceAmounts::minor($total);
+        if($totalMinor<1||$totalMinor>\CompanyInvoiceAmounts::minor($balance['receivable']))throw new \DomainException('asaas_legacy_amount_review');
+        $this->legacyTransaction($guard);self::customer($client,$customer,$parent);
+        $page=$get('installments/'.$groupId.'/payments');
+        if(!is_array($page['data']??null)||!array_is_list($page['data'])||count($page['data'])!==$count||($page['hasMore']??null)!==false||($page['totalCount']??null)!==$count)throw new \DomainException('asaas_installment_review_incomplete');
+        $members=[];$ids=[];$sum=0;
+        foreach($page['data'] as $parcel){
+            if(!is_array($parcel))throw new \DomainException('asaas_installment_review_invalid');
+            $id=self::opaque($parcel['id']??null,64);$number=$parcel['installmentNumber']??null;
+            if(($parcel['installment']??null)!==$groupId||($parcel['customer']??null)!==$customer||($parcel['billingType']??null)!==$group['billingType']||!is_int($number)||$number<1||$number>$count||isset($members[$number])||isset($ids[$id]))throw new \DomainException('asaas_installment_review_invalid');
+            $amount=self::money($parcel['value']??null);$minor=\CompanyInvoiceAmounts::minor($amount);
+            $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$parcel['dueDate']??'');
+            if($minor<1||$minor>$totalMinor-$sum||!$date||$date->format('Y-m-d')!==$parcel['dueDate'])throw new \DomainException('asaas_installment_review_invalid');
+            $local=$parent;$local['duedate']=$parcel['dueDate'];$candidate=$parcel;unset($candidate['installment']);
+            $safe=self::normalize($candidate,['remote_id'=>$id],['customer_id'=>$customer,'billing_type'=>$group['billingType'],'reviewed_amount'=>$amount],$local,$id);
+            if($safe['deleted']||$safe['adverse']||!in_array($safe['status'],['PENDING','OVERDUE','RECEIVED'],true))throw new \DomainException('asaas_legacy_payment_review');
+            if($id===$remote){$original=$member;unset($original['installment']);$originalSafe=self::normalize($original,['remote_id'=>$id],['customer_id'=>$customer,'billing_type'=>$group['billingType'],'reviewed_amount'=>$amount],$local,$id);if(($member['installmentNumber']??null)!==$number||$originalSafe!==$safe)throw new \DomainException('asaas_legacy_review_changed');}
+            $ids[$id]=true;$sum+=$minor;$members[$number]=['number'=>$number]+$safe;
+        }
+        if($sum!==$totalMinor||!isset($ids[$remote]))throw new \DomainException('asaas_installment_review_incomplete');
+        ksort($members);$result=['bound'=>false,'read_only'=>true,'issuer_id'=>$issuer,'invoice_id'=>$invoice,'account_row'=>$account,'account_id'=>$config['account_id'],'environment'=>$config['environment'],'group_id'=>$groupId,'amount'=>$total,'receivable'=>$balance['receivable'],'billing_type'=>$group['billingType'],'members'=>array_values($members)];
+        $result['review_hash']=self::hash(['installment_review_v1',$actor,$config['revision'],self::snapshot($parent),$balance,$result]);
+        return $this->legacyTransaction(function()use($guard,$result){$guard();return $result;});
+    }
     private function legacyLocal(int $issuer,int $actor,int $invoice,int $account,string $remote):array
     {
         $this->legacyAccess($issuer,$actor);$config=$this->account($issuer,$account);
