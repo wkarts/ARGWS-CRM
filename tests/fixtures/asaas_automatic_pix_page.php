@@ -9,10 +9,10 @@ $pix_inbox=['workers'=>[],'events'=>[['id'=>1,'account_row'=>10,'event_type'=>'P
 $accounts=[['id'=>10,'enabled'=>1,'verified_at'=>'2026-11-01','account_id'=>'wallet-synthetic','environment'=>'sandbox','revision'=>str_repeat('a',64)]];
 $automatic_pix_monitor=['account_row'=>10,'account_revision'=>str_repeat('a',64),'filters'=>['status'=>'ACTIVE'],'page'=>['items'=>[['remote_id'=>'<img src=x onerror=alert(1)>','status'=>'ACTIVE','frequency'=>'MONTHLY']],'next_offset'=>50]];
 if(in_array($argv[1]??'',['operations','operations-denied'],true)){
- $can_issue=$can_settle=$can_configure;
+ $can_remove=$can_issue=$can_settle=$can_configure;
  $accounts[0]['webhook_configured']=true;$activeAccount=$accounts[0];
  $invoice=['id'=>8,'revision'=>str_repeat('b',64),'request_key'=>str_repeat('c',64),'data'=>['number'=>'INV-8']];
- $pix_operations=$can_configure?[['id'=>4,'invoice_id'=>8,'environment'=>'sandbox','state'=>'created','remote_id'=>'pay_test','receipt'=>null,'initial_proof'=>['id'=>9,'status'=>'RECEIVED','amount'=>'10.00','net_value'=>'9.00','fee'=>'1.00','payment_date'=>'2026-11-07']]]:[];
+ $pix_operations=$can_configure?[['id'=>4,'account_row'=>10,'invoice_id'=>8,'environment'=>'sandbox','state'=>'created','remote_id'=>'pay_test','receipt'=>null,'initial_proof'=>['id'=>9,'status'=>'RECEIVED','amount'=>'10.00','net_value'=>'9.00','fee'=>'1.00','payment_date'=>'2026-11-07']]]:[];
  $pix_receipt_jobs=$can_configure?['workers'=>[],'jobs'=>[['event_id'=>7,'origin_id'=>4,'state'=>'queued','last_code'=>'awaiting_canonical_identity','attempts'=>0]]]:null;
 }
 echo '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pix sintético</title><body><ul id="asaas-settings-tabs"><li><a role="tab" id="tab-accounts" aria-controls="accounts" href="#accounts">Contas</a></li><li><a role="tab" id="tab-pix" aria-controls="automatic-pix" href="#automatic-pix">Pix Automático</a></li></ul><section id="accounts">Conta</section>';

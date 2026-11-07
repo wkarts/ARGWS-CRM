@@ -37,6 +37,14 @@
 <label for="native-pix-payload">Pix copia e cola</label><textarea id="native-pix-payload" class="form-control" rows="4" readonly autocomplete="off" spellcheck="false"><?= e($instrument['payload']); ?></textarea><p>A exibição deste código não confirma autorização bancária ou pagamento.</p></section>
 <?php } ?>
 </div></section><?php } ?>
+<?php if(is_array($native_portal_pix_revocation??null)){ $withdraw=$native_portal_pix_revocation; ?>
+<section aria-label="Revogação Pix"><h4>Consentimento Pix Automático</h4>
+<?php if($withdraw['revoked']){ ?><p>Consentimento revogado neste CRM. <?= $withdraw['cancel_confirmed']?'Cancelamento bancário confirmado por consulta.':'Cancelamento bancário ainda não confirmado. Consulte a empresa e seu banco sobre instruções já agendadas.'; ?></p>
+<?php }else{ ?>
+<?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><?= form_hidden('pix_consent_revision',$withdraw['revision']); ?>
+<label><input type="checkbox" name="pix_withdraw_confirm" value="1" required> Quero revogar meu consentimento neste CRM.</label>
+<button type="submit" name="native_payment_action" value="asaas_pix_withdraw" class="btn btn-default">Revogar consentimento</button><?= form_close(); ?>
+<p>A revogação local bloqueia novos envios. Não estorna pagamentos anteriores nem confirma cancelamento bancário ou de instruções já agendadas.</p><?php } ?></section><?php } ?>
 <a class="btn btn-default go-to-portal" href="<?= e(NativePortalPresentation::url('clients/invoices')); ?>"><?= e(_l('client_go_to_dashboard')); ?></a>
 <?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" name="invoicepdf" value="invoicepdf" class="btn btn-default"><?= e(_l('clients_invoice_html_btn_download')); ?></button><?= form_close(); ?>
 </div></div></div><?php return; } ?>

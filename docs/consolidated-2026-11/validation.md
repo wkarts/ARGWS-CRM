@@ -1023,3 +1023,11 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 ### Regressão visual196 — fixture e novos formulários
 
 O teste da guia isolada falhou por ausência de APPPATH no fixture após a inclusão do painel operacional. O fixture passou a reproduzir essa constante do runtime; nenhum guard de produção foi reduzido. `tests/browser/asaas_automatic_pix.cjs` passou em8 cenários Chromium: os4 anteriores preservados mais desktop/mobile com operações permitidas/negadas. Confere CSRF/revisão, ausência de frequência preselecionada, confirmação financeira desmarcada e revisão independente do worker. Esses testes são apresentação sobre HTML real, não uma sessão HTTP completa.
+
+## Incremento197 — revogação/cancelamento
+
+`asaas_pix_revocation.php`:62 verificações MySQL adicionais à cadeia196. Cobre isolamento antes do HTTP, revisão, retirada após pagamento com funcionário/conta inativos, auditoria com rollback, recusa de reaceite/novo claim, timeout, resposta DELETE sem confirmação, recuperação canônica, reentrada durante transporte e dois processos aguardando mutex nativo: apenas um DELETE. Controller real exige CSRF/checkbox e retorna303; GET após retirada não oferece envio nem afirma cancelamento bancário. Transportes exclusivamente sintéticos.
+
+Runner nativo:411 verificações MySQL, incluindo falha/tracking/retry/replay197;26 scripts de contratos sem rede passaram. CI196 (1462ef7) aprovou contratos8.1/8.5 e settings-ui; MySQL ainda estava em andamento na leitura. Esses resultados não equivalem a CI197 nem homologação bancária.
+
+Validação complementar197: portal de retirada em Chromium1280/375 sobre view PHP real, com confirmação desmarcada, revisão e CSRF;8 cenários da guia administrativa incluindo cancelamento permitido/negado;9 guards do controller. Fixtures mantêm constantes e campos reais, sem reduzir asserts anteriores. Migrations154/15548/101 passaram. São testes de apresentação/controlador, não navegador autenticado por socket nem homologação financeira. CI Asaas196 concluído com sucesso em contracts8.1/8.5, settings-ui e MySQL: [run42351714316](https://github.com/wkarts/ARGWS-CRM/actions/runs/42351714316). Não substitui CI197.

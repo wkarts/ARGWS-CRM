@@ -37,6 +37,12 @@ final class CompanyClient
         if(!$invoiceEdit&&!$webhookRead&&!$webhookWrite&&(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/(?:refund|payWithCreditCard|payWithCard|receiveInCash)$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))))throw new \DomainException('asaas_company_request_invalid');
         return $this->perform($method,$path,$payload);
     }
+    /** Cancellation has its own bounded endpoint, never a caller-selected mutation path. */
+    public function cancelPixAuthorization(string $id):array
+    {
+        if(!preg_match('/^[A-Za-z0-9_-]{1,120}$/D',$id))throw new \DomainException('asaas_pix_authorization_invalid');
+        return $this->perform('DELETE','pix/automatic/authorizations/'.$id,null);
+    }
     /** Only approved report resources, never a URL/HTTP method selected by the caller. */
     public function report(string $report,array $path,array $query):array
     {

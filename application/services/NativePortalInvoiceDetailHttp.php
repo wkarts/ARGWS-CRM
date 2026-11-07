@@ -31,6 +31,12 @@ final class NativePortalInvoiceDetailHttp
     $this->verified($identity,$identities,$issuer);
     redirect(NativePortalPresentation::url('invoice/'.$id.'/'.$hash),'location',303);return;
    }
+   elseif($paymentAction==='asaas_pix_withdraw'){
+    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixRevocation.php';
+    $revision=$this->ci->input->post('pix_consent_revision');if(!is_string($revision))throw new DomainException('asaas_pix_consent_stale');
+    (new \Asaas\CompanyPixRevocation($this->ci->db,db_prefix()))->withdraw($portal,$identity['binding'],$issuer,(int)$id,$revision,$this->ci->input->post('pix_withdraw_confirm')==='1');
+    $this->verified($identity,$identities,$issuer);redirect(NativePortalPresentation::url('invoice/'.$id.'/'.$hash),'location',303);return;
+   }
    elseif($paymentAction==='asaas_pix_enroll'){
     require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
     $revision=$this->ci->input->post('pix_consent_revision');if(!is_string($revision))throw new DomainException('asaas_pix_consent_stale');
@@ -64,14 +70,16 @@ final class NativePortalInvoiceDetailHttp
   $payments=$legacy?$legacyState['payments']:$documents->payments($identity['binding'],$issuer,$id);if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   $attachments=$legacy?$legacy->attachments($identity['binding'],$issuer,(int)$id,$hash):$documents->attachments($identity['binding'],$issuer,$id);$available=['bb'=>false,'asaas'=>false];if(!$legacy&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$available['bb']=!empty((new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_hosted_links')){require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$available['asaas']=!empty((new \Asaas\CompanyHostedLinks($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   if($bbInstrument!==null){$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}$this->verified($identity,$identities,$issuer);
-  $pixConsent=null;
+  $pixConsent=null;$pixRevocation=null;
   if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_proofs')){
    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
    try{$pixConsent=(new \Asaas\CompanyPixConsent($this->ci->db,db_prefix()))->page($portal,$identity['binding'],$issuer,(int)$id);}
    catch(DomainException $denied){$pixConsent=null;}
+   require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixRevocation.php';
+   try{$pixRevocation=(new \Asaas\CompanyPixRevocation($this->ci->db,db_prefix()))->page($portal,$identity['binding'],$issuer,(int)$id);}catch(DomainException $denied){$pixRevocation=null;}
   }
   $this->verified($identity,$identities,$issuer);
   $this->ci->output->set_header('Cache-Control: private, no-store')->set_header('Referrer-Policy: no-referrer');
-  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_pix_instrument'=>$pixInstrument,'native_portal_pix_notice'=>$pixNotice,'native_portal_pix_consent'=>$pixConsent,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
+  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_pix_instrument'=>$pixInstrument,'native_portal_pix_notice'=>$pixNotice,'native_portal_pix_revocation'=>$pixRevocation,'native_portal_pix_consent'=>$pixConsent,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
  }
 }
