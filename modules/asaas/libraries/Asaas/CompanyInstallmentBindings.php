@@ -63,10 +63,20 @@ trait CompanyInstallmentBindings
     public function installmentGroupPage(int $issuer,int $actor,int $groupOrigin):array
     {
         return $this->transaction(function()use($issuer,$actor,$groupOrigin){
-            [$root,$meta,$config,$parent,$review,$members]=$this->installmentGroupInOwned($issuer,$actor,$groupOrigin);$out=[];
+            $this->authorize($issuer,$actor,'configuration');$this->authorize($issuer,$actor,'query');
+            if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+            require_once __DIR__.'/CompanyInstallmentIdentity.php';
+            $group=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND channel=? FOR UPDATE',[$groupOrigin,$issuer,'installments'])[0]??null;
+            if(!$group)throw new \DomainException('asaas_installment_origin_denied');
+            $member=$this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND issuer_id=? AND account_id=? AND environment=? AND batch_id=? AND channel=? ORDER BY id LIMIT 1 FOR UPDATE',[$group['invoice_id'],$issuer,$group['account_id'],$group['environment'],$group['batch_id'],'installment'])[0]??null;
+            if(!$member)throw new \DomainException('asaas_installment_origin_denied');
+            $historical=CompanyInstallmentIdentity::member($this->db,$this->p,$issuer,(int)$member['id']);
+            if((int)$historical['root']['id']!==$groupOrigin)throw new \DomainException('asaas_installment_identity_conflict');
+            $root=$historical['root'];$meta=$historical['root_meta'];$config=$historical['account'];$review=$historical['review'];$members=$historical['members'];$this->unchanged($meta,$this->parent($issuer,(int)$root['invoice_id']));$out=[];
+
             foreach($review['members'] as $member){$origin=(int)$members[$member['id']]['origin']['id'];$proof=$this->rows("SELECT result_json,evidence_hash FROM {$this->p}asaas_company_proofs WHERE origin_id=? AND operation='parcel_query' ORDER BY id DESC LIMIT 1",[$origin])[0]??null;
                 if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);if(!hash_equals($proof['evidence_hash'],self::hash($safe)))throw new \DomainException('asaas_installment_binding_conflict');$member['status']=$safe['status'];}
-                $receipt=$this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=?',[$origin])[0]??null;$member['payment_id']=$receipt?(int)$receipt['payment_id']:null;$op=$this->installmentRemovalLedger($origin);$member['removal']=$op?$this->installmentRemovalPublic($op):null;$out[]=$member;
+                $receipt=$this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=?',[$origin])[0]??null;$member['origin_id']=$origin;$member['payment_id']=$receipt?(int)$receipt['payment_id']:null;$op=$this->installmentRemovalLedger($origin);$member['removal']=$op?$this->installmentRemovalPublic($op):null;$out[]=$member;
             }
             return ['origin_id'=>$groupOrigin,'invoice_id'=>(int)$root['invoice_id'],'group_id'=>$root['batch_id'],'account_id'=>$config['account_id'],'environment'=>$config['environment'],'members'=>$out];
         });

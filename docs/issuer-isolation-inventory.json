@@ -2886,7 +2886,7 @@
       "evidence": ""
     },
     "application/services/CompanyAsaasRefundPostings.php": {
-      "sha256": "4b0deaccc9c55bbdb5c6910f637bedb9d5fdd950c451bb445d36dc5cffe63517",
+      "sha256": "12dc307a05d1c516a1d3998c8dca8ff677ba84f95a5b1513e239c4e03c235243",
       "categories": [
         "invoice_table",
         "payments"
@@ -2894,8 +2894,8 @@
       "signal_lines": [
         10,
         19,
-        49,
-        54
+        55,
+        60
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "913ec689e1d7dcc4dbdaa1339f75cc72c9ec555ad1f396e68869de9282438e75",
+      "sha256": "4b4b155a6300954f222673f0f21f256c331dbbd8bd546767ff92e25199cbe5a5",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8713,14 +8713,14 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentBindings.php": {
-      "sha256": "77b64426782547af25adbc1721767f606a045896d275fe033a30c42b84fd4fab",
+      "sha256": "d635f8bead41833d1bf53a775cb53d94ace99a88f927100e8ea23f2b5394123c",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
         61,
-        113
+        123
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8803,7 +8803,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRefundStorage.php": {
-      "sha256": "8a26fe962bcd228a925cf30a3a617bcd21f972930a3f18699e76b3760e95c46d",
+      "sha256": "42298038bd75a0ecad3ea281f35412982312a1ecdc258a0ddeb06dc7567ed436",
       "categories": [
         "invoice_table",
         "payments"
@@ -8811,8 +8811,8 @@
       "signal_lines": [
         21,
         52,
-        73,
-        76
+        74,
+        78
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8841,7 +8841,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "96fdf5c08e7b9ffae093c374270d0db64524cd2f3ec08554c78195f42cf9b2be",
+      "sha256": "d7f72cd8d334e97fcf3784bb5bb39497e91055174418778dd3bd328911f9ab59",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -8857,8 +8857,8 @@
         362,
         427,
         534,
-        691,
-        760
+        703,
+        772
       ],
       "state": "unreviewed",
       "evidence": ""

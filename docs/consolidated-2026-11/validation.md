@@ -971,3 +971,11 @@ Executados:24 scripts de contratos do workflow Asaas em PHP8.3.36 (incluindo155 
 - Inventários continuam operational_ready=false/operational_rollout=blocked. Nenhum gate foi removido; inventário não é homologação R01–R11.
 
 Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migrations de origem/edição presentes; nenhuma chamada externa.
+
+### Asaas191 — prova histórica e reembolso por parcela
+
+- MySQL descartável, provedor simulado:33 verificações novas em `asaas_installment_refunds.php`, após suites reais de revisão/associação/recebimento. Captura do grupo, rejeição de grupo/número divergentes, único POST, prova corrompida/rehash, rollback tardio, duas conexões simultâneas com waiters InnoDB, revogação, declaração idempotente e preservação de recebimento irmão/bytes originais.
+- Regressão `finance_resume_439_asaas.php`:192 verificações cumulativas aprovadas (ciclo de reembolso avulso e retomada).
+- Runner nativo:387 verificações MySQL, incluindo191 falha de tracking/retry/replay e preservação190.
+- Chromium:10 cenários de grupos desktop/mobile e permissões; link de reembolso aponta exclusivamente para a parcela recebida escolhida.
+- Sintaxe PHP, callback-version13 e contratos de relatórios155 aprovados. Nenhuma homologação financeira ou chamada real.

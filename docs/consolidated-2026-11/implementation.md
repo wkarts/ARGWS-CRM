@@ -269,3 +269,13 @@ Migration190 aditiva cria inbox, jobs, observações e configuração explícita
 **Pendências preservadas:** adesão/consentimento Pix no portal, intenção durável de criação, jobs financeiros e vínculo do primeiro Pix ainda não implementados. A fila190 é observacional, não comprova esses requisitos. Reembolso/edição/recriação de grupos e ciclo integral de alocações continuam pendentes; prova imutável do grupo ainda precisa ser integrada ao reembolso. Não há homologação Asaas/bancária. Cartão com trânsito de dados permanece aguardando decisão.
 
 Deploy futuro pelo runner nativo após backup, sem executar nesta tarefa. Falha de DDL/tracking não promove marcador; retry valida esquema parcial. Rollback de código não deve remover tabelas, provas ou reduzir marcador; suspender observador e corrigir aditivamente.
+
+### Asaas191 — reembolso explícito por parcela Pix com identidade histórica
+
+`CompanyInstallmentIdentity` valida, sob transação nativa, raiz e todos os membros do grupo, empresa/conta/ambiente, snapshots, políticas manuais, provas de associação e respectivas auditorias. Não depende de conta habilitada nem da permissão atual do autor para ler histórico; não concede autoridade para operar. A intenção de reembolso inclui essa identidade imutável, nominal/vencimento da parcela e vínculo com o recibo original. Toda operação nova continua exigindo ACL atual, conta válida, revisão e concessão explícita de reembolso.
+
+O normalizador só aceita parcela Pix quando `installment` e `installmentNumber` correspondem à prova capturada. Usa o endpoint por cobrança `payments/{id}/refund`, nunca o estorno do recurso de parcelamento de cartão. O escritor de declaração integral confere novamente o grupo/provas/auditorias, o recibo e a observação canônica. Integral refere-se ao recibo da parcela: não altera total da fatura nem apaga recebimentos irmãos. Retry não repete POST; a declaração local permanece explícita e exige evidência independente. Histórico permanece verificável após desativação da conta.
+
+Página nativa de grupos permite consultar histórico sem tratar revogação posterior como corrupção da prova. Parcela Pix recebida possui acesso ao painel de reembolso por ID local exato, condicionado à permissão. Ações mutantes continuam com as verificações anteriores de estado/autoridade.
+
+Referência oficial: [estornar cobrança](https://docs.asaas.com/reference/estornar-cobranca). Sem operação real, alteração no SDK ou repositório Perfex. Migration191 NOOP, sem backfill/grants. Ainda pendentes: edição/recriação de grupos e ciclo integral de alocações/reembolsos parciais. Observar agregado parcial não inventa identidade de um estorno individual.

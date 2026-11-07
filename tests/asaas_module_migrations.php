@@ -344,9 +344,12 @@ $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.8','189 tracking failure preserves188');
 verify((string)(new App_module_migration('asaas'))->version('189')==='189','189 retry confirmed');verify((new App_module_migration('asaas'))->version('189')===true,'189 replay no-op');
 $db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_pix_event_jobs`';
-try{(new App_module_migration('asaas'))->to_latest();verify(false,'190 DDL failure incorrectly accepted');}catch(RuntimeException $error){verify($error->getMessage()==='issuer_storage_failed','190 DDL failure is sanitized and propagated');}$db->failQuery=null;
+try{(new App_module_migration('asaas'))->version('190');verify(false,'190 DDL failure incorrectly accepted');}catch(RuntimeException $error){verify($error->getMessage()==='issuer_storage_failed','190 DDL failure is sanitized and propagated');}$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.9','190 partial DDL preserves189');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'190 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('190')===false,'190 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.9','190 tracking failure preserves189');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='190','190 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'190 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('190')==='190','190 retry confirmed');verify((new App_module_migration('asaas'))->version('190')===true,'190 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'191 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.0','191 tracking failure preserves190');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='191','191 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'191 replay no-op');
 echo "OK: {$n} native module migration MySQL assertions.\n";

@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'../..');
   const page=await browser.newPage({viewport:{width,height:900}});await page.route('**/*',route=>route.abort());
   const html=execFileSync(process.env.ASAAS_TEST_PHP||'php',[path.join(root,'tests/fixtures/asaas_installments_page.php'),mode],{encoding:'utf8'});
   await page.setContent(html);await page.addStyleTag({content:fs.readFileSync(path.join(root,'assets/plugins/bootstrap/css/bootstrap.min.css'),'utf8')});
-  assert.equal(await page.locator('img').count(),0);assert.equal(await page.locator('[value="observe_installment"]').count(),2);
+  assert.equal(await page.locator('img').count(),0);const refunds=page.locator('a[href*="refund_origin"]');assert.equal(await refunds.count(),readonly?0:1);if(!readonly)assert.equal(await refunds.getAttribute('href'),'/settings/asaas?refund_origin=12#asaas-refunds');assert.equal(await page.locator('[value="observe_installment"]').count(),2);
   assert.equal(await page.locator('[value="reconcile_installment"]').count(),writable?1:0);
   assert.equal(await page.locator('form input[name="company_asaas_preferences_csrf"]').count(),readonly?3:(mode==='batch'?6:5));
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
