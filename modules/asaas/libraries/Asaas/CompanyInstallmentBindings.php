@@ -31,7 +31,7 @@ trait CompanyInstallmentBindings
         $this->installmentGroupInOwned($issuer,$actor,$groupOrigin);
         return ['bound'=>true,'origin_id'=>$groupOrigin];
     }
-    public function installmentGroupInOwned(int $issuer,int $actor,int $groupOrigin):array
+    public function installmentGroupInOwned(int $issuer,int $actor,int $groupOrigin,?string $ownEdit=null):array
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->installmentModule();$this->authorize($issuer,$actor,'configuration');$this->authorize($issuer,$actor,'query');
         if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
@@ -54,6 +54,7 @@ trait CompanyInstallmentBindings
         foreach($review['members'] as $member)if(($members[$member['id']]['member']??null)!==$member)throw new \DomainException('asaas_installment_binding_conflict');
         if(!(int)$config['enabled']||$config['verified_at']===null||$root['account_id']!==$config['account_id']||$root['environment']!==$config['environment'])throw new \DomainException('asaas_company_account_unverified');
         $parent=$this->parent($issuer,(int)$root['invoice_id']);$this->unchanged($rootMeta,$parent);if($root['invoice_hash']!==$parent['hash']||self::money($root['invoice_total'])!==self::money($parent['total'])||$root['invoice_due_date']!==$parent['duedate'])throw new \DomainException('asaas_installment_binding_conflict');
+        [$review,$members]=CompanyInstallmentEditJournal::effective($this->db,$this->p,$root,$review,$members,$ownEdit);
         return [$root,$rootMeta,$config,$parent,$review,$members];
     }
     public function installmentGroups(int $issuer,int $actor):array

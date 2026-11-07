@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Asaas;
 require_once __DIR__.'/CompanyOriginPolicy.php';
+require_once __DIR__.'/CompanyInstallmentEditJournal.php';
 /** Historical identity only. Callers own the transaction and independently authorize every operation. */
 final class CompanyInstallmentIdentity
 {
@@ -38,8 +39,10 @@ final class CompanyInstallmentIdentity
   if(!$account||$account['account_id']!==$root['account_id']||$account['environment']!==$root['environment']||!isset($members[$selected['remote_id']])||(int)$members[$selected['remote_id']]['origin']['id']!==$origin)$fail();
   $snapshot=json_decode($rootMeta['snapshot_json'],true,32,JSON_THROW_ON_ERROR);
   if((string)($snapshot['id']??'')!==(string)$root['invoice_id']||(string)($snapshot['issuer_id']??'')!==(string)$issuer||($snapshot['hash']??null)!==$root['invoice_hash']||\CompanyInvoiceAmounts::minor((string)($snapshot['total']??''))!==\CompanyInvoiceAmounts::minor((string)$root['invoice_total'])||($snapshot['duedate']??null)!==$root['invoice_due_date'])$fail();
+  [$review,$members,$editHistory]=CompanyInstallmentEditJournal::effective($db,$p,$root,$review,$members);
   $member=$members[$selected['remote_id']]['member'];
   $identity=['group_origin'=>$rootId,'group_id'=>$root['batch_id'],'member_origin'=>$origin,'member_id'=>$member['id'],'member_number'=>$member['number'],'member_value'=>$member['value'],'member_due_date'=>$member['due_date'],'issuer_id'=>$issuer,'account_row'=>(int)$account['id'],'account_id'=>$account['account_id'],'environment'=>$account['environment'],'invoice_id'=>(int)$root['invoice_id'],'invoice_hash'=>$root['invoice_hash'],'invoice_total'=>$root['invoice_total'],'snapshot_hash'=>$rootMeta['snapshot_hash'],'bindings'=>$evidence];
+  if(isset($editHistory[$selected['remote_id']]))$identity['edits']=$editHistory[$selected['remote_id']];
   return ['review'=>$review,'members'=>$members,'root_meta'=>$rootMeta,'identity'=>$identity,'root'=>$root,'origin'=>$selected,'meta'=>$members[$selected['remote_id']]['meta'],'account'=>$account,'snapshot'=>$snapshot];
  }
 }

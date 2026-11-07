@@ -1057,3 +1057,13 @@ CI198 feee484: contratos8.1/8.5 passaram; settings-ui falhou porque o teste ante
 Runner nativo200:424 assertions MySQL incluindo tracking/falha/retry/replay; sintaxe PHP e views passaram. Chromium:8 cenários da guia Pix e4 da view de vínculos/sucessão, com confirmações desmarcadas e revisões preservadas. Não é homologação bancária nem sessão HTTP autenticada completa. CI199: contracts8.1/8.5 e settings-ui aprovados; MySQL ainda em execução na consulta desta etapa. CI200 deve ser acompanhado separadamente.
 
 Regressão200: worker21 checks adicionais e preparação15 aprovados após composição dos métodos na transação possuída; upgrades154/15548/101 aprovados. Nenhum assert ou gate foi removido.
+
+## Incremento201 — edição de grupo
+
+69 verificações MySQL adicionais: reallocation com soma exata, autorização/isolamento antes de envio, confirmação, rollback da auditoria inicial, revogação durante PUT, resposta perdida, recuperação sem reenvio, bloqueio do grupo enquanto parcial, recebimento pelo novo nominal e preservação byte a byte das origens. Dois processos separados aguardam o mutex real e produzem um único PUT. Reembolso congela o nominal editado e a prova histórica específica da parcela. Provedor exclusivamente simulado.
+
+Runner nativo201:428 assertions MySQL, preservando200 e cobrindo falha/tracking/retry/replay201. Controller real:36 guards após179 cumulativos; inclui quatro novas ações com CSRF e tipos/confirmacão inválidos. Chromium:8 cenários de edição/revisão/retomada/negação em1280/390 sobre view PHP real; confirmações inicialmente desmarcadas, revision hash, contexto e escape. Não são homologação bancária nem sessão autenticada HTTP completa.
+
+CI do SHA200 `604abb09`: workflow Asaas42356488596 aprovado integralmente (contratos8.1/8.5, interface e MySQL). A rodada agregada ainda estava em andamento. Esses resultados não são CI do incremento201.
+
+Regressão201: reembolso por parcela33 verificações MySQL adicionais e baixas39 passaram; upgrades históricos154/15548/101; callback13; dez cenários Chromium da grade anterior preservados. Sintaxe dos PHPs alterados e diff passaram. Inventários regenerados conservadoramente:710 fronteiras,681 não revisadas e29 parciais; operational_rollout continua bloqueado. Nenhum gate foi afrouxado.

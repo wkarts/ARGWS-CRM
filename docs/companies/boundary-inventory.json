@@ -2,18 +2,18 @@
   "format": 1,
   "purpose": "Review inventory only; lexical matches do not establish runtime isolation.",
   "operational_ready": false,
-  "files": 15450,
-  "unresolved_files": 15450,
+  "files": 15454,
+  "unresolved_files": 15454,
   "categories": {
     "core": 1359,
     "translation": 536,
-    "schema_history": 806,
+    "schema_history": 807,
     "dependency_boundary": 9333,
-    "presentation": 1734,
+    "presentation": 1735,
     "provisioning": 19,
     "module:accounting": 74,
     "module:api": 39,
-    "module:asaas": 116,
+    "module:asaas": 118,
     "module:backup": 5,
     "module:banco_brasil": 97,
     "module:connect_api_chat": 9,
@@ -50,6 +50,6 @@
     "module:wiki": 78,
     "module:zillapage": 33
   },
-  "source_sha256": "8f4731371445f7a77349797b17c35d82bf9da0740880a2125133b4ce1bb6c1ac",
+  "source_sha256": "db6212df1562a8a16cc47a182bcccee7162cd3db07b701b5d461d557b58f4373",
   "detail_generation": "python scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json"
 }

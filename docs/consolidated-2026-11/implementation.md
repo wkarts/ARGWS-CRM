@@ -371,3 +371,15 @@ Confirmação usa uma única transação/mutex nativo para interromper vínculo 
 Asaas2.0.0 é a sequência nativa200 do CRM, não versão nova do módulo upstream de referência1.5.8. Migration200 NOOP, journals existentes; sem seed/backfill/grants ou ativação. Para implantação futura: backup/runner/marcador200 e revisão das autorizações. Rollback não desfaz cancelamento bancário nem pagamentos; preservar histórico e corrigir aditivamente. Sem merge/deploy/operações reais.
 
 Este fluxo não dispensa a adesão e o pagamento inicial da nova autorização, não cancela cobranças antigas por inferência e não transfere automaticamente políticas. Ciclos restantes de grupos/alocações, paridade integral1.5.8 e R01–R11 seguem pendentes. Cartão aguarda decisão específica.
+
+## Incremento201 — edição revisada de parcelas e alocações
+
+A guia Monitor permite editar valores e vencimentos das parcelas pendentes PIX/BOLETO de um grupo já vinculado. A soma exata em centavos permanece igual; a fatura emitida, seu total, calendário, snapshots e vínculos originais não são reescritos. Parcelas recebidas ou com intenção de remoção/reembolso não podem ser alteradas. Créditos e pagamentos sem vínculo com o grupo impedem a operação. Isso implementa redistribuição do principal dentro do grupo, não alteração irrestrita do total da fatura ou edição de cartão.
+
+A revisão consulta as cobranças canônicas e congela antes/depois, empresa, ator e revisão da conta. A confirmação grava plano e auditoria antes de qualquer PUT. Cada parcela tem claim de envio único sob mutex nativo. Timeout não autoriza novo PUT: a retomada consulta GET e só envia membros ainda sem claim. O grupo permanece bloqueado para conciliação/remoção enquanto houver resultado parcial. Somente confirmações canônicas recentes de todos os membros permitem aplicar a revisão efetiva. Não há atomicidade remota presumida nem compensação financeira automática.
+
+O journal append-only valida hashes, auditorias e sequência sobre os vínculos originais. Baixa usa o nominal aprovado; reembolso captura a prova das edições específicas da parcela, preservando a identidade de irmãos já recebidos. A edição continua sujeita às permissões atuais e ao contexto/CSRF. O formulário apresenta revisão e confirmação desmarcada; um resultado incerto não aparece como sucesso.
+
+Contrato: [PUT de cobrança existente](https://docs.asaas.com/reference/atualizar-cobranca-existente), consultado em7/11/2026. Alterar valor/vencimento pode gerar webhook e notificações do provedor. Não muda o cliente nem envia dados de cartão. Asaas2.0.1/201, migration NOOP: provas/auditorias existentes, sem DDL/backfill/ativação. Implantação futura usa backup consistente e runner nativo. Rollback de código não desfaz PUTs já aceitos: preservar plano/claims e recuperar por consulta; não apagar histórico nem reduzir marcadores.
+
+Ainda pendentes: criação remota de grupos sucessores e seu vínculo histórico, ciclos de alocações parciais fora de grupos e reversão parcial canônica; paridade integral1.5.8 e R01–R11. O total fixo e os membros elegíveis são limites explícitos desta edição, não conclusão dessas pendências.

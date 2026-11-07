@@ -5,6 +5,14 @@ $controller->input->verb='GET';$controller->output->status=200;$run();
 $csrf=$controller->session->data['company_asaas_preferences_csrf'];
 $before=$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array();
 foreach([
+ ['action'=>'open_installment_edit','group_origin'=>1],
+ ['action'=>'review_installment_edit','group_origin'=>1],
+ ['action'=>'execute_installment_edit','group_origin'=>1],
+ ['action'=>'resume_installment_edit','group_origin'=>1],
+ ['action'=>'review_installment_edit','group_origin'=>1,'changes'=>'invalid','company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'execute_installment_edit','group_origin'=>1,'changes'=>[],'review_hash'=>[],'confirm'=>'1','company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'execute_installment_edit','group_origin'=>1,'changes'=>[],'review_hash'=>str_repeat('a',64),'company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'resume_installment_edit','group_origin'=>1,'review_hash'=>str_repeat('a',64),'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'account_report','account_row'=>1],
  ['action'=>'export_account_report','account_row'=>1,'account_revision'=>[],'report_kind'=>'balance','report_filters'=>[],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'automatic_pix_monitor','account_row'=>1],

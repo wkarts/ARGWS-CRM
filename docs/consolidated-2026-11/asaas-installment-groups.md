@@ -256,3 +256,7 @@ abria CompanySettingsRuntime. Ambos reproduzidos localmente. Corrigida somente
 a fixture, mantendo StrictViewFixture e a exigência de contexto/CSRF; adicionada
 asserção do token dedicado nos formulários reais. Resultado:18 checks adicionais,
 136 cumulativos MySQL. Não houve remoção de guard ou redução de cobertura.
+
+## Edição e redistribuição — módulo2.0.1/201
+
+Implementada edição revisada de valor/vencimento dos membros pendentes com total fixo, journal imutável, envio único por parcela e recuperação de resultado incerto. A UI nativa oferece revisão/confirmacão/retomada; recebimentos e reembolsos usam a identidade efetiva comprovada, preservando os vínculos originais. Detalhes e limitações atuais em `implementation.md` e resultados em `validation.md`, incremento201. As seções anteriores são históricas. Recriação de grupos e reversão parcial continuam incompletas.
