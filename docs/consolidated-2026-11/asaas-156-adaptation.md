@@ -1,3 +1,5 @@
+> Atualização: a referência vigente passou a1.5.7. Ver [comparação e limites](asaas-157-reference.md). Este arquivo preserva o inventário e as etapas da1.5.6.
+
 # Base Asaas1.5.6 — adaptação ao CRM multiempresa
 
 Referência solicitada: `wkarts/asaas-payment-module-perfex-crm` no commit
