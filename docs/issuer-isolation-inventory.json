@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "04cc2eb31f13276b987a286f76234f0e4726e9da519466d9d822fec6610f3f59",
+      "sha256": "8bdab1c1bf8335cdfe1ec084440c59ccc7326549c4b1b0d53b6d35561ce4581e",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8724,12 +8724,12 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyLegacyBinding.php": {
-      "sha256": "cb792dbaec93db759a5175b592971c880c83842e6ae4d0bd77d410ddf79f7933",
+      "sha256": "5ebb984ce968fd455a231efa55b12be791afca1c3010f9699602c5ac0fd5e5f6",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        49
+        68
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8768,7 +8768,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRecreationSuccessors.php": {
-      "sha256": "08fffe38182efee31bbc1f3f2e68bc3330555ff2335e6accde90ac3795d6403a",
+      "sha256": "ca92bde56e5922f0f7d2b3562a392e4a289355e40a4896064dc71f4e1bf71e1a",
       "categories": [
         "invoice_table"
       ],

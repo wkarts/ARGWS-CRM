@@ -39,7 +39,26 @@ trait CompanyLegacyBinding
     public function legacyReferenceInOwned(int $issuer,int $actor,int $origin):?string
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());$this->authorize($issuer,$actor,'configuration');
-        [$row,$meta]=$this->source($issuer,$origin,null,true);return $meta['legacy_reference']??null;
+        [$row,$meta]=$this->source($issuer,$origin,null,true);
+        if(isset($meta['legacy_reference']))return $meta['legacy_reference'];
+        if(!CompanyOriginPolicy::isManual($this->db,$this->p,$origin)||!$this->db->table_exists($this->p.'asaas_company_recreations'))return null;
+        $links=$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_recreations WHERE successor_origin_id=? FOR UPDATE',[$origin]);
+        if(!$links)return null; // Other explicit integrations do not gain monitor authority.
+        $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+        if(version_compare($version,'1.7.9','<'))throw new \DomainException('asaas_module_179_required');
+        CompanyOriginGenerations::postRefundOriginInOwned($this->db,$this->p,$issuer,(int)$row['invoice_id'],$origin);
+        $cursor=$origin;$seen=[];
+        while(true){
+            if(isset($seen[$cursor]))throw new \DomainException('asaas_legacy_binding_conflict');$seen[$cursor]=true;
+            $old=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? FOR UPDATE',[$cursor,$issuer])[0]??null;
+            $oldMeta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$cursor])[0]??null;
+            if(!$old||!$oldMeta)throw new \DomainException('asaas_legacy_binding_conflict');
+            CompanyOriginPolicy::assertManual($this->db,$this->p,$cursor,$issuer,$oldMeta['request_key']);
+            $ancestors=$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_recreations WHERE successor_origin_id=? FOR UPDATE',[$cursor]);
+            if(!$ancestors){$root=$this->legacyMeta($old,$oldMeta,true);if(!isset($root['legacy_reference'])||self::money($root['reviewed_amount'])!==self::money($old['invoice_total']))throw new \DomainException('asaas_legacy_recreation_allocation_required');break;}
+            if(count($ancestors)!==1)throw new \DomainException('asaas_legacy_binding_conflict');$cursor=(int)$ancestors[0]['origin_id'];
+        }
+        return $meta['request_key'];
     }
     private function legacyLocal(int $issuer,int $actor,int $invoice,int $account,string $remote):array
     {

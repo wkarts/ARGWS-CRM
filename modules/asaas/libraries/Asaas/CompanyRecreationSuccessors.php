@@ -7,7 +7,7 @@ require_once __DIR__.'/CompanyOriginGenerations.php';
 final class CompanyRecreationSuccessors
 {
     public function __construct(private $db,private string $p){}
-    public function tables():array{return array_values(array_unique(array_merge((new \CompanyInvoices($this->db,$this->p))->transactionParticipants(),(new CompanyRemoteOperations($this->db,$this->p))->tables(),CompanyPreferencesSchema::tables(),[CompanyRecreationSchema::TABLE])));}
+    public function tables():array{return array_values(array_unique(array_merge((new \CompanyInvoices($this->db,$this->p))->transactionParticipants(),(new CompanyRemoteOperations($this->db,$this->p))->tables(),CompanyPreferencesSchema::tables(),[CompanyRecreationSchema::TABLE],$this->db->table_exists($this->p.'asaas_company_refund_requests')?['asaas_company_refund_requests']:[])));}
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
     public function prepare(int $issuer,int $actor,int $invoice,int $origin,string $revision,string $key):int
     {
@@ -35,7 +35,11 @@ final class CompanyRecreationSuccessors
             (new CompanyRemoteOperations($this->db,$this->p))->assertCancellationInOwned($issuer,$actor,$invoice,$origin);
             [$old,$meta,$account,$document]=$service->remoteSourceInOwnedTransaction($issuer,$actor,$origin);
             if($account['revision']!==$intent['account_revision']||(int)$old['invoice_id']!==$invoice)throw new \DomainException('asaas_recreation_conflict');
-            CompanyOriginPolicy::assertAutomaticAllowed($this->db,$this->p,$origin);
+            $legacyReference=CompanyOriginPolicy::isManual($this->db,$this->p,$origin)?$service->legacyReferenceInOwned($issuer,$actor,$origin):null;
+            if($legacyReference!==null){
+                if(version_compare($module['installed_version']??'0','1.7.9','<'))throw new \DomainException('asaas_module_179_required');
+                if(isset($meta['reviewed_amount'])&&\CompanyInvoiceAmounts::minor($meta['reviewed_amount'])!==\CompanyInvoiceAmounts::minor($document['total']))throw new \DomainException('asaas_legacy_recreation_allocation_required');
+            }else CompanyOriginPolicy::assertAutomaticAllowed($this->db,$this->p,$origin);
             if(!in_array($meta['billing_type'],['PIX','BOLETO'],true))throw new \DomainException('asaas_recreation_method_requires_review');
             $policy=new CompanyPreferences($this->db,$this->p);$policy->requireReady();
             $profile=$policy->snapshotInOwned($issuer,$actor,$account,$meta['billing_type'],$document['formatted_number'],null);
@@ -47,6 +51,7 @@ final class CompanyRecreationSuccessors
             $snapshot=json_decode($meta['snapshot_json'],true,32,JSON_THROW_ON_ERROR);$snapshot['asaas_profile_contract']='company_profile_v1';$json=json_encode($snapshot,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_origin_meta(origin_id,account_row,created_by,request_key,snapshot_hash,snapshot_json,customer_id,billing_type,created_at) VALUES(?,?,?,?,?,?,?,?,?)',[$next,$account['id'],$actor,$key,hash('sha256',$json),$json,$meta['customer_id'],$meta['billing_type'],$now]);
             $policy->persistInOwned($next,$profile);
+            if($legacyReference!==null)CompanyOriginPolicy::markManual($this->db,$this->p,$next,$issuer,$key);
             \IssuerStorage::query($this->db,'UPDATE '.$this->p.CompanyRecreationSchema::TABLE.' SET successor_origin_id=?,proof_id=?,state=?,updated_at=? WHERE origin_id=?',[$next,$proof['id'],'prepared',$now,$origin]);
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,'company_asaas_recreation_prepared',$issuer,$next,$now]);
             $stored=$this->rows('SELECT successor_origin_id,state FROM '.$this->p.CompanyRecreationSchema::TABLE.' WHERE origin_id=?',[$origin])[0]??[];

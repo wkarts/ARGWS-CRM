@@ -189,3 +189,10 @@ incerto, reembolso do principal revisado e edição de cobrança que cobre toda 
 fatura preservam a evidência inicial e a revisão explícita. Grupos/parcelamentos,
 alocações parciais editáveis e recriação legada ainda exigem implementação.
 Não há merge, deploy, chamadas financeiras reais ou ampliação do SDK neste delta.
+
+### Continuidade179 — sucessores de vínculos legados integrais
+
+Ver `asaas-157-reference.md`. Recriação preserva política manual, origem revisada
+imutável e cadeia completa entre gerações. Conciliação explícita valida essa
+cadeia; não habilita baixa automática. Alocações parciais e grupos permanecem
+pendentes. Migration179 NOOP; histórico anterior intacto.

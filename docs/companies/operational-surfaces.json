@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "7fc6d72cb34eedb8d75ff72cfb77416a8e5578ad7981c7721f6e53d30a81503a",
+    "source_manifest_sha256": "92fa6f0f6000c25ac44eb3d2197f0e1b555ff93d417b3d16a4939e48f2d06a56",
     "counts": {
         "modules": 38,
-        "source_files": 4876,
+        "source_files": 4877,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.7.8",
+            "version": "1.7.9",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26291,7 +26291,7 @@
         {
             "name": "asaas_company_origin_meta",
             "state": "not_verified",
-            "reference_count": 20
+            "reference_count": 21
         },
         {
             "name": "asaas_company_origin_policy",
@@ -26331,7 +26331,7 @@
         {
             "name": "asaas_company_recreations",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 15
         },
         {
             "name": "asaas_company_refund_grants",
@@ -26346,7 +26346,7 @@
         {
             "name": "asaas_company_refund_requests",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 14
         },
         {
             "name": "asaas_company_remote_operations",
@@ -26371,7 +26371,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 79
+            "reference_count": 80
         },
         {
             "name": "asaas_payments_map",
@@ -29496,7 +29496,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 131
+            "reference_count": 132
         },
         {
             "name": "mrp_manufacturing_orders",

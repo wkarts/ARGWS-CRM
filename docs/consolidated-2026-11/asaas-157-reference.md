@@ -26,7 +26,7 @@ Git retornados pelo conector. Isso não é uma nova verificação do ZIP da Libr
 | Resumo/cartão/titular em blocos e CSS responsivo | Futuras telas de checkout/adesão dentro do shell nativo, com autorização/conta/empresa próprias | Ainda não portado; fluxo de trânsito de dados de cartão aguarda decisão |
 | Aviso Visa/Mastercard apenas para opção disponível selecionada de13–21 parcelas | Oferta validada no servidor, sem aviso de elegibilidade baseado só em parâmetro global | Testes oficiais confirmados; adaptação do checkout pendente |
 | Card de recorrência compacto após totais | Documento/portal nativo, consentimento explícito, sem redesenho global | Adaptação pendente, não ativada por esta atualização de referência |
-| Migration157 vazia e header1.5.7 | Histórico do CRM permanece1.7.8/178 | Não copiar157: esse ID já pertence ao CRM |
+| Migration157 vazia e header1.5.7 | Histórico do CRM avança para1.7.9/179 | Não copiar157: esse ID já pertence ao CRM |
 | Backend, contrato e SDK sem delta nesta versão | Serviços por empresa/conta/ambiente já existentes | SDK0.2.64 preservada, sem ampliação |
 
 `AsaasRecurring::scope` da fonte rejeita `issuer_id`/`emitter_id` e contas diferentes
@@ -38,7 +38,7 @@ origem precisam vir da conta autorizada da empresa, nunca de fallback global.
 
 A matriz1.5.6 permanece como inventário histórico das capacidades; os requisitos
 que já estavam pendentes não se tornam concluídos pela nova versão visual.
-Grupos/parcelamentos, sucessores legados, alocação de principal, recorrência com
+Grupos/parcelamentos, sucessores de alocações parciais, alocação de principal, recorrência com
 consentimento e paridade R01–R11 continuam trabalhos abertos.
 
 ## Testes oficiais da fonte executados
@@ -72,3 +72,35 @@ o dia em `America/Sao_Paulo` ainda era6/11. Mantido o guard financeiro contra da
 futura; a fixture usa a data de pagamento sintética original. Um caso negativo
 novo exige rejeição de amanhã no fuso do provedor e zero recibos. A suíte passou
 novamente em MySQL com55 checks adicionais. Nenhuma regra financeira foi afrouxada.
+
+## Sucessores legados integrais — módulo 1.7.9/179
+
+Cancelamento e recriação explícitos agora preservam a autoridade `manual_only`
+para vínculos legados que cobriam toda a fatura. A preparação cria o sucessor,
+perfil e política dentro da mesma transação; falhar a política desfaz a retirada
+do antecessor. POST incerto exige recuperação, sem reenvio automático.
+
+Cada conciliação explícita valida a cadeia até a associação revisada original:
+empresa, conta, ambiente, identidades, remoções comprovadas, ausência de eventos
+adversos e política manual em todas as gerações. Recriar não concede autorização
+para baixa automática. Uma cadeia incompleta ou alterada bloqueia o recebimento.
+
+A migration179 é NOOP e seu tracking é obrigatório. Não há DDL, backfill, seed,
+credencial, permissão nova nem chamada financeira real. Alocações parciais não
+podem ser convertidas em cobranças integrais; grupos e edição de sucessores
+continuam pendentes. Implantação futura exige runner nativo e backup consistente;
+rollback de código não desfaz cobranças, recebimentos ou gerações registradas.
+Preservar journals e marcadores; tratar resultados incertos antes de retomar.
+
+Regressão local: `asaas_origin_generations.php` passou em MySQL8.4, com69 checks
+de gerações após118 da base,49 de remoção,22 de cancelamento,6 de concorrência
+do cancelamento e16 de intenções/concorrência. Provedor simulado.
+Runner179:337 assertions em MySQL, incluindo falha de tracking, retry e replay.
+
+`asaas_legacy_successors.php`:37 checks adicionais passaram em MySQL8.4 após55
+do ciclo legado,74 da associação,11 do lote,38 da edição e118 da base. Exercita
+ duas gerações, POST incerto/recovery, falha de gravação da política com rollback,
+tracking antigo negado, cadeia alterada negada, baixa automática negada, replay
+e recusa de conversão de principal parcial em integral. Transportes simulados.
+CI anterior8b6b02b7: Asaas contracts8.1/8.5, settings-ui e MySQL passaram no
+run42317871022. Ainda havia jobs globais na fila; não é CI do novo commit179.

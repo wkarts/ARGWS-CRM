@@ -151,7 +151,7 @@ jobs:
           php tests/companies/asaas_batch_concurrency.php
           php tests/companies/asaas_legacy_binding_concurrency.php
           php tests/companies/asaas_legacy_binding_controller.php
-          php tests/companies/asaas_legacy_lifecycle.php
+          php tests/companies/asaas_legacy_successors.php
           php tests/companies/asaas_legacy_primary_scope.php
           php tests/companies/asaas_card_payments_concurrency.php
 
