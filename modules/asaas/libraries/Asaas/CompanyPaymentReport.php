@@ -17,11 +17,13 @@ final class CompanyPaymentReport
     private function context(int $issuer,int $actor,int $account,string $revision):array
     {
         $service=new CompanyService($this->db,$this->prefix);
-        // Export additionally requires the existing company settings.edit capability.
-        $service->authorize($issuer,$actor,'configure');$service->authorize($issuer,$actor,'query');
+        // Dedicated company grants never imply settings editing, credentials or financial writes.
+        $service->authorize($issuer,$actor,'configuration');$service->authorize($issuer,$actor,'query');
+        $acl=new \IssuerResourceAccess($this->db,$this->prefix);
+        if(!$acl->can($issuer,$actor,'asaas_reports','view')||!$acl->can($issuer,$actor,'asaas_reports','export'))throw new \DomainException('asaas_report_access_denied');
         if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
         $version=\IssuerStorage::query($this->db,'SELECT installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['asaas'])->row_array()['installed_version']??'0';
-        if(version_compare($version,'1.8.5','<'))throw new \DomainException('asaas_module_185_required');
+        if(version_compare($version,'1.8.7','<'))throw new \DomainException('asaas_module_187_required');
         foreach($service->accounts($issuer,$actor) as $row)if((int)$row['id']===$account){
             if(!hash_equals($row['revision'],$revision)||(int)$row['enabled']!==1||$row['verified_at']===null)throw new \DomainException('asaas_company_stale');
             return ['issuer_id'=>$issuer,'account_row'=>$account,'account_id'=>$row['account_id'],'environment'=>$row['environment'],'revision'=>$revision];

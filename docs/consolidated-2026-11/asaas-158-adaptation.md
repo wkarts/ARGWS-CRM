@@ -1,6 +1,6 @@
 # Referência Asaas 1.5.8 e adaptação multiempresa
 
-A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale à versão instalada do módulo no CRM: o CRM preserva sua sequência própria, agora 1.8.6/186. Nenhuma migration 158 existente foi substituída. A integração completa da referência ainda não está concluída.
+A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale à versão instalada do módulo no CRM: o CRM preserva sua sequência própria, agora 1.8.7/187. Nenhuma migration 158 existente foi substituída. A integração completa da referência ainda não está concluída.
 
 Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-payment-module-perfex-crm/releases/download/v1.5.8/asaas-module-v1.5.8.zip). SHA-256 `a8c5d140c6b099805d34758aaae6fb4187d0afd1495bf8f55d96f5cb74a05da3`, 660 arquivos (768 entradas incluindo diretórios). O manifesto `asaas-158-source-manifest.json` registra hash de cada arquivo, inclusive vendor. O hash do ZIP não é o hash de outro empacotamento. Comparação com a cópia local 1.5.7 identificou 49 arquivos não-vendor adicionados/alterados; isso não é contagem de todas as diferenças de dependências.
 
@@ -10,7 +10,7 @@ Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-paymen
 |---|---|---|---|
 | Exportação integral paginada em `AsaasReports::export` | Monitor remoto validado por empresa/conta/revisão | `CompanyPaymentReport`, formulário nativo e ação POST com CSRF; CSV entregue somente após todas as páginas | Implementado para cobranças e filtros já suportados pelo monitor |
 | Arquivo privado, orçamento de execução, rejeição de repetição e lista variável | Transporte limitado e DTO mínimo existentes | Temporário 0600 descartado em `finally`, 10 mil linhas/8 MiB/45s, duplicatas/total variável/ACL revogada rejeitados | Testes MySQL com provedor simulado |
-| Autorização de relatórios | ACL nativa por empresa | Exportação exige settings.edit e invoices.view; consulta mantém settings.view e invoices.view | Granularidade específica de relatórios da referência ainda pendente |
+| Autorização de relatórios | ACL nativa por empresa | Exportação exige asaas_reports.view/export da empresa, settings.view e invoices.view; sem settings.edit | Implementado187 para a exportação disponível; demais relatórios e delegação sem acesso à tela de configurações permanecem pendentes |
 | Saldo/extrato/estatísticas e demais relatórios | Não adaptados | Não são expostos pelo exportador de cobranças | Pendente; impedir uso de gateway global/conta compartilhada |
 | Pix Automático: autorização, jobs, cron e rotas públicas | Não incorporados | Inventário da fonte; buscas por ID e cursores globais não foram copiados | Pendente implementação e testes por empresa/conta/ambiente |
 | SDK 0.3.0/dependências da referência | Lock e runtime da release incorporados no186 | 534 assinaturas públicas preservadas, 14 novas; 23 suites de contrato do CRM passaram | Dependência adaptada; isso não habilita Pix Automático nem completa os relatórios |
@@ -19,7 +19,7 @@ Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-paymen
 
 ## Escopo da exportação de cobranças185
 
-A tela permanece em Configurações > Meios de pagamento > Asaas, na consulta remota existente. Após consultar uma conta, um editor de configurações pode exportar todos os resultados dos mesmos filtros, começando pela primeira página. Cada linha informa empresa, conta local, carteira, ambiente, início da consulta, filtros, ID remoto, situação, meio, valor nominal e vínculo local quando já comprovado. Campos privados adicionais do provedor não entram no CSV. Não há recebimento, associação de origem, atualização ou cobrança.
+A tela permanece em Configurações > Meios de pagamento > Asaas, na consulta remota existente. Após consultar uma conta, um colaborador com as permissões empresariais de relatório pode exportar todos os resultados dos mesmos filtros, começando pela primeira página. Cada linha informa empresa, conta local, carteira, ambiente, início da consulta, filtros, ID remoto, situação, meio, valor nominal e vínculo local quando já comprovado. Campos privados adicionais do provedor não entram no CSV. Não há recebimento, associação de origem, atualização ou cobrança.
 
 A conta precisa estar habilitada e verificada, com revisão atual. O cadastro nativo já impõe unicidade de carteira/ambiente entre empresas (`account_environment`); a API deve confirmar exatamente a carteira antes de cada página. Uma chave de outra carteira não pode ser usada como fallback. Identificadores remotos coincidentes em contas distintas não permitem associar a fatura de outra empresa. O recurso **não é uma solução para empresas que compartilham a mesma conta Asaas** e não deve ser ampliado a saldo/extrato mediante mero filtro local.
 
@@ -46,3 +46,13 @@ Testes adicionais executados **somente na fonte** obtida da tag oficial1.5.8: re
 Permanecem de implementação: Pix Automático com autorização/cron/rotas públicas escopados, restante do catálogo e permissões de relatórios, grupos/alocações e R01–R11. SDK não substitui essas camadas. Cartão continua aguardando decisão. Não houve merge, deploy, credencial persistente ou operação financeira real.
 
 CI185 (run42337576279/job128297880853) parou em `asaas_module_migration_155.php:12`, expectativa antiga de header1.8.4. Reprodução local antes da correção confirmada; expectativa atualizada exatamente para1.8.6, sem remover o teste. Reexecução MySQL:48 checks154 e101 checks155 aprovados. Os23 testes de contrato foram repetidos após reconciliar o autoloader raiz e os classmaps Composer; todos passaram. Inventários continuam sem declarar prontidão operacional.
+
+## Permissões empresariais187
+
+`asaas_reports.view` e `asaas_reports.export` entram no catálogo nativo de concessões por empresa. O serviço e o botão exigem ambas, além de settings.view e invoices.view já necessários à consulta nativa. settings.edit deixa de ser requisito e deixa de ser autorização suficiente. A exceção continua apenas a do master da instalação, definida pelo núcleo; o flag global admin de outro usuário não substitui concessões da empresa. Não foram criadas linhas de permissão, credenciais ou consentimentos pela migration187 NOOP.
+
+A concessão permite somente o CSV disponível; não permite editar a integração, revelar segredos, conciliar, cancelar ou emitir cobranças. Settings.view é um pré-requisito explícito da tela atual, não uma concessão inferida: acesso exclusivamente ao catálogo de relatórios sem a tela de configurações ainda requer adaptação de rota. A consulta de monitor já existente mantém seu contrato separado.
+
+Testes MySQL:67 verificações adicionais de relatório, incluindo export sem view negado antes de HTTP, leitor/exportador sem settings.edit autorizado, empresaB negada, administrador global não-master sem concessões negado e revogação durante resposta descartando arquivo. Catálogo consultado sem escrita de grants. Chromium:4 cenários de apresentação1280/390 com exportador sem settings.edit e leitor sem botão. Runner187:369 assertions; callback13; históricos154/155:48/101. Sem homologação financeira ou ampliação do fluxo de cartão.
+
+Controller187:24 verificações de guard após179 cumulativas das suítes antecedentes, incluindo HTTP403 simulado para administrador sem permissão empresarial de relatório; não houve chamada ao provedor. A tela recebeu somente o booleano de capacidade, sem listas de concessões ou segredos.

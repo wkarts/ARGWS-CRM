@@ -4336,7 +4336,7 @@
       "evidence": ""
     },
     "application/services/CompanyResourceCatalog.php": {
-      "sha256": "081bd233000a98c109c906fa3023713e10e11643751f5c22abf785bb349bae63",
+      "sha256": "49bf2870c76c69e4e5d4053606a3104eed729c572e022bde413e764e4584712c",
       "categories": [
         "invoice_table"
       ],
@@ -5963,7 +5963,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "7b6a5e606b6c6e61b726c0d8e98dd674aabbdb066c53e17425c1979f4909a7c7",
+      "sha256": "9ca16426075a6f7ae8e386cd5128ba8c0bf06a1e49516d01c2708a643f87d36c",
       "categories": [
         "invoice_table"
       ],
@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "09a9370989c862dd64e9ebcce8fb4d5bd56bdc56e482b09ce5d5ba858181d9a0",
+      "sha256": "b3e57cd77f702e6291b07e33ca63262320f84ab1e059c90c5ba03070ad4dbf2c",
       "categories": [
         "customer_privacy",
         "invoice_model",

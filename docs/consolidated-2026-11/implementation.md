@@ -247,3 +247,7 @@ A nova referência funcional é a release Asaas1.5.8, inventariada por arquivo e
 
 ### Dependência da referência1.5.8 —186
 SDK0.3.0 e dependências exatas do lock oficial incorporadas sem alterar o repositório SDK. Compatibilidade de534 assinaturas preservada;23 suites PHP do workflow passaram, mais365 assertions do runner e regressões históricas48/101. Adaptação Pix/relatórios/grupos continua pendente; instalar a SDK não concede autoridade financeira. Ver matriz `asaas-158-adaptation.md`.
+
+### Permissões específicas de relatórios187
+
+Catálogo nativo inclui `asaas_reports.view/export` por empresa. Exportação não exige nem concede settings.edit; exige grants de leitura/exportação e os acessos de consulta atuais. Nenhum grant automático ou seed. Isolamento, ator restrito, admin global sem concessões e revogação durante HTTP cobertos no MySQL; demais relatórios/monitor/Pix e R01–R11 não declarados completos.

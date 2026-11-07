@@ -29,4 +29,7 @@ foreach([
  ['action'=>'preview_legacy_binding','remote_id'=>['pay_synthetic'],'invoice_id'=>1,'account_row'=>$accounts[$a],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'preview_legacy_binding','remote_id'=>'pay_synthetic','invoice_id'=>1,'account_row'=>$accounts[$b],'company_asaas_preferences_csrf'=>$csrf],
 ] as $case=>$post){$controller->input->verb='POST';$controller->input->posted=$post;$controller->output->status=200;$run();essentialCheck($controller->output->status===(!isset($post['company_asaas_preferences_csrf'])?409:422)&&$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array()===$before,'controller guard case '.$case.' status '.$controller->output->status);}
+$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,22,?,?)',[$a,'invoices','view']);
+$controller->input->verb='POST';$controller->input->posted=['action'=>'export_payment_report','account_row'=>999999,'account_revision'=>str_repeat('a',64),'remote_filters'=>[],'company_asaas_preferences_csrf'=>$csrf];$controller->output->status=200;$run($a,22);
+essentialCheck($controller->output->status===403&&!$controller->load->view['can_export_asaas_reports'],'controller denies report export for settings admin without company report capabilities before account/network');
 echo 'Legacy binding controller: '.($GLOBALS['essentialChecks']-$start).' checks ('.$db->driver().'); no provider calls.'.PHP_EOL;
