@@ -26,7 +26,7 @@ Git retornados pelo conector. Isso não é uma nova verificação do ZIP da Libr
 | Resumo/cartão/titular em blocos e CSS responsivo | Futuras telas de checkout/adesão dentro do shell nativo, com autorização/conta/empresa próprias | Ainda não portado; fluxo de trânsito de dados de cartão aguarda decisão |
 | Aviso Visa/Mastercard apenas para opção disponível selecionada de13–21 parcelas | Oferta validada no servidor, sem aviso de elegibilidade baseado só em parâmetro global | Testes oficiais confirmados; adaptação do checkout pendente |
 | Card de recorrência compacto após totais | Documento/portal nativo, consentimento explícito, sem redesenho global | Adaptação pendente, não ativada por esta atualização de referência |
-| Migration157 vazia e header1.5.7 | Histórico do CRM avança para1.8.1/181 | Não copiar157: esse ID já pertence ao CRM |
+| Migration157 vazia e header1.5.7 | Histórico do CRM avança para1.8.2/182 | Não copiar157: esse ID já pertence ao CRM |
 | Backend, contrato e SDK sem delta nesta versão | Serviços por empresa/conta/ambiente já existentes | SDK0.2.64 preservada, sem ampliação |
 
 `AsaasRecurring::scope` da fonte rejeita `issuer_id`/`emitter_id` e contas diferentes
@@ -125,3 +125,7 @@ Nenhum PAN/CVV, transação real ou mudança no SDK.
 
 Consulta/revisão de grupos por empresa e conta: ver `asaas-installment-groups.md`.
 A grade implementada não conclui vínculo ou ciclo financeiro de parcelamentos.
+
+Associação revisada e recebimento por membro foram implementados em182; consultar
+`asaas-installment-groups.md`. O restante do ciclo financeiro dos grupos permanece
+pendente, sem autorização automática ou alteração do SDK.

@@ -61,9 +61,19 @@ trait CompanyLegacyBinding
         return $meta['request_key'];
     }
     /** Read-only group review. Its digest never authorizes single-charge binding or settlement. */
-    public function reviewLegacyInstallments($issuer,$actor,$invoice,$account,string $remote,callable $decrypt,?callable $transport=null):array
+    public function reviewLegacyInstallments($issuer,$actor,$invoice,$account,string $remote,callable $decrypt,?callable $transport=null,string $approval=''):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$invoice=\IssuerPolicy::id($invoice);$account=\IssuerPolicy::id($account);$remote=self::opaque($remote,64);
+        if($approval!==''){
+            if(!preg_match('/^[a-f0-9]{64}$/D',$approval))throw new \DomainException('asaas_legacy_review_changed');
+            $replay=$this->legacyTransaction(function()use($issuer,$actor,$invoice,$account,$approval,$remote){
+                $this->legacyAccess($issuer,$actor);$this->installmentModule();
+                $found=$this->rows('SELECT origin_id,created_by FROM '.$this->p.'asaas_company_origin_meta WHERE request_key=? FOR UPDATE',[$approval]);
+                if(!$found)return null;[$root,$meta,,,,$members]=$this->installmentGroupInOwned($issuer,$actor,(int)$found[0]['origin_id']);
+                if(!isset($members[$remote])||(int)$root['invoice_id']!==$invoice||(int)$meta['account_row']!==$account||(int)$meta['created_by']!==$actor)throw new \DomainException('asaas_legacy_review_changed');
+                return ['bound'=>true,'origin_id'=>(int)$root['id']];
+            });if($replay!==null)return $replay;
+        }
         [$config,$parent,$balance]=$this->legacyTransaction(fn()=>$this->legacyLocal($issuer,$actor,$invoice,$account,$remote));
         $guard=function()use($issuer,$actor,$invoice,$account,$remote,$config,$parent,$balance):void{
             [$now,$current,$position]=$this->legacyLocal($issuer,$actor,$invoice,$account,$remote);
@@ -99,7 +109,7 @@ trait CompanyLegacyBinding
         if($sum!==$totalMinor||!isset($ids[$remote]))throw new \DomainException('asaas_installment_review_incomplete');
         ksort($members);$result=['bound'=>false,'read_only'=>true,'issuer_id'=>$issuer,'invoice_id'=>$invoice,'account_row'=>$account,'account_id'=>$config['account_id'],'environment'=>$config['environment'],'group_id'=>$groupId,'amount'=>$total,'receivable'=>$balance['receivable'],'billing_type'=>$group['billingType'],'members'=>array_values($members)];
         $result['review_hash']=self::hash(['installment_review_v1',$actor,$config['revision'],self::snapshot($parent),$balance,$result]);
-        return $this->legacyTransaction(function()use($guard,$result){$guard();return $result;});
+        return $this->legacyTransaction(function()use($guard,$result,$approval,$issuer,$actor,$config,$parent){$guard();return $approval===''?$result:$this->bindInstallmentReview($issuer,$actor,$result,$config,$parent,$approval);});
     }
     private function legacyLocal(int $issuer,int $actor,int $invoice,int $account,string $remote):array
     {

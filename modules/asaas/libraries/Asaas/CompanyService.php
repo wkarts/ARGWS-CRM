@@ -5,6 +5,7 @@ namespace Asaas;
 require_once APPPATH.'services/CompanyInvoiceBalance.php';
 require_once __DIR__.'/CompanySchema.php';
 require_once __DIR__.'/CompanyLegacyBinding.php';
+require_once __DIR__.'/CompanyInstallmentBindings.php';
 require_once __DIR__.'/CompanyInvoiceEditJournal.php';
 require_once __DIR__.'/CompanyOriginGenerations.php';
 require_once __DIR__.'/CompanyOriginPolicy.php';
@@ -27,7 +28,7 @@ require_once APPPATH.'services/CompanyCurrencyUnits.php';
 /** Named-company adapter. Never enters the legacy gateway, global configuration or invoice map. */
 final class CompanyService
 {
-    use CompanyLegacyBinding;
+    use CompanyLegacyBinding, CompanyInstallmentBindings;
     public function __construct(private $db,private string $p,private ?WebhookTokenCipher $webhookCipher=null)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('asaas_company_prefix_invalid');
@@ -633,7 +634,7 @@ final class CompanyService
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');CompanySchema::ensure($this->db,$this->p,false);
         $canInvoices=(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','view');
-        $origins=$canInvoices?$this->rows('SELECT o.id,o.invoice_id,o.account_id,o.environment,o.remote_id,o.state,m.billing_type,m.created_by FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? ORDER BY o.id DESC LIMIT 100',[$issuer]):[];
+        $origins=$canInvoices?$this->rows('SELECT o.id,o.invoice_id,o.account_id,o.environment,o.remote_id,o.state,m.billing_type,m.created_by FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? AND o.channel=\'api\' ORDER BY o.id DESC LIMIT 100',[$issuer]):[];
         foreach($origins as &$origin){$proof=$this->rows('SELECT id,state,result_json,created_at FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1',[$origin['id']])[0]??null;if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);unset($proof['result_json']);$proof+=array_intersect_key($safe,array_flip(['status','value','net_value','fee','payment_date','credit_date','checkout_url']));$proof['fee_posting_status']=$safe['fee']==='0.00'?'not_applicable':'not_posted';$linked=$this->rows('SELECT f.expense_id,e.total_cents,e.state FROM '.$this->p.'asaas_company_fee_expenses f JOIN '.$this->p.'company_expenses e ON e.id=f.expense_id AND e.issuer_id=f.issuer_id WHERE f.origin_id=? AND f.issuer_id=?',[$origin['id'],$issuer])[0]??null;if($linked){$proof['fee_posting_status']=$linked['state']==='recorded'&&(int)$linked['total_cents']===\app\services\InvoicePaymentWriter::minorUnits($safe['fee'])?'posted':'review_required';$proof['fee_expense_id']=(int)$linked['expense_id'];}}$origin['remote_operation']=$this->db->table_exists($this->p.'asaas_company_remote_operations')?($this->rows('SELECT state,last_code,updated_at FROM '.$this->p.'asaas_company_remote_operations WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null):null;$origin['hosted_publication']=$this->db->table_exists($this->p.'asaas_company_hosted_links')?($this->rows('SELECT enabled,updated_at FROM '.$this->p.'asaas_company_hosted_links WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null):null;$origin['proof']=$proof;$origin['receipt']=$this->rows('SELECT payment_id,created_at FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null;}
         unset($origin);
         $events=$canInvoices?$this->rows('SELECT e.event_id,e.event_type,e.remote_id,e.state,e.created_at,a.environment FROM '.$this->p.'asaas_company_events e JOIN '.$this->p.'asaas_company_accounts a ON a.id=e.account_row WHERE a.issuer_id=? ORDER BY e.id DESC LIMIT 100',[$issuer]):[];

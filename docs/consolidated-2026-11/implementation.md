@@ -210,3 +210,9 @@ O monitor nativo consulta grupo e parcelas por GET, valida o conjunto completo e
 apresenta os IDs individuais. Não aplica vínculo nem baixa. Matriz, limites,
 contratos oficiais e resultados: `asaas-installment-groups.md`. Associação e ciclo
 financeiro dos grupos continuam pendentes; não equivaler consulta a conciliação.
+
+### Continuidade182 — associação e baixa por parcela
+
+Identidades imutáveis do grupo/membros, confirmação por digest e recebimento
+nominal pelo escritor nativo. Política manual, rollback e idempotência preservados.
+Ver `asaas-installment-groups.md` para formato, evidências e ciclo ainda pendente.

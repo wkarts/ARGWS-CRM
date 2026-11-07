@@ -154,7 +154,7 @@ jobs:
           php tests/companies/asaas_legacy_binding_controller.php
           php tests/companies/asaas_legacy_successors.php
           php tests/companies/asaas_legacy_primary_scope.php
-          php tests/companies/asaas_installment_review.php
+          php tests/companies/asaas_installment_receipts.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:
@@ -173,6 +173,7 @@ jobs:
           node --check assets/js/native-asaas-settings.js
           php tests/companies/asaas_card_payment_controller.php
           node tests/browser/asaas_settings.cjs
+          node tests/browser/asaas_installments.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
           chrome="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"

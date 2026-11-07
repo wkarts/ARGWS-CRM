@@ -56,7 +56,7 @@ $refundTransport=function($env,$method,$path,$payload,$secret)use($mock,&$respon
  }
  return $mock($env,$method,$path,$payload,$secret);
 };
-$start=$GLOBALS['essentialChecks'];$postCases=[];
+$start=$GLOBALS['essentialChecks'];$postCases=[];$providerToday=(new DateTimeImmutable('now',new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');
 foreach(['cancel','manual'] as $mode){
  [$invoice,$predecessor]=asaasUnpaid($b,$customerB,'cus_b','post-refund-generation-'.$mode);
  $deleteMode='normal';$cancel->cancel($b,7,$invoice,$invoiceService->revision($b,7,$invoice),$dec,$removeTransport);
@@ -66,7 +66,7 @@ foreach(['cancel','manual'] as $mode){
   $coordinator->reopen($b,7,$invoice,$invoiceService->revision($b,7,$invoice),$dec,$mock);
  }
  $current=$db->query("SELECT * FROM {$p}asaas_payment_origins WHERE invoice_id=? AND active_slot=1",[$invoice])->row_array();
- $remote=$current['remote_id'];$responses[$remote]['status']='RECEIVED';$responses[$remote]['paymentDate']=gmdate('Y-m-d');$responses[$remote]['creditDate']=gmdate('Y-m-d');
+ $remote=$current['remote_id'];$responses[$remote]['status']='RECEIVED';$responses[$remote]['paymentDate']=$providerToday;$responses[$remote]['creditDate']=$providerToday;
  $proof=$asaas->query($b,7,(int)$current['id'],$dec,$mock);
  $paid=$writer->recordCompanyProviderReceipt($b,7,new \Asaas\CompanyReceivedReceipt((int)$current['id'],$proof));
  $key=hash('sha256','post-refund-generation-'.$invoice);

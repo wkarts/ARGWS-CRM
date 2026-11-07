@@ -61,3 +61,64 @@ controlador real:8 guards após179 cumulativos das suítes antecedentes. Inclui
 CSRF ausente, ID inválido e conta estrangeira. Transporte:12 verificações sem
 rede recusam mutações de grupo, body em GET, host/caminho arbitrários e vazamento
 do erro do provedor. Callback:13. Nenhuma cobrança ou baixa realizada.
+
+## Associação e recebimento por parcela — módulo1.8.2/182
+
+A confirmação revisa novamente o grupo remoto e compara o digest apresentado.
+Dentro de uma única transação nativa, cria uma origem ativa do grupo e identidades
+separadas para seus membros. Metadados, prova, auditoria e política manual são
+persistidos juntos. Falha da auditoria desfaz toda a associação. Retry com a mesma
+aprovação retorna o mesmo grupo, sem nova chamada remota.
+
+São utilizados journals existentes, sem alterar origens anteriores: canal
+`installments` no grupo e `installment` nos membros. O grupo guarda o ID real em
+`batch_id`; seu `remote_id` é um identificador local determinístico `grp_` + hash,
+nunca enviado à API como cobrança. Cada membro guarda o verdadeiro ID de cobrança.
+O grupo ocupa a seleção ativa da fatura; membros não são sucessores nem entram em
+operações avulsas. Todos conservam `manual_only`. A consulta normal de cobranças
+continua restrita ao canal API; há grade própria para grupos no mesmo monitor.
+
+A consulta de uma parcela valida grupo, número, cliente, referência, nominal e
+vencimento originais, com revalidação de conta/ACL antes de gravar a prova. A baixa
+exige confirmação explícita, estado RECEIVED, prova canônica recente, data válida
+no fuso do provedor, ausência de eventos adversos e saldo nativo suficiente.
+O escritor financeiro nativo registra apenas o principal da parcela, preservando
+um recibo canônico por ID remoto. A tarifa é observacional, não despesa automática.
+A chave e o recibo não dependem de um clique novo; concorrência usa o mutex nativo.
+
+O adapter de recebimento é uma classe final expressamente permitida pelo escritor,
+sem callback público que conceda autoridade. Ele revalida vínculo/prova e confere
+pagamento e journal nativos antes de registrar a ligação da parcela. Acesso cruzado
+por empresa, configuração revogada ou histórico divergente falham no servidor.
+Perfis sem leitura de faturas/configurações não recebem a lista de grupos; isso
+não bloqueia os demais recursos da página de configuração.
+
+Migration182 NOOP; utiliza o schema e constraints existentes. Upgrade confirma o
+marcador1.8.2. Backup consistente inclui origens, provas, políticas, auditoria,
+pagamentos e recibos. Rollback de código não desfaz associações ou pagamentos:
+não apagar membros, baixar marcadores ou repetir cobranças para reconstruir estado.
+
+Permanecem pendentes neste delta: edição/exclusão/reembolso/recriação dos grupos
+e alocações parciais, cartão e paridade integral R01–R11. Webhook adverso interrompe
+conciliação; não significa reversão financeira automática. Não declarar ciclo
+completo de parcelamentos apenas pela associação e baixa implementadas aqui.
+
+Primeira validação local:32 checks MySQL de associação/recebimentos; rodada ampliada
+com dois processos concorrentes:36 checks, após65 da revisão e suas dependências.
+Runner182:349 assertions MySQL; callback13; migrations históricas154/155:48/101.
+Provedor simulado, sem chamada financeira real ou homologação Asaas.
+
+CI649f627d: focused8.1 job128264760835 falhou em
+`asaas_post_refund_generations.php:71`. A fixture usava dia UTC no paymentDate,
+futuro em America/Sao_Paulo entre00–03UTC. Corrigida a data sintética para o fuso
+do provedor; o guard financeiro não foi alterado. Monitor run42326809950 reportou
+essa falha. A repetição local e o CI do novo SHA devem confirmar a correção.
+
+Validação final182:39 verificações adicionais MySQL de associação/recebimentos,
+após65 de revisão e dependências74/11/38/118; controlador real11 guards após179
+cumulativos. Teste Chromium com view PHP e Bootstrap reais: quatro cenários
+1280/390px, leitura/escrita, campos CSRF, confirmação por parcela, escape e ausência
+de botão de baixa em parcela paga. Binário Chromium do executor; no CI usa o
+binário pareado. Esses cenários de view não equivalem a homologação HTTP completa.
+Regressão de pós-reembolso corrigida:30 checks adicionais MySQL após69 de gerações
+e suas dependências. Gates do novo SHA e CI permanecem verificações separadas.

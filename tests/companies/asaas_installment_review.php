@@ -29,9 +29,10 @@ $during=fn()=>$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');esse
 $group['value']='106.00';essentialThrows($review,'asaas_legacy_amount_review','group above native balance rejected');$group['value']='105.53';
 $db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.8.0','asaas']);$n=count($calls);essentialThrows($review,'asaas_module_181_required','group review requires native tracking');essentialCheck(count($calls)===$n,'old tracking rejected before network');
 essentialCheck($db->query('SELECT * FROM '.$p.'asaas_payment_origins ORDER BY id')->result_array()===$before,'all group reviews preserve origins byte for byte');
-$legacy_review=$result;$legacy_review['group_id']='<script>forbidden</script>';$accounts=[];$action_url='/synthetic/settings';$preferences_csrf='synthetic';
+$savedAccounts=$accounts;$legacy_review=$result;$legacy_review['group_id']='<script>forbidden</script>';$accounts=[];$action_url='/synthetic/settings';$preferences_csrf='synthetic';
 $e=fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');$environmentLabel=fn($v)=>$v;$hidden=function(array $values)use($e){foreach($values as $name=>$value)echo '<input type="hidden" name="'.$e($name).'" value="'.$e($value).'">';};
 ob_start();include APPPATH.'views/admin/settings/native_asaas_legacy_binding.php';$html=ob_get_clean();
 essentialCheck(str_contains($html,'pay_group_one')&&str_contains($html,'pay_group_two')&&!str_contains($html,'confirm_legacy_binding'),'group view lists individual identities without binding confirmation');
 essentialCheck(!str_contains($html,'<script>forbidden')&&str_contains($html,'&lt;script&gt;forbidden'),'group view escapes display content');
+$accounts=$savedAccounts;
 echo 'Installment group review: '.($GLOBALS['essentialChecks']-$start).' additional MySQL checks; provider simulated, no financial writes.'.PHP_EOL;

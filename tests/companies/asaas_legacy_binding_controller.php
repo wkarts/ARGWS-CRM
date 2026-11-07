@@ -5,6 +5,9 @@ $controller->input->verb='GET';$controller->output->status=200;$run();
 $csrf=$controller->session->data['company_asaas_preferences_csrf'];
 $before=$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array();
 foreach([
+ ['action'=>'reconcile_installment','group_origin'=>1,'remote_id'=>'pay_synthetic'],
+ ['action'=>'reconcile_installment','group_origin'=>1,'remote_id'=>'pay_synthetic','company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'confirm_legacy_installments','remote_id'=>'pay_synthetic','invoice_id'=>1,'account_row'=>$accounts[$a],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'preview_legacy_installments','remote_id'=>'pay_synthetic','invoice_id'=>1,'account_row'=>$accounts[$a]],
  ['action'=>'preview_legacy_installments','remote_id'=>['bad'],'invoice_id'=>1,'account_row'=>$accounts[$a],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'preview_legacy_installments','remote_id'=>'pay_synthetic','invoice_id'=>1,'account_row'=>$accounts[$b],'company_asaas_preferences_csrf'=>$csrf],

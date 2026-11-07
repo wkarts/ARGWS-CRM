@@ -20,3 +20,5 @@
 <?php if(($can_configure??false)&&($can_issue??false))require APPPATH.'views/admin/settings/native_asaas_legacy_binding.php'; ?>
 <?php if(isset($origins,$can_settle)&&CompanySettingsRuntime::canResource('settings','view'))require APPPATH.'views/admin/settings/native_asaas_batch.php'; ?>
 </section>
+
+<?php require APPPATH.'views/admin/settings/native_asaas_installments.php'; ?>
