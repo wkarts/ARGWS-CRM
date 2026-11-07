@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "77131b4f19188c6f9930efacdc143af7c46d6463c7346a239b0e2effe3e2b5c7",
+    "source_manifest_sha256": "0dbf7938a4aa900361c76f8dca64c5f429d9a09f54fa53cccc52f9cee62667c4",
     "counts": {
         "modules": 38,
-        "source_files": 4932,
+        "source_files": 4934,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.9.9",
+            "version": "2.0.0",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26337,7 +26337,7 @@
         {
             "name": "asaas_company_pix_future_workers",
             "state": "not_verified",
-            "reference_count": 9
+            "reference_count": 11
         },
         {
             "name": "asaas_company_pix_observations",
@@ -26372,7 +26372,7 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 58
+            "reference_count": 59
         },
         {
             "name": "asaas_company_receipts",
@@ -26422,7 +26422,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 111
+            "reference_count": 112
         },
         {
             "name": "asaas_payments_map",
@@ -29547,7 +29547,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 152
+            "reference_count": 153
         },
         {
             "name": "mrp_manufacturing_orders",

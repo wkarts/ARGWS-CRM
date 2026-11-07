@@ -16,6 +16,7 @@ const {chromium}=require('playwright');
   assert.equal(await page.locator('input[value="issue_pix_cycle"]').count(),stopped?0:1);
   assert.equal(await page.locator('input[value="observe_pix_cycle"]').count(),1);
   assert.equal(await page.locator('input[value="settle_pix_cycle"]').count(),1);
+  if(!stopped){const replacement=page.locator('form').filter({has:page.locator('input[value="confirm_pix_replacement"]')});assert.equal(await replacement.evaluate(f=>f.checkValidity()),false);assert.equal(await replacement.locator('[name="replacement_revision"]').inputValue(),'e'.repeat(64));}
   if(!stopped){const form=page.locator('form').filter({has:page.locator('input[value="confirm_pix_series"]')});assert.equal(await form.evaluate(f=>f.checkValidity()),false);assert.equal(await form.locator('[name="review_hash"]').inputValue(),'a'.repeat(64));}
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.close();
  }

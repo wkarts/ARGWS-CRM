@@ -60,13 +60,16 @@ final class CompanyPixFutureSchedules
  public function confirm(int $issuer,int $actor,int $origin,int $schedule,array $holidays,string $revision,bool $confirmed):int
  {
   if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');
-  return $this->run(function()use($issuer,$actor,$origin,$schedule,$holidays,$revision){$value=$this->proposed($issuer,$actor,$origin,$schedule,$holidays);$hash=self::hash($value);if(!hash_equals($hash,$revision))throw new \DomainException('asaas_pix_schedule_stale');$old=$this->proof($origin,'pix_series');if($old){if($old['evidence_hash']!==$hash)throw new \DomainException('asaas_pix_schedule_conflict');return (int)$old['id'];}
+  return $this->run(fn()=>$this->confirmInOwnedTransaction($issuer,$actor,$origin,$schedule,$holidays,$revision,true));
+ }
+ public function confirmInOwnedTransaction(int $issuer,int $actor,int $origin,int $schedule,array $holidays,string $revision,bool $confirmed):int
+ {
+  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');$value=$this->proposed($issuer,$actor,$origin,$schedule,$holidays);$hash=self::hash($value);if(!hash_equals($hash,$revision))throw new \DomainException('asaas_pix_schedule_stale');$old=$this->proof($origin,'pix_series');if($old){if($old['evidence_hash']!==$hash)throw new \DomainException('asaas_pix_schedule_conflict');return (int)$old['id'];}
    $review=$this->rows('SELECT evidence_hash,created_at FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? AND operation=? AND actor_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin,'pix_sreview',$actor])[0]??null;if(!$review||$review['evidence_hash']!==$hash||$review['created_at']<gmdate('Y-m-d H:i:s',time()-300))throw new \DomainException('asaas_pix_schedule_stale');
    foreach($this->rows('SELECT p.origin_id FROM '.$this->p.'asaas_company_proofs p JOIN '.$this->p.'asaas_payment_origins o ON o.id=p.origin_id WHERE o.issuer_id=? AND p.operation=? FOR UPDATE',[$issuer,'pix_series']) as $candidate){$bound=$this->proof((int)$candidate['origin_id'],'pix_series');if(($bound['value']['schedule_id']??null)===$schedule&&!$this->proof((int)$candidate['origin_id'],'pix_series_stop'))throw new \DomainException('asaas_pix_schedule_already_bound');}
    $json=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$now=gmdate('Y-m-d H:i:s');
    \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$origin,$value['account_revision'],$actor,'pix_series',$json,$hash,'series_prepared',$now]);$id=(int)$this->db->insert_id();
    \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(?,?,?,?,?,?)',[$actor,'company_asaas_pix_series_prepared',$issuer,$origin,json_encode(['proof_id'=>$id,'evidence_hash'=>$hash],JSON_THROW_ON_ERROR),$now]);if((int)($this->proof($origin,'pix_series')['id']??0)!==$id)throw new \RuntimeException('issuer_asaas_pix_series_unconfirmed');return $id;
-  });
  }
  public function status(int $issuer,int $actor,int $origin):?array
  {
@@ -74,11 +77,14 @@ final class CompanyPixFutureSchedules
  }
  public function stop(int $issuer,int $actor,int $origin,string $revision,bool $confirmed):void
  {
-  if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');$this->run(function()use($issuer,$actor,$origin,$revision){$this->ready();$this->service->authorize($issuer,$actor,'configure');$this->service->authorize($issuer,$actor,'issue');if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+  if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');$this->run(fn()=>$this->stopInOwnedTransaction($issuer,$actor,$origin,$revision,true));
+ }
+ public function stopInOwnedTransaction(int $issuer,int $actor,int $origin,string $revision,bool $confirmed):void
+ {
+  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');$this->ready();$this->service->authorize($issuer,$actor,'configure');$this->service->authorize($issuer,$actor,'issue');if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
    if(!$this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND channel=?',[$origin,$issuer,'pix_mandate']))throw new \DomainException('asaas_pix_schedule_denied');$bound=$this->proof($origin,'pix_series');if(!$bound||!hash_equals($bound['evidence_hash'],$revision))throw new \DomainException('asaas_pix_schedule_stale');if($this->proof($origin,'pix_series_stop'))return;
    $value=['binding_hash'=>$revision,'issuer_id'=>$issuer,'root_origin'=>$origin];$hash=self::hash($value);$now=gmdate('Y-m-d H:i:s');\IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$origin,$bound['account_revision'],$actor,'pix_series_stop',json_encode($value,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),$hash,'stopped',$now]);
    \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(?,?,?,?,?,?)',[$actor,'company_asaas_pix_series_stopped',$issuer,$origin,json_encode(['binding_hash'=>$revision],JSON_THROW_ON_ERROR),$now]);if(($this->proof($origin,'pix_series_stop')['evidence_hash']??null)!==$hash)throw new \RuntimeException('issuer_asaas_pix_series_unconfirmed');
-  });
  }
  /** Private composition for a cycle writer owning the complete native schedule boundary. */
  public function bindingInOwnedTransaction(int $issuer,int $actor,int $origin):array

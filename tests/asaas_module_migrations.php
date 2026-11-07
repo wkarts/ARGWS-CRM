@@ -378,9 +378,13 @@ verify((string)(new App_module_migration('asaas'))->version('197')==='197','197 
 $db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('198')===false,'198 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.7','198 failure preserves197');
 verify((string)(new App_module_migration('asaas'))->version('198')==='198','198 retry confirmed');verify((new App_module_migration('asaas'))->version('198')===true,'198 replay no-op');
-$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'199 tracking failure rejected');$db->failQuery=null;
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('199')===false,'199 tracking failure rejected');$db->failQuery=null;
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.8','199 failure preserves198');
-verify((string)(new App_module_migration('asaas'))->to_latest()==='199','199 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'199 replay no-op');
+verify((string)(new App_module_migration('asaas'))->version('199')==='199','199 retry confirmed');verify((new App_module_migration('asaas'))->version('199')===true,'199 replay no-op');
 verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_pix_future_workers')->fetchColumn()===0,'199 never activates a financial worker');
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'200 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.9','200 failure preserves199');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='200','200 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'200 replay no-op');
 
 echo "OK: {$n} native module migration MySQL assertions.\n";

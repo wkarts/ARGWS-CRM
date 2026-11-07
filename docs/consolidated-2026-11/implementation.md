@@ -361,3 +361,13 @@ Cada ocorrência utiliza a reserva/POST único198. Origens já enviadas são som
 Migration199 adiciona uma tabela de políticas/leases por origem, com FK e índice de próximas tentativas. Sem seed, ativação, backfill ou grants. Implantação futura exige runner/backup/tracking e revisão explícita de cada vínculo. Suspender política não estorna recebimentos; preservar tabela/journals e corrigir aditivamente, sem reduzir marcadores.
 
 Substituição completa de autorização, ciclos restantes de grupos/alocações e aceites integrais R01–R11 ainda pendentes. Cartão aguarda decisão, SDK sem ampliação. Sem merge, deploy ou operações financeiras reais.
+
+## Incremento200 — substituição revisada da autorização Pix
+
+A configuração nativa permite revisar e confirmar a substituição do vínculo de uma recorrência. Antes de qualquer consulta da nova autorização, valida ambas as origens na empresa, vínculo anterior e prova canônica CANCELLED, com retirada local. Exige nova adesão, consentimento próprio, ACTIVE e primeiro recebimento novo; não reaproveita consentimento ou baixa antiga. A revisão informa origem/conta anterior e sucessora, recorrência, valor, periodicidade e calendário. O novo vínculo conserva o corte de faturas futuras.
+
+Confirmação usa uma única transação/mutex nativo para interromper vínculo antigo, confirmar novo, invalidar/desabilitar worker antigo e gravar provas pareadas de sucessão/auditoria. Falha tardia reverte todas essas alterações. Dois confirmadores convergem no mesmo sucessor; revisão/pares diferentes falham. Nenhuma chamada bancária ocorre na confirmação, nenhuma fatura/recebimento antigo é reescrito, e a nova automação continua exigindo ativação separada. Consultas históricas preservam as origens anteriores.
+
+Asaas2.0.0 é a sequência nativa200 do CRM, não versão nova do módulo upstream de referência1.5.8. Migration200 NOOP, journals existentes; sem seed/backfill/grants ou ativação. Para implantação futura: backup/runner/marcador200 e revisão das autorizações. Rollback não desfaz cancelamento bancário nem pagamentos; preservar histórico e corrigir aditivamente. Sem merge/deploy/operações reais.
+
+Este fluxo não dispensa a adesão e o pagamento inicial da nova autorização, não cancela cobranças antigas por inferência e não transfere automaticamente políticas. Ciclos restantes de grupos/alocações, paridade integral1.5.8 e R01–R11 seguem pendentes. Cartão aguarda decisão específica.

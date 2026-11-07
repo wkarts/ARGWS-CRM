@@ -166,6 +166,7 @@ jobs:
           php tests/companies/asaas_pix_revocation.php
           php tests/companies/asaas_pix_future_cycles.php
           php tests/companies/asaas_pix_future_worker.php
+          php tests/companies/asaas_pix_replacement.php
           php tests/companies/asaas_pix_inbox_controller.php
           php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php

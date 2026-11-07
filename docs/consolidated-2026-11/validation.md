@@ -1049,3 +1049,11 @@ Complemento198: os26 scripts de contrato sem rede passaram; sintaxe PHP dos serv
 Migrations:420 assertions no runner nativo, incluindo falha de tracking199/retry/replay/tabela vazia;154/15548/101; callback13. Controller:17 guards. Contratos:26 scripts sem rede. Chromium:8 cenários existentes da guia Pix e4 da view de vínculo, incluindo habilitação/desabilitação explícitas, confirmação inicialmente desmarcada e revisões. Nenhum provedor real ou homologação financeira.
 
 CI198 feee484: contratos8.1/8.5 passaram; settings-ui falhou porque o teste anterior esperava cinco formulários e a consulta de vínculo acrescentou o sexto. Corrigida a matriz para validar as ações novas e conservar CSRF, conta/revisão das ações bancárias e ausência de formulários em perfil negado. A guia completa passou localmente após correção; MySQL daquele run foi cancelado pela orquestração. Não declarar CI198 verde nem atribuir esse resultado ao próximo SHA.
+
+## Incremento200 — sucessão de autorizações
+
+20 verificações MySQL adicionais: origens estrangeiras antes de HTTP, cancelamento canônico obrigatório, novo consentimento e novo recebimento inicial, revisão/checkbox, rollback tardio ao desabilitar worker após ambas as alterações de vínculo, preservação de faturas/recebimentos e automação nova desabilitada. Dois processos aguardam mutex financeiro real e convergem no mesmo sucessor. Replay não envia operação bancária. Transporte exclusivamente simulado.
+
+Runner nativo200:424 assertions MySQL incluindo tracking/falha/retry/replay; sintaxe PHP e views passaram. Chromium:8 cenários da guia Pix e4 da view de vínculos/sucessão, com confirmações desmarcadas e revisões preservadas. Não é homologação bancária nem sessão HTTP autenticada completa. CI199: contracts8.1/8.5 e settings-ui aprovados; MySQL ainda em execução na consulta desta etapa. CI200 deve ser acompanhado separadamente.
+
+Regressão200: worker21 checks adicionais e preparação15 aprovados após composição dos métodos na transação possuída; upgrades154/15548/101 aprovados. Nenhum assert ou gate foi removido.
