@@ -28,4 +28,5 @@
 <?php foreach($pix_inbox['events'] as $pixEvent){if((int)$pixEvent['account_row']!==(int)$pixAccount['id'])continue; ?><tr><td><?= $e($pixEvent['event_type']); ?></td><td><?= $e($pixEvent['remote_id']); ?></td><td><?= $e($pixEvent['state']); ?></td><td><?= (int)$pixEvent['attempts']; ?></td><td><?php if(in_array($pixEvent['state'],['queued','retry'],true)){ ?><form method="post" action="<?= $e($action_url); ?>#pix-events"><?php $hidden(['action'=>'pix_observe','event_id'=>$pixEvent['id'],'account_revision'=>$pixAccount['revision'],'company_asaas_preferences_csrf'=>$preferences_csrf]); ?><button type="submit" class="btn btn-default">Consultar estado</button></form><?php } ?></td></tr><?php } ?>
 </tbody></table></div></div></article><?php } ?></section><?php } ?>
 
+<?php require APPPATH.'views/admin/settings/native_asaas_pix_operations.php'; ?>
 </section>

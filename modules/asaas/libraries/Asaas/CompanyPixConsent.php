@@ -14,6 +14,7 @@ final class CompanyPixConsent
  private static function hash(array $value):string{return hash('sha256',json_encode($value,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));}
  private function source(\CompanyPortal $portal,array $session,int $issuer,int $invoice):array
  {
+  $this->service->module();$version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.9.4','<'))throw new \DomainException('asaas_module_194_required');
   $portal->assertStorageBinding($this->db,$this->p);$who=$portal->invoiceIdentity($session,$issuer,true);
   if(!$who||!$this->rows('SELECT id FROM '.$this->p.'contacts WHERE id=? AND email_verified_at IS NOT NULL FOR UPDATE',[$who['contact_id']])||count($this->rows('SELECT id FROM '.$this->p.'contact_permissions WHERE userid=? AND permission_id=1 FOR UPDATE',[$who['contact_id']]))!==1)throw new \DomainException('asaas_pix_portal_denied');
   if(!$this->rows('SELECT i.id FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_clients o ON o.client_id=i.clientid WHERE i.id=? AND i.issuer_id=? AND i.clientid=? AND o.owner_issuer_id=? AND i.status IN (1,4) FOR UPDATE',[$invoice,$issuer,$who['client_id'],$issuer]))throw new \DomainException('asaas_pix_portal_denied');

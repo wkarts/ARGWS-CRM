@@ -34,13 +34,21 @@ trait CompanyPixReservations
   $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($version,'1.9.4','<'))throw new \DomainException('asaas_module_194_required');
   return $this->pixReservationSource($issuer,$actor,$origin);
  }
- public function reservePixAuthorization(int $issuer,int $actor,int $invoice,int $account,string $customer,string $revision,string $key,string $frequency,string $startDate):int
+ /** Operational list scoped to invoice visibility; no credentials or QR payloads. */
+ public function pixOperations(int $issuer,int $actor):array
+ {
+  return $this->transaction(function()use($issuer,$actor){$this->pixReservationReady();$this->authorize($issuer,$actor,'view');if(!(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','view'))throw new \DomainException('asaas_company_access_denied');
+   $rows=$this->rows('SELECT o.id,o.invoice_id,o.remote_id,o.environment,o.state,m.account_row FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? AND o.channel=? AND o.active_slot=1 ORDER BY o.id DESC LIMIT 100',[$issuer,'pix_mandate']);
+   foreach($rows as &$row){$row['receipt']=$this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? AND issuer_id=?',[$row['id'],$issuer])[0]['payment_id']??null;$row['initial_proof']=null;$proof=$this->rows('SELECT id,result_json,evidence_hash FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? AND operation=? ORDER BY id DESC LIMIT 1',[$row['id'],'pix_initial'])[0]??null;if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($safe)||self::hash($safe)!==$proof['evidence_hash'])throw new \DomainException('asaas_pix_initial_requires_review');$row['initial_proof']=['id'=>(int)$proof['id']]+array_intersect_key($safe,array_flip(['payment_id','amount','net_value','fee','payment_date','status']));}}unset($row);return $rows;
+  });
+ }
+ public function reservePixAuthorization(int $issuer,int $actor,int $invoice,int $account,string $customer,string $revision,string $key,string $frequency,string $startDate,?string $accountRevision=null):int
  {
   foreach([$issuer,$actor,$invoice,$account] as $id)\IssuerPolicy::id($id);self::revision($key);self::revision($revision);self::opaque($customer,64);
-  return $this->transaction(function()use($issuer,$actor,$invoice,$account,$customer,$revision,$key,$frequency,$startDate){
+  return $this->transaction(function()use($issuer,$actor,$invoice,$account,$customer,$revision,$key,$frequency,$startDate,$accountRevision){
    $this->pixReservationReady();$this->authorize($issuer,$actor,'issue');
    if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
-   $config=$this->account($issuer,$account);if(!(int)$config['enabled']||$config['verified_at']===null)throw new \DomainException('asaas_company_account_unverified');
+   $config=$this->account($issuer,$account);if($accountRevision!==null&&!hash_equals($config['revision'],$accountRevision))throw new \DomainException('asaas_company_stale');if(!(int)$config['enabled']||$config['verified_at']===null)throw new \DomainException('asaas_company_account_unverified');
    $parent=$this->parent($issuer,$invoice);$this->authorize($issuer,$actor,'issue');
    if(!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new \DomainException('asaas_company_stale');
    $old=$this->rows('SELECT id,channel FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=?'.CompanyOriginGenerations::predicate($this->db,$this->p).' FOR UPDATE',[$invoice])[0]??null;

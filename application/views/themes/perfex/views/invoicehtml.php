@@ -21,13 +21,21 @@
 <p>Valor: R$ <?= e($pix['terms']['amount']); ?> · Periodicidade: <?= e($frequency[$pix['terms']['frequency']]??$pix['terms']['frequency']); ?> · Início: <?= e($pix['terms']['start_date']); ?></p>
 <p><?= e($pix['terms']['text']); ?></p>
 <?php if($pix['accepted']) { ?><p role="status">Aceite registrado para esta revisão. A confirmação bancária e o pagamento são etapas distintas.</p>
+<?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><?= form_hidden('pix_consent_revision',$pix['revision']); ?>
+<button type="submit" name="native_payment_action" value="asaas_pix_enroll" class="btn btn-success">Preparar Pix e consultar código</button><?= form_close(); ?>
 <?php } else { ?>
 <?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?>
 <?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><?= form_hidden('pix_consent_revision',$pix['revision']); ?>
 <div class="checkbox"><label><input type="checkbox" name="pix_consent_accept" value="1" required> Li os termos acima e autorizo a adesão descrita.</label></div>
 <button type="submit" name="native_payment_action" value="asaas_pix_consent" class="btn btn-default">Registrar meu aceite</button>
 <?= form_close(); ?><?php } ?>
-<p>Esta etapa registra somente o consentimento. Nenhuma solicitação ao banco ou cobrança é enviada por este formulário.</p>
+<p>Registrar o aceite não envia cobrança. Preparar Pix solicita a autorização uma única vez e recupera seu estado nas próximas consultas. Confira os dados no aplicativo do banco antes de confirmar.</p>
+<?php if(is_string($native_portal_pix_notice??null)) { ?><p role="status"><?= e($native_portal_pix_notice); ?></p><?php } ?>
+<?php if(is_array($native_portal_pix_instrument??null)) { $instrument=$native_portal_pix_instrument; ?>
+<section aria-label="Pix privado"><h5>Pix — <?= e($instrument['environment']==='production'?'Produção':'Homologação — sem pagamento real'); ?></h5><p>Valor: R$ <?= e($instrument['amount']); ?> · Válido até <?= e($instrument['expires_at']); ?> UTC</p>
+<?= $instrument['svg']; ?>
+<label for="native-pix-payload">Pix copia e cola</label><textarea id="native-pix-payload" class="form-control" rows="4" readonly autocomplete="off" spellcheck="false"><?= e($instrument['payload']); ?></textarea><p>A exibição deste código não confirma autorização bancária ou pagamento.</p></section>
+<?php } ?>
 </div></section><?php } ?>
 <a class="btn btn-default go-to-portal" href="<?= e(NativePortalPresentation::url('clients/invoices')); ?>"><?= e(_l('client_go_to_dashboard')); ?></a>
 <?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" name="invoicepdf" value="invoicepdf" class="btn btn-default"><?= e(_l('clients_invoice_html_btn_download')); ?></button><?= form_close(); ?>

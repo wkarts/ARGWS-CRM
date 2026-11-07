@@ -12,4 +12,7 @@ foreach(['pix_worker','pix_observe'] as $action){
  $post['company_asaas_preferences_csrf']=$controller->session->data['company_asaas_preferences_csrf'];
  $post['account_revision']=[];$controller->input->posted=$post;$controller->output->status=200;$run();essentialCheck($controller->output->status===409,$action.' rejects unusable revision as stale');
 }
+foreach(['pix_receipt_worker','reserve_pix','observe_pix_initial','settle_pix_initial'] as $action){
+ $controller->input->posted=['action'=>$action];$controller->output->status=200;$run();essentialCheck($controller->output->status===409,$action.' requires scoped CSRF before command or transport');
+}
 echo 'Pix controller: '.($GLOBALS['essentialChecks']-$start).' additional guards; no provider calls.'.PHP_EOL;

@@ -1009,3 +1009,13 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 - Runner nativo `tests/asaas_module_migrations.php`:403 verificações MySQL, incluindo tracking194→195, falha, retry e replay.
 - `tests/companies/asaas_pix_initial_receipt.php`: escritor nativo + MySQL, duas conexões/processos concorrentes, GETs simulados; 21 verificações adicionais passaram, incluindo autorização REFUSED com recebimento comprovado, prova adulterada/obsoleta, falha tardia e repetição. Sem chamadas financeiras reais ou homologação bancária.
 - QR permanece fora da rota de pagamento até integração dos fluxos operacionais/jobs; não se declara adesão ponta a ponta. Inventário mantém rollout bloqueado e lacunas explícitas.
+
+## Incremento 196 — evidências locais e limites
+
+- `asaas_pix_portal_enrollment.php`:13 verificações MySQL/controller adicionais; envio único, timeout/recuperação, ausência remota, QR privado e ausência de payload em sessão/journals. Transporte sintético, sem HTTP financeiro real.
+- `asaas_pix_enrollment_browser.cjs`: Chromium1280/375 sobre HTML real gerado pelo controller; SVG local e copia/cola, sem requisições externas e sem overflow. Usa setContent, não uma sessão HTTP autenticada por socket.
+- `asaas_pix_receipt_jobs.php`:28 verificações MySQL adicionais; callback deduplicado, valor do payload ignorado, ausência de backfill, isolamento, desativação durante GET, rollback tardio, retry idempotente e dois processos sob mutex real. Provedor simulado.
+- `asaas_pix_inbox_controller.php`:8 verificações adicionais, incluindo CSRF nas quatro novas ações; testes existentes preservados.
+- Runner nativo:407 verificações MySQL, incluindo falha/retry/replay196. Migrations154/155:48/101; callback13; todos os26 scripts de contratos sem rede do workflow Asaas passaram. Contadores de suites encadeadas não devem ser somados como cenários independentes.
+- Regressão `asaas_checkout_portal.php`:24 verificações adicionais passaram (174 cumulativas) com instalação antiga. No CI195, registry-shards(8.1,1), job128336479450, falhou ao consultar active_slot antes do gate de versão. O aggregate cancelou a execução Asaas42349918085. A correção196 antecipa o gate; esses resultados locais não comprovam CI remoto196.
+- Inventários continuam com rollout bloqueado; nenhuma homologação bancária, implantação, cobrança, transmissão ou operação real foi realizada.

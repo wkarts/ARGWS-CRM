@@ -12,6 +12,10 @@ trait CompanyPixInitialPayments
   if(!is_array($safe)||self::hash($safe)!==$authorization['evidence_hash']||$authorization['account_revision']!==$tuple[2]['revision'])throw new \DomainException('asaas_pix_reservation_conflict');
   $tuple[4]['conciliation_id']=$safe['conciliation_id']??null;if($tuple[0]['remote_id']!==null)$tuple[4]['payment_id']=$tuple[0]['remote_id'];return $tuple;
  }
+ public function pixInitialIdentityInOwned(int $issuer,int $actor,int $origin):array
+ {
+  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());return $this->pixInitialSource($issuer,$actor,$origin)[4];
+ }
  private static function pixInitialFinancial(array $source,array $payment,array $transaction):array
  {
   $identity=CompanyPixAuthorizationContract::initialPayment($source,$payment,$transaction);
