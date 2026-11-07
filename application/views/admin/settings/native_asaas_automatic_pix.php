@@ -1,0 +1,32 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<section id="automatic-pix">
+<h3>Pix Automático · autorizações da conta</h3>
+<p>Consulta pontual do estado no Asaas. Uma autorização ativa no provedor não habilita cobranças automáticas nem comprova consentimento local para esta empresa.</p>
+<?php if(!($can_view_asaas_reports??false)){ ?><p>É necessária a permissão de visualizar relatórios Asaas nesta empresa.</p><?php }else{foreach($accounts as $pixAccount){if(!(int)$pixAccount['enabled']||$pixAccount['verified_at']===null)continue;$pixAccountId=(int)$pixAccount['id']; ?>
+<article class="panel panel-default" data-pix-account="<?= $pixAccountId; ?>"><div class="panel-body">
+<h4><?= $e($pixAccount['account_id'].' · '.$environmentLabel($pixAccount['environment'])); ?></h4>
+<form method="post" action="<?= $e($action_url); ?>#automatic-pix">
+<?php $hidden(['action'=>'automatic_pix_monitor','account_row'=>$pixAccountId,'account_revision'=>$pixAccount['revision'],'company_asaas_preferences_csrf'=>$preferences_csrf]); ?>
+<label for="pix-state-<?= $pixAccountId; ?>">Situação no Asaas</label>
+<select class="form-control" id="pix-state-<?= $pixAccountId; ?>" name="pix_filters[status]">
+<?php foreach(['all'=>'Todas','CREATED'=>'Criada','ACTIVE'=>'Ativa','CANCELLED'=>'Cancelada','REFUSED'=>'Recusada','EXPIRED'=>'Expirada'] as $value=>$label){ ?><option value="<?= $e($value); ?>"><?= $e($label); ?></option><?php } ?>
+</select><button class="btn btn-default tw-mt-2" type="submit">Consultar autorizações desta conta</button></form>
+<?php if(($automatic_pix_monitor['account_row']??null)===$pixAccountId){$pixPage=$automatic_pix_monitor['page']; ?>
+<div class="table-responsive"><table class="table"><thead><tr><th>Autorização</th><th>Situação consultada</th><th>Periodicidade</th><th>Consulta</th></tr></thead><tbody>
+<?php foreach($pixPage['items'] as $pixItem){ ?><tr><td><?= $e($pixItem['remote_id']); ?></td><td><?= $e($pixItem['status']); ?></td><td><?= $e($pixItem['frequency']); ?></td><td><form method="post" action="<?= $e($action_url); ?>#automatic-pix"><?php $hidden(['action'=>'automatic_pix_monitor','account_row'=>$pixAccountId,'account_revision'=>$automatic_pix_monitor['account_revision'],'company_asaas_preferences_csrf'=>$preferences_csrf,'pix_filters[id]'=>$pixItem['remote_id']]); ?><button class="btn btn-default" type="submit">Consultar estado atual</button></form></td></tr><?php }if(!$pixPage['items']){ ?><tr><td colspan="4">Nenhuma autorização nesta página.</td></tr><?php } ?>
+</tbody></table></div>
+<?php if($pixPage['next_offset']!==null){ ?><form method="post" action="<?= $e($action_url); ?>#automatic-pix"><?php $hidden(['action'=>'automatic_pix_monitor','account_row'=>$pixAccountId,'account_revision'=>$automatic_pix_monitor['account_revision'],'company_asaas_preferences_csrf'=>$preferences_csrf]);foreach(array_replace($automatic_pix_monitor['filters'],['offset'=>$pixPage['next_offset']]) as $key=>$value){ ?><input type="hidden" name="pix_filters[<?= $e($key); ?>]" value="<?= $e($value); ?>"><?php } ?><button class="btn btn-default" type="submit">Consultar próxima página</button></form><?php } ?>
+<?php } ?></div></article><?php }} ?>
+<?php if(($pix_inbox??null)!==null&&($can_view_asaas_reports??false)){ ?>
+<section id="pix-events"><h3>Eventos Pix · observação por conta</h3>
+<p>Eventos autenticados ficam separados por empresa, conta e ambiente. A consulta do estado atual não cria consentimento, autorização, cobrança ou recebimento.</p>
+<?php foreach($accounts as $pixAccount){if(!(int)$pixAccount['enabled']||$pixAccount['verified_at']===null)continue;$pixWorker=null;foreach($pix_inbox['workers'] as $candidate)if((int)$candidate['account_row']===(int)$pixAccount['id'])$pixWorker=$candidate; ?>
+<article class="panel panel-default"><div class="panel-body"><h4><?= $e($pixAccount['account_id'].' · '.$environmentLabel($pixAccount['environment'])); ?></h4>
+<p>Observação periódica: <?= (int)($pixWorker['enabled']??0)===1?'habilitada':'desabilitada'; ?>. As permissões do responsável são conferidas a cada consulta.</p>
+<?php if($can_configure??false){ ?><form method="post" action="<?= $e($action_url); ?>#pix-events"><?php $hidden(['action'=>'pix_worker','account_row'=>$pixAccount['id'],'account_revision'=>$pixAccount['revision'],'worker_revision'=>$pixWorker['revision']??str_repeat('0',64),'enabled'=>(int)($pixWorker['enabled']??0)===1?'0':'1','company_asaas_preferences_csrf'=>$preferences_csrf]); ?><button type="submit" class="btn btn-default"><?= (int)($pixWorker['enabled']??0)===1?'Desabilitar':'Habilitar'; ?> somente observação</button></form><?php } ?>
+<div class="table-responsive"><table class="table"><thead><tr><th>Evento</th><th>Recurso</th><th>Situação</th><th>Tentativas</th><th>Consulta</th></tr></thead><tbody>
+<?php foreach($pix_inbox['events'] as $pixEvent){if((int)$pixEvent['account_row']!==(int)$pixAccount['id'])continue; ?><tr><td><?= $e($pixEvent['event_type']); ?></td><td><?= $e($pixEvent['remote_id']); ?></td><td><?= $e($pixEvent['state']); ?></td><td><?= (int)$pixEvent['attempts']; ?></td><td><?php if(in_array($pixEvent['state'],['queued','retry'],true)){ ?><form method="post" action="<?= $e($action_url); ?>#pix-events"><?php $hidden(['action'=>'pix_observe','event_id'=>$pixEvent['id'],'account_revision'=>$pixAccount['revision'],'company_asaas_preferences_csrf'=>$preferences_csrf]); ?><button type="submit" class="btn btn-default">Consultar estado</button></form><?php } ?></td></tr><?php } ?>
+</tbody></table></div></div></article><?php } ?></section><?php } ?>
+
+<?php require APPPATH.'views/admin/settings/native_asaas_pix_operations.php'; ?>
+</section>

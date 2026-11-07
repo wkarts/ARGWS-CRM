@@ -1,6 +1,6 @@
 {
   "model": "frozen-paired-lpt-retired-plus-unmeasured-count-v3",
-  "manifest_sha256": "371a4b0d636192b8d5f2604e22ab0368c285ad4ba33ad3e8ae59fe160b0ba197",
+  "manifest_sha256": "d324698e3468eb04d50dc2e5744fe0d8d958b49e5e64d629abb30ac619fdeb65",
   "baseline_sha256": "0471decd3b02721ae8a35dce36fe2b23241ac7d314f66dcae2ac3e36d6b26851",
   "assignments": [
     3,
@@ -139,6 +139,7 @@
     5,
     2,
     5,
+    4,
     4,
     2,
     4,
@@ -503,6 +504,13 @@
         "tests/companies/asaas_remote_webhooks.php"
       ],
       "reason": "Added with Asaas 1.6.1; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
+    },
+    {
+      "argv": [
+        "php",
+        "tests/companies/sales_pdf_bootstrap.php"
+      ],
+      "reason": "Cold portal PDF dependency regression; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
     }
   ]
 }

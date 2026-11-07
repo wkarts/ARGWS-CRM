@@ -70,6 +70,34 @@ final class PigeBridgeConnections
         }
         return $active;
     }
+    /** Trusted server-only snapshot for explicit transfer to a new disabled PIGE configuration. */
+    public function preparationSnapshot(string $key,int $revision,int $caller):array
+    {
+        self::key($key);$caller=IssuerPolicy::id($caller);if($revision<1)throw new DomainException('pige_configuration_invalid');
+        return IssuerTransaction::run($this->db,$this->prefix,array_merge(self::tables(),['modules']),function()use($key,$revision,$caller){
+            $row=$this->rows('SELECT * FROM '.$this->prefix.'pige_bridge_connections WHERE connection_key=? FOR UPDATE',[$key])[0]??null;
+            if(!$row||(int)$row['revision']!==$revision)throw new DomainException('pige_configuration_changed_reload');
+            $scope=self::decoded($row);$this->authorize((int)$scope['issuer_id'],$caller,true);
+            $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['pige_bridge'])[0]??[];
+            if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.1'||(int)$row['enabled']!==0)throw new DomainException('pige_preparation_disabled_required');
+            $secret=$this->encryption->decrypt($row['secret_cipher']);
+            if(!is_string($secret)||!hash_equals($row['secret_hash'],hash('sha256',$secret)))throw new DomainException('pige_secret_unavailable');self::secret($secret);
+            return ['scope'=>$scope,'secret'=>$secret];
+        });
+    }
+    /** Public scope only; diagnostic cannot decrypt/export the local HMAC or enable consent. */
+    public function diagnosticSnapshot(string $key,int $revision,int $caller):array
+    {
+        self::key($key);$caller=IssuerPolicy::id($caller);if($revision<1)throw new DomainException('pige_configuration_invalid');
+        return IssuerTransaction::run($this->db,$this->prefix,array_merge(self::tables(),['modules']),function()use($key,$revision,$caller){
+            $row=$this->rows('SELECT * FROM '.$this->prefix.'pige_bridge_connections WHERE connection_key=? FOR UPDATE',[$key])[0]??null;
+            if(!$row||(int)$row['revision']!==$revision)throw new DomainException('pige_configuration_changed_reload');
+            $scope=self::decoded($row);$this->authorize((int)$scope['issuer_id'],$caller,false);
+            $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['pige_bridge'])[0]??[];
+            if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.1'||(int)$row['enabled']!==1)throw new DomainException('pige_diagnostic_enabled_required');
+            return $scope;
+        });
+    }
     public function save(string $key,array $scope,?string $secret,bool $enabled,int $revision,int $caller):void
     {
         self::key($key);$scope=self::scope($scope);$caller=IssuerPolicy::id($caller);if($revision<0||$revision===PHP_INT_MAX)throw new DomainException('pige_configuration_invalid');if($secret!==null)self::secret($secret);

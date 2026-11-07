@@ -16,12 +16,15 @@
             </h4>
         </div>
         <div class="panel-body">
+            <?php if ($nativePayment && !empty($native_payment_form_data['asaas_partial_manual'])) { ?>
+            <p class="alert alert-info"><?= e(_l('asaas_partial_manual_native_notice')); ?></p>
+            <?php } ?>
             <div class="row">
                 <div class="col-md-6">
                     <?php
-                    $amount = $invoice->total_left_to_pay;
+                    $amount = $nativePayment && !empty($native_payment_form_data['asaas_partial_manual']) ? '' : $invoice->total_left_to_pay;
 $totalAllowed               = 0;
-echo render_input('amount', 'record_payment_amount_received', $amount, 'number', ['max' => $amount]); ?>
+echo render_input('amount', 'record_payment_amount_received', $amount, 'number', ['max' => $invoice->total_left_to_pay]); ?>
                     <?= render_date_input('date', 'record_payment_date', _d(date('Y-m-d'))); ?>
                     <div class="form-group">
                         <label for="paymentmode"

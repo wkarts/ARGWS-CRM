@@ -2,6 +2,7 @@
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">
+        <?php if(($native_recurring??false)&&($can_manage??false)){?><p><a class="btn btn-default" href="<?= html_escape(CompanyRequestScope::adminUrl($this,'invoices/recurring?reprice=1')); ?>">Reajustes de recorrências</a></p><?php } ?>
         <div class="row">
             <?php
                 include_once(APPPATH . 'views/admin/invoices/recurring/filter_params.php');

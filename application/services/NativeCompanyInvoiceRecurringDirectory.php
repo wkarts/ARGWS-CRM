@@ -16,7 +16,7 @@ final class NativeCompanyInvoiceRecurringDirectory
         $documents=$reader->directory($issuer,$actor);$rows=[];$years=[];$agents=[];
         $acl=new IssuerResourceAccess($this->db,$this->p);
         foreach($documents as$document){
-            $payload=$document['payload'];$config=$document['config'];
+            $payload=$document['future_payload']??$document['payload'];$config=$document['config'];
             $amounts=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));
             $year=substr($payload['date'],0,4);$years[$year]=['year'=>$year];
             $agent=(int)($payload['native_fields']['sale_agent']??0);

@@ -1,6 +1,9 @@
 <?php
-/** Canonical proposal portal list/detail/PDF/file routes on real scoped SQLite data. */
+/** Canonical proposal portal list/detail/PDF/file routes on real scoped PDO data. */
 require __DIR__.'/sales_extras.php';
+// Setup installs MySQL tables after early metadata reads. A subsequent HTTP request
+// has a fresh driver cache; never carry that pre-migration cache into this boundary.
+unset($db->data_cache['table_names']);
 require __DIR__.'/native_portal_http_fixture.php';
 require_once APPPATH.'services/NativePortalIdentity.php';
 require_once APPPATH.'services/ValidatesContact.php';
@@ -32,6 +35,7 @@ $db->query('UPDATE '.$p.'contacts SET email_verified_at=? WHERE id IN (?,?)',['2
 $sessionA=$portal->login($a,$person['email'],'changed-password','password_verify');
 $sessionB=$portal->login($b,$person['email'],'synthetic-portal-password','password_verify');
 $proposalRecord=$portalSales->document($sessionA,$a,$proposalId);
+essentialCheck($db->table_exists($p.'company_sales_files')&&count($files->portalPage($portal,$sessionA,$a,$proposalId))===1,'fresh HTTP metadata observes the actual published owned attachment');
 
 $list=(new ReflectionClass(NativeProposalsListFixture::class))->newInstanceWithoutConstructor();
 foreach(get_object_vars($auth)as$key=>$value)$list->$key=$value;
@@ -49,7 +53,9 @@ $detail->output=new class{public array$headers=[];public string$body='';function
 essentialCheck(PortalRequestScope::prepare($detail)&&PortalRequestScope::resolve($detail)&&PortalRequestScope::issuerId()===$a,'canonical proposal detail recovers the bound issuer');
 ob_start();$detail->index((string)$proposalId,$proposalRecord['link_hash']);$detailHtml=ob_get_clean();
 $proposalDisplay=CompanySalesPreferences::presentation('proposals',$proposalRecord['number'],$proposalRecord['context'],'',$proposalRecord['payload']['date']);
-essentialCheck(str_contains($detailHtml,$proposalDisplay['formatted_number'])&&str_contains($detailHtml,'synthetic-proof.pdf')&&str_contains($detailHtml,'proposal_pdf'),'proposal detail renders its immutable snapshot, PDF action and published attachment');
+essentialCheck(str_contains($detailHtml,$proposalDisplay['formatted_number']),'proposal detail renders its immutable formatted number');
+essentialCheck(str_contains($detailHtml,'synthetic-proof.pdf'),'proposal detail renders its published attachment');
+essentialCheck(str_contains($detailHtml,'proposal_pdf'),'proposal detail renders its PDF action');
 essentialThrows(fn()=>$detail->index((string)$proposalId,str_repeat('f',32)),'fixture_http_404','wrong opaque proposal hash is denied');
 
 $detail->input->verb='POST';$detail->input->post=['action'=>'proposal_pdf'];

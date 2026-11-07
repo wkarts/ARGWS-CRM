@@ -14,12 +14,14 @@ async function reveal(page,control){
 }
 async function createForm(page,url,kind,client){
   const resource=type(kind),callback='/admin/'+kind+'/'+(kind==='estimates'?'client_change_data/':'get_relation_data_values/')+client+(kind==='proposals'?'/customer':'');
-  const selected=page.waitForResponse(response=>new URL(response.url()).pathname===callback);
+  // Observe rejection immediately so a failed navigation/assertion cannot be masked
+  // by an unhandled callback waiter when the browser closes.
+  const selected=page.waitForResponse(response=>new URL(response.url()).pathname===callback).then(response=>({response}),error=>({error}));
   const response=await page.goto(url+'/admin/'+kind+'/'+resource+(kind==='estimates'?'?customer_id=':'?rel_type=customer&rel_id=')+client);
   assert.equal(response.status(),200,'original '+kind+' form opens');
   const form=page.locator('#'+resource+'-form');await form.locator('tr.main textarea[name=description]').waitFor({state:'visible'});
   await page.waitForFunction(()=>typeof calculate_total==='function'&&typeof native_sales_original_init==='function');
-  const customerResponse=await selected;assert.equal(customerResponse.status(),200,'original customer callback is scoped and available');
+  const selection=await selected;if(selection.error)throw selection.error;const customerResponse=selection.response;assert.equal(customerResponse.status(),200,'original customer callback is scoped and available');
   const currency=await form.locator('#currency option').evaluateAll(xs=>xs.find(x=>x.textContent.trim()==='BRL')?.value);assert(currency,'original '+kind+' form offers BRL');await picker(page,'#'+resource+'-form #currency',currency);
   if(kind==='proposals'){
     await form.locator('[name=subject]').fill('Synthetic original proposal');
@@ -49,11 +51,40 @@ async function settle(page){const target=new URL(page.url());if(!/^\/admin\/(?:e
 async function open(page,target){const response=await page.goto(target);if(response?.ok())await settle(page);return response;}
 async function save(page,url,kind){
   const resource=type(kind),form=page.locator('#'+resource+'-form'),endpoint=new URL(await form.getAttribute('action'),page.url()).pathname;
-  const [response]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('.transaction-submit:not(.save-and-send):not(.save-and-send-later)').first().click()]);
-  assert.equal(response.status(),200,'original '+kind+' AJAX POST commits');const result=await response.json();assert.equal(result.success,true);assert.match(result.id,/^[1-9][0-9]*$/);
-  assert.equal(new URL(page.url()).pathname,'/admin/'+kind+'/list_'+kind+'/'+result.id);await page.locator('[data-native-sales-preview="'+result.id+'"]').waitFor({state:'visible'});
-  const replay=await postRecorded(page.context(),response.request());assert.equal(replay.status(),200,'original request supports durable replay');assert.equal((await replay.json()).id,result.id);
-  return{id:result.id,request:response.request()};
+  // Pause only this real response long enough to copy its body before navigation.
+  // continueResponse preserves original status, headers and bytes; no fulfill,
+  // request rewrite, DOM substitution or replacement response is used.
+  const session=await page.context().newCDPSession(page);let finish,timer;
+  const diagnostics={previewStatus:null,pageErrors:[]};
+  const onResponse=response=>{if(new RegExp('^/admin/'+kind+'/get_'+resource+'_data_ajax/[0-9]+$').test(new URL(response.url()).pathname))diagnostics.previewStatus=response.status();};
+  const onError=error=>{const match=String(error.stack||'').match(/\/(assets\/[A-Za-z0-9_./-]+\.js)(?:\?[^\s:)]*)?:(\d+):(\d+)/);diagnostics.pageErrors.push(match?match[1]+':'+match[2]+':'+match[3]:'unavailable');};
+  page.on('response',onResponse);page.on('pageerror',onError);
+  const captured=new Promise(resolve=>{finish=resolve;timer=setTimeout(()=>resolve({error:new Error('Original Sales POST body was not observed')}),30000);});
+  session.on('Fetch.requestPaused',async event=>{
+    let observed;
+    try{
+      if(event.request.method==='POST'){
+        const body=await session.send('Fetch.getResponseBody',{requestId:event.requestId});
+        observed={result:JSON.parse(body.base64Encoded?Buffer.from(body.body,'base64').toString('utf8'):body.body)};
+      }
+    }catch(error){observed={error};}
+    finally{
+      try{await session.send('Fetch.continueResponse',{requestId:event.requestId});}
+      catch(error){observed={error};}
+      if(observed)finish(observed);
+    }
+  });
+  try{
+    await session.send('Fetch.enable',{patterns:[{urlPattern:new URL(endpoint,url).href,requestStage:'Response'}]});
+    const [response,navigation]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname===endpoint),page.waitForNavigation({waitUntil:'domcontentloaded'}),form.locator('.transaction-submit:not(.save-and-send):not(.save-and-send-later)').first().click()]);
+    assert.equal(response.status(),200,'original '+kind+' AJAX POST commits');
+    assert.equal(navigation.status(),200,'original '+kind+' destination page renders after commit');
+    const observed=await captured;if(observed.error)throw observed.error;const result=observed.result;
+    assert.equal(result.success,true);assert.match(result.id,/^[1-9][0-9]*$/);
+    assert.equal(new URL(page.url()).pathname,'/admin/'+kind+'/list_'+kind+'/'+result.id);await page.locator('[data-native-sales-preview="'+result.id+'"]').waitFor({state:'visible'});
+    const replay=await postRecorded(page.context(),response.request());assert.equal(replay.status(),200,'original request supports durable replay');assert.equal((await replay.json()).id,result.id);
+    return{id:result.id,request:response.request()};
+  }catch(error){console.error('Sales preview diagnostics '+JSON.stringify(diagnostics));throw error;}finally{page.off('response',onResponse);page.off('pageerror',onError);clearTimeout(timer);await session.detach();}
 }
 async function action(page,name){const button=page.getByRole('button',{name,exact:true});await reveal(page,button);await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 function command(page,action){assert(['convert','accepted','declined','cancelled'].includes(action));return page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')}).locator('button[type=submit]');}

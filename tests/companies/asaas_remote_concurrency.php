@@ -5,17 +5,44 @@ require_once __DIR__.'/asaas_job_transport_fixture.php';
 if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
 function asaasRemoteConnection(string $p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
 if(($argv[1]??'')==='worker'){
-    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$in=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);if(!preg_match('~^/tmp/asaas-remote-test-[a-f0-9]{20}\.jsonl$~D',$in['evidence']??''))exit(2);$db=asaasRemoteConnection($p);$GLOBALS['essentialPrefix']=$p;
+    if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');
+    $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$in=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);if(!preg_match('~^/tmp/asaas-remote-test-[a-f0-9]{20}\.jsonl$~D',$in['evidence']??''))exit(2);$db=asaasRemoteConnection($p);$GLOBALS['essentialPrefix']=$p;$GLOBALS['CI']=(object)['db'=>$db];
     $transport=function($environment,$method,$path,$payload,$secret)use($db,$p,$in){
         if($db->pdo->inTransaction())throw new LogicException('fixture HTTP under transaction');$letter=str_contains($secret,'key-A')?'A':'B';
         if($path==='wallets/')return ['data'=>[['id'=>'wallet-'.$letter]],'hasMore'=>false];
         if(str_starts_with($path,'customers/'))return ['id'=>substr($path,10),'cpfCnpj'=>$letter==='A'?'11144477735':'12345678909','deleted'=>false];
+        if($method==='POST'&&($in['operation']??'')==='recreate'){
+            $ledger=$db->query('SELECT state,successor_origin_id FROM '.$p.'asaas_company_recreations WHERE origin_id=?',[$in['origin']])->row_array();
+            if($ledger['state']!=='sending')throw new LogicException('post without durable sending intention');
+            $remote='pay_recreation_worker_'.$ledger['successor_origin_id'];file_put_contents($in['evidence'],$remote."\n",FILE_APPEND|LOCK_EX);
+            usleep(200000);return $payload+['id'=>$remote,'status'=>'PENDING','netValue'=>$payload['value'],'paymentDate'=>'','creditDate'=>'','deleted'=>false];
+        }
         $remote=substr($path,9);$row=$db->query('SELECT o.*,m.customer_id,m.billing_type,m.account_row,m.snapshot_json AS invoice_snapshot_json FROM '.$p.'asaas_payment_origins o JOIN '.$p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.remote_id=? AND o.account_id=? AND o.environment=?',[$remote,'wallet-'.$letter,$environment])->row_array();if(!$row)throw new LogicException('fixture identity missing');
+        if(($in['operation']??'')==='edit'){
+            $edit=$db->query('SELECT * FROM '.$p.'asaas_company_invoice_edits WHERE request_key=?',[$in['key']])->row_array();
+            if($method==='PUT'){if($edit['state']!=='sending')throw new LogicException('PUT without durable claim');file_put_contents($in['evidence'],$remote."\n",FILE_APPEND|LOCK_EX);}
+            $sent=is_file($in['evidence']);$snapshot=json_decode($edit[$sent?'after_json':'before_json'],true,32,JSON_THROW_ON_ERROR);
+            return asaasOriginDescriptionFixture($db,$p,$row)+['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$snapshot['total'],'dueDate'=>$snapshot['duedate'],'status'=>'PENDING','netValue'=>$snapshot['total'],'paymentDate'=>'','creditDate'=>'','deleted'=>false];
+        }
         if($method==='DELETE'){$state=$db->query('SELECT state FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$row['id']])->row()->state;if($state!=='sending')throw new LogicException('delete without durable sending intention');file_put_contents($in['evidence'],$remote."\n",FILE_APPEND|LOCK_EX);return ['id'=>$remote,'deleted'=>true];}
-        $deleted=in_array($remote,is_file($in['evidence'])?file($in['evidence'],FILE_IGNORE_NEW_LINES):[],true);
+        $deleted=($in['operation']??'')!=='recreate'&&in_array($remote,is_file($in['evidence'])?file($in['evidence'],FILE_IGNORE_NEW_LINES):[],true);
         return asaasOriginDescriptionFixture($db,$p,$row)+['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$row['invoice_total'],'dueDate'=>$row['invoice_due_date'],'status'=>'PENDING','netValue'=>$row['invoice_total'],'paymentDate'=>'','creditDate'=>'','deleted'=>$deleted];
     };
-    try{echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false,$transport),JSON_THROW_ON_ERROR);}catch(DomainException $e){if($e->getMessage()!=='asaas_company_access_denied')throw $e;echo 'denied';}exit(0);
+    try{
+        $decrypt=fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false;
+        if(($in['operation']??'')==='edit'){
+            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInvoiceEdits.php';
+            (new \Asaas\CompanyInvoiceEdits($db,$p))->recover($in['issuer'],7,$in['key'],$decrypt,$transport);echo 'edited';
+        }elseif(($in['operation']??'')==='recreate'){
+            echo (new \Asaas\CompanyService($db,$p))->dispatchRecreation($in['issuer'],7,$in['origin'],$in['key'],$decrypt,$transport);
+        }elseif(($in['operation']??'')==='recreation_intent'){
+            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyRecreationIntents.php';
+            echo json_encode((new \Asaas\CompanyRecreationIntents($db,$p))->reserve($in['issuer'],7,$in['invoice'],$in['origin'],$in['revision'],$in['key']),JSON_THROW_ON_ERROR);
+        }elseif(($in['operation']??'')==='cancel'){
+            require_once APPPATH.'services/CompanyAsaasInvoiceCancellation.php';
+            (new CompanyAsaasInvoiceCancellation($db,$p))->cancel($in['issuer'],7,$in['invoice'],$in['revision'],$decrypt,$transport);echo 'cancelled';
+        }else echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],$decrypt,$transport),JSON_THROW_ON_ERROR);
+    }catch(DomainException $e){if(($in['operation']??'')==='edit'&&in_array($e->getMessage(),['asaas_invoice_edit_canonical_conflict','company_invoice_stale'],true))echo 'pending';elseif($e->getMessage()==='asaas_company_access_denied')echo 'denied';elseif(($in['operation']??'')==='recreate'&&$e->getMessage()==='asaas_recreation_recovery_required')echo 'pending';elseif(($in['operation']??'')==='cancel'&&$e->getMessage()==='asaas_invoice_cancellation_pending')echo 'pending';else throw $e;}exit(0);
 }
 require __DIR__.'/asaas_remote_operations.php';$observer=asaasRemoteConnection($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
 foreach(['normal','revocation'] as $mode){

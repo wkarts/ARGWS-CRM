@@ -131,13 +131,23 @@ async function addNativeTaskChecklistItem(page, baseUrl, taskCanonical, text) {
         const responsePromise = page.waitForResponse((response) =>
             response.request().method() === 'POST' && response.url().includes('/admin/tasks/checklist_command/'),
         );
+        // Initialization refreshes the modal through AJAX, not document navigation.
+        // Observe and finish that refresh before testing persistence with reload.
+        const detailPath='/admin/tasks/get_task_data/'+taskCanonical;
+        const refreshed=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname===detailPath).then(response=>({response}),error=>({error}));
         await initialize.click();
         const response = await responsePromise;
         assert.equal(response.status(), 200);
         const payload = await response.json();
         assert.equal(payload.success, true);
-        await page.waitForLoadState('domcontentloaded');
-        await page.reload({ waitUntil: 'domcontentloaded' });
+        const refresh=await refreshed;if(refresh.error)throw refresh.error;
+        assert.equal(refresh.response.status(),200,'initialized checklist detail refresh succeeds');
+        await page.locator('[data-native-task-detail] button[onclick*="add_task_checklist_item"]').waitFor({state:'visible'});
+        const reloaded=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname===detailPath).then(response=>({response}),error=>({error}));
+        const navigation=await page.reload({ waitUntil: 'domcontentloaded' });
+        assert.equal(navigation.status(),200,'task index reload succeeds after checklist initialization');
+        const detail=await reloaded;if(detail.error)throw detail.error;
+        assert.equal(detail.response.status(),200,'persisted checklist detail remains readable after reload');
         await page.locator('[data-native-task-detail]').waitFor({ state: 'visible' });
     }
     await page.locator('button[onclick*="add_task_checklist_item"]').click();

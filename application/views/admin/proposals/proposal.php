@@ -34,7 +34,7 @@ if ($this->input->get('estimate_request_id')) {
                     <span>
                         <?= e(isset($proposal) ? ($native_sales_formatted_number??format_proposal_number($proposal->id)) : _l('new_proposal')); ?>
                     </span>
-                    <?= isset($proposal) ? format_proposal_status($proposal->status) : ''; ?>
+                    <?= isset($proposal) ? ($scopedSales?NativeCompanySalesTable::statusHtml('proposals',(int)$proposal->status):format_proposal_status($proposal->status)) : ''; ?>
                 </h4>
                 <div class="panel_s">
                     <div class="panel-body">
@@ -223,7 +223,7 @@ if (isset($proposal)) {
                                                     value="<?= e($status); ?>"
                                                     <?php if ((isset($proposal) && $proposal->status == $status) || (! isset($proposal) && $status == 0)) {
                                                         echo 'selected';
-                                                    } ?>><?= format_proposal_status($status, '', false); ?>
+                                                    } ?>><?= ($scopedSales?NativeCompanySalesTable::statusHtml('proposals',(int)$status,false):format_proposal_status($status, '', false)); ?>
                                                 </option>
                                                 <?php } ?>
                                             </select>

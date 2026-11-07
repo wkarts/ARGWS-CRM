@@ -14,4 +14,7 @@ $admin=false;$c->disable();adminOk(end($errors)===403);$admin=true;
 $c->input->verb='GET';$c->disable();adminOk(end($errors)===405);
 $c->input->verb='POST';$c->input->values=['pige_csrf'=>'wrong'];$c->disable();adminOk(end($errors)===403);
 $c->input->values=['pige_csrf'=>str_repeat('a',64),'connection_key'=>'synthetic','revision'=>'invalid'];$c->disable();adminOk(end($alerts)==='danger');
+$admin=false;$c->discover();adminOk(end($errors)===403);$admin=true;
+$c->input->verb='GET';$c->discover();adminOk(end($errors)===405);
+$c->input->verb='POST';$c->input->values=['pige_csrf'=>'wrong'];$c->discover();adminOk(end($errors)===403);
 echo "PIGE admin guards: synthetic controller checks only\n";

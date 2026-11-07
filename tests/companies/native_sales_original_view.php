@@ -34,8 +34,6 @@ function process_text_content_for_display($value){return e($value);}
 function slug_it($value){return trim(strtolower(preg_replace('/[^a-zA-Z0-9]+/','-',$value)),'-');}
 function app_generate_hash(){static $counter=0;return hash('sha256','synthetic-control-'.++$counter);}
 function set_checkbox($name,$value,$default=false){return$default?' checked="checked"':'';}
-function format_estimate_status($status,$classes='',$label=true){return (string)$status;}
-function format_proposal_status($status,$classes='',$label=true){return (string)$status;}
 function is_sale_discount($row,$mode){return$mode==='percent'?(float)$row->discount_percent>0:(float)$row->discount_total>0&&(float)$row->discount_percent===0.0;}
 function is_sale_discount_applied($row){return(float)$row->discount_total>0;}
 $GLOBALS['essentialHooks']=new class{public function __call($name,$args){throw new RuntimeException('global hook used by scoped Sales form');}};
@@ -51,6 +49,7 @@ class OriginalSalesViewLoader{
     public function view($path,$extra=[],$return=false){$this->data=array_merge($this->data,$extra);extract($this->data);if($return)ob_start();include APPPATH.'views/'.$path.'.php';if($return)return ob_get_clean();}
 }
 $viewStart=$GLOBALS['essentialChecks'];$originalRendered=[];
+essentialCheck(!function_exists('format_estimate_status')&&!function_exists('format_proposal_status'),'scoped original forms run without legacy status helpers or test replacements');
 function originalSalesSuccessfulControls(string $html,string $formId):array{
     $dom=new DOMDocument();$previous=libxml_use_internal_errors(true);try{$dom->loadHTML('<?xml encoding="UTF-8">'.$html);}finally{libxml_clear_errors();libxml_use_internal_errors($previous);}$xpath=new DOMXPath($dom);$pairs=[];
     foreach($xpath->query('//form[@id="'.$formId.'"]//input[@name]|//form[@id="'.$formId.'"]//textarea[@name]|//form[@id="'.$formId.'"]//select[@name]')as$node){
@@ -66,6 +65,7 @@ foreach(['estimates'=>'estimate','proposals'=>'proposal']as$kind=>$type){
         $data=$originalForms[$kind]->data($a,12,$id,$ca);$loader=new OriginalSalesViewLoader($data,'admin/'.$kind.'/'.$type.($id!==''?'/'.$id:''));$GLOBALS['CI']->load=$loader;
         ob_start();try{$loader->view('admin/'.$kind.'/'.$type);$html=ob_get_clean();}catch(Throwable $error){ob_end_clean();throw$error;}$originalRendered[$kind][$mode]=$html;
         foreach(['id="'.$type.'-form"','name="currency"','name="_native_sales_request_key"','name="_native_sales_number_revision"','name="description"','name="status"',"native_sales_original_init('".$kind."')"]as$marker)essentialCheck(str_contains($html,$marker),'original '.$kind.' '.$mode.' retains '.$marker);
+        foreach(($kind==='estimates'?range(1,5):range(1,6))as$status)essentialCheck(str_contains($html,NativeCompanySalesTable::statusLabel($kind,$status)),'original '.$kind.' '.$mode.' renders actual scoped status '.$status);
         essentialCheck(substr_count($html,'<form ')===1&&substr_count($html,'</form>')===1,'original '.$kind.' '.$mode.' has one form without unauthorized item-create modal');
         essentialCheck(!str_contains($html,'Private B')&&!str_contains($html,'name="issuer_id"'),'original '.$kind.' '.$mode.' never renders another company or context override');
         essentialCheck(!str_contains($html,'VAT "<safe>')&&str_contains($html,'&lt;safe&gt;'),'original '.$kind.' '.$mode.' escapes actual tax text in option attributes');

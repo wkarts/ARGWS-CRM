@@ -1,4 +1,5 @@
 'use strict';
+const {picker}=require('../helpers/native_invoice_driver.cjs');
 const {selectContractClient} = require('../helpers/native_contract_driver.cjs');
 const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
@@ -62,7 +63,7 @@ function currentContract(page) {
       const clientData = await selectContractClient(page, client);
       const projectCanonical = String(4294967296n + BigInt(project));
       assert(clientData.projects.some(row => row.id === projectCanonical));
-      await page.locator('#contract-project').selectOption(projectCanonical,{force:true});
+      await picker(page, '#contract-project', projectCanonical);
       assert.equal(await page.locator('#contract-project-revision').inputValue(),'1');
       await page.locator('#contract-new-name').fill('Browser contract ' + letter + ' <script>');
       await page.locator('#contract-new-body').fill('Synthetic contract ' + letter + ' <script>literal</script>');

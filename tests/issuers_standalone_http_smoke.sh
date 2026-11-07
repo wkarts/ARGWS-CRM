@@ -85,6 +85,8 @@ collect_smoke_failure() {
             $files=array_merge(["/tmp/issuer-http-error.log"],array_slice(glob("/app/application/logs/log-*.php")?:[],-3));
             foreach($files as $file){if(!is_file($file)||!is_readable($file))continue;$handle=fopen($file,"rb");if($handle===false)continue;$size=filesize($file);if($size>262144)fseek($handle,-262144,SEEK_END);echo PHP_EOL."--- ".basename($file)." (bounded tail) ---".PHP_EOL;echo stream_get_contents($handle,262144);fclose($handle);}
         ' 2>&1 | python3 tests/ci/classify_php_error_log.py > "$evidence/$container-application.log" || true
+        # Only classified code locations, never the raw application/container logs.
+        cat "$evidence/$container-application.log" >&2 || true
     done
 }
 cleanup() {
@@ -284,6 +286,8 @@ sed -i 's/argws_legacy_ci/argws_upgrade_ci/g' "$work/app-config.php"
 # Keep the synthetic HTTPS authority explicit even though the local browser uses HTTP.
 [[ "$upgrade" =~ ^argws-crm-upgrade-[0-9]+$ ]]
 grep -Fq "define('APP_DB_NAME', 'argws_upgrade_ci');" "$work/app-config.php"
+# Disposable HTTP diagnostics; consumers print only allowlisted code-location facts.
+printf '\n%s\n' "define('APP_LOG_THRESHOLD', 1);" >> "$work/app-config.php"
 printf '\n%s\n' "define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/google_mail_oauth');" >> "$work/app-config.php"
 printf '\n%s\n' "define('COMPANY_MICROSOFT_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/microsoft_mail_oauth');" >> "$work/app-config.php"
 printf '\n%s\n' "define('COMPANY_CONNECT_API_ENDPOINTS', ['synthetic'=>['label'=>'Synthetic approved','url'=>'https://connect.example.invalid']]);" >> "$work/app-config.php"

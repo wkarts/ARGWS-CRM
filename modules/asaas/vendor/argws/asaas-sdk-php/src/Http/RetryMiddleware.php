@@ -19,6 +19,13 @@ final class RetryMiddleware
                 ?ResponseInterface $response = null,
                 ?\Throwable $exception = null
             ) use ($maxRetries): bool {
+                // Only reads are automatically replayed. Financial writes may have
+                // succeeded even when the response is lost; reconcile before retrying.
+                // A caller-supplied idempotency header does not establish a contract.
+                if (!in_array(strtoupper($request->getMethod()), ['GET', 'HEAD', 'OPTIONS'], true)) {
+                    return false;
+                }
+
                 if ($retries >= $maxRetries) {
                     return false;
                 }

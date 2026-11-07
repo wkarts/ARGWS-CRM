@@ -36,6 +36,8 @@ test('workspace browser suites do not omit admin page aliases and keep public/ne
     const rawExceptions = new Map([
         ['companies_onboarding_browser.cjs', ['mobilePage:context', 'employeePage:regular']],
         ['companies/portal_operations_browser.cjs', ['page:publicCtx']],
+        // Independently authenticated customer boleto portal has no admin workspace.
+        ['banco_brasil_origination_browser.cjs', ['publicPage:publicContext']],
         // This suite imports only openDisclosure; selected task billing has one visible record panel.
         ['companies/task_timesheets_http_browser.cjs', ['p:context']]
     ]);

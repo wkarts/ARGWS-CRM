@@ -98,6 +98,10 @@ jobs:
           "$RUNNER_TEMP/ci-browser/node_modules/.bin/playwright" install --with-deps chromium
           echo "NODE_PATH=$RUNNER_TEMP/ci-browser/node_modules" >> "$GITHUB_ENV"
           sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - name: Testar seletores e modal nativos de Contratos
+        run: node tests/browser/native_contract_selects.cjs
+      - name: Testar leitura do POST de Vendas durante redirecionamento real
+        run: node tests/browser/sales_driver_navigation.cjs
       - name: Testar navegação das abas no shell isolado de Empresas
         run: node tests/native_context_tabs_browser.cjs
       - name: Testar apresentação e escolha com POST no shell de Empresas

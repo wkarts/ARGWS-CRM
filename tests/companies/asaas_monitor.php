@@ -1,0 +1,37 @@
+<?php
+/** Local ledger pagination with actual SQL, no provider transport. */
+require __DIR__.'/asaas_preferences_controller.php';
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyMonitor.php';
+$start=$GLOBALS['essentialChecks'];$monitor=new \Asaas\CompanyMonitor($db,$p);
+essentialThrows(fn()=>$monitor->page($a,7),'asaas_module_174_required','monitor requires native174 tracking');
+$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.7.4','asaas']);
+$before=$db->query('SELECT * FROM '.$p.'invoicepaymentrecords')->result_array();
+for($i=0;$i<53;$i++)$db->query('INSERT INTO '.$p.'asaas_company_events(account_row,event_id,event_type,remote_id,payload_hash,state,created_at) VALUES(?,?,?,?,?,?,?)',[$accounts[$a],'monitor-'.$i,'PAYMENT_UPDATED','synthetic-monitor-payment',hash('sha256','monitor-'.$i),'monitor_fixture','2026-11-06 10:00:00']);
+$first=$monitor->page($a,7,['kind'=>'events','state'=>'monitor_fixture']);
+essentialCheck(count($first['rows'])===50&&$first['next_before']!==null,'first page bounded to50 and offers older cursor');
+$next=$monitor->page($a,7,['kind'=>'events','state'=>'monitor_fixture','before'=>$first['next_before']]);
+essentialCheck(count($next['rows'])===3&&$next['next_before']===null&&!array_intersect(array_column($first['rows'],'id'),array_column($next['rows'],'id')),'keyset visits older records without overlap');
+essentialCheck($monitor->page($b,7,['kind'=>'events','state'=>'monitor_fixture'])['rows']===[],'B cannot see A event history');
+essentialThrows(fn()=>$monitor->page($b,7,['account'=>$accounts[$a]]),'asaas_company_access_denied','foreign account filter rejected');
+essentialThrows(fn()=>$monitor->page($a,7,['state'=>"x' OR 1=1"]),'asaas_monitor_filters_invalid','SQL-like filter rejected');
+essentialThrows(fn()=>$monitor->page($a,7,['kind'=>['events']]),'asaas_monitor_filters_invalid','array kind rejected');
+essentialThrows(fn()=>$monitor->page($a,21),'asaas_company_access_denied','invoice-only actor cannot use administrative monitor');
+foreach(['origins','jobs'] as $kind)essentialCheck(is_array($monitor->page($a,7,['kind'=>$kind])['rows']),'actual SQL for '.$kind.' is scoped and readable');
+essentialCheck(!str_contains(json_encode($first),'payload_hash')&&!str_contains(json_encode($first),'token')&&!str_contains(json_encode($first),'secret'),'DTO omits payload hashes and credential material');
+essentialCheck($db->query('SELECT * FROM '.$p.'invoicepaymentrecords')->result_array()===$before,'local monitor does not record payments');
+$e=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
+$renderMonitor=function($monitor)use($e){$accounts=[];$monitor_error=null;$action_url='https://synthetic.invalid/admin/settings/asaas';$environmentLabel=static fn($s)=>$s;ob_start();include APPPATH.'views/admin/settings/native_asaas_monitor.php';return ob_get_clean();};
+$first['rows'][0]['remote_id']='<img src=x onerror=alert(1)>';
+$html=$renderMonitor($first);essentialCheck(str_contains($html,'&lt;img')&&!str_contains($html,'<img')&&str_contains($html,'monitor_before='),'view escapes provider identifiers and links older page');
+$controller->input=new class{public string $verb='GET';public array $posted=[];public array $filters=['monitor_kind'=>'events','monitor_state'=>'monitor_fixture'];public function method($upper){return $this->verb;}public function post($name=null,$clean=false){return $name===null?$this->posted:($this->posted[$name]??null);}public function get($name){return $this->filters[$name]??null;}};
+$controller->output->status=200;
+essentialThrows(fn()=>$run(),'asaas_invoice_edit_schema_required','tracked monitor upgrade without required journal fails closed');
+\Asaas\CompanyInvoiceEditSchema::ensure($db,$p);
+\Asaas\CompanyOriginPolicy::ensure($db,$p,true);
+$run();
+essentialCheck($controller->output->status===200&&count($controller->load->view['monitor']['rows'])===50,'controller GET loads bounded local history');
+$controller->input->filters['monitor_kind']=['events'];$controller->output->status=200;$run();
+essentialCheck($controller->output->status===422&&$controller->load->view['monitor']===null,'invalid controller filters fail without fallback full history');
+$controller->input->filters=[];$controller->output->status=200;$run();
+essentialCheck($controller->output->status===200&&$controller->load->view['monitor']===null,'ordinary settings GET does not eagerly load monitor');
+echo 'Scoped local monitor: '.($GLOBALS['essentialChecks']-$start).' additional checks ('.$db->driver().').'.PHP_EOL;

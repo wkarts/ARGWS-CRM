@@ -1,0 +1,4448 @@
+{
+  "reference_commit": "c3f169e7f571d70dc2accf2fce67bf7b7e5749c7",
+  "reference_version": "1.5.6",
+  "crm_commit": "fe7532e1a60b320ac2d48e0e153a8f41d9afcf03",
+  "source": "git archive; ZIP equivalence reported by parent, not locally reverified",
+  "counts": {
+    "source_only": 112,
+    "different": 53,
+    "equal": 486,
+    "crm_only": 88
+  },
+  "files": [
+    {
+      "path": ".github/scripts/check_perfex_module.sh",
+      "source_sha256": "01d250362c3d0d75e43eb87a7d17adaac238c3dc494313a79c32654c0949e5d3",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "source_sha256": "5bbf4b1918e2b6cacaaeb67f1158e51e655580d526da2af178161cb4b05847db",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "source_sha256": "7d90c2f87620c6e4a10ddbec258122333286f7289d01318cf6115f21ea00a14c",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": ".release-please-config.json",
+      "source_sha256": "ea44988c288765cb51d8565e79c60511564eca951946d1dfc472c8cb72786ab6",
+      "crm_sha256": "c5b960e84bc16d0423d75f12ca868ca6ae0f92785f3d3f55f4b6906cc4296e3d",
+      "status": "different"
+    },
+    {
+      "path": ".release-please-manifest.json",
+      "source_sha256": "c9fe8f6dd77b6f84686efe56e3070d72ce398ccafb9411c353698dd1f964ac1e",
+      "crm_sha256": "70b3ded7ddeaa2e8de6223300ffdfb16a9d103ebb3bf1401aa09dd4d7baec040",
+      "status": "different"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "source_sha256": "14969122458f5b6bf8f7b4a64e4b7b751fca088f8b28097140faacf037edf7ac",
+      "crm_sha256": "079787a5e2a25837e1591a2f1425f53eef9e3808cfcaed3affacdca7a151148c",
+      "status": "different"
+    },
+    {
+      "path": "asaas.php",
+      "source_sha256": "4f30989b799a896a7200e5b4c96649543ec5e65fb19da2a3808aa60cfb0995e1",
+      "crm_sha256": "2e0f9807c5eb59e93c7bebbd2537e39581fd683c92af96dcf4c1fba152de3607",
+      "status": "different"
+    },
+    {
+      "path": "assets/css/asaas-logs.css",
+      "source_sha256": "9185ae98007ec5c54433acd624c76c212f3bf046b6d130c74c5d7f3846652ec3",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/css/asaas-monitor.css",
+      "source_sha256": "ee17a2af385963d68e13c9dd80724157f916543d453173143ba1bc63002d54d2",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/css/asaas-recurring.css",
+      "source_sha256": "078aeae290c7bafc1056d7fdafe2d702a58cf54714d08b2affdfbc39762cbb58",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/css/asaas-settings.css",
+      "source_sha256": "5e6b17551369330dfb9e45cbecb97634c172fd344c6692280b651a041ec5f8fd",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/img/carregando.gif",
+      "source_sha256": "3c7a58b93ebaeee160cd4c7090c4e6df658f3182377a48177dd8c6003faa8599",
+      "crm_sha256": "3c7a58b93ebaeee160cd4c7090c4e6df658f3182377a48177dd8c6003faa8599",
+      "status": "equal"
+    },
+    {
+      "path": "assets/img/spinner.gif",
+      "source_sha256": "7983d92d94ac1327a01aae67c2713fef1f541d59ce98cb3b7535b3a69beeb86f",
+      "crm_sha256": "7983d92d94ac1327a01aae67c2713fef1f541d59ce98cb3b7535b3a69beeb86f",
+      "status": "equal"
+    },
+    {
+      "path": "assets/js/asaas-card-checkout.js",
+      "source_sha256": "c50f99aeea0246ba6df342b4fb63c8b3883454d3ba2cc8883217fba72494064c",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/asaas-logs.js",
+      "source_sha256": "40ade770b598549e152188d95a76d68fc013e746d6455982b1d81f10fe831b5c",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/asaas-monitor.js",
+      "source_sha256": "9d897c3ad71e6afa7c122da9bef7cf60fa89c3150c81102428f1e12e44a19a85",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/asaas-recurring.js",
+      "source_sha256": "cdd3602df12dbf6331ddcec34736774b642cb89b3d62e963e8b76eae2e7c77ea",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/asaas-settings.js",
+      "source_sha256": "c79a8a067ed1a47cd1e70fa96f09d8075f20aa708a05c1b3db065512461b4471",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/asaas-webhook-settings.js",
+      "source_sha256": "f07f7867abb3b0c9b995a3fec3f7375a3409d4f517e42fa96ab14fcc8d1ef14f",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "assets/js/clipboard.min.js",
+      "source_sha256": "99e1761c92764dcaeec33df3e1773160344cc4aa6b8ddaee0477372279a2c424",
+      "crm_sha256": "99e1761c92764dcaeec33df3e1773160344cc4aa6b8ddaee0477372279a2c424",
+      "status": "equal"
+    },
+    {
+      "path": "assets/js/operations-panel.js",
+      "source_sha256": null,
+      "crm_sha256": "15850fdb27bdbfc3943527c858ada6fc27b66b10e5ffd7dac84f484ef7d3aef5",
+      "status": "crm_only"
+    },
+    {
+      "path": "assets/js/settings-tabs.js",
+      "source_sha256": null,
+      "crm_sha256": "c1ad9edb84c8894daca8722620766e2a50d8a57ceb7f5d185e1daaa9169e2aa1",
+      "status": "crm_only"
+    },
+    {
+      "path": "composer.json",
+      "source_sha256": "913b6fe65eeaf36b79c6f431be633091111cf66f74e339148b0d70806eca5a2a",
+      "crm_sha256": "f3143bee5c060c4fe5fcb98a6a75cfeb26ef3192e957ec4f37b313d70259cba2",
+      "status": "different"
+    },
+    {
+      "path": "composer.lock",
+      "source_sha256": "4f57772c8fa853ce8489c13eea3394933e02b30bb38a3ad519187b31375a5bee",
+      "crm_sha256": "7e632ee2af3d6a5bd7e05b2c1f0141af92081dcf87b01c5034a81a49815cf2a0",
+      "status": "different"
+    },
+    {
+      "path": "config/routes.php",
+      "source_sha256": "e95617093023f171f69951381ddc63c06a5f432920b1c88bd94bdb12c7b680c6",
+      "crm_sha256": "9d0fa67784420702b7c79c4c372642e60c50020e8c7732f0886168bd528ffe36",
+      "status": "different"
+    },
+    {
+      "path": "controllers/Asaas.php",
+      "source_sha256": "fef2b06ae0e5c009739654a8a3de757678a468107bffdba93b7a119ec27655d9",
+      "crm_sha256": "b10cdbea23fcf15800486bd70662bcbe76bfd979702470d7f3ff81a2ec476131",
+      "status": "different"
+    },
+    {
+      "path": "controllers/Checkout.php",
+      "source_sha256": "d20d26122cce06cb9bbbcd2318ec1c591ba26aafc28991118f95e8c0a6eb5064",
+      "crm_sha256": "2f70b5df27932a9be5ca74f760d4117a6df3c264d64239c2284ed048e420e7d0",
+      "status": "different"
+    },
+    {
+      "path": "controllers/Main.php",
+      "source_sha256": "a7d0a1a990fdd6a16f1fdb8dbd83ff0c92f7bddbc6fb22b487874834cd9f4631",
+      "crm_sha256": "e076f0f7a1572a31a8f1b6964dfaaf60f484f59f84e4575b29ad657bdc827622",
+      "status": "different"
+    },
+    {
+      "path": "controllers/Monitor.php",
+      "source_sha256": "955916a7613a7727fa7f1e87918a475b2953830d9df11f0e4d8c1b3df42df0da",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "controllers/Payment_origins.php",
+      "source_sha256": null,
+      "crm_sha256": "8ce97d8174e67e261de1d9c4609590ae689cff09222761b3ec512a37f858bf39",
+      "status": "crm_only"
+    },
+    {
+      "path": "controllers/Recurring.php",
+      "source_sha256": "d77e9404c3ac0f211192708ed861e5cfc74c05de902b46cbd41a4ca85cc853d0",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "controllers/gateways/Callback.php",
+      "source_sha256": "fb58df7b790e8c5646152e09b045fa24f88d5f23a4b3d631a6633ae356e00c01",
+      "crm_sha256": "efdb3f384cf1ab13a9817e320399a88ddff1b72f149725e1cdb7de4e3dc665ab",
+      "status": "different"
+    },
+    {
+      "path": "docs/CARTAO-CREDITO.md",
+      "source_sha256": "6d7ee86742f7dda912d8a295de4a1b7d202f9fb9d19f207ff16d271a867ca3a2",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/CARTAO-RECORRENTE.md",
+      "source_sha256": "ff3a68bdf587031c7cb901c2ad5c3b67dbac7e1a00b6b5a355b222bb128d2018",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/CICLO-FATURAS.md",
+      "source_sha256": "5c138135420adc5e9ad2dfa38618547440f992eb1f624df9d037b8de48b5653d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/CONFIGURACOES-MONITORAMENTO.md",
+      "source_sha256": "7765abc48786a82b5549b384ef004937d1425e84dc1ce2c2f89e1c51b60b3a77",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/DIAGNOSTICO.md",
+      "source_sha256": "b78dbdddcf9031ac4761371d8f03cba3efb3a4b6bbd98ee736833bb7dfa39bae",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/ENVIRONMENT_PROFILES.md",
+      "source_sha256": null,
+      "crm_sha256": "3a66731c8ad9b71ef6a164d08c6885a85c54769195bec4441d42a4d81f10b969",
+      "status": "crm_only"
+    },
+    {
+      "path": "docs/NATIVE_PREFERENCES.md",
+      "source_sha256": null,
+      "crm_sha256": "1b265b9ee277ce75f8ef02e5b7abea1e0283c4833f75569e806ae183f527f786",
+      "status": "crm_only"
+    },
+    {
+      "path": "docs/PARAMETER_PARITY_155.md",
+      "source_sha256": null,
+      "crm_sha256": "d153a5bf947e7d284878c33546e60229b556b53fef9967bdc3612eb8462c23d6",
+      "status": "crm_only"
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "source_sha256": "d9544e4441d36b3c05766a53b4a1236ac515214efcbe55c36932338697c308c8",
+      "crm_sha256": "cc0d3c4f413ba4ee0a58d3fc4d86cd7195cebe1da2d639fc127efae29bf5df34",
+      "status": "different"
+    },
+    {
+      "path": "docs/UPGRADE.md",
+      "source_sha256": "7c026ede32082b120d4b9d490a6f98a636e6cf9ec3d95fa491adaf23d2f18500",
+      "crm_sha256": "e1c95470d5a9c29f2964dc2d8f76a8584070dd1bc3b9037facb43a3042ba1831",
+      "status": "different"
+    },
+    {
+      "path": "docs/WEBHOOK.md",
+      "source_sha256": "d47d3f8b37b3ba00e7dad6ab69c9defc226f9f52aa69df08fa90abe1e986458d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "docs/WEBHOOK_TOKEN_RECOVERY.md",
+      "source_sha256": null,
+      "crm_sha256": "458a20bbfe820dc2ba819b24ce87871ea98ebb3c4f8dffb4da99232ea8e15a66",
+      "status": "crm_only"
+    },
+    {
+      "path": "docs/checkout-transaction-boundary-160.md",
+      "source_sha256": null,
+      "crm_sha256": "2e6752bc774822153e12bc4823b73f88a03e8dca1248f6d3d0f55fa0175e3963",
+      "status": "crm_only"
+    },
+    {
+      "path": "docs/settings-panel-156.md",
+      "source_sha256": null,
+      "crm_sha256": "d308626dd4e946c93640fabc604b8a16f9a6f9cc12a61ec60e6dd42b1ec6c273",
+      "status": "crm_only"
+    },
+    {
+      "path": "helpers/asaas_atomic_payment_helper.php",
+      "source_sha256": "16c833aee0080ed3742a57dd231544181e3195ba9a6f9aca75c7c740d26ef61f",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_card_helper.php",
+      "source_sha256": "235f6a9e849eab9b43bdba47002c0f64f9b0ddc95fcf8c7217344fc6dbbafce3",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_card_pricing_helper.php",
+      "source_sha256": "965fb3f6fa1cc5a94364c53f62ad4700aba526d76b905da6e86603d28a4269b5",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_card_receipts_helper.php",
+      "source_sha256": "86612a4a05cfd7a4ebe4ef80ac875ce345dbd0e47011666533bfa6a00cb7f77b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_checkout_display_helper.php",
+      "source_sha256": "59ea980d1ad029f87a79102b1a5bc814b62b62bb0e96f5defb96a176fa24cac4",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_diagnostics_helper.php",
+      "source_sha256": "f5288b9f5d790ddf8493410dd1542cd6112137c45f7a31861b302a32c85f31cc",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_lifecycle_helper.php",
+      "source_sha256": "fa0f16c447e1b9f1bbd53f38dee33a8aae50b83d68cc27398f15eff814ca9981",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_monitor_schema_helper.php",
+      "source_sha256": "c876a40994f46b6dec2224b3e8e7871adc50e845ced6e233e7216dfe46560742",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_payment_validation_helper.php",
+      "source_sha256": "abe805db52f32c3864fa62d436815ecb21cf61a1c08acd957eb391d299a86987",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_receipt_lock_helper.php",
+      "source_sha256": "3a31a6a63a792bf3f45c63152a3b0b53a860aa84f74b11cbebcf08743943d869",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_reconciliation_helper.php",
+      "source_sha256": "bffa9abda00f91728475ab9f21b9efdcb0700258d02c1949300fade1fd0901f9",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_recurring_helper.php",
+      "source_sha256": "dc6808f9c4827b959bc5793d69b5b40667e27f5d3b59c7cd531ecd3b5e4fa76b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_recurring_hooks_helper.php",
+      "source_sha256": "9ceb59ad8bdcefcb7d1a28219c34b1b63b73a0142b140cb23b14ccaea00f4292",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_recurring_schema_helper.php",
+      "source_sha256": "a5a32df94cd9f912112cdbb6a275e810a17c2e411d07f354fcf75947f0bfdb0b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_settings_helper.php",
+      "source_sha256": "0ac9b2315b1afbdd4d6285b5f05397f1567d5ce7549528e2fc2c29bb2ee66641",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "helpers/asaas_webhook_helper.php",
+      "source_sha256": "8407a5f0f48878ade512093e3aa2d249cc8f0694606417d9485918f1f25b8dfb",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "install.php",
+      "source_sha256": "dd6917493e52667c1d13053696f968164d55e1c38d82802931a90393049914c1",
+      "crm_sha256": "c3998187a4edf187b3ffff448443ff2adfb74e51b5247ff80cc82d06270ac087",
+      "status": "different"
+    },
+    {
+      "path": "libraries/Asaas/AdminSettingsPolicy.php",
+      "source_sha256": null,
+      "crm_sha256": "c680327194cddad3cc46fb84e2dde385813375b94f78f530df6d4e399cf66a47",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasAdapter.php",
+      "source_sha256": "53541bb3aa57deddbf152dd152f777c6f8c46f48be40fff24dc95e5d20de09ea",
+      "crm_sha256": "f9edbcb1ff6c2f5030135c6d3efb43d94b9d2f81526d23249bf84fafcf54f341",
+      "status": "different"
+    },
+    {
+      "path": "libraries/Asaas/AsaasCardApi.php",
+      "source_sha256": "1c43a683e0da73ee80c902c7c6cea636cf8b4c68c1df8c98a79a931d4fb6fa93",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasCardCheckout.php",
+      "source_sha256": "f77de36b1f568e550aba601077e2bd428c8a660cd26c32e7b987c2fabded2b5b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasCardCheckoutException.php",
+      "source_sha256": "42348219deeed80fa6de91636ac891e2a26014f11ba603699fa8260f486dda7d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasCardRequestException.php",
+      "source_sha256": "25e26979cb1a63d6f8e34dd05fc94751aedfde40133a86a5222ff0a9c7abe6f5",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasReconciliation.php",
+      "source_sha256": "00f29974ce36ca716287044136c81c996c652a86a5df5cc2c99f6404c12d83f8",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasRecurring.php",
+      "source_sha256": "e550f03d2e6984b0b2338bb2badcdc49cf45ec5db134ec5df4e5f7ada0123333",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/AsaasRecurringStore.php",
+      "source_sha256": "25ca995b4f3b1c898f4a6cd723c6cfe1848d93f93244e1cecdf087770686505d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/CanonicalReceiptRecorder.php",
+      "source_sha256": null,
+      "crm_sha256": "5909da19ae8b308ab28ddc4e9f9595b4a280bc2dc8014838ea8b3e42405e91dc",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCardPaymentRequest.php",
+      "source_sha256": null,
+      "crm_sha256": "90f5681c62490f333814c77bfba49f56991f7569f47b8f377f53d6506bb76fa1",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCardPayments.php",
+      "source_sha256": null,
+      "crm_sha256": "29c5ff47dc526b08b4917539508c930856d8127c446f173aaa71fa4e63af88d3",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCardPaymentsSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "135948e084c763bd152a3588f59186a9de5ccfec57eacbfbb002fa15d0d1ad42",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCardSettlement.php",
+      "source_sha256": null,
+      "crm_sha256": "57345f5cd4c59eb2a9d0b4df5c9bbd903a4e989ecdd5b2a6ef6231e1ad0f01f4",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCheckoutSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "969faa8ca6ca4392ab8dbe3d296d0c16637cee0dc8b75d09aba8e659aa7ba614",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyClient.php",
+      "source_sha256": null,
+      "crm_sha256": "4fb61e079a9a39ff33d9de8afd1c8a487ec8a0897c590e3cd1fa69c2e35251b8",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyCron.php",
+      "source_sha256": null,
+      "crm_sha256": "ed4e0ef90f0bbeabca057523d0bd402b3143207675efbb43ad8e5cc1f57a216e",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyFeeExpense.php",
+      "source_sha256": null,
+      "crm_sha256": "1def23a634cd500bbf6b0cc994aa10f48489ffaecce6301f47cf4a1ad5e2d174",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyHostedLinks.php",
+      "source_sha256": null,
+      "crm_sha256": "6714b38c70f078e5309ead7745aa9d0187ce9e436010dd3cd5a25bae9d013beb",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyInstruments.php",
+      "source_sha256": null,
+      "crm_sha256": "c8bac2daed733c13765b47791c1d119b4fc8480814a84ff123c09eba294d3968",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyInvoiceEditJournal.php",
+      "source_sha256": null,
+      "crm_sha256": "200c14173802b042af4e0f18a843f6eb80000a0cd7cc4fecf34cdb4cfb7ae6d9",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyInvoiceEditSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "1024bcc5470770bc4e89152df26da8bcbbb30cffc0f1cfc37969af7dc98e050b",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyInvoiceEdits.php",
+      "source_sha256": null,
+      "crm_sha256": "f9ef686b2cba230a230bf900c33e1647b19def5d1859073a0e664dfe2d3c92c1",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyManualSettlementSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "096d038907c0bc5207ba4f00e5b979fa2bd649b0007aa4277482e82f9ea546c3",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyManualSettlements.php",
+      "source_sha256": null,
+      "crm_sha256": "ba300f90798007fe20d7faf6015cfd93c355e27ae9fabb774397b0ac3acd62d1",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyOriginGenerations.php",
+      "source_sha256": null,
+      "crm_sha256": "741ed938cdc4424ef40ee1a842ebcd828cd05e838061800a56f4fe3bb19208b3",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyOriginPolicy.php",
+      "source_sha256": null,
+      "crm_sha256": "8b9d2c69cef19ab91f4af9a47c54165d8a60230876f69f6e6e91b28248bc8f7e",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyPayers.php",
+      "source_sha256": null,
+      "crm_sha256": "884b2d50e95bd308eb79a47bc396105501c4e779d8268e9be04258185f530e20",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyPreferences.php",
+      "source_sha256": null,
+      "crm_sha256": "76b18c02b20dbb7df75c0ff9374124e4f24bb53a3bf134d362d92e1098e12cbb",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyPreferencesSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "32acaa63915168804db1862d456cf511d7e20aea10a4d49ac9223bd0109b91d5",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyReceivedReceipt.php",
+      "source_sha256": null,
+      "crm_sha256": "2d18666919ecd1f75decb289784fd39e16fdbc3a1ccdad2963691df51d44e5fc",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyReconciliation.php",
+      "source_sha256": null,
+      "crm_sha256": "9a3009ccdcd0ef623fed8cb4c8357f94198c1dbc0b2d614c5f9441e4ec596d59",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRecreationIntents.php",
+      "source_sha256": null,
+      "crm_sha256": "fb484f3d96e2f3a3714663a617444fdf71732e88da0c52e068b2f221551d3894",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRecreationSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "0d457fc8799b79d11a7403e1bc6e85f9ad531aa5645528a25ae27d5e722081fb",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRecreationSuccessors.php",
+      "source_sha256": null,
+      "crm_sha256": "08fffe38182efee31bbc1f3f2e68bc3330555ff2335e6accde90ac3795d6403a",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRefundContract.php",
+      "source_sha256": null,
+      "crm_sha256": "c9b2a5b64b4a976fa18a8490548c625b7d4588b1f1f82b52c6377aed756b07be",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRefundSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "4163af9eb9006d86f7f2e78a9c0701c6edcdb51ffadbaf5070d5fc395cfd91de",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRefundStorage.php",
+      "source_sha256": null,
+      "crm_sha256": "c55f425078b3f8ced42deee86c615cceaff967b503a74c00ccf23a9a8deaca21",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRefunds.php",
+      "source_sha256": null,
+      "crm_sha256": "2ed70710a71bf50f9bf882176349faf55c57295664a575013b5c3c7601677486",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRemoteOperations.php",
+      "source_sha256": null,
+      "crm_sha256": "75d18910b58a4934a66644add61e66dff39516b3d1603f0ec2bd906b277af4fd",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyRemoteOperationsSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "2f4eae4dc83d619849cbc0183b0988c7082be177cbe6a03a315309fc6a97c454",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanySchema.php",
+      "source_sha256": null,
+      "crm_sha256": "d0902c11d31e7a9a649e28ae10cfe08c2fb7564d02e560c7ed7a07d7e8f0e600",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CompanyService.php",
+      "source_sha256": null,
+      "crm_sha256": "217ce4045b0f850907d2ead9edf7e2d15f2e9e72bb3820d4521b186476a19a6d",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/ConfirmedFullRefund.php",
+      "source_sha256": null,
+      "crm_sha256": "4559faffc6df773ebffcbd720107dc0abdf983ef3c706fac55959fc0acb18205",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/CustomerContactPolicy.php",
+      "source_sha256": null,
+      "crm_sha256": "e8507d50f2b67027c1ef55be96744989523d8e6b1252dcbe773e164fb2a9d31f",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/EnvironmentSettings.php",
+      "source_sha256": null,
+      "crm_sha256": "69e6f2dfb00fc22472da4abd968e366b4e35bd450bcbb14e6c889d5d013f12ad",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/EnvironmentSettingsSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "26cbebbf53bfa54f0ad8f99e7cac820aadd89932cd4131ec45e5bc91c6452cce",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/ExactJson.php",
+      "source_sha256": null,
+      "crm_sha256": "edb96c0dbf5a972e17bdc1fdfb2fb53ba1543f8475350877abbbb7040780d2e4",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/HostedCardCheckout.php",
+      "source_sha256": null,
+      "crm_sha256": "68dda4f93a69b596b7ee1bc49e50366f6539a9aad29846c02bc9d5767dc61e49",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/InvoicePaymentRemoval.php",
+      "source_sha256": null,
+      "crm_sha256": "6e1fae50df5de523e0ee97a9fc610f347d0671a1c020b4b08dce55496a901b97",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/InvoiceTransaction.php",
+      "source_sha256": "0cba881477b5f5eace7e4981fe839475a832bf0fde324b1752e6b8afee25e8cf",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "libraries/Asaas/ModuleReadiness.php",
+      "source_sha256": null,
+      "crm_sha256": "03919fe8c5b37873d92ae727a78ca4bb79b2b55f5231825fc9228b7dda05a2f6",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/PaymentOriginSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "941fd38da313475764bb1533dcfa4f2f5aec4fb37647c10dd91140911e481fd2",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/PaymentOriginStore.php",
+      "source_sha256": null,
+      "crm_sha256": "62e516f74431f2a2d3da59be6a4dfb456b91a6dbd5009ffa2e8a95f40a5323f6",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/RemoteWebhook.php",
+      "source_sha256": null,
+      "crm_sha256": "7ae8a9e184cab2f6b1b73329d4e85cf5a9033aa229973f819847a7bd27966691",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/SettingsPresentation.php",
+      "source_sha256": null,
+      "crm_sha256": "5667bf2159b367760798e425919ddc434d1ba6553fc323e2712e3f3e8793567c",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookAdminPresentation.php",
+      "source_sha256": null,
+      "crm_sha256": "5599acc6603e63281c61cf911f4ea7d9da214ff86e34f0f80c14bcde80efb64a",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookIntegrationSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "7d777496431b3b6f111aa3d4802c042cb3d9cb1a471760aae6af00088590abeb",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookIntegrationStore.php",
+      "source_sha256": null,
+      "crm_sha256": "2383570d67c6542cd8de7eacd6005ff4abc9daa7ef3c4b6f52aaf83f9309ba02",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookSecurity.php",
+      "source_sha256": null,
+      "crm_sha256": "c926b26ac311eab5bffcb969f0ad5162eda0b6f4843cfed22df53b6577700dfb",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookTokenCipher.php",
+      "source_sha256": null,
+      "crm_sha256": "290f15b70985934c4a86768d3568c21f04b5fc7aa7df0d5a205aa8785315f670",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookTokenSchema.php",
+      "source_sha256": null,
+      "crm_sha256": "46f7e861527f1de91687a5685b9747eba3210a3104dd654533185b124b066e6f",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas/WebhookTransactionGuard.php",
+      "source_sha256": null,
+      "crm_sha256": "3d043bea0b07c319c289f2fc69a440c85e6d41cc5db4e65b702d7ff40c7f4c7c",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/AsaasSdkProvider.php",
+      "source_sha256": "18b3d61121ad0e6d33e52d9663c111a0a2681c09b77324d83a2b5906dd80a62a",
+      "crm_sha256": "83a968372d819cc6df6d6cafc6cf09dc5f066854b990bf585a0db3753ad25797",
+      "status": "different"
+    },
+    {
+      "path": "libraries/Asaas_gateway - Copia.php.260202026",
+      "source_sha256": null,
+      "crm_sha256": "0f827aa71a651c248d81905612261d16be18682dada9a8c3b2cc20c8d094edc9",
+      "status": "crm_only"
+    },
+    {
+      "path": "libraries/Asaas_gateway.php",
+      "source_sha256": "e365e8e693332e096370d1503aba49f96a332d491667bbe27ba97b2b51928fcd",
+      "crm_sha256": "18065592c5658cc2aa4ba7a18172e2e99982f808f60f97d661fdbe6aa979d8e4",
+      "status": "different"
+    },
+    {
+      "path": "libraries/Asaas_recurring_gateway.php",
+      "source_sha256": "78fb51ace6b4842b6dbf3f5207c4ee9bd483a9ccc96d60e2a6a718f42742faf8",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "migrations/110_version_110.php",
+      "source_sha256": "7f513c4e014f2cd78c22e3aaaeec34a199bf73adf7a4cb26d1b39659754ed313",
+      "crm_sha256": "7f513c4e014f2cd78c22e3aaaeec34a199bf73adf7a4cb26d1b39659754ed313",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/111_version_111.php",
+      "source_sha256": "15db23a2c240304c2b05a4b1b62c3310abe3db79f1b507f0f956a1b5e0914e10",
+      "crm_sha256": "15db23a2c240304c2b05a4b1b62c3310abe3db79f1b507f0f956a1b5e0914e10",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/112_version_112.php",
+      "source_sha256": "6525a07bd1a81f5fc2c2e769ccd0e7fac800099ee53c3ebc72d7f642a219644b",
+      "crm_sha256": "6525a07bd1a81f5fc2c2e769ccd0e7fac800099ee53c3ebc72d7f642a219644b",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/113_version_113.php",
+      "source_sha256": "b5a21be383cd9692f7bc4ea7124f1e4cf46c556f41232b53856b1b284257771f",
+      "crm_sha256": "b5a21be383cd9692f7bc4ea7124f1e4cf46c556f41232b53856b1b284257771f",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/114_version_114.php",
+      "source_sha256": "10e8b1a28874605cc9cd29160fd03d2e7c8983b482d2f7c4fa02d4eb9eb187a1",
+      "crm_sha256": "10e8b1a28874605cc9cd29160fd03d2e7c8983b482d2f7c4fa02d4eb9eb187a1",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/115_version_115.php",
+      "source_sha256": "29b2677b06a7710afe6de1a3e6d7b9b2a4a39a4c280d01b5310ec7eb2aa68459",
+      "crm_sha256": "29b2677b06a7710afe6de1a3e6d7b9b2a4a39a4c280d01b5310ec7eb2aa68459",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/116_version_116.php",
+      "source_sha256": "27524929fcbac01203438626eb7a8ef8cb0609364540d2fee0319e4bc87753f2",
+      "crm_sha256": "27524929fcbac01203438626eb7a8ef8cb0609364540d2fee0319e4bc87753f2",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/117_version_117.php",
+      "source_sha256": "ddd56596dfbae1fc82ad149cf2076f372fa42f3c6d4c3da921bf984d3bea7946",
+      "crm_sha256": "ddd56596dfbae1fc82ad149cf2076f372fa42f3c6d4c3da921bf984d3bea7946",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/118_version_118.php",
+      "source_sha256": "b080f934903d054919bfa1041259f6b18c364c32d9f4f46ec3e36ddaf57d9936",
+      "crm_sha256": "b080f934903d054919bfa1041259f6b18c364c32d9f4f46ec3e36ddaf57d9936",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/119_version_119.php",
+      "source_sha256": "391c10a0701297eadf1991713808c46ca5a03198ee0cd55fe7e8586f32be6d4d",
+      "crm_sha256": "391c10a0701297eadf1991713808c46ca5a03198ee0cd55fe7e8586f32be6d4d",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/120_version_120.php",
+      "source_sha256": "b78402791cdf2d3b54d0c18b6f88dc8f5cec60a9d92da2b97562be9166d4ab57",
+      "crm_sha256": "b78402791cdf2d3b54d0c18b6f88dc8f5cec60a9d92da2b97562be9166d4ab57",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/121_version_121.php",
+      "source_sha256": "f148e4c245d5f0b5fdd5b1b7ba99124b37b53e2459426f1eb4ef301171342d71",
+      "crm_sha256": "f148e4c245d5f0b5fdd5b1b7ba99124b37b53e2459426f1eb4ef301171342d71",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/122_version_122.php",
+      "source_sha256": "6827ed249587a7b727f6472a2bbbc852f93a6801571d24ba2e9e0744572861d4",
+      "crm_sha256": "6827ed249587a7b727f6472a2bbbc852f93a6801571d24ba2e9e0744572861d4",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/123_version_123.php",
+      "source_sha256": "ee798e6ca66447f2bb034a54566a5c2545038e734f922ab4aff943f600d87e01",
+      "crm_sha256": "ee798e6ca66447f2bb034a54566a5c2545038e734f922ab4aff943f600d87e01",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/124_version_124.php",
+      "source_sha256": "cf171da6a428ee0f6a68d55e515da759675066739f36c748139eacb4464b2e11",
+      "crm_sha256": "cf171da6a428ee0f6a68d55e515da759675066739f36c748139eacb4464b2e11",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/125_version_125.php",
+      "source_sha256": "179dffe6e8013387757823ae0b6756161c70e1ab48986f4691ff761b592a7c05",
+      "crm_sha256": "179dffe6e8013387757823ae0b6756161c70e1ab48986f4691ff761b592a7c05",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/126_version_126.php",
+      "source_sha256": "3efbb55ceb5f9767f5c3ef223a2443312d54110540ee7d9916f8d1af5504084d",
+      "crm_sha256": "3efbb55ceb5f9767f5c3ef223a2443312d54110540ee7d9916f8d1af5504084d",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/127_version_127.php",
+      "source_sha256": "af3bb6bcd6ff34d61cebcb94169e293b177a71822519d8fdf7e7bd71577f550f",
+      "crm_sha256": "af3bb6bcd6ff34d61cebcb94169e293b177a71822519d8fdf7e7bd71577f550f",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/128_version_128.php",
+      "source_sha256": "68b4bad61b14122a021727ec2b2482862da37211a22de55d38c011cd291cbc7c",
+      "crm_sha256": "68b4bad61b14122a021727ec2b2482862da37211a22de55d38c011cd291cbc7c",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/129_version_129.php",
+      "source_sha256": "a2532734cd7ea169133d5d6ecbc4b77d274fb80102948c1e838a971536015dcc",
+      "crm_sha256": "a2532734cd7ea169133d5d6ecbc4b77d274fb80102948c1e838a971536015dcc",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/130_version_130.php",
+      "source_sha256": "c7f1f7527bb4bebfd6612d174ca123f477f9f6bbdb7d7f2fedb259506abe00b9",
+      "crm_sha256": "c7f1f7527bb4bebfd6612d174ca123f477f9f6bbdb7d7f2fedb259506abe00b9",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/131_version_131.php",
+      "source_sha256": "c0f500c32983b2ae9ddf7808729f537bb8d9b4762becb041d0a7e42232de5ec5",
+      "crm_sha256": "c0f500c32983b2ae9ddf7808729f537bb8d9b4762becb041d0a7e42232de5ec5",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/132_version_132.php",
+      "source_sha256": "92f4c658696bc5801a6410088f7d5e731c3740f7eefcc635abd9dcc8cf2b62e3",
+      "crm_sha256": "92f4c658696bc5801a6410088f7d5e731c3740f7eefcc635abd9dcc8cf2b62e3",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/133_version_133.php",
+      "source_sha256": "0051cefdf033710df5bbf56bdde6756671d91e8200765f2f2ecae595af86a724",
+      "crm_sha256": "0051cefdf033710df5bbf56bdde6756671d91e8200765f2f2ecae595af86a724",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/134_version_134.php",
+      "source_sha256": "b84bad9d4356d5ad354c0a752dce2a2fe3324e445ecb5cfb54cade2c92a3d3a1",
+      "crm_sha256": "b84bad9d4356d5ad354c0a752dce2a2fe3324e445ecb5cfb54cade2c92a3d3a1",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/135_version_135.php",
+      "source_sha256": "c601cb4db9c531bd5c88d2450fae49741e5ecbdbf1d7abbb548f1dce777e3cd8",
+      "crm_sha256": "c601cb4db9c531bd5c88d2450fae49741e5ecbdbf1d7abbb548f1dce777e3cd8",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/136_version_136.php",
+      "source_sha256": "25ad0f7fd3f1b6469a0fc5965bb844fbccfbc1599249b99a5847096265ee34db",
+      "crm_sha256": "25ad0f7fd3f1b6469a0fc5965bb844fbccfbc1599249b99a5847096265ee34db",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/137_version_137.php",
+      "source_sha256": "18214f4440a67d887cfdf7a42c399e839e36d28d8e8dc184d0bfa761db202aa5",
+      "crm_sha256": "18214f4440a67d887cfdf7a42c399e839e36d28d8e8dc184d0bfa761db202aa5",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/138_version_138.php",
+      "source_sha256": "f7c97bc48a0bf3d2985eb68aed7c3de30b89849670d2df1b359d0a2f039a8403",
+      "crm_sha256": "f7c97bc48a0bf3d2985eb68aed7c3de30b89849670d2df1b359d0a2f039a8403",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/139_version_139.php",
+      "source_sha256": "54611710b5edda74c0359215cd03701c243c073ff7cd519d366a3082b0cf61bd",
+      "crm_sha256": "54611710b5edda74c0359215cd03701c243c073ff7cd519d366a3082b0cf61bd",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/140_version_140.php",
+      "source_sha256": "e4464d58450ed92566f00edf85cc58587034e7618a8c1123cbabbac2beb9e57e",
+      "crm_sha256": "e4464d58450ed92566f00edf85cc58587034e7618a8c1123cbabbac2beb9e57e",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/141_version_141.php",
+      "source_sha256": "a30e11afa5fac6b3d779a77e00792b17eae4e529fde477f363b69d64cbd593dc",
+      "crm_sha256": "a30e11afa5fac6b3d779a77e00792b17eae4e529fde477f363b69d64cbd593dc",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/142_version_142.php",
+      "source_sha256": "3b616d5184c5c954e4292d37a2e393b315a5d419b9812510e2128c241d8dc7b7",
+      "crm_sha256": "3b616d5184c5c954e4292d37a2e393b315a5d419b9812510e2128c241d8dc7b7",
+      "status": "equal"
+    },
+    {
+      "path": "migrations/143_version_143.php",
+      "source_sha256": "16c241b2c038cfb8c227fba091fd197a45a4c7e1f2d92f91f727c1e7869980ce",
+      "crm_sha256": "66ed253fdfda46cb5d708e30252ff77c15b7834397bc4bc0f4f2334e7d6ea4d9",
+      "status": "different"
+    },
+    {
+      "path": "migrations/144_version_144.php",
+      "source_sha256": "2120545f8d9b8a7ce236bc97fb234fb86f7b6323d69abf91a1f8fc6d625b927e",
+      "crm_sha256": "7790d224a0a677d2fc5172e69c973aef7d79b353fe2c00d5a4a43b472f80c5f7",
+      "status": "different"
+    },
+    {
+      "path": "migrations/145_version_145.php",
+      "source_sha256": "a426b89b88f7ed638fbb66004a2fde7829ee02f32895cc83561ccb72cd39f950",
+      "crm_sha256": "350f0c4fa8d84da4d8955453d34cf8bf840feed9f5469977a4e4e261b3aeebd0",
+      "status": "different"
+    },
+    {
+      "path": "migrations/146_version_146.php",
+      "source_sha256": "cb27ad3f87b8a5546972a5b69327921aa781330aa862c7f29397acfb523a3c29",
+      "crm_sha256": "963dbf56b18f53034c8c939c372b553a16c2494b1bcdc15e1c400f0c51c1b81e",
+      "status": "different"
+    },
+    {
+      "path": "migrations/147_version_147.php",
+      "source_sha256": "f8bba4aa1752be315942e16170b2e17f121669419f382cc05c49240f24508dfa",
+      "crm_sha256": "f6b55261b14566ce4c791d96c394fd5fe221924b91c9b521d8a1f9742e6f6b6e",
+      "status": "different"
+    },
+    {
+      "path": "migrations/148_version_148.php",
+      "source_sha256": "b6e375239d281364a18156e7c912086815180f1c3dbffafafb3c962347ebbf17",
+      "crm_sha256": "b0439c5858e63a4945f35491cb1da7ee93bcfff4d3f61058949647a26d739755",
+      "status": "different"
+    },
+    {
+      "path": "migrations/149_version_149.php",
+      "source_sha256": "6a3664d09f494af1b4c0e54967d35b19b0c270128ccda809be92f6d93daa35f0",
+      "crm_sha256": "347f3388e8b07e8c273f6f3c355dda6fdd8f675ae4666d13964eb62364e78aaa",
+      "status": "different"
+    },
+    {
+      "path": "migrations/150_version_150.php",
+      "source_sha256": "606173325f2b563972f8d296875b45f442dea7656b76687fe7b0001a285caf2b",
+      "crm_sha256": "55a83a5702dbdecae7a907e74e1055ef78cedfbb56f07ec9704d8a2708c6f9b3",
+      "status": "different"
+    },
+    {
+      "path": "migrations/151_version_151.php",
+      "source_sha256": "5cba4296887aa105b1c4e465dd393c851436047b44bcb8e7248aa5a72d8623d4",
+      "crm_sha256": "3e70f84e9e8d5d21fdc59a3319b58b922bef0988b62fb3061355a55e2a961187",
+      "status": "different"
+    },
+    {
+      "path": "migrations/152_version_152.php",
+      "source_sha256": "7a76bfaa7597ef9433d5fd2941caeea91c12efdb64f7422aef6ae3c4657af252",
+      "crm_sha256": "3a3c9d8abc2f1bca6d7df640573c5b0a4b92f8403231436838729f4aa2561d3b",
+      "status": "different"
+    },
+    {
+      "path": "migrations/153_version_153.php",
+      "source_sha256": "b681db1c0f92fc8ccd5d19642742ae58a00a588e4ab40b7a291a3e070d7bca45",
+      "crm_sha256": "e8809dd85b3ceb442a1d6582e4b54fdc36ee564c1f4191fbb81ce0edcb720881",
+      "status": "different"
+    },
+    {
+      "path": "migrations/154_version_154.php",
+      "source_sha256": "d51af4522122f05ee5ad92244baec294e5d3045eff057f2d641c3433f48a0bf8",
+      "crm_sha256": "f8536eae06d315a3f664a1b8469d0661965b7dedf836b862ec81dd87cc495f7e",
+      "status": "different"
+    },
+    {
+      "path": "migrations/155_version_155.php",
+      "source_sha256": "20c506174ca5dccb0ee8b18dd361b61df1929595520e539f8b7a8253f7e83e00",
+      "crm_sha256": "7ec34d03c90c236f1cbd5c9222b3a1def62c73143273de8d2ab7729c8a4756a1",
+      "status": "different"
+    },
+    {
+      "path": "migrations/156_version_156.php",
+      "source_sha256": "d7317855c4ad23e9a6aa5c9dd09bf82c1f152d68497104452ddf85e86d2f3e59",
+      "crm_sha256": "f3c136c34896239f81d64ed82eb469a763fa1c35bf64ed173c91eb4308b8489b",
+      "status": "different"
+    },
+    {
+      "path": "migrations/157_version_157.php",
+      "source_sha256": null,
+      "crm_sha256": "29371a17118a501fc20cd805c962d2b9f349edb4c5bc4f051bd80f7236da7071",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/158_version_158.php",
+      "source_sha256": null,
+      "crm_sha256": "adcf3aaa14cdef24fda4e977808b38863148d8a6df4831abe074fac0e7a30772",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/159_version_159.php",
+      "source_sha256": null,
+      "crm_sha256": "66e978771bf7e7a6f177b57281ed589aa6a480b750c6c2d37b23d7897e62f5b5",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/160_version_160.php",
+      "source_sha256": null,
+      "crm_sha256": "7f2ddec05dd9d4877c2aba31970275b29d0f32ab9e4d37349f57de58582718fe",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/161_version_161.php",
+      "source_sha256": null,
+      "crm_sha256": "91c479a9ece8a2482d96725b1cd8c590a52f70cdbd73b3697cd092b4d714dfd0",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/162_version_162.php",
+      "source_sha256": null,
+      "crm_sha256": "6da40840cb45ba6a482361166508feb73071107719b2aeca4131e5cff326126d",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/163_version_163.php",
+      "source_sha256": null,
+      "crm_sha256": "209021748c5d1bdd968b16cd908f09a5131b37cc067aff2ff59472fbef243386",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/164_version_164.php",
+      "source_sha256": null,
+      "crm_sha256": "2f8a1cc51ba49643a5a7409c85f51f032151545cd94903f6df19042ec29914da",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/165_version_165.php",
+      "source_sha256": null,
+      "crm_sha256": "8315e10e55fc79608c9c5ae66430831ef571c0d6f7ca03db983c7c4ab537daa6",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/166_version_166.php",
+      "source_sha256": null,
+      "crm_sha256": "cec85904571fdd221f64e605698d47fbc009fac2a9817d10bf73dc8f9a8e8ea8",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/167_version_167.php",
+      "source_sha256": null,
+      "crm_sha256": "ee886aae7c3899de9eb0fdfd9f017a02fca550dabd89c1600e317569db5c17a8",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/168_version_168.php",
+      "source_sha256": null,
+      "crm_sha256": "a9b29a83b7755a0907c1e928be06ae5a8c66bc05aa41152ad255f35ac626a0a0",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/169_version_169.php",
+      "source_sha256": null,
+      "crm_sha256": "e8a42c9770f37f11eed0fea5d7f187a77f4cb7e15952892dc98a1ab695376468",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/170_version_170.php",
+      "source_sha256": null,
+      "crm_sha256": "1dc384375d2c71209c66ab01474d8ea24c32acbf1e79b1fc663b446821d891bb",
+      "status": "crm_only"
+    },
+    {
+      "path": "migrations/171_version_171.php",
+      "source_sha256": null,
+      "crm_sha256": "17b9dd3acfc71498978c322be3bb17d58a5d56ec3487c3612bb3e5789bd68419",
+      "status": "crm_only"
+    },
+    {
+      "path": "phpunit.xml",
+      "source_sha256": "69c47bae73a09ccceb0a86e5dad9897185593366768d64a25590d32cd393880b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "readme.md",
+      "source_sha256": "23b6e7eb2aa7575686b850f0b71a9e0569d4071f7ee4c36736d163c838a3887b",
+      "crm_sha256": "96335b11624e12033c19c2e1cf5c4bcdf0143e1f3d67397886f8b5356554f821",
+      "status": "different"
+    },
+    {
+      "path": "scripts/assert-module-version.php",
+      "source_sha256": "a8d5ac112d683bbf55af4c344f3190e1094ac0773a85f67d8e10c3d3fcbf86b1",
+      "crm_sha256": "a8d5ac112d683bbf55af4c344f3190e1094ac0773a85f67d8e10c3d3fcbf86b1",
+      "status": "equal"
+    },
+    {
+      "path": "scripts/assert-webhook-security.php",
+      "source_sha256": null,
+      "crm_sha256": "e625a960881ccd0606d578ca10955effb4a42a09fd4e6efc9b268a3d60fed17f",
+      "status": "crm_only"
+    },
+    {
+      "path": "scripts/bump-patch.php",
+      "source_sha256": "dde420506459354c7d8e17c03c642e3159a3869e8bd2fa7f6be8feb1621dc957",
+      "crm_sha256": "ac51097d9a4eef40c1c1490d12627fd8eb7a206a244e7dac6c66523147967c3c",
+      "status": "different"
+    },
+    {
+      "path": "scripts/enforce-next-patch-version.php",
+      "source_sha256": "0e16555f469731e37fae4fb50ff7cc4e8602e7c5f5c78adcd296dc0732211cb7",
+      "crm_sha256": "0e16555f469731e37fae4fb50ff7cc4e8602e7c5f5c78adcd296dc0732211cb7",
+      "status": "equal"
+    },
+    {
+      "path": "scripts/ensure-version-migration.php",
+      "source_sha256": "117da94f922813936d40c727586fc84756ec89434efafdd2ec7893780e4471d0",
+      "crm_sha256": "b096debf0cf4410b1c96d24b63b5b8163dff6a8fa920145aaf11506ad605bcbc",
+      "status": "different"
+    },
+    {
+      "path": "scripts/module-version.php",
+      "source_sha256": "6659bf58fa0eedf0f1fc3280987aaf0b0dcf8cd674c24d0be17d673cc2837d5a",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "scripts/sync-module-version.php",
+      "source_sha256": "f2451a5de6aa65cfb03dbda2139031f792cf7281f6bd8259961d8770904959e0",
+      "crm_sha256": "f2451a5de6aa65cfb03dbda2139031f792cf7281f6bd8259961d8770904959e0",
+      "status": "equal"
+    },
+    {
+      "path": "tests/AsaasAdapterPrefacesTest.php",
+      "source_sha256": "e911bfcfd10062ec2e35de3c5b4aa604d0e2e31805762f44998c11e0d74ec1fe",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/AsaasSdkProviderSmokeTest.php",
+      "source_sha256": "17733900be11e55cd1583100006c6284173b6342ce4d6a28ed345db05b908532",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/atomic-payment-smoke.php",
+      "source_sha256": "eca2a4aee36e5e42f0075409a6c2beaee5969d3d9b7b4810f8d3140e96e16bda",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/bootstrap.php",
+      "source_sha256": "ff8d93dfaa08ca974015666570171c89322bebb5cf200a977e1c431d9c064f54",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-api-smoke.php",
+      "source_sha256": "92fdc997f5ddf924b6d5d6508f479e6b83a6dc5af12336bbc44ba1307346b8cc",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-checkout-smoke.php",
+      "source_sha256": "93dbc592bf837499700899d8f3a3e5f886238d96b7261fd2149a83d0c894af5b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-checkout-ui-smoke.js",
+      "source_sha256": "bc632e223a19b362f9864d512ac97550259965d9f9247096f543af66e0f64d5d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-controller-smoke.php",
+      "source_sha256": "62da0ce890b12950c7f7b44f4a65e2f5b44389ca4d351191ede8d896ed19d54b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-pricing-smoke.php",
+      "source_sha256": "bcfd06da74b0481cee2e8bad3a895ced0449007fa732cff8060d9e39b34dfeec",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-receipts-smoke.php",
+      "source_sha256": "62f907698c7108fa7b7bdf7f6481fca0496fedead158ae961ed1eced5f17539d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/card-view-smoke.php",
+      "source_sha256": "344e3dbcdbf297fa9ace51169f15a1379de94e7b571f19849e19aac193e461a9",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/checkout-environment-smoke.php",
+      "source_sha256": "d3ef3244e9362a9151fea0f1c1c20fee05818f8cdd2307d8f12a73a776804ca5",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/checkout-receipt-smoke.php",
+      "source_sha256": "65c5351b1e9629b14cc99ef5cb6a157f6b6eea61f741ef3beb38f6dca87464f2",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/diagnostics-smoke.php",
+      "source_sha256": "2823219927c7e4161201019478d5888acc6f56e02712e0dcffb39a6d57599688",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/fixtures/invoice-lifecycle-fixture.php",
+      "source_sha256": "8392dd38d06ea5a5a0a4322e39b839f47f09ad2c0626fdfb46fd7caf6baf734d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/fixtures/recurring-ui-page.php",
+      "source_sha256": "386795c7409b00dfc1896acc21cfa48c81578a726d1552a22c10554775104d3d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/fixtures/settings-ui-fixture.css",
+      "source_sha256": "04be69b07c19cad4aee22ae9d18880a968643ef461d0cc8112251a89a99f6858",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/fixtures/settings-ui-page.php",
+      "source_sha256": "db7dd8834edb04f6895f713621eae417a5e2ddb4d35ea607618854fe6e1824fa",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/invoice-dispatch-smoke.php",
+      "source_sha256": "66a6b565acd9018f6f7fdcd84aa01751436ef320e3fa3e2ec703a2f24680813c",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/invoice-lifecycle-smoke.php",
+      "source_sha256": "cd5ce9f25026419b29423ced299ec3f9ed21ac1b2ee863fd7b5d0ba35aba9836",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/invoice-receipt-lock-smoke.php",
+      "source_sha256": "6a6bd74da23b0404701a5fcfe23193cda8f071b59bb7f37efa8154a3204fe324",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/invoice-transaction-smoke.php",
+      "source_sha256": "ce30478d01e99dc6c83f675faa2964fab7ed91f739dbf02501545ee2b7d2a4a5",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/logs-ui-smoke.js",
+      "source_sha256": "328125a3eb71c25ba5632e18d893b596169a50684fdeae27c6ea9d4927f8d2df",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/module-version-smoke.php",
+      "source_sha256": "1b47025417e378ef6ad7391876d7402170f1029a5e3a7623308f70f831342f48",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/monitor-mysql-smoke.php",
+      "source_sha256": "5c81bd4ac345bbf8a855d282701ccff4fa737d6241868cb51b9a40ce58a5476d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/monitor-reconciliation-smoke.php",
+      "source_sha256": "0b99861cba47bcbf135f33589ccb874850269f936c8311758b0469f14085095e",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/monitor-ui-smoke.js",
+      "source_sha256": "863ff416408a860d5c8ca05f9dea7d639b4476a1efea6684624da7991ae146ea",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/payment-api-smoke.php",
+      "source_sha256": "03f6a0b7e9f73f588677bb2ea996a289aca28e74ccc382352a96ba661fdbac09",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/payment-lifecycle-api-smoke.php",
+      "source_sha256": "bfdf840d9888c4130018735928f991ed246b3c3051f30cca5a923ff075c3f23e",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/payment-validation-smoke.php",
+      "source_sha256": "7e227ff362a56449fc7c1b92a28dd1b2ac1735c69f3b3ff318a7a835e064fdd6",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/provider-autoload-smoke.php",
+      "source_sha256": "28191cfc951a23fee0cdbb595e252bee72c79ce064e88425093c5ab11af63447",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/reconciliation-transport-smoke.php",
+      "source_sha256": "8379251dae6a847e6b3f77e145b102b122ffe52ab646ae071409706830abe849",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-browser-smoke.cjs",
+      "source_sha256": "caf9d568b5d1942f9b1ebd11dda7080012b53fd2bad8f96a9b8421c1da244d69",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-controller-smoke.php",
+      "source_sha256": "b73e635d9eeae040c0006955bf615e8ba824e146e91ab3e5b031880072d57c12",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-hooks-smoke.php",
+      "source_sha256": "360fff22a3e6bc0245f2f10d5dc5e893af258985ab6b8f2acc0c75e09dbcc452",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-mysql-smoke.php",
+      "source_sha256": "f262475da78c9c74380b5b8f5f9d5034932f769663d844b7805616ef9897a75d",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-service-smoke.php",
+      "source_sha256": "cdc5dbe5e3ba740ebf37a584009240cc8f8906caa28deec3f5e8e3d0874f00e9",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/recurring-ui-smoke.js",
+      "source_sha256": "2bcb6fd0758cac3d0575a8158c50ccca9a7298d6138a7ca1d5304280c8596ab8",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/settings-card-smoke.php",
+      "source_sha256": "84e0dcec2b9f51d1ecfc1503b383a7b434beab845e2a2c9a39bced04ec4a244a",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/settings-environment-smoke.php",
+      "source_sha256": "acc33f79ac89d502646e33e554beee9de1870e3bdf5a974e41058d04469f5251",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/settings-ui-smoke.js",
+      "source_sha256": "c86ac59bdba79329aafdee50dc6d1f88530aa44fdcd280bb4e11967f85601018",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/webhook-api-smoke.php",
+      "source_sha256": "3ab12004438346b4b1a8372715662f23a8ebf92b438881df359aefd14d261e34",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "tests/webhook-token-smoke.php",
+      "source_sha256": "9b5fda795f57918813c89f2cdfafcf588c2b9ac7d20d7ef3c655bc9e7ba7e78a",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "traits/BaseApi.php",
+      "source_sha256": "1cc903d953621470efe742612d6abd807fc13eff2862dd0c703c7429bb0317e1",
+      "crm_sha256": "1cc903d953621470efe742612d6abd807fc13eff2862dd0c703c7429bb0317e1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.editorconfig",
+      "source_sha256": "5dd2da9e4a9ccdbb0aa04fdedc8a4ec44a17a5e58e482fd60a1402bf353cb5a4",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.gitattributes",
+      "source_sha256": "19b9977052b4f38a31d70e982cf807908ea955a23ad63cdb9575023b10df5f3b",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.github/ISSUE_TEMPLATE/auditoria.yml",
+      "source_sha256": "b81af962575b8e828f21fdce3de79b0dabaeb4ca711009498002e676b4639486",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.github/workflows/audit-checklist.yml",
+      "source_sha256": "4ef956c18f7958360751219da8b9e5080b04d796bf10e3611c6307d38486a9d5",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.github/workflows/ci.yml",
+      "source_sha256": "75585fcc70b3605d2897504152a089dbec11f098fc910decd6715387e51ac735",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.github/workflows/docker-playground.yml",
+      "source_sha256": "93ba6b4af656a392f7a8935379b955c67a29a7b7aeedb365ea94ec6cac9515ee",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.github/workflows/release.yml",
+      "source_sha256": "990df9e57925d2f2ba7b5bc0357a3584572f05ade476b58c8f7dfba58f1d01a6",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.gitignore",
+      "source_sha256": "b9e4eca874974830d30991e74a0267340e182db9160ac3593fef45c1b4a11a35",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/.php-cs-fixer.dist.php",
+      "source_sha256": "4ec85f530405aed0d417929bdb31d9296a991b57b4c3cebd10da99936142ffbc",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/DISCLAIMER.md",
+      "source_sha256": "1f2eb62277baf05335a8ca3e7350719dad43950131633c292147c4dc73f4e3d2",
+      "crm_sha256": "1f2eb62277baf05335a8ca3e7350719dad43950131633c292147c4dc73f4e3d2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/LICENSE",
+      "source_sha256": "99424be33ca0337a8e93a26b17caf8e08a4d7613d01ed50924a38a0a16537bd9",
+      "crm_sha256": "99424be33ca0337a8e93a26b17caf8e08a4d7613d01ed50924a38a0a16537bd9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/README.md",
+      "source_sha256": "c739be8d7f4d0554dfbb3d72d3179c231bb644702bb367b00a1519f671bac312",
+      "crm_sha256": "2df200fc718747bdece7c42ac3cbd1383c17b41adff91e054aa6be6b1c1c87ab",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/README.md",
+      "source_sha256": "ac070a600fcb3128d84b076ed3612c05434631f9cb0f1a6dd360828da5909359",
+      "crm_sha256": "ac070a600fcb3128d84b076ed3612c05434631f9cb0f1a6dd360828da5909359",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/checklists/CHECKLIST.md",
+      "source_sha256": "cc9a126f84fbdc27ac254111511135d587480d4df000d60b339c4b2e2a6058ca",
+      "crm_sha256": "cc9a126f84fbdc27ac254111511135d587480d4df000d60b339c4b2e2a6058ca",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/checklists/SDK_PLAYGROUND_CHECKLIST.md",
+      "source_sha256": "a3a154aba0675b5d0987e4c3be37829f421ccad2288788bbe12a4c805e11660c",
+      "crm_sha256": "a3a154aba0675b5d0987e4c3be37829f421ccad2288788bbe12a4c805e11660c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/reports/.gitkeep",
+      "source_sha256": null,
+      "crm_sha256": "2641fcd10b5dc1cdeb8787767ebac0edc41dbea2552908bf5a449f7c517f47bb",
+      "status": "crm_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/roadmap/ROADMAP.md",
+      "source_sha256": "e0f48388044698f7c1603e13681359034ab9722ccaa6971de177d4a0765ad8d9",
+      "crm_sha256": "e0f48388044698f7c1603e13681359034ab9722ccaa6971de177d4a0765ad8d9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/audit/templates/AUDIT_REPORT.md",
+      "source_sha256": "3c1972c8b8e0453c456b2b8746aab64eee8faad5cde9a10e7c25f694e05694ec",
+      "crm_sha256": "3c1972c8b8e0453c456b2b8746aab64eee8faad5cde9a10e7c25f694e05694ec",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/bin/audit-report.php",
+      "source_sha256": "af2767d0e47efccd0e069eeb3c127ead5c78e604853df1959da9380d11395fc5",
+      "crm_sha256": "af2767d0e47efccd0e069eeb3c127ead5c78e604853df1959da9380d11395fc5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/bin/build-openapi.php",
+      "source_sha256": "6a9197dd4229dabe6c798e3450ce6dbf80721b17624aa3c171c27d2b8606cc74",
+      "crm_sha256": "6a9197dd4229dabe6c798e3450ce6dbf80721b17624aa3c171c27d2b8606cc74",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/bin/generate-sdk.php",
+      "source_sha256": "2fa46def7046970dc74300b47b2dbf81ae3fb82ce49110c29a184013e25b0f4a",
+      "crm_sha256": "2fa46def7046970dc74300b47b2dbf81ae3fb82ce49110c29a184013e25b0f4a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/bin/verify-parity.php",
+      "source_sha256": "b82dd629064b6cd2449de382a001dd6d1afce9495cacdd1e72d4108f9b13ddea",
+      "crm_sha256": "b82dd629064b6cd2449de382a001dd6d1afce9495cacdd1e72d4108f9b13ddea",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/composer.json",
+      "source_sha256": "b8d724a74a155b2dd3738921e1f7a0a90fe7a674888a441af899f717fa082bc4",
+      "crm_sha256": "b8d724a74a155b2dd3738921e1f7a0a90fe7a674888a441af899f717fa082bc4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/00-introducao.md",
+      "source_sha256": "cc60ed693813648a0e28c6ed3aec43f8e080658413725e061f0315f418714d31",
+      "crm_sha256": "cc60ed693813648a0e28c6ed3aec43f8e080658413725e061f0315f418714d31",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/01-instalacao.md",
+      "source_sha256": "d488863589806a69fd4c82e3e51775893a6bdfb08fa6138f9bcd56677a96aee0",
+      "crm_sha256": "d488863589806a69fd4c82e3e51775893a6bdfb08fa6138f9bcd56677a96aee0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/02-configuracao.md",
+      "source_sha256": "52685004246b027685dc1d5d981c8100f8b6a5bec9b38077c4ace1a1d81f7718",
+      "crm_sha256": "52685004246b027685dc1d5d981c8100f8b6a5bec9b38077c4ace1a1d81f7718",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/03-quickstart.md",
+      "source_sha256": "9e5f565e277453b5331b6663784aea746520822e111394da5c427feec14dce7b",
+      "crm_sha256": "9e5f565e277453b5331b6663784aea746520822e111394da5c427feec14dce7b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/04-ambientes-sandbox-production.md",
+      "source_sha256": "62e1754e8a1e6edfab033d84f068780a10a4001e43ef89d6b7e4dd0f46ce6b06",
+      "crm_sha256": "62e1754e8a1e6edfab033d84f068780a10a4001e43ef89d6b7e4dd0f46ce6b06",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/05-servicos-e-endpoints.md",
+      "source_sha256": "f98f8fe90d8e3202f68f0edfa006d513f8b6791eb61cab67a1e86acfab729648",
+      "crm_sha256": "7878601f1f6313ba291e8c4ed601e15d4eeba94608bd748fe12a124a7f2d2ed7",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/06-exceptions-e-erros.md",
+      "source_sha256": "79b6892f01658f237ad5fc4e03438201d69cca93330405ebb5eba890d6e16b74",
+      "crm_sha256": "79b6892f01658f237ad5fc4e03438201d69cca93330405ebb5eba890d6e16b74",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/07-paginacao-filtros-ordenacao.md",
+      "source_sha256": "f7f7cec4e6611e349dfec0a65a7458310dddeea03f25d4b7e7886f6dadc21c5e",
+      "crm_sha256": "f7f7cec4e6611e349dfec0a65a7458310dddeea03f25d4b7e7886f6dadc21c5e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/08-webhooks.md",
+      "source_sha256": "bdfbfb72eabc7a5862c6a4a356314bbcdf3d5e7ca79c5813494ffcd4ce282001",
+      "crm_sha256": "e3c37aa1fe4656b81bd57a00b2ded715df9fe862ba088e4c2a7e47dda4fef32e",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/09-upload-download-arquivos.md",
+      "source_sha256": "3bf184a5fcf7450e483b0676a14aedd11ea94329cd4cf3f3c4cf27472ac80395",
+      "crm_sha256": "3bf184a5fcf7450e483b0676a14aedd11ea94329cd4cf3f3c4cf27472ac80395",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/10-multitenancy.md",
+      "source_sha256": "ffbb285e3d84475a9a4a32b313a8c1bba64807274229b8e04603081ab94916d0",
+      "crm_sha256": "ffbb285e3d84475a9a4a32b313a8c1bba64807274229b8e04603081ab94916d0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/11-exemplos-laravel.md",
+      "source_sha256": "26ee11791499c0b34cb8d5ef640041770797edfb090ec90a0a29eec5e4798b25",
+      "crm_sha256": "26ee11791499c0b34cb8d5ef640041770797edfb090ec90a0a29eec5e4798b25",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/12-exemplos-codeengine.md",
+      "source_sha256": "6400466bd54b1d813df58f1a2cabdce1dd73cfd8bab1e6d474367a588ba62c9a",
+      "crm_sha256": "6400466bd54b1d813df58f1a2cabdce1dd73cfd8bab1e6d474367a588ba62c9a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/13-geracao-openapi-e-paridade.md",
+      "source_sha256": "729deccf5ab0d8c79dc0d56ebabe67c7cc50a4c78fec126db89281b6bb6bb617",
+      "crm_sha256": "729deccf5ab0d8c79dc0d56ebabe67c7cc50a4c78fec126db89281b6bb6bb617",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/14-status-healthcheck-resiliencia.md",
+      "source_sha256": "b3fcf06cdb2e15b237c175c5c3e237f8dd69b6b7cafff6cf025272407e1feb6c",
+      "crm_sha256": "b3fcf06cdb2e15b237c175c5c3e237f8dd69b6b7cafff6cf025272407e1feb6c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/15-exemplos-argws-crm.md",
+      "source_sha256": null,
+      "crm_sha256": "b77cf1a0bace5b091153ab2a94c4fb258c885b90b7d0b1c4cc21a37216ca8a7f",
+      "status": "crm_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/15-exemplos-perfex-crm.md",
+      "source_sha256": "12014d7a5590d4fc71a758036441193e75c41586eb478f3140eed17d1a584e77",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/16-playground-referencia.md",
+      "source_sha256": "b3f6a9290e5cbf7cbd08df0bd9a2b4a46fe35d1d20672b7b0413954edb5cf47b",
+      "crm_sha256": "eb1456cc733dd64cdbd61de24122844996f1566b8e971c6abdadf5061446bfe2",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/17-guia-payloads-minimos.md",
+      "source_sha256": "9f5fa9b748da4412fcc97bba14f5f5225fc3ef2fdb7fa73fc115486ce5a62e60",
+      "crm_sha256": "249f49361bfd133d29a7974b2e4d2f8700bc9a5c84bcab2dae0507de3ab6d2ec",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/18-mapeamento-erp-argws-crm-asaas.md",
+      "source_sha256": null,
+      "crm_sha256": "fc20df857a346c3941a3cd1f72ce8d7ec276cedaed888c830a33f6e52d6e2aae",
+      "status": "crm_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/18-mapeamento-erp-perfex-asaas.md",
+      "source_sha256": "18599ae3e73b8c1671b5fad6220bf27db3c269439770f53631a1877616b5b02c",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/19-idempotencia-e-anti-duplicacao.md",
+      "source_sha256": "6901b3a9f0b5db854b69855dda1a590af95017975b630a62e69f87c64f62336a",
+      "crm_sha256": "5abab8af19a07dd54f74e8f7be2bcc4934ae379eecac9f31b5885cdb7162bfbc",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/99-reference-endpoints.md",
+      "source_sha256": "622944a07015729916add2f4b651fa31bc3c2bfaf767137dc454570f56904e17",
+      "crm_sha256": "622944a07015729916add2f4b651fa31bc3c2bfaf767137dc454570f56904e17",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/README.md",
+      "source_sha256": "e4495b1fffa5daf86008e380746a93424269a7f04a01ebab3a8d4586cec69a0d",
+      "crm_sha256": "6b09b2292b27d31e665d8606a94aed6b58715f346c51668250028e7d0f283270",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/card-contracts.md",
+      "source_sha256": "2527b74a5c44cc81ee2a4ecf62369dda7e4940997eab1b794d6c5454a36f7464",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/account-document-service.md",
+      "source_sha256": "a72af0979509ca568568ecfef0352cfe4fd6d80f31bf4e3bac527e6c4b4da4f0",
+      "crm_sha256": "a72af0979509ca568568ecfef0352cfe4fd6d80f31bf4e3bac527e6c4b4da4f0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/account-info-service.md",
+      "source_sha256": "2bc7777031dc351fea84074b954dd5912c247882bd9fe5b09a79f7092583596a",
+      "crm_sha256": "2bc7777031dc351fea84074b954dd5912c247882bd9fe5b09a79f7092583596a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/anticipation-service.md",
+      "source_sha256": "2573b9a37e71e1504311ddc38fe7223d7b7d62b72aaee69b92c2f222e41973ae",
+      "crm_sha256": "2573b9a37e71e1504311ddc38fe7223d7b7d62b72aaee69b92c2f222e41973ae",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/automatic-pix-service.md",
+      "source_sha256": "5e78ac559b66bf7610fbb879f75c3c312ac7c101edcf8f8a6f8f6a930410a8b7",
+      "crm_sha256": "5e78ac559b66bf7610fbb879f75c3c312ac7c101edcf8f8a6f8f6a930410a8b7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/bill-service.md",
+      "source_sha256": "5b4f7d71fb7b39451c7361b0b80410683faf1eef91a80e650091ce55a52b0d38",
+      "crm_sha256": "5b4f7d71fb7b39451c7361b0b80410683faf1eef91a80e650091ce55a52b0d38",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/chargeback-service.md",
+      "source_sha256": "ee4e2cf0b8de1a9033b01cbb8ad599a9fd53cb768fc8a53c7fc0a3febd867055",
+      "crm_sha256": "ee4e2cf0b8de1a9033b01cbb8ad599a9fd53cb768fc8a53c7fc0a3febd867055",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/checkout-service.md",
+      "source_sha256": "adb617d281179bc10f66ca7bccdf36e7baabb06d167faab91c2f1398eb0dfeef",
+      "crm_sha256": "adb617d281179bc10f66ca7bccdf36e7baabb06d167faab91c2f1398eb0dfeef",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/credit-bureau-report-service.md",
+      "source_sha256": "e37d403e733e9b541f82776f4c95289b5ffb3574871d4f2ae6998d7267f4d7f0",
+      "crm_sha256": "e37d403e733e9b541f82776f4c95289b5ffb3574871d4f2ae6998d7267f4d7f0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/credit-card-service.md",
+      "source_sha256": "b10613dcece97ab8cec3dbe487858305668c9dca50617dc91dabe35c0a2b4a84",
+      "crm_sha256": "b10613dcece97ab8cec3dbe487858305668c9dca50617dc91dabe35c0a2b4a84",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/customer-service.md",
+      "source_sha256": "6a0150532b631a680f363777c52874fcb0af112fe0b493418c53583a66507db5",
+      "crm_sha256": "6a0150532b631a680f363777c52874fcb0af112fe0b493418c53583a66507db5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/escrow-account-service.md",
+      "source_sha256": "723df78f72df48dcabbc47d9a9bcee1c0b8ac5aa8195a7e0adf0e388e71d4a07",
+      "crm_sha256": "723df78f72df48dcabbc47d9a9bcee1c0b8ac5aa8195a7e0adf0e388e71d4a07",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/finance-service.md",
+      "source_sha256": "c9b332d259ed1f0ee3f041e8994222b452a3aab1312161946a98653cda371a51",
+      "crm_sha256": "c9b332d259ed1f0ee3f041e8994222b452a3aab1312161946a98653cda371a51",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/financial-transaction-service.md",
+      "source_sha256": "4e5ac4f5c2bd22eb8b4f3a22e62da3fda9b9fdd857e5270c33ff0a641afe10e2",
+      "crm_sha256": "4e5ac4f5c2bd22eb8b4f3a22e62da3fda9b9fdd857e5270c33ff0a641afe10e2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/fiscal-info-service.md",
+      "source_sha256": "a18e6f68d010d43db1079a7b70ee9b27f73c2c1a8363a6cf301afca0b9c00b74",
+      "crm_sha256": "a18e6f68d010d43db1079a7b70ee9b27f73c2c1a8363a6cf301afca0b9c00b74",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/installment-service.md",
+      "source_sha256": "d4b3d3228e60ece0cf1fefa18e1ceabd5592a7cb0eb29bb737350d4596fa7730",
+      "crm_sha256": "d4b3d3228e60ece0cf1fefa18e1ceabd5592a7cb0eb29bb737350d4596fa7730",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/invoice-service.md",
+      "source_sha256": "e614493f01b742764cd6716eeffaada3ba09fa47e350e20233a994d6d13ce679",
+      "crm_sha256": "e614493f01b742764cd6716eeffaada3ba09fa47e350e20233a994d6d13ce679",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/mobile-phone-recharge-service.md",
+      "source_sha256": "6e834e05bad991995a1b67224cc44102063b47efa9eb1c297c4cd555746cbc4e",
+      "crm_sha256": "6e834e05bad991995a1b67224cc44102063b47efa9eb1c297c4cd555746cbc4e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/notification-service.md",
+      "source_sha256": "5991c64b30710961ea0a0de1054f5436196efceff7586a10965b2dc6e3814e26",
+      "crm_sha256": "5991c64b30710961ea0a0de1054f5436196efceff7586a10965b2dc6e3814e26",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-document-service.md",
+      "source_sha256": "f181fb6b3cbcb0e7b71b477d8870a612914281e7268c4a33076554ad5b1992f8",
+      "crm_sha256": "f181fb6b3cbcb0e7b71b477d8870a612914281e7268c4a33076554ad5b1992f8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-dunning-service.md",
+      "source_sha256": "78f06effd7d5973d122efa235b677cdde6ffae91b3d2addf004adcf1ce19f7fc",
+      "crm_sha256": "78f06effd7d5973d122efa235b677cdde6ffae91b3d2addf004adcf1ce19f7fc",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-link-service.md",
+      "source_sha256": "dc03bf5a7fd7028d83f5cd3b351bdcb2945bf3c8578365a817d31b7c24fc99b5",
+      "crm_sha256": "dc03bf5a7fd7028d83f5cd3b351bdcb2945bf3c8578365a817d31b7c24fc99b5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-refund-service.md",
+      "source_sha256": "da5f198142caabccb6a1e62c81b64202d652c96a370df693bc97568339bc4940",
+      "crm_sha256": "da5f198142caabccb6a1e62c81b64202d652c96a370df693bc97568339bc4940",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-service.md",
+      "source_sha256": "73d757b73d8395f9b2409fdcc2e12b893e07597be65c9bd8d13cc0657f6aec28",
+      "crm_sha256": "1e653e0521916aae0e19db09d6f1b8bcce8024726d087af85ab4978e30b26cc2",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-split-service.md",
+      "source_sha256": "dee6efa8dab90873a9294a44e497fc7252f24723b8b80fdd57e6633b371709ac",
+      "crm_sha256": "dee6efa8dab90873a9294a44e497fc7252f24723b8b80fdd57e6633b371709ac",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/payment-with-summary-data-service.md",
+      "source_sha256": "990c73f43066d38241a74da0494eb9bd9ef12d2bc16932c5b39f20b70cb1d276",
+      "crm_sha256": "990c73f43066d38241a74da0494eb9bd9ef12d2bc16932c5b39f20b70cb1d276",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/pix-service.md",
+      "source_sha256": "22fa497dde91a42de562477165f0a86ac22d61c4d7e874164aefd53f7b1b4da1",
+      "crm_sha256": "22fa497dde91a42de562477165f0a86ac22d61c4d7e874164aefd53f7b1b4da1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/pix-transaction-service.md",
+      "source_sha256": "44f3ab0b7b1c2ef5dbab67816b524156d7ac465a60b04af2c83f02d16345338a",
+      "crm_sha256": "44f3ab0b7b1c2ef5dbab67816b524156d7ac465a60b04af2c83f02d16345338a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/recurring-pix-service.md",
+      "source_sha256": "f474d9701ff97f0340cd36f7b375eb396afed86e56b74404f19bf616b6a88eb3",
+      "crm_sha256": "f474d9701ff97f0340cd36f7b375eb396afed86e56b74404f19bf616b6a88eb3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/sandbox-actions-service.md",
+      "source_sha256": "23273eea3cb7f609bcbd3dfbb3ad423d4e6c7683cb118512d36f47aed6d3972a",
+      "crm_sha256": "23273eea3cb7f609bcbd3dfbb3ad423d4e6c7683cb118512d36f47aed6d3972a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/subaccount-service.md",
+      "source_sha256": "76a75af4dbd4743826e288b3749da11900e12e1424f3b86194036e9c922bc625",
+      "crm_sha256": "76a75af4dbd4743826e288b3749da11900e12e1424f3b86194036e9c922bc625",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/subscription-service.md",
+      "source_sha256": "447faf4fc547c744b8e5a69229b442389d407c0384005b469873b3d8f34e459a",
+      "crm_sha256": "447faf4fc547c744b8e5a69229b442389d407c0384005b469873b3d8f34e459a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/transfer-service.md",
+      "source_sha256": "420a803a1f4eda63df8db8f071119d6fa81bb3465a9c3ff9e3ec1749362b9a6f",
+      "crm_sha256": "420a803a1f4eda63df8db8f071119d6fa81bb3465a9c3ff9e3ec1749362b9a6f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/docs/reference/webhook-service.md",
+      "source_sha256": "0b603924dd4f72eff02e9644ec3fc6adcc0b5a552260401486c029e5762846b8",
+      "crm_sha256": "0b603924dd4f72eff02e9644ec3fc6adcc0b5a552260401486c029e5762846b8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/phpstan.neon",
+      "source_sha256": "32d2ba15a364ff362a91ed213e77911f320e51f5a141ba24efab71b06f3f2c39",
+      "crm_sha256": "32d2ba15a364ff362a91ed213e77911f320e51f5a141ba24efab71b06f3f2c39",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/phpunit.xml",
+      "source_sha256": "b2d00d3ec95ffefdcbba8c0db52591fdd75be95588b35ba6326511f2e2c73cd3",
+      "crm_sha256": "b2d00d3ec95ffefdcbba8c0db52591fdd75be95588b35ba6326511f2e2c73cd3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/resources/openapi.json",
+      "source_sha256": "b2b7afaa04a2f49605975d96b03dd55da731a244336970ceb140171325387f34",
+      "crm_sha256": "b2b7afaa04a2f49605975d96b03dd55da731a244336970ceb140171325387f34",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/resources/tag-map.php",
+      "source_sha256": "30f180bc40fbdb2d4655cbeadabfe3188907efa2034c80ee29af6243709323d2",
+      "crm_sha256": "30f180bc40fbdb2d4655cbeadabfe3188907efa2034c80ee29af6243709323d2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/resources/templates/dto.php.tpl",
+      "source_sha256": "0a80eb2d2258e735a6ccedc7fbef55cb4856156d7b38dcd48845ef8208df8483",
+      "crm_sha256": "0a80eb2d2258e735a6ccedc7fbef55cb4856156d7b38dcd48845ef8208df8483",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/resources/templates/enum.php.tpl",
+      "source_sha256": "5042e8af710fdbd1019be8ef533eccecc6287ba27813fb5a2809912a82fc027d",
+      "crm_sha256": "5042e8af710fdbd1019be8ef533eccecc6287ba27813fb5a2809912a82fc027d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/resources/templates/service.php.tpl",
+      "source_sha256": "a8d2819f1b8be62d77eee0f3c293b2951f95f073d4e893eb7d798687edcb469d",
+      "crm_sha256": "a8d2819f1b8be62d77eee0f3c293b2951f95f073d4e893eb7d798687edcb469d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/AsaasSdk.php",
+      "source_sha256": "2119be8b3f9a3bbff8ee2a13828ff9e6803c508207b5843edb9527b9ef6c14d4",
+      "crm_sha256": "2119be8b3f9a3bbff8ee2a13828ff9e6803c508207b5843edb9527b9ef6c14d4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Config/AsaasConfig.php",
+      "source_sha256": "b5f91f47552d79d1b22363b819e8664737ad7a4f58c9a13683e60ae7daab903e",
+      "crm_sha256": "b5f91f47552d79d1b22363b819e8664737ad7a4f58c9a13683e60ae7daab903e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Exception/ApiException.php",
+      "source_sha256": "34af0ca79ed4df12baffbee6b58a5b2f46ca23d7dd0000736ddce76b399ce4a4",
+      "crm_sha256": "34af0ca79ed4df12baffbee6b58a5b2f46ca23d7dd0000736ddce76b399ce4a4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Exception/TransportException.php",
+      "source_sha256": "e7790569ac03f5f97488944678469716a3d08c110bb3c933f6ae0e6e6210fbf6",
+      "crm_sha256": "e7790569ac03f5f97488944678469716a3d08c110bb3c933f6ae0e6e6210fbf6",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Exception/ValidationException.php",
+      "source_sha256": "47154914edf56683834cc82f5548ff5cc57445653b9683b9ea45df0d88cd6e0a",
+      "crm_sha256": "47154914edf56683834cc82f5548ff5cc57445653b9683b9ea45df0d88cd6e0a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Generator/OpenApiBuilder.php",
+      "source_sha256": "e3ecef84f8d7d3fc94b4470a5b6155d88a78692ebb206fdd560bc56957dbdcf9",
+      "crm_sha256": "e3ecef84f8d7d3fc94b4470a5b6155d88a78692ebb206fdd560bc56957dbdcf9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Generator/ParityVerifier.php",
+      "source_sha256": "33ba1b670cc0ee411720169eeca15986ffeb06abd3b9cca614534cba744000e1",
+      "crm_sha256": "33ba1b670cc0ee411720169eeca15986ffeb06abd3b9cca614534cba744000e1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Generator/SdkGenerator.php",
+      "source_sha256": "fe39b69c790a08a3b1dd99777a17a40ab943b0499cae1198a9bd8480b1f73536",
+      "crm_sha256": "fe39b69c790a08a3b1dd99777a17a40ab943b0499cae1198a9bd8480b1f73536",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Http/Client.php",
+      "source_sha256": "b6d150e34fa15175c92fa9d6b2861225ce503cc4d9fc073a524dbb4d67aaf967",
+      "crm_sha256": "b6d150e34fa15175c92fa9d6b2861225ce503cc4d9fc073a524dbb4d67aaf967",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Http/Environment.php",
+      "source_sha256": "2ed3a9f198d48d816343f73283dc415d0be7f367285b21ab64c5219adb9fdffd",
+      "crm_sha256": "2ed3a9f198d48d816343f73283dc415d0be7f367285b21ab64c5219adb9fdffd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Http/RetryMiddleware.php",
+      "source_sha256": "9bb958c79dfba71eb88e3e3136130bbb9858080e333526a8e1fad3bbdc850f17",
+      "crm_sha256": "c75869abddfdbca1b50efb10d763518c83ae43d6df6c97e023ce68e529a6d413",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Model/Contracts/ArraySerializable.php",
+      "source_sha256": "09552ebe6233a657a1a93a486b39cbc53dd1dc798e097da97bd8662e40ca0b47",
+      "crm_sha256": "09552ebe6233a657a1a93a486b39cbc53dd1dc798e097da97bd8662e40ca0b47",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/AbstractService.php",
+      "source_sha256": "bbfefa805e563feb33d816192d1e9e4c6ab730515b04f5ea9c90f0635fac076d",
+      "crm_sha256": "bbfefa805e563feb33d816192d1e9e4c6ab730515b04f5ea9c90f0635fac076d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/AccountDocumentService.php",
+      "source_sha256": "560fcf5592626dfb44c30b216090ba647a64998e532cf218c505f564da9e93b5",
+      "crm_sha256": "560fcf5592626dfb44c30b216090ba647a64998e532cf218c505f564da9e93b5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/AccountInfoService.php",
+      "source_sha256": "f9d7d8497232206de6a42060b11b8375c5d1127d4319dbde54ad3564dfb62128",
+      "crm_sha256": "f9d7d8497232206de6a42060b11b8375c5d1127d4319dbde54ad3564dfb62128",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/AnticipationService.php",
+      "source_sha256": "ff4c6911b0d004530d14888d06f1d5c7165c738940a078f5dc7f7abd2d445ccc",
+      "crm_sha256": "ff4c6911b0d004530d14888d06f1d5c7165c738940a078f5dc7f7abd2d445ccc",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/BillService.php",
+      "source_sha256": "7687f0954e7ec53587b2861e83a20d08c9c27c5bd0c7af3f5a3acbd3823983bd",
+      "crm_sha256": "7687f0954e7ec53587b2861e83a20d08c9c27c5bd0c7af3f5a3acbd3823983bd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/ChargebackService.php",
+      "source_sha256": "d286b47176c8932094f351e77abedd2fbcfa1e24c7de55ea9bfcbb9647aed1a7",
+      "crm_sha256": "d286b47176c8932094f351e77abedd2fbcfa1e24c7de55ea9bfcbb9647aed1a7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/CheckoutService.php",
+      "source_sha256": "a91571e8d6fde8e5d8343dae56f57842581daba2493f9a89ed9f55f467d5a813",
+      "crm_sha256": "a91571e8d6fde8e5d8343dae56f57842581daba2493f9a89ed9f55f467d5a813",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/CreditBureauReportService.php",
+      "source_sha256": "78ff2cecac538d58fbc6416fe0678436812de5c16acf3824d4f3e8412688aecb",
+      "crm_sha256": "78ff2cecac538d58fbc6416fe0678436812de5c16acf3824d4f3e8412688aecb",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/CreditCardService.php",
+      "source_sha256": "5ad467bea34cc6057aae102f7e86fa5ea2d0df97b24a611277842d1b917f0703",
+      "crm_sha256": "5ad467bea34cc6057aae102f7e86fa5ea2d0df97b24a611277842d1b917f0703",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/CustomerService.php",
+      "source_sha256": "5a85fa8886a92ddc89e26400ea7c352e63ec8af21904681d94a2ab67eb075e3a",
+      "crm_sha256": "5a85fa8886a92ddc89e26400ea7c352e63ec8af21904681d94a2ab67eb075e3a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/EscrowAccountService.php",
+      "source_sha256": "8b5830eea66abfcf27c1a534dc604aad094e5b9c000cab3c233f07b5462e690c",
+      "crm_sha256": "8b5830eea66abfcf27c1a534dc604aad094e5b9c000cab3c233f07b5462e690c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/FinanceService.php",
+      "source_sha256": "e6021afa673f4792161d7350e3b8876d6678d9a981b2efa9f619bdd6c5e29682",
+      "crm_sha256": "e6021afa673f4792161d7350e3b8876d6678d9a981b2efa9f619bdd6c5e29682",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/FinancialTransactionService.php",
+      "source_sha256": "bc890bad0a565f9c3a87996bd0ecbf896d1f61b2aae07c9bbdc32a685d7517e5",
+      "crm_sha256": "bc890bad0a565f9c3a87996bd0ecbf896d1f61b2aae07c9bbdc32a685d7517e5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/FiscalInfoService.php",
+      "source_sha256": "d511bf5b71f824a18f9310b6a686346ed1718c641ea057961af817f3c4bf70f3",
+      "crm_sha256": "d511bf5b71f824a18f9310b6a686346ed1718c641ea057961af817f3c4bf70f3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/AccountDocumentService.php",
+      "source_sha256": "afe94c17105e5ae947eb489682cde179668e564d976f7ae18950f8412c8b7403",
+      "crm_sha256": "afe94c17105e5ae947eb489682cde179668e564d976f7ae18950f8412c8b7403",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/AccountInfoService.php",
+      "source_sha256": "a2ff4423bc1abcf51ea93da8cbf8f987836c7e24f7967c831daa9f9cb6f07a07",
+      "crm_sha256": "a2ff4423bc1abcf51ea93da8cbf8f987836c7e24f7967c831daa9f9cb6f07a07",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/AnticipationService.php",
+      "source_sha256": "2ef1c5eb28261d57cc1e503c37534dca39d2bf48e527c93987b9bac3255ec819",
+      "crm_sha256": "2ef1c5eb28261d57cc1e503c37534dca39d2bf48e527c93987b9bac3255ec819",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/AutomaticPixService.php",
+      "source_sha256": "50d50c1c2c57ffb9fcd9a0cfac71f06b3f9f915238eba944f750b1fed277c73c",
+      "crm_sha256": "50d50c1c2c57ffb9fcd9a0cfac71f06b3f9f915238eba944f750b1fed277c73c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/BillService.php",
+      "source_sha256": "33cf112b824503650744cb62502de22ea2d3fb49f1a13f1d7c3ed94cf4726c4f",
+      "crm_sha256": "33cf112b824503650744cb62502de22ea2d3fb49f1a13f1d7c3ed94cf4726c4f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/ChargebackService.php",
+      "source_sha256": "5f0266d004de91c3d5bbd09eae5600312c25fbc1084a2ffb249e87756c13a0ac",
+      "crm_sha256": "5f0266d004de91c3d5bbd09eae5600312c25fbc1084a2ffb249e87756c13a0ac",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/CheckoutService.php",
+      "source_sha256": "7c5712b0ed988d26827c16bb566cf476e82232c5d99e2224170e05235d934934",
+      "crm_sha256": "7c5712b0ed988d26827c16bb566cf476e82232c5d99e2224170e05235d934934",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/CreditBureauReportService.php",
+      "source_sha256": "1d958a5fd936ef3254bb2e1bdc4fda38da29d5e704458059ea3c1a942fe709fc",
+      "crm_sha256": "1d958a5fd936ef3254bb2e1bdc4fda38da29d5e704458059ea3c1a942fe709fc",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/CreditCardService.php",
+      "source_sha256": "a1772d30f892bd529f96e5144a8e3721d4a02de81d395a0959b985a30eb00b9d",
+      "crm_sha256": "a1772d30f892bd529f96e5144a8e3721d4a02de81d395a0959b985a30eb00b9d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/CustomerService.php",
+      "source_sha256": "1717743171dc93bada013809ec61b0ed21f59b4415e6f19b9c7d22a84de1802c",
+      "crm_sha256": "1717743171dc93bada013809ec61b0ed21f59b4415e6f19b9c7d22a84de1802c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/EscrowAccountService.php",
+      "source_sha256": "86c19d7067c2924cc5d474e11ee6782605f1d3168533d21cfcb20f725d802a06",
+      "crm_sha256": "86c19d7067c2924cc5d474e11ee6782605f1d3168533d21cfcb20f725d802a06",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/FinanceService.php",
+      "source_sha256": "25f3b3732627ccfab00e194ca0c59d9c7b0ad8362ff84b902ceb8c5b95b4586f",
+      "crm_sha256": "25f3b3732627ccfab00e194ca0c59d9c7b0ad8362ff84b902ceb8c5b95b4586f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/FinancialTransactionService.php",
+      "source_sha256": "9b8698f464eb9b2575de35528e826f8b913c473357c334c34bf5088a0aef8a0c",
+      "crm_sha256": "9b8698f464eb9b2575de35528e826f8b913c473357c334c34bf5088a0aef8a0c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/FiscalInfoService.php",
+      "source_sha256": "821da080576dac7f7240ddf21c3691453be4354cc0b72ec06a8ea96b79956b10",
+      "crm_sha256": "821da080576dac7f7240ddf21c3691453be4354cc0b72ec06a8ea96b79956b10",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/InstallmentService.php",
+      "source_sha256": "41899c8b106e0c9ec5f3e8bc7343fcd8212320b43616746b2ec05445f52c5da1",
+      "crm_sha256": "41899c8b106e0c9ec5f3e8bc7343fcd8212320b43616746b2ec05445f52c5da1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/InvoiceService.php",
+      "source_sha256": "8b6ac2cd10599ea230ce17a1e2bf7147b86b9ce39d050a5a4239eb77c53276d2",
+      "crm_sha256": "8b6ac2cd10599ea230ce17a1e2bf7147b86b9ce39d050a5a4239eb77c53276d2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/MobilePhoneRechargeService.php",
+      "source_sha256": "a191b06b2056d13bf2bec34ed1dde0c1ae079966c86bae14bf468338cb8a0715",
+      "crm_sha256": "a191b06b2056d13bf2bec34ed1dde0c1ae079966c86bae14bf468338cb8a0715",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/NotificationService.php",
+      "source_sha256": "e8275316f73c3566da94a402dd536a5bd9f4a1d5cdce0dc220bd26501c83489b",
+      "crm_sha256": "e8275316f73c3566da94a402dd536a5bd9f4a1d5cdce0dc220bd26501c83489b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentDocumentService.php",
+      "source_sha256": "518fea3f837f347e39b2b50157b0a070c583a42ebb3558cd3f6803f3d13e815c",
+      "crm_sha256": "518fea3f837f347e39b2b50157b0a070c583a42ebb3558cd3f6803f3d13e815c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentDunningService.php",
+      "source_sha256": "7c44c27df05c5af5a22d0b8fa2add62da336523a475b24fdf60526d41bbae234",
+      "crm_sha256": "7c44c27df05c5af5a22d0b8fa2add62da336523a475b24fdf60526d41bbae234",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentLinkService.php",
+      "source_sha256": "481f29fa36bc97cb6789211ac5a76ffaa245bfd77dda9194c47369982ad7c088",
+      "crm_sha256": "481f29fa36bc97cb6789211ac5a76ffaa245bfd77dda9194c47369982ad7c088",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentRefundService.php",
+      "source_sha256": "d1638a63a8f565d083b71887ade1460f66d152e262750884d10c7da832bc5c2e",
+      "crm_sha256": "d1638a63a8f565d083b71887ade1460f66d152e262750884d10c7da832bc5c2e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentService.php",
+      "source_sha256": "4bc1ac90c72ae93f8004bb6b0c16a5f37d7487037f5e2815bf56d04fb3568d6f",
+      "crm_sha256": "4bc1ac90c72ae93f8004bb6b0c16a5f37d7487037f5e2815bf56d04fb3568d6f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentSplitService.php",
+      "source_sha256": "f1f836283ac7a2eeebeee5d28ebf43284217315fcf95b6496b00f66f932c52a1",
+      "crm_sha256": "f1f836283ac7a2eeebeee5d28ebf43284217315fcf95b6496b00f66f932c52a1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PaymentWithSummaryDataService.php",
+      "source_sha256": "6f67e797fb7aabd7d561d1867db5903ffeaa78527f8874f0740ca03c30c5f636",
+      "crm_sha256": "6f67e797fb7aabd7d561d1867db5903ffeaa78527f8874f0740ca03c30c5f636",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PixService.php",
+      "source_sha256": "01ef6a1fb8eebcd34e5b0a0e676287b1a4fd81038662ec1a814d5e4a81597cbc",
+      "crm_sha256": "01ef6a1fb8eebcd34e5b0a0e676287b1a4fd81038662ec1a814d5e4a81597cbc",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/PixTransactionService.php",
+      "source_sha256": "f08171dcfc75d02bca127d6a6e2be5e49209bd8b0065c993fe21691a07379053",
+      "crm_sha256": "f08171dcfc75d02bca127d6a6e2be5e49209bd8b0065c993fe21691a07379053",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/RecurringPixService.php",
+      "source_sha256": "d625e81623ea3cd128c0d72c4b2be52c4833050c68b2006c74f8a04754677e1f",
+      "crm_sha256": "d625e81623ea3cd128c0d72c4b2be52c4833050c68b2006c74f8a04754677e1f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/SandboxActionsService.php",
+      "source_sha256": "7634acbd4c9dfd7244276e7713622fcd9ccd7ba8a995ec80b8fdda29ffd06ecf",
+      "crm_sha256": "7634acbd4c9dfd7244276e7713622fcd9ccd7ba8a995ec80b8fdda29ffd06ecf",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/SubaccountService.php",
+      "source_sha256": "5a1ef0a2add3436339a0717afa1dddd9cededbf852c4cf3b4d50d9a60fb081a0",
+      "crm_sha256": "5a1ef0a2add3436339a0717afa1dddd9cededbf852c4cf3b4d50d9a60fb081a0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/SubscriptionService.php",
+      "source_sha256": "3e53acb5ea6c6747411854475b6fdc7bccddb7e7261b45e2e46543c9c76d79c8",
+      "crm_sha256": "3e53acb5ea6c6747411854475b6fdc7bccddb7e7261b45e2e46543c9c76d79c8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/TransferService.php",
+      "source_sha256": "c15b0765eac9fe69c09d9fa1c634ca44e5692749e577483da4570a847906358e",
+      "crm_sha256": "c15b0765eac9fe69c09d9fa1c634ca44e5692749e577483da4570a847906358e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/Generated/WebhookService.php",
+      "source_sha256": "b6e70cc19006eb8b56ea23c49c89fd15a1229730c0ca29917f68d0a2d4f8b2c0",
+      "crm_sha256": "b6e70cc19006eb8b56ea23c49c89fd15a1229730c0ca29917f68d0a2d4f8b2c0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/InstallmentService.php",
+      "source_sha256": "7a4ada8eb04b9aca9e0947a8345c69b27e3ba4269daac866c6c3355036885106",
+      "crm_sha256": "7a4ada8eb04b9aca9e0947a8345c69b27e3ba4269daac866c6c3355036885106",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/InvoiceService.php",
+      "source_sha256": "32d9a9f0f7e7cbe3393fa0a1a95eda152bdc63a5fdb4039fb3a01854df3a6665",
+      "crm_sha256": "32d9a9f0f7e7cbe3393fa0a1a95eda152bdc63a5fdb4039fb3a01854df3a6665",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/MobilePhoneRechargeService.php",
+      "source_sha256": "af2c2bd06764ae3acc5d7089b35d9de354057cf8c29b7278f8de4c993f941984",
+      "crm_sha256": "af2c2bd06764ae3acc5d7089b35d9de354057cf8c29b7278f8de4c993f941984",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/NotificationService.php",
+      "source_sha256": "f2ed14ed22ce0f6155ea3090e1a61f1c6695870d320ea67eede7e837633806f8",
+      "crm_sha256": "f2ed14ed22ce0f6155ea3090e1a61f1c6695870d320ea67eede7e837633806f8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentDocumentService.php",
+      "source_sha256": "edc0b6a53fd0b02a130fbc7b1f81092466baadec0dcecf08a24169e2af4dba16",
+      "crm_sha256": "edc0b6a53fd0b02a130fbc7b1f81092466baadec0dcecf08a24169e2af4dba16",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentDunningService.php",
+      "source_sha256": "d03ab5203bf9537954c7586feefd24beb09cfdad4a006718617c414d2c260658",
+      "crm_sha256": "d03ab5203bf9537954c7586feefd24beb09cfdad4a006718617c414d2c260658",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentLinkService.php",
+      "source_sha256": "1e6574a9f852570d9f656840bf6ca375134e4d77ab35dbd142e42ba8750e83ca",
+      "crm_sha256": "1e6574a9f852570d9f656840bf6ca375134e4d77ab35dbd142e42ba8750e83ca",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentRefundService.php",
+      "source_sha256": "297e85dc3954d90bf53960477277f9f317fad5a047c627430dc295fc4ab8e7bd",
+      "crm_sha256": "297e85dc3954d90bf53960477277f9f317fad5a047c627430dc295fc4ab8e7bd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentService.php",
+      "source_sha256": "94fafc4a48e13a7ad69aeac4be9865e8465701d8ba396c41573ce813dce80377",
+      "crm_sha256": "670de2b6c6c4cd8bd44117b2228889ec72dd65294b2c33dafb4cf6109571cdb7",
+      "status": "different"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentSplitService.php",
+      "source_sha256": "00717131bcf75a5d1cebe42588179eb7ffa6a416736601787d438c4dfc6073cf",
+      "crm_sha256": "00717131bcf75a5d1cebe42588179eb7ffa6a416736601787d438c4dfc6073cf",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PaymentWithSummaryDataService.php",
+      "source_sha256": "36a98bf7576409dff4a50c626f3c042f86b18cb2343b9dec5847fd79e866ed2c",
+      "crm_sha256": "36a98bf7576409dff4a50c626f3c042f86b18cb2343b9dec5847fd79e866ed2c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PixService.php",
+      "source_sha256": "2dcfc13b4eb5121809e8d7955dd03199ac17ebf9b892048a5e54f0003fd5e10e",
+      "crm_sha256": "2dcfc13b4eb5121809e8d7955dd03199ac17ebf9b892048a5e54f0003fd5e10e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/PixTransactionService.php",
+      "source_sha256": "c9580b274a6bae129fe0aabde4f1582ff11811ac6baa41ac1e2ebe3a6bfce150",
+      "crm_sha256": "c9580b274a6bae129fe0aabde4f1582ff11811ac6baa41ac1e2ebe3a6bfce150",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/RecurringPixService.php",
+      "source_sha256": "9db05de460700ab96177331bc6ab0f1351fbae4f61d566af1e308dbd9def01fd",
+      "crm_sha256": "9db05de460700ab96177331bc6ab0f1351fbae4f61d566af1e308dbd9def01fd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/SandboxActionsService.php",
+      "source_sha256": "3f53ac79c06f6e5f89e60c1b0011f3445c0fddb33f3ec7aabd76c7d861e8b7f8",
+      "crm_sha256": "3f53ac79c06f6e5f89e60c1b0011f3445c0fddb33f3ec7aabd76c7d861e8b7f8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/SubaccountService.php",
+      "source_sha256": "0aa60b99812bd9a83dc3492f952ad14d3df91b8f5eed56d94a24a56d0d4a2f8d",
+      "crm_sha256": "0aa60b99812bd9a83dc3492f952ad14d3df91b8f5eed56d94a24a56d0d4a2f8d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/SubscriptionService.php",
+      "source_sha256": "d25d8b636217694eacba1f264cbddc0739201add9c9c5908e08dd1625c769a7c",
+      "crm_sha256": "d25d8b636217694eacba1f264cbddc0739201add9c9c5908e08dd1625c769a7c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/TransferService.php",
+      "source_sha256": "37ba7470dd4c613a6a2cb4e30889848e73dd1500687a846aff474c651ee48154",
+      "crm_sha256": "37ba7470dd4c613a6a2cb4e30889848e73dd1500687a846aff474c651ee48154",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Service/WebhookService.php",
+      "source_sha256": "7200b6068bdf85519c43e645a1f3f8f40d81a50a16c2fa2e627008a8a40c5303",
+      "crm_sha256": "7200b6068bdf85519c43e645a1f3f8f40d81a50a16c2fa2e627008a8a40c5303",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Util/Path.php",
+      "source_sha256": "aaf30638ce17e360b445d366b47b6818492876c421cb2ecab849db7cfdb0b647",
+      "crm_sha256": "aaf30638ce17e360b445d366b47b6818492876c421cb2ecab849db7cfdb0b647",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Util/Query.php",
+      "source_sha256": "fb3f89438bb6ac59f2cdcced91f959823978d2fcc0ddcf81912d6f5a12bc709d",
+      "crm_sha256": "fb3f89438bb6ac59f2cdcced91f959823978d2fcc0ddcf81912d6f5a12bc709d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Util/Serializer.php",
+      "source_sha256": "0efb7012d20ab06e42661fbf5b5e1a6584a860d9370e3f6e8cba56da935128e1",
+      "crm_sha256": "0efb7012d20ab06e42661fbf5b5e1a6584a860d9370e3f6e8cba56da935128e1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/argws/asaas-sdk-php/src/Webhook/WebhookToken.php",
+      "source_sha256": "b3597fbd477201f3d337d90ba5a713a70a9b5c6bd9c5b444f1a42d8fc99fce93",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "vendor/autoload.php",
+      "source_sha256": "783acb1d69f74eacb6b2b81e12046ff87e6d29b7d8d493dd6c1a0ac8d78c8ae1",
+      "crm_sha256": "783acb1d69f74eacb6b2b81e12046ff87e6d29b7d8d493dd6c1a0ac8d78c8ae1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/LICENSE",
+      "source_sha256": "973af1db913b076a85e09732c75df802a6b8a61a63701c38f2ce6d471c213260",
+      "crm_sha256": "973af1db913b076a85e09732c75df802a6b8a61a63701c38f2ce6d471c213260",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/README.md",
+      "source_sha256": "10eee73be5fd7ae8bb98c3a321d0982d3f26eb44a4acbf08d2923499a7664562",
+      "crm_sha256": "10eee73be5fd7ae8bb98c3a321d0982d3f26eb44a4acbf08d2923499a7664562",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/composer.json",
+      "source_sha256": "9717ae6d82f298b024fb15fc5e7088245b8f94712cec088ee50922c7b9ca7462",
+      "crm_sha256": "9717ae6d82f298b024fb15fc5e7088245b8f94712cec088ee50922c7b9ca7462",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/BitArray.php",
+      "source_sha256": "b9a71976ddad1bd685220362baaadfd4c082619eddc09e9b5235dad908a3eaf9",
+      "crm_sha256": "b9a71976ddad1bd685220362baaadfd4c082619eddc09e9b5235dad908a3eaf9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/BitMatrix.php",
+      "source_sha256": "aa3b36d931d6da6ed452b657f8d598b8cc1e4796c685ad1c1d2b989f0d0db6ec",
+      "crm_sha256": "aa3b36d931d6da6ed452b657f8d598b8cc1e4796c685ad1c1d2b989f0d0db6ec",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/BitUtils.php",
+      "source_sha256": "a461d2b3eb45e14b54cba362fb7fbb910bc624d4ae332340a6a5a9644267a354",
+      "crm_sha256": "a461d2b3eb45e14b54cba362fb7fbb910bc624d4ae332340a6a5a9644267a354",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/CharacterSetEci.php",
+      "source_sha256": "fd9465a40872699c7fc8ac4dd0ebb40a5a9bd1b7b7618794755cf485b06d9ce4",
+      "crm_sha256": "fd9465a40872699c7fc8ac4dd0ebb40a5a9bd1b7b7618794755cf485b06d9ce4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/EcBlock.php",
+      "source_sha256": "4aad2525cbf8329d9d5029b0d5c57c4edeba44e50b0c5a7d5b7705ae1cad7a4d",
+      "crm_sha256": "4aad2525cbf8329d9d5029b0d5c57c4edeba44e50b0c5a7d5b7705ae1cad7a4d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/EcBlocks.php",
+      "source_sha256": "b6c802eb6360b6f97dcd2c5d90036a673678ae9751d28fe6246a7c29a1902bac",
+      "crm_sha256": "b6c802eb6360b6f97dcd2c5d90036a673678ae9751d28fe6246a7c29a1902bac",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/ErrorCorrectionLevel.php",
+      "source_sha256": "b2d5665585f00612801f02726a8e62575b3c4bd8a6058ef08e71cce123cdddb2",
+      "crm_sha256": "b2d5665585f00612801f02726a8e62575b3c4bd8a6058ef08e71cce123cdddb2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/FormatInformation.php",
+      "source_sha256": "8104bbcee9af16bc3e786b40c8f9d70f24efbeeee7090e9fa55ea3c73a4c8a1f",
+      "crm_sha256": "8104bbcee9af16bc3e786b40c8f9d70f24efbeeee7090e9fa55ea3c73a4c8a1f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/Mode.php",
+      "source_sha256": "92f161ed7dacf352f7dda6ed3cc3d43a30cd92879e727b8b0753978904a83a9a",
+      "crm_sha256": "92f161ed7dacf352f7dda6ed3cc3d43a30cd92879e727b8b0753978904a83a9a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/ReedSolomonCodec.php",
+      "source_sha256": "779785ad583b98b81700b48b95730143a0e6773b14177b826f9eb625e8e67837",
+      "crm_sha256": "779785ad583b98b81700b48b95730143a0e6773b14177b826f9eb625e8e67837",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Common/Version.php",
+      "source_sha256": "a3c97701f474a454c7186f45b9bd3dc1a161efc73ab340aa42b9e8fd94ea0d51",
+      "crm_sha256": "a3c97701f474a454c7186f45b9bd3dc1a161efc73ab340aa42b9e8fd94ea0d51",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/BlockPair.php",
+      "source_sha256": "c2c03a4e2cf405de61555712c2d6ff039d4b8929783ab2b6dff0a522e81bb333",
+      "crm_sha256": "c2c03a4e2cf405de61555712c2d6ff039d4b8929783ab2b6dff0a522e81bb333",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/ByteMatrix.php",
+      "source_sha256": "3565cb4e23da44e769a888d67ca3d5f92abbf6866be5c0d2d1af82e9fd47dcf4",
+      "crm_sha256": "3565cb4e23da44e769a888d67ca3d5f92abbf6866be5c0d2d1af82e9fd47dcf4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/Encoder.php",
+      "source_sha256": "89bb2beba25474ebe196fc0b2d81b8dadeaea4ce008c678a48d8e6e668f74d58",
+      "crm_sha256": "89bb2beba25474ebe196fc0b2d81b8dadeaea4ce008c678a48d8e6e668f74d58",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/MaskUtil.php",
+      "source_sha256": "ccbae354a4f0433ed030c35dfb68854c72e68b53f3c2452e7afe89753e9b11ca",
+      "crm_sha256": "ccbae354a4f0433ed030c35dfb68854c72e68b53f3c2452e7afe89753e9b11ca",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/MatrixUtil.php",
+      "source_sha256": "c5764dd1f44a57b918646e0039a2a82cedb80959ff23bc536e866e56356cf5da",
+      "crm_sha256": "c5764dd1f44a57b918646e0039a2a82cedb80959ff23bc536e866e56356cf5da",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Encoder/QrCode.php",
+      "source_sha256": "347fe94c75b0cccc86a38c371cc939072ad30bcc2b8f02872b357670ad75283f",
+      "crm_sha256": "347fe94c75b0cccc86a38c371cc939072ad30bcc2b8f02872b357670ad75283f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/ExceptionInterface.php",
+      "source_sha256": "c834a85c399d71e0a24f3f917f6bbc587d79aed093523ab61d7dab88d14c1fbd",
+      "crm_sha256": "c834a85c399d71e0a24f3f917f6bbc587d79aed093523ab61d7dab88d14c1fbd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/InvalidArgumentException.php",
+      "source_sha256": "ff8d83eee797fecd35bc1735cf1c4484ca3aaaf3504e929834f2f7d9749b55e6",
+      "crm_sha256": "ff8d83eee797fecd35bc1735cf1c4484ca3aaaf3504e929834f2f7d9749b55e6",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/OutOfBoundsException.php",
+      "source_sha256": "c0eeb51ad8b504ce7cac32554ce234d9757335e41fd913d65eca391088de3b91",
+      "crm_sha256": "c0eeb51ad8b504ce7cac32554ce234d9757335e41fd913d65eca391088de3b91",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/RuntimeException.php",
+      "source_sha256": "8eeb51e804157983990fdfe1e131a17876c56bb3474f8e72b97afae40bcfcb01",
+      "crm_sha256": "8eeb51e804157983990fdfe1e131a17876c56bb3474f8e72b97afae40bcfcb01",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/UnexpectedValueException.php",
+      "source_sha256": "e8e1c50b55259a6f2080480d045084949b1b8a3638f584a4d83d4a5161bfa15b",
+      "crm_sha256": "e8e1c50b55259a6f2080480d045084949b1b8a3638f584a4d83d4a5161bfa15b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Exception/WriterException.php",
+      "source_sha256": "76f2109c2cbaa518c40f04c4379247391aa277048e7a715a6cd2d982ddeea32a",
+      "crm_sha256": "76f2109c2cbaa518c40f04c4379247391aa277048e7a715a6cd2d982ddeea32a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Color/Alpha.php",
+      "source_sha256": "33bd0ebfaa060b4991f5582f4b006a607719a9339dab61f492fb6b120a1786a9",
+      "crm_sha256": "33bd0ebfaa060b4991f5582f4b006a607719a9339dab61f492fb6b120a1786a9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Color/Cmyk.php",
+      "source_sha256": "847c5e453651dd96d86e1e0e9d2ed60110022c19e7ab7b563bab87a95d5bf508",
+      "crm_sha256": "847c5e453651dd96d86e1e0e9d2ed60110022c19e7ab7b563bab87a95d5bf508",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Color/ColorInterface.php",
+      "source_sha256": "6e61824b404db2cd01bf6e0f9e89b9871ec7253d40576ae7159ea637aaaba04d",
+      "crm_sha256": "6e61824b404db2cd01bf6e0f9e89b9871ec7253d40576ae7159ea637aaaba04d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Color/Gray.php",
+      "source_sha256": "904c0a1fd4ea931188db43c9e412218234ba702c9ad35284fa25fc800faff0a7",
+      "crm_sha256": "904c0a1fd4ea931188db43c9e412218234ba702c9ad35284fa25fc800faff0a7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Color/Rgb.php",
+      "source_sha256": "b5acd9bce3071809818995473ed0c816a7188f3f83a460ee976c264d06a72fd1",
+      "crm_sha256": "b5acd9bce3071809818995473ed0c816a7188f3f83a460ee976c264d06a72fd1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/CompositeEye.php",
+      "source_sha256": "5c88e9a6d2db31a0cb91182cbcb22f824e4be60139ef834bcf5d58191d01935c",
+      "crm_sha256": "5c88e9a6d2db31a0cb91182cbcb22f824e4be60139ef834bcf5d58191d01935c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/EyeInterface.php",
+      "source_sha256": "acb3b17678c4f99b9de6c1ce8632431bd773554a4c6ade86c29a52bddf783fa2",
+      "crm_sha256": "acb3b17678c4f99b9de6c1ce8632431bd773554a4c6ade86c29a52bddf783fa2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/ModuleEye.php",
+      "source_sha256": "44436985af9b5fb3c6f6b57eef60383f22bea2233ad6baac21ea826bbf64ec15",
+      "crm_sha256": "44436985af9b5fb3c6f6b57eef60383f22bea2233ad6baac21ea826bbf64ec15",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/PointyEye.php",
+      "source_sha256": "3e8a735e0fa473a1a5ac386c9d5866e244c1bcfeeb10f812345173590959c3c4",
+      "crm_sha256": "3e8a735e0fa473a1a5ac386c9d5866e244c1bcfeeb10f812345173590959c3c4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/SimpleCircleEye.php",
+      "source_sha256": "5eaca1de9a0c3a6642768490a134dd9870702107b01d8a623c8c9cf9cc4aaaca",
+      "crm_sha256": "5eaca1de9a0c3a6642768490a134dd9870702107b01d8a623c8c9cf9cc4aaaca",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Eye/SquareEye.php",
+      "source_sha256": "b4a9d7f48ada373bff0137717dd34524bc82907c6c56ee9501d2709c1e3c4450",
+      "crm_sha256": "b4a9d7f48ada373bff0137717dd34524bc82907c6c56ee9501d2709c1e3c4450",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/GDLibRenderer.php",
+      "source_sha256": "98969481235e2df682491c3c3413c31376453aa01f5fc0acf89f41932dd8a6b5",
+      "crm_sha256": "98969481235e2df682491c3c3413c31376453aa01f5fc0acf89f41932dd8a6b5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Image/EpsImageBackEnd.php",
+      "source_sha256": "40ce9982f506daddd6bce63fd16b07a8ca0b4a8d2f2b5e9c60bf07f97fda3fbe",
+      "crm_sha256": "40ce9982f506daddd6bce63fd16b07a8ca0b4a8d2f2b5e9c60bf07f97fda3fbe",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Image/ImageBackEndInterface.php",
+      "source_sha256": "c9b026d3498ae283fd3f6c255f350835f2c017a6bacd0211b2142893dfd210fa",
+      "crm_sha256": "c9b026d3498ae283fd3f6c255f350835f2c017a6bacd0211b2142893dfd210fa",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Image/ImagickImageBackEnd.php",
+      "source_sha256": "1f4ad6c044918fd2186d237697fdf63cd3aadd18a9297f1579142ccef7241d7c",
+      "crm_sha256": "1f4ad6c044918fd2186d237697fdf63cd3aadd18a9297f1579142ccef7241d7c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Image/SvgImageBackEnd.php",
+      "source_sha256": "9069af534999acdd649cad87e06a57cf2b3413ea607cc574dee3affef852b5e7",
+      "crm_sha256": "9069af534999acdd649cad87e06a57cf2b3413ea607cc574dee3affef852b5e7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Image/TransformationMatrix.php",
+      "source_sha256": "521e20fcaa6c8ce9550705e894205754c2ec76ee0c3329c3df4ca27779019524",
+      "crm_sha256": "521e20fcaa6c8ce9550705e894205754c2ec76ee0c3329c3df4ca27779019524",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/ImageRenderer.php",
+      "source_sha256": "d5badf3f1688171b9d89eb896016a18d5d16e8a073153cf4cfeab56cad9d0766",
+      "crm_sha256": "d5badf3f1688171b9d89eb896016a18d5d16e8a073153cf4cfeab56cad9d0766",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/DotsModule.php",
+      "source_sha256": "f9b85b0f3f5391c12bc4f93a65e864bec222b3bbb687632a1c2e66d9989a1a69",
+      "crm_sha256": "f9b85b0f3f5391c12bc4f93a65e864bec222b3bbb687632a1c2e66d9989a1a69",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/EdgeIterator/Edge.php",
+      "source_sha256": "f546451adb0671d2c781957c4fe9c47e150fa7d8f0d8d80d0559633cd830c29a",
+      "crm_sha256": "f546451adb0671d2c781957c4fe9c47e150fa7d8f0d8d80d0559633cd830c29a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/EdgeIterator/EdgeIterator.php",
+      "source_sha256": "b04654ecc48e0eb2c0da1a4e57e7098129906cef74cd715a98e59ca8e08840a0",
+      "crm_sha256": "b04654ecc48e0eb2c0da1a4e57e7098129906cef74cd715a98e59ca8e08840a0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/ModuleInterface.php",
+      "source_sha256": "c643acaf6b2e5ce50194cacf61cff18a3b5d37513ed06e4816074ef989053eb3",
+      "crm_sha256": "c643acaf6b2e5ce50194cacf61cff18a3b5d37513ed06e4816074ef989053eb3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/RoundnessModule.php",
+      "source_sha256": "84ef74b3e06c025bc144010ab2208d8986de74c683752138b9a6fe151fad50a6",
+      "crm_sha256": "84ef74b3e06c025bc144010ab2208d8986de74c683752138b9a6fe151fad50a6",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Module/SquareModule.php",
+      "source_sha256": "f52f335872d741c1adf19c0b1c826a37342dd7739c06ee1a277a6fec883d39a8",
+      "crm_sha256": "f52f335872d741c1adf19c0b1c826a37342dd7739c06ee1a277a6fec883d39a8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/Close.php",
+      "source_sha256": "71cc07b11a3567f28e288d49ff75237b8cf72e854b842cd847154802e15075f9",
+      "crm_sha256": "71cc07b11a3567f28e288d49ff75237b8cf72e854b842cd847154802e15075f9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/Curve.php",
+      "source_sha256": "7bae782b56b9fb3493484861d10dfa895d4dd89ab40f06872d7c23a89b2d99ef",
+      "crm_sha256": "7bae782b56b9fb3493484861d10dfa895d4dd89ab40f06872d7c23a89b2d99ef",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/EllipticArc.php",
+      "source_sha256": "dc4cb757304746fef0d5276f603b9e8b764af1cdf655a1cc4c7d110d11159abb",
+      "crm_sha256": "dc4cb757304746fef0d5276f603b9e8b764af1cdf655a1cc4c7d110d11159abb",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/Line.php",
+      "source_sha256": "db77e473da6827822d4f914d34218210ca031c50238911d606d58ae426a29910",
+      "crm_sha256": "db77e473da6827822d4f914d34218210ca031c50238911d606d58ae426a29910",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/Move.php",
+      "source_sha256": "e424dcde680170c40f622b011ba2c6b17585c11007e9ea25f41ba6c2ed51af44",
+      "crm_sha256": "e424dcde680170c40f622b011ba2c6b17585c11007e9ea25f41ba6c2ed51af44",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/OperationInterface.php",
+      "source_sha256": "0b41de0dadc8d189b3419f357503947f37f6a6951963272fba714dddca204c42",
+      "crm_sha256": "0b41de0dadc8d189b3419f357503947f37f6a6951963272fba714dddca204c42",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/Path/Path.php",
+      "source_sha256": "785d89f9cce10def715e7743fdf8342339538d0b155cdf19dd7739da91361b41",
+      "crm_sha256": "785d89f9cce10def715e7743fdf8342339538d0b155cdf19dd7739da91361b41",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/PlainTextRenderer.php",
+      "source_sha256": "89b62d1ad13592f664bec50085cefa4a9980e8caf3c6641545cbab3f69c32944",
+      "crm_sha256": "89b62d1ad13592f664bec50085cefa4a9980e8caf3c6641545cbab3f69c32944",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererInterface.php",
+      "source_sha256": "4452c80c1c07d8c0a04e24f9144439d994ea939c8060fb05b723cf590c4406b0",
+      "crm_sha256": "4452c80c1c07d8c0a04e24f9144439d994ea939c8060fb05b723cf590c4406b0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererStyle/EyeFill.php",
+      "source_sha256": "ad2cf08557f5525d6ecb34de99ecc55ec8d89ebeb2a5387c20af157ba8e07552",
+      "crm_sha256": "ad2cf08557f5525d6ecb34de99ecc55ec8d89ebeb2a5387c20af157ba8e07552",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererStyle/Fill.php",
+      "source_sha256": "46d12cf210f4f9921a0542b96895b44e17398e8f3f8e239fbafa6a0ad177ffb1",
+      "crm_sha256": "46d12cf210f4f9921a0542b96895b44e17398e8f3f8e239fbafa6a0ad177ffb1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererStyle/Gradient.php",
+      "source_sha256": "2fa4d25ed8cc2be381744858dec1db04c076da72003451577c7cd9cf4df5a43b",
+      "crm_sha256": "2fa4d25ed8cc2be381744858dec1db04c076da72003451577c7cd9cf4df5a43b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererStyle/GradientType.php",
+      "source_sha256": "144a098f4f5e2a30b667b337788ad0b1c66bdcb44f5f973d736089bb6e9588d0",
+      "crm_sha256": "144a098f4f5e2a30b667b337788ad0b1c66bdcb44f5f973d736089bb6e9588d0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Renderer/RendererStyle/RendererStyle.php",
+      "source_sha256": "76884084da186d5f318f67f7eaf902bd594c2b2f6afaa752c78f46010a480369",
+      "crm_sha256": "76884084da186d5f318f67f7eaf902bd594c2b2f6afaa752c78f46010a480369",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/bacon/bacon-qr-code/src/Writer.php",
+      "source_sha256": "b3f968284dafcb6b010287028eacca7f4e39a7c0d2e7852309596fa9121fbeb0",
+      "crm_sha256": "b3f968284dafcb6b010287028eacca7f4e39a7c0d2e7852309596fa9121fbeb0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/ClassLoader.php",
+      "source_sha256": "d4b2313e562edf942838ec316d983c1a3459ca67da3e5658e861200b0b3693c2",
+      "crm_sha256": "d4b2313e562edf942838ec316d983c1a3459ca67da3e5658e861200b0b3693c2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/InstalledVersions.php",
+      "source_sha256": "1e4525198301d1ed1f87ac3df2a8555a6f139f8df30a703d0b775a61963c96e4",
+      "crm_sha256": "1e4525198301d1ed1f87ac3df2a8555a6f139f8df30a703d0b775a61963c96e4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/LICENSE",
+      "source_sha256": "c8cce4b6b9729f264ffdf9296d505d63432497feeed1f586d1902b942197e024",
+      "crm_sha256": "c8cce4b6b9729f264ffdf9296d505d63432497feeed1f586d1902b942197e024",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/autoload_classmap.php",
+      "source_sha256": "8ab5b3964ef9838ae2d49b178582c004bf389d243e60f40cf8908baaea2386c3",
+      "crm_sha256": "2a66d6ea779956550ba13b0c048cc6b65257cb69b7e91f05949c2700e5161d57",
+      "status": "different"
+    },
+    {
+      "path": "vendor/composer/autoload_files.php",
+      "source_sha256": "b21ff2721c847de7bf5cc5a73f26af740ba9bb2168d4e9f369e52ae7ca26e6fb",
+      "crm_sha256": "b21ff2721c847de7bf5cc5a73f26af740ba9bb2168d4e9f369e52ae7ca26e6fb",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/autoload_namespaces.php",
+      "source_sha256": "ede505407590638a435137f4e060136f1008de79fc169b3de9793423b0cea38c",
+      "crm_sha256": "ede505407590638a435137f4e060136f1008de79fc169b3de9793423b0cea38c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/autoload_psr4.php",
+      "source_sha256": "dee7c07fdb515cf5b310acbf0006ce119c188015fb6a1b82ae16bae63f438c0e",
+      "crm_sha256": "dee7c07fdb515cf5b310acbf0006ce119c188015fb6a1b82ae16bae63f438c0e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/autoload_real.php",
+      "source_sha256": "be2ac8852d11b7c13df26d8ead476ac3442675bda287e60d7776364609888ca9",
+      "crm_sha256": "be2ac8852d11b7c13df26d8ead476ac3442675bda287e60d7776364609888ca9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/composer/autoload_static.php",
+      "source_sha256": "0e08a8757004d165cb698bbe772dc2f0c87a51a0c2003f5eb59b38872a90c3cd",
+      "crm_sha256": "f78166ce0112cc9c87ef325c3b0d2741489e0c8e8b6522eb8fc53cca67de160d",
+      "status": "different"
+    },
+    {
+      "path": "vendor/composer/installed.json",
+      "source_sha256": "6645c422e2db29c915d7803c1a06ad6e31740e5e4fa21e94273912fadc36c911",
+      "crm_sha256": "4f8749399ea672c03478263c2607132c17c8d4c4460e17e4a56924f49712d339",
+      "status": "different"
+    },
+    {
+      "path": "vendor/composer/installed.php",
+      "source_sha256": "c419cd1d539064cc6ef6347ee614bd7a02586c685c6ab02cb2f28db6394654c0",
+      "crm_sha256": "7db2f735ee131d0c6729470b1c8dbe67ebfa2ed5041847a9ed2680e454210c33",
+      "status": "different"
+    },
+    {
+      "path": "vendor/composer/platform_check.php",
+      "source_sha256": "4d6b890ba90c7126c20b0afcf72acbdb4bb55808e0f2546059894224d056af39",
+      "crm_sha256": "4d6b890ba90c7126c20b0afcf72acbdb4bb55808e0f2546059894224d056af39",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/LICENSE",
+      "source_sha256": "6748d0268a176f839bfa1031724f9ce0963acbdadc71e503c2c3e9b59c8fcd68",
+      "crm_sha256": "6748d0268a176f839bfa1031724f9ce0963acbdadc71e503c2c3e9b59c8fcd68",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/README.md",
+      "source_sha256": "1bafc44d59b9d75e95ac0d52c72ca94d9d1129dda2761bf1922f9e235b30bedd",
+      "crm_sha256": "1bafc44d59b9d75e95ac0d52c72ca94d9d1129dda2761bf1922f9e235b30bedd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/composer.json",
+      "source_sha256": "806922540285ebc6013d9028bbefbfb3d9ab47260c1138fb0f01e38d9c1ec1df",
+      "crm_sha256": "806922540285ebc6013d9028bbefbfb3d9ab47260c1138fb0f01e38d9c1ec1df",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/AbstractEnum.php",
+      "source_sha256": "1c2d7baa5e2a9c9b9419ee6b1e49e5af35229c51ef9c77c489b087faaa6e0040",
+      "crm_sha256": "1c2d7baa5e2a9c9b9419ee6b1e49e5af35229c51ef9c77c489b087faaa6e0040",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/EnumMap.php",
+      "source_sha256": "449f605b743700e428551a7adcf50898d002a3839524982f27a52224fb456a73",
+      "crm_sha256": "449f605b743700e428551a7adcf50898d002a3839524982f27a52224fb456a73",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/CloneNotSupportedException.php",
+      "source_sha256": "a3c266842dcbc83fa57a7d4ba7314cd2c4e588d5f7e2734619b343b201f9a08e",
+      "crm_sha256": "a3c266842dcbc83fa57a7d4ba7314cd2c4e588d5f7e2734619b343b201f9a08e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/ExceptionInterface.php",
+      "source_sha256": "990c3de69010a72dc796c37d27c9ec3df312989e46332d3344e96810255e0359",
+      "crm_sha256": "990c3de69010a72dc796c37d27c9ec3df312989e46332d3344e96810255e0359",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/ExpectationException.php",
+      "source_sha256": "07874b69ba61b438a22a719d7718de7e2f17b1f7126ffbf92f56b5a5d2239d68",
+      "crm_sha256": "07874b69ba61b438a22a719d7718de7e2f17b1f7126ffbf92f56b5a5d2239d68",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/IllegalArgumentException.php",
+      "source_sha256": "f5523323e738118b46c621b04bebea3b779745fc1c4dc4318cc81d69832dbd41",
+      "crm_sha256": "f5523323e738118b46c621b04bebea3b779745fc1c4dc4318cc81d69832dbd41",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/MismatchException.php",
+      "source_sha256": "973256edaee9b540eb63a3901d82b53a4516f5eb2387062c16da29a797f03845",
+      "crm_sha256": "973256edaee9b540eb63a3901d82b53a4516f5eb2387062c16da29a797f03845",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/SerializeNotSupportedException.php",
+      "source_sha256": "d6072d330097ef643df673c5c40c51729a4fdbd0aa197980ba8d8d53efa11ba9",
+      "crm_sha256": "d6072d330097ef643df673c5c40c51729a4fdbd0aa197980ba8d8d53efa11ba9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/Exception/UnserializeNotSupportedException.php",
+      "source_sha256": "c0b225b1eab0b0cee0f11f473a7ff935697e55ad267a6eca27234585a2963c6e",
+      "crm_sha256": "c0b225b1eab0b0cee0f11f473a7ff935697e55ad267a6eca27234585a2963c6e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/dasprid/enum/src/NullValue.php",
+      "source_sha256": "c2e503fab5e76a21e5e6bf45954780a8759d0c6ae7d13ba09f0a7c3d37b0e838",
+      "crm_sha256": "c2e503fab5e76a21e5e6bf45954780a8759d0c6ae7d13ba09f0a7c3d37b0e838",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/LICENSE",
+      "source_sha256": "55f4a81e457beb2d868cf94bf664751491735d4a33d22506a6e71431a445a2a0",
+      "crm_sha256": "55f4a81e457beb2d868cf94bf664751491735d4a33d22506a6e71431a445a2a0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/README.md",
+      "source_sha256": "a87b3118ee55baa64f68b7e7881bd624356fe09f89875865e314c0dfe1594778",
+      "crm_sha256": "a87b3118ee55baa64f68b7e7881bd624356fe09f89875865e314c0dfe1594778",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/assets/noto_sans.otf",
+      "source_sha256": "f18253affd968c8ea592d8df6d84b1d4c5d3a46d267e53a1f6749e6c4f76a23d",
+      "crm_sha256": "f18253affd968c8ea592d8df6d84b1d4c5d3a46d267e53a1f6749e6c4f76a23d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/assets/open_sans.ttf",
+      "source_sha256": "e64e508b2aa2880f907e470c4550980ec4c0694d103a43f36150ac3f93189bee",
+      "crm_sha256": "e64e508b2aa2880f907e470c4550980ec4c0694d103a43f36150ac3f93189bee",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/composer.json",
+      "source_sha256": "bd74bbda4e34888f5a25d8e1ace720692b8321283c77d1caaa6078a5153173ac",
+      "crm_sha256": "bd74bbda4e34888f5a25d8e1ace720692b8321283c77d1caaa6078a5153173ac",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Bacon/ErrorCorrectionLevelConverter.php",
+      "source_sha256": "d749d3e2102aafa5a0e3c645c4b3e7f3d410cd1b76579b25b04220692c0f17ae",
+      "crm_sha256": "d749d3e2102aafa5a0e3c645c4b3e7f3d410cd1b76579b25b04220692c0f17ae",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Bacon/MatrixFactory.php",
+      "source_sha256": "2ea23cadaad74995c34d5142165f6e70daf300bb7b7024296e250da3400ebd18",
+      "crm_sha256": "2ea23cadaad74995c34d5142165f6e70daf300bb7b7024296e250da3400ebd18",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Builder/Builder.php",
+      "source_sha256": "2101f97ff9bb0a79f8a39b570586d9c7a3d17d1c9190d91b9cf6775f5f39d530",
+      "crm_sha256": "2101f97ff9bb0a79f8a39b570586d9c7a3d17d1c9190d91b9cf6775f5f39d530",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Builder/BuilderInterface.php",
+      "source_sha256": "92afd839f6734a156feb7a1acceed8880f77452230750735b698e18499e11035",
+      "crm_sha256": "92afd839f6734a156feb7a1acceed8880f77452230750735b698e18499e11035",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Builder/BuilderRegistry.php",
+      "source_sha256": "561cc5c5e1e8d7f542c84cc417b1d07fcaeef4566266003eed4f95064e08f559",
+      "crm_sha256": "561cc5c5e1e8d7f542c84cc417b1d07fcaeef4566266003eed4f95064e08f559",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Builder/BuilderRegistryInterface.php",
+      "source_sha256": "357cc6ddc43bdb1ca585d9512557da639b57918808564b8ad4678d27e3519ac3",
+      "crm_sha256": "357cc6ddc43bdb1ca585d9512557da639b57918808564b8ad4678d27e3519ac3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Color/Color.php",
+      "source_sha256": "c7adfe108be40bf342a4a4003e7c4bc73c9e892a0d01e767c4f847aeb3216dec",
+      "crm_sha256": "c7adfe108be40bf342a4a4003e7c4bc73c9e892a0d01e767c4f847aeb3216dec",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Color/ColorInterface.php",
+      "source_sha256": "f0b4410936c4fc1e456bad35b1162d19d8ec2775e608c1ba1592f97974cd2684",
+      "crm_sha256": "f0b4410936c4fc1e456bad35b1162d19d8ec2775e608c1ba1592f97974cd2684",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Encoding/Encoding.php",
+      "source_sha256": "01db8b6ee24d9c3a3b7ad48e44c400bb2b0b6bc3667e249ea6984a67ef4734f8",
+      "crm_sha256": "01db8b6ee24d9c3a3b7ad48e44c400bb2b0b6bc3667e249ea6984a67ef4734f8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Encoding/EncodingInterface.php",
+      "source_sha256": "5344c1b8492b9a11c53ca3e870c0a2fc94e8a64d1545367dcac433d01c68940f",
+      "crm_sha256": "5344c1b8492b9a11c53ca3e870c0a2fc94e8a64d1545367dcac433d01c68940f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/ErrorCorrectionLevel.php",
+      "source_sha256": "a9c23bf3633f33ddd4800350e86e0d435f517920861b6c19518b5b8b51d81be0",
+      "crm_sha256": "a9c23bf3633f33ddd4800350e86e0d435f517920861b6c19518b5b8b51d81be0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Exception/ValidationException.php",
+      "source_sha256": "fce876fc77814b33015e317c57d3beca6cfb0adf2bb39232dde1d8cd09984aee",
+      "crm_sha256": "fce876fc77814b33015e317c57d3beca6cfb0adf2bb39232dde1d8cd09984aee",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/ImageData/LabelImageData.php",
+      "source_sha256": "4f6a04b088c5ddb85cbf58d158fd54670bdc68e5f276e79106fd45decd9c13ee",
+      "crm_sha256": "4f6a04b088c5ddb85cbf58d158fd54670bdc68e5f276e79106fd45decd9c13ee",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/ImageData/LogoImageData.php",
+      "source_sha256": "42a1672751646196a9c4c42ff11c56eeb07481965130ec15df7a14bab0d673ef",
+      "crm_sha256": "42a1672751646196a9c4c42ff11c56eeb07481965130ec15df7a14bab0d673ef",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Font/Font.php",
+      "source_sha256": "d22ace3d84aeb962d91b7492fd9f413295ce1eeea675cc19a2ce7232fdee4dff",
+      "crm_sha256": "d22ace3d84aeb962d91b7492fd9f413295ce1eeea675cc19a2ce7232fdee4dff",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Font/FontInterface.php",
+      "source_sha256": "248ac2e9aaacdc6a41bcd3175935192b8e78b6ebacf6d7ff8cbccd7cb434a863",
+      "crm_sha256": "248ac2e9aaacdc6a41bcd3175935192b8e78b6ebacf6d7ff8cbccd7cb434a863",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Font/NotoSans.php",
+      "source_sha256": "28fb08d872e96f771694234d0d7190308adc3f5f5ff32003584a074006e5db7a",
+      "crm_sha256": "28fb08d872e96f771694234d0d7190308adc3f5f5ff32003584a074006e5db7a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Font/OpenSans.php",
+      "source_sha256": "6a0f11256248c75ec26586035f043f489c83d3878dd3a27453e7d86594790500",
+      "crm_sha256": "6a0f11256248c75ec26586035f043f489c83d3878dd3a27453e7d86594790500",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Label.php",
+      "source_sha256": "a01c10c267a7c3c95202d77f13464ff12b360027de0c7dbed775b847651bb856",
+      "crm_sha256": "a01c10c267a7c3c95202d77f13464ff12b360027de0c7dbed775b847651bb856",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/LabelAlignment.php",
+      "source_sha256": "f86e9247a34362d6f886dc42e9b146980b8d0a745186369f251f548a88140eb4",
+      "crm_sha256": "f86e9247a34362d6f886dc42e9b146980b8d0a745186369f251f548a88140eb4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/LabelInterface.php",
+      "source_sha256": "33f8cf5127f88ee67da801db0c5b175bb07fdce9f54b59a452417eb6064c4fde",
+      "crm_sha256": "33f8cf5127f88ee67da801db0c5b175bb07fdce9f54b59a452417eb6064c4fde",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Margin/Margin.php",
+      "source_sha256": "c92aa061ae2764ab71fb39cb96aab99201fa4544c9cceaf3e3d851865db331f0",
+      "crm_sha256": "c92aa061ae2764ab71fb39cb96aab99201fa4544c9cceaf3e3d851865db331f0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Label/Margin/MarginInterface.php",
+      "source_sha256": "2b8166074990d3c466d27ea6e9f522ce7a775f0b27ca866aed3cb59204c8de1c",
+      "crm_sha256": "2b8166074990d3c466d27ea6e9f522ce7a775f0b27ca866aed3cb59204c8de1c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Logo/Logo.php",
+      "source_sha256": "95fb1ed0edbdc5bdbc92c57409fd8fba3ec406dc9176055245817756701c1100",
+      "crm_sha256": "95fb1ed0edbdc5bdbc92c57409fd8fba3ec406dc9176055245817756701c1100",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Logo/LogoInterface.php",
+      "source_sha256": "85f516f34bf9c4a87a63de79ef29b4997148077fe88ae8a7c49625ad98d65aaa",
+      "crm_sha256": "85f516f34bf9c4a87a63de79ef29b4997148077fe88ae8a7c49625ad98d65aaa",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Matrix/Matrix.php",
+      "source_sha256": "d1d73ee570a166f99265ecc74a5446215821419ec66fdc85b18f43ecd0f9ee72",
+      "crm_sha256": "d1d73ee570a166f99265ecc74a5446215821419ec66fdc85b18f43ecd0f9ee72",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Matrix/MatrixFactoryInterface.php",
+      "source_sha256": "47f355b7e917937fba75282ac2a68fbe12d83e836e5968a7bbd168b8a160142d",
+      "crm_sha256": "47f355b7e917937fba75282ac2a68fbe12d83e836e5968a7bbd168b8a160142d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Matrix/MatrixInterface.php",
+      "source_sha256": "836fd14fa8716882d54b474cab229534c0b646fe375769e2308a2685740f92b8",
+      "crm_sha256": "836fd14fa8716882d54b474cab229534c0b646fe375769e2308a2685740f92b8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/QrCode.php",
+      "source_sha256": "367d0fc6958a3d87dab5afe9f1eb92c52178850a05a6de451302441ea88d5e7a",
+      "crm_sha256": "367d0fc6958a3d87dab5afe9f1eb92c52178850a05a6de451302441ea88d5e7a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/QrCodeInterface.php",
+      "source_sha256": "9385bcd7b9d24ad73f04205dfc72b77006412a59c10ed0325b7db5d9a987f8fd",
+      "crm_sha256": "9385bcd7b9d24ad73f04205dfc72b77006412a59c10ed0325b7db5d9a987f8fd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/RoundBlockSizeMode.php",
+      "source_sha256": "6f98e0dbf8cb5f49aa4adc668d3908a8df32b49d62d743dbe7f9fd94c9230182",
+      "crm_sha256": "6f98e0dbf8cb5f49aa4adc668d3908a8df32b49d62d743dbe7f9fd94c9230182",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/AbstractGdWriter.php",
+      "source_sha256": "062d84a8acc4064a7e88d4cce73d05395c2098bb6a9d8a298b5f43ee873d240c",
+      "crm_sha256": "062d84a8acc4064a7e88d4cce73d05395c2098bb6a9d8a298b5f43ee873d240c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/BinaryWriter.php",
+      "source_sha256": "d64688411cedf71d8de07de7bb3f5d8ee6c3cef438b48e4374fb4ac33191685f",
+      "crm_sha256": "d64688411cedf71d8de07de7bb3f5d8ee6c3cef438b48e4374fb4ac33191685f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/ConsoleWriter.php",
+      "source_sha256": "211447a1c846113b9ea45e794c302dc5ea4c71bdeb7ed8fe85f1efc5a90a099f",
+      "crm_sha256": "211447a1c846113b9ea45e794c302dc5ea4c71bdeb7ed8fe85f1efc5a90a099f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/DebugWriter.php",
+      "source_sha256": "f096445f1a63fd2acd9366272a419bfb939edacc5a99677e688136646bf22668",
+      "crm_sha256": "f096445f1a63fd2acd9366272a419bfb939edacc5a99677e688136646bf22668",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/EpsWriter.php",
+      "source_sha256": "51e9304cf7600572e2ae882045d84ee9086a436bf212a60b9c196abf50f7f86d",
+      "crm_sha256": "51e9304cf7600572e2ae882045d84ee9086a436bf212a60b9c196abf50f7f86d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/GifWriter.php",
+      "source_sha256": "6924d1cc0c19e0b92b6a200db44dc1d773dc782963c928af534bd8eb111b9aa9",
+      "crm_sha256": "6924d1cc0c19e0b92b6a200db44dc1d773dc782963c928af534bd8eb111b9aa9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/PdfWriter.php",
+      "source_sha256": "348175f4a8bbb80f6f1c3b1d97f6da38b06276d54b6699dd6fe67c8476389f69",
+      "crm_sha256": "348175f4a8bbb80f6f1c3b1d97f6da38b06276d54b6699dd6fe67c8476389f69",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/PngWriter.php",
+      "source_sha256": "deea79d93147ed58f1fade4c5a752ddd9b0115aefeb91831f078de0b822a42c6",
+      "crm_sha256": "deea79d93147ed58f1fade4c5a752ddd9b0115aefeb91831f078de0b822a42c6",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/AbstractResult.php",
+      "source_sha256": "5c93a0f10118234371ed709987f7612946875ead11a8a1f90a0f33a92c42c76a",
+      "crm_sha256": "5c93a0f10118234371ed709987f7612946875ead11a8a1f90a0f33a92c42c76a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/BinaryResult.php",
+      "source_sha256": "d2f392314a1b45c2dce5c6e8d4dfff735d32c93f45c2f9c667545657ca80f0d3",
+      "crm_sha256": "d2f392314a1b45c2dce5c6e8d4dfff735d32c93f45c2f9c667545657ca80f0d3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/ConsoleResult.php",
+      "source_sha256": "39aa8eae67cc7b491598451ee442e3e72ec1d151a2ec255718898cf964d52625",
+      "crm_sha256": "39aa8eae67cc7b491598451ee442e3e72ec1d151a2ec255718898cf964d52625",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/DebugResult.php",
+      "source_sha256": "3211c1ef2b7d7b8a855c0412e58cd194e3c9087447ed54889653ecfc79c2da14",
+      "crm_sha256": "3211c1ef2b7d7b8a855c0412e58cd194e3c9087447ed54889653ecfc79c2da14",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/EpsResult.php",
+      "source_sha256": "f1dfe6552f6beda42eba87c3705639f7be06f468421605d419035f6d24e770c5",
+      "crm_sha256": "f1dfe6552f6beda42eba87c3705639f7be06f468421605d419035f6d24e770c5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/GdResult.php",
+      "source_sha256": "1928c988f96814ba4a0f5e097d9f3dd572f321861d2a846a720b0a8a5b4649c1",
+      "crm_sha256": "1928c988f96814ba4a0f5e097d9f3dd572f321861d2a846a720b0a8a5b4649c1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/GifResult.php",
+      "source_sha256": "8f601e6736f8d9e12a049d8206972fcb96811969c2e23bee5f8b83bc597089c4",
+      "crm_sha256": "8f601e6736f8d9e12a049d8206972fcb96811969c2e23bee5f8b83bc597089c4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/PdfResult.php",
+      "source_sha256": "517018e8d29d2ed4e268aa6c5180104c40f4d2125cc50f91b792267fc76d3526",
+      "crm_sha256": "517018e8d29d2ed4e268aa6c5180104c40f4d2125cc50f91b792267fc76d3526",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/PngResult.php",
+      "source_sha256": "77d6a1af6f2ef6937b3a966ad7580c48aa1272f44ade1beb7fe1348be19094ff",
+      "crm_sha256": "77d6a1af6f2ef6937b3a966ad7580c48aa1272f44ade1beb7fe1348be19094ff",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/ResultInterface.php",
+      "source_sha256": "55b120349bbaaee27ee5d715a56cf00a8e4f8c226fb7dae3aa67cf17eb183c30",
+      "crm_sha256": "55b120349bbaaee27ee5d715a56cf00a8e4f8c226fb7dae3aa67cf17eb183c30",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/SvgResult.php",
+      "source_sha256": "8caabb36b6d6abdf38de7071c13ff3c1a7a796a9f5abc4d25d269bdd7d537309",
+      "crm_sha256": "8caabb36b6d6abdf38de7071c13ff3c1a7a796a9f5abc4d25d269bdd7d537309",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/Result/WebPResult.php",
+      "source_sha256": "2938b36b7546ddca14907eb9b78a012221b845dbdbcc482dbf3c3fea1dba43d1",
+      "crm_sha256": "2938b36b7546ddca14907eb9b78a012221b845dbdbcc482dbf3c3fea1dba43d1",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/SvgWriter.php",
+      "source_sha256": "b5c51ed4f43eac8ed2d47cdc462738fc3a6ee6aa0f04a49a423547631f284d8d",
+      "crm_sha256": "b5c51ed4f43eac8ed2d47cdc462738fc3a6ee6aa0f04a49a423547631f284d8d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/ValidatingWriterInterface.php",
+      "source_sha256": "234822d50e3577a204390a607059963fb66b88b30e8e3e4c498913866b0188f9",
+      "crm_sha256": "234822d50e3577a204390a607059963fb66b88b30e8e3e4c498913866b0188f9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/WebPWriter.php",
+      "source_sha256": "39e7ce432f3c1fb2af83019185fa48f7af71818d74f1284ce7fd0aa13c15a9c2",
+      "crm_sha256": "39e7ce432f3c1fb2af83019185fa48f7af71818d74f1284ce7fd0aa13c15a9c2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/endroid/qr-code/src/Writer/WriterInterface.php",
+      "source_sha256": "7b030a3b109b8b0cb237df68b2d91ef0851d238fd892faf544974fc1d721dc79",
+      "crm_sha256": "7b030a3b109b8b0cb237df68b2d91ef0851d238fd892faf544974fc1d721dc79",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/CHANGELOG.md",
+      "source_sha256": "5979e30bf38698014365cdda342cf011082d36e50cd4ac6a76cb64483b86c662",
+      "crm_sha256": "5979e30bf38698014365cdda342cf011082d36e50cd4ac6a76cb64483b86c662",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/LICENSE",
+      "source_sha256": "1090e16630dfd10d5f79be2fb68c4f2f0b168cc34fae57eca7150f735078332d",
+      "crm_sha256": "1090e16630dfd10d5f79be2fb68c4f2f0b168cc34fae57eca7150f735078332d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/README.md",
+      "source_sha256": "46012620bed7a9b0e3eb569bef9de1e856ca063720c1ff0340b45ba89076e325",
+      "crm_sha256": "46012620bed7a9b0e3eb569bef9de1e856ca063720c1ff0340b45ba89076e325",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/UPGRADING.md",
+      "source_sha256": "e118080d7dde5276e9416bb94a6d75d08b6b2dcf2f76d6ae9090da7c020c2254",
+      "crm_sha256": "e118080d7dde5276e9416bb94a6d75d08b6b2dcf2f76d6ae9090da7c020c2254",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/composer.json",
+      "source_sha256": "103882ccac9d012530cac788ef90d2c4fc7585a7cb222edb8a702d079461e82f",
+      "crm_sha256": "103882ccac9d012530cac788ef90d2c4fc7585a7cb222edb8a702d079461e82f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/package-lock.json",
+      "source_sha256": "ba297e81df136f863380a3cb766861bb84776dbb7dad09644c5ed65929f57413",
+      "crm_sha256": "ba297e81df136f863380a3cb766861bb84776dbb7dad09644c5ed65929f57413",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/BodySummarizer.php",
+      "source_sha256": "b0556781ec02a08e8e5cf4dbb6c3a5a4ca6031b9538def0e5225848b54e2766c",
+      "crm_sha256": "b0556781ec02a08e8e5cf4dbb6c3a5a4ca6031b9538def0e5225848b54e2766c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/BodySummarizerInterface.php",
+      "source_sha256": "8c12d0a10e28d8a53edda57d0eae65ca28e0bddd8627b7dae0999edeb12966ca",
+      "crm_sha256": "8c12d0a10e28d8a53edda57d0eae65ca28e0bddd8627b7dae0999edeb12966ca",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Client.php",
+      "source_sha256": "01d769df8eda4e26bfca70ac1e774a2641ccb2dd82519f1dcd3d73a531da7a7a",
+      "crm_sha256": "01d769df8eda4e26bfca70ac1e774a2641ccb2dd82519f1dcd3d73a531da7a7a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/ClientInterface.php",
+      "source_sha256": "94f2371df4dcb959a71492fa36c7fe2d48605bfed3762060e48b0d2942704c99",
+      "crm_sha256": "94f2371df4dcb959a71492fa36c7fe2d48605bfed3762060e48b0d2942704c99",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/ClientTrait.php",
+      "source_sha256": "b4d3a5d74b928d3b133cab16a5ee0fb94f399748c5d1d866758e47e7516c8eec",
+      "crm_sha256": "b4d3a5d74b928d3b133cab16a5ee0fb94f399748c5d1d866758e47e7516c8eec",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJar.php",
+      "source_sha256": "858df28580d1ed0e96692dad0b87019a3d03bc1c4ffacd3ffff0bd057c528720",
+      "crm_sha256": "858df28580d1ed0e96692dad0b87019a3d03bc1c4ffacd3ffff0bd057c528720",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJarInterface.php",
+      "source_sha256": "964a92251ab53a5375a35644bd291ab434bdd646e30469c792b5f7925caebd54",
+      "crm_sha256": "964a92251ab53a5375a35644bd291ab434bdd646e30469c792b5f7925caebd54",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Cookie/FileCookieJar.php",
+      "source_sha256": "d5af41fa17385bf3f57049d3063e8d4028a9fcebb18df62487fc19bcab50fe30",
+      "crm_sha256": "d5af41fa17385bf3f57049d3063e8d4028a9fcebb18df62487fc19bcab50fe30",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Cookie/SessionCookieJar.php",
+      "source_sha256": "4cd07219acba0d11dabf200041029e032c0cc4a105ab9f54f1a91a4eb866826b",
+      "crm_sha256": "4cd07219acba0d11dabf200041029e032c0cc4a105ab9f54f1a91a4eb866826b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Cookie/SetCookie.php",
+      "source_sha256": "3cd16750fdfd6e56d70e7df6c5b3d851b8a9ab4a25ed603c155fd32b0257a0d2",
+      "crm_sha256": "3cd16750fdfd6e56d70e7df6c5b3d851b8a9ab4a25ed603c155fd32b0257a0d2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/BadResponseException.php",
+      "source_sha256": "a4a65f27a55d1fbbda5bf096ea0c3bb8475aca67e46af90ea4e4cf802f3f9361",
+      "crm_sha256": "a4a65f27a55d1fbbda5bf096ea0c3bb8475aca67e46af90ea4e4cf802f3f9361",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/ClientException.php",
+      "source_sha256": "fac9e27b986d65020881e7fd588d38a0722f6c44ee4e59b194852421fccf7181",
+      "crm_sha256": "fac9e27b986d65020881e7fd588d38a0722f6c44ee4e59b194852421fccf7181",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/ConnectException.php",
+      "source_sha256": "1fb8b465251b1a3a6e43f2d151c35fb8960b13c09897e8a644a5f1988127cab2",
+      "crm_sha256": "1fb8b465251b1a3a6e43f2d151c35fb8960b13c09897e8a644a5f1988127cab2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/GuzzleException.php",
+      "source_sha256": "96256c6e7e80da624b76a0d4a36b9012516a6901eda34a122e4be0781c7caacf",
+      "crm_sha256": "96256c6e7e80da624b76a0d4a36b9012516a6901eda34a122e4be0781c7caacf",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/InvalidArgumentException.php",
+      "source_sha256": "0b1e7f68dad880cb3ca174c77c4d99ce9a79ae03ef4eb1323650a45df7d6701f",
+      "crm_sha256": "0b1e7f68dad880cb3ca174c77c4d99ce9a79ae03ef4eb1323650a45df7d6701f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/RequestException.php",
+      "source_sha256": "b5c3a83a6b90a060237b4fe196367c6d6da65140d03d44079d5d26e155130210",
+      "crm_sha256": "b5c3a83a6b90a060237b4fe196367c6d6da65140d03d44079d5d26e155130210",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/ServerException.php",
+      "source_sha256": "3081ac56d7c6c2a9e9cefe12b849b2a23f50174a74d203aeaed0a0ca3293d6fd",
+      "crm_sha256": "3081ac56d7c6c2a9e9cefe12b849b2a23f50174a74d203aeaed0a0ca3293d6fd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/TooManyRedirectsException.php",
+      "source_sha256": "9febbce2d104c65da0d3dc697ccb881049ba3b3b1e0bb1274d6e7a89b6dd5b9c",
+      "crm_sha256": "9febbce2d104c65da0d3dc697ccb881049ba3b3b1e0bb1274d6e7a89b6dd5b9c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Exception/TransferException.php",
+      "source_sha256": "67fbfd5194b7486da3b46ae4e79d7114e13101c9b7c0341ecbdbf91c641e0b3d",
+      "crm_sha256": "67fbfd5194b7486da3b46ae4e79d7114e13101c9b7c0341ecbdbf91c641e0b3d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php",
+      "source_sha256": "828ff66df1aa8db6d17032a2a7c9d1cd600aff02562d3376d4413f726c81d0d4",
+      "crm_sha256": "828ff66df1aa8db6d17032a2a7c9d1cd600aff02562d3376d4413f726c81d0d4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactoryInterface.php",
+      "source_sha256": "45c39beffa0038ce2c728b955d70f2fd3f21e345a12b322f120ba3e6cfc781ea",
+      "crm_sha256": "45c39beffa0038ce2c728b955d70f2fd3f21e345a12b322f120ba3e6cfc781ea",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/CurlHandler.php",
+      "source_sha256": "e6d53c3c0ea7618ac594a9bf09ca85f429ffce827fa0ca1a4aae3bd4f739e2f4",
+      "crm_sha256": "e6d53c3c0ea7618ac594a9bf09ca85f429ffce827fa0ca1a4aae3bd4f739e2f4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/CurlMultiHandler.php",
+      "source_sha256": "e86044957a6ff810d1f86060bdf7646d8743ea25026a477276c0f74f2c14e838",
+      "crm_sha256": "e86044957a6ff810d1f86060bdf7646d8743ea25026a477276c0f74f2c14e838",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/EasyHandle.php",
+      "source_sha256": "9af7b853ab91369b0d38005309407b4061e4af394f17e20799be5db88be1d24f",
+      "crm_sha256": "9af7b853ab91369b0d38005309407b4061e4af394f17e20799be5db88be1d24f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/HeaderProcessor.php",
+      "source_sha256": "a8064272b4d341fbbb14a190eede415515bfe88962d937026cad967ade1f9d58",
+      "crm_sha256": "a8064272b4d341fbbb14a190eede415515bfe88962d937026cad967ade1f9d58",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/MockHandler.php",
+      "source_sha256": "a506f579be538e2de5e9bcbc8020c8597089e99d00075ff245dcabe37ddc6274",
+      "crm_sha256": "a506f579be538e2de5e9bcbc8020c8597089e99d00075ff245dcabe37ddc6274",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/Proxy.php",
+      "source_sha256": "6ec050db514bce475d2cf826ce98003b724e79b315abb61fcd8cf54be53b6198",
+      "crm_sha256": "6ec050db514bce475d2cf826ce98003b724e79b315abb61fcd8cf54be53b6198",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Handler/StreamHandler.php",
+      "source_sha256": "580f3d8715341ffa394602af739276c2acc8c08a206a639f694ced004f1e4d4c",
+      "crm_sha256": "580f3d8715341ffa394602af739276c2acc8c08a206a639f694ced004f1e4d4c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/HandlerStack.php",
+      "source_sha256": "72bb3dc3d5d94eb7546c47254f809a9869b4848811f59ce43f9156b2e18e1d91",
+      "crm_sha256": "72bb3dc3d5d94eb7546c47254f809a9869b4848811f59ce43f9156b2e18e1d91",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/MessageFormatter.php",
+      "source_sha256": "ec4a3ffa29b39f5c288463298600196ac733cce725addda3a4eb53b6dbf9a028",
+      "crm_sha256": "ec4a3ffa29b39f5c288463298600196ac733cce725addda3a4eb53b6dbf9a028",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/MessageFormatterInterface.php",
+      "source_sha256": "07e018567ea4cd1c149a7b9f5ae3f4dda2ea16e5f1623e2e80c4a36e9efd4f79",
+      "crm_sha256": "07e018567ea4cd1c149a7b9f5ae3f4dda2ea16e5f1623e2e80c4a36e9efd4f79",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Middleware.php",
+      "source_sha256": "1481d78eca71a45a2e3bb6e59a5a3419064bbd52cde25bdfb2dcf0d89ef6fb1c",
+      "crm_sha256": "1481d78eca71a45a2e3bb6e59a5a3419064bbd52cde25bdfb2dcf0d89ef6fb1c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Pool.php",
+      "source_sha256": "6c8d02c1a0426e97502a2dca52464c0da1a2d72e96022a75b6681a656b0e2fbe",
+      "crm_sha256": "6c8d02c1a0426e97502a2dca52464c0da1a2d72e96022a75b6681a656b0e2fbe",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/PrepareBodyMiddleware.php",
+      "source_sha256": "74119b4569f642aacdceb5517f2413d089172775592dad008e6328b16fbeffc5",
+      "crm_sha256": "74119b4569f642aacdceb5517f2413d089172775592dad008e6328b16fbeffc5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/RedirectMiddleware.php",
+      "source_sha256": "79a09efd324b72f5f3bb9105bccf2e96614daeb2bebc973e77eba37451b96e3c",
+      "crm_sha256": "79a09efd324b72f5f3bb9105bccf2e96614daeb2bebc973e77eba37451b96e3c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/RequestOptions.php",
+      "source_sha256": "655077c65fb58e0d636e6784a090b8a6c7cdc751543b77b519bd470a2db6ede2",
+      "crm_sha256": "655077c65fb58e0d636e6784a090b8a6c7cdc751543b77b519bd470a2db6ede2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/RetryMiddleware.php",
+      "source_sha256": "05f0b25a97d0a8c0aa77486861238c337edd435b3abe7652d8d6bea3872e28ee",
+      "crm_sha256": "05f0b25a97d0a8c0aa77486861238c337edd435b3abe7652d8d6bea3872e28ee",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/TransferStats.php",
+      "source_sha256": "264664c238a09e7b98bf7089fe57a41efe6e268a384a8de83e51262ca933af72",
+      "crm_sha256": "264664c238a09e7b98bf7089fe57a41efe6e268a384a8de83e51262ca933af72",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/Utils.php",
+      "source_sha256": "5b00ff6cce8d6861144ef532db3054cf9fc197df372d0137cbdd9fde302d81f7",
+      "crm_sha256": "5b00ff6cce8d6861144ef532db3054cf9fc197df372d0137cbdd9fde302d81f7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/functions.php",
+      "source_sha256": "7df2400c7e56b5b87c3be5d0764866848397e096cf2c19a391af1cc4f94b5cbd",
+      "crm_sha256": "7df2400c7e56b5b87c3be5d0764866848397e096cf2c19a391af1cc4f94b5cbd",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/guzzle/src/functions_include.php",
+      "source_sha256": "188619ae14fd7457f450a02fba9f4ab58ef3fd2eccf90ee5e0d39b2b6078480a",
+      "crm_sha256": "188619ae14fd7457f450a02fba9f4ab58ef3fd2eccf90ee5e0d39b2b6078480a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/CHANGELOG.md",
+      "source_sha256": "e206131b3ba80b8827d6ca43a2fdd6d8d1e0a0587287fc8890f3f082b6bd01db",
+      "crm_sha256": "e206131b3ba80b8827d6ca43a2fdd6d8d1e0a0587287fc8890f3f082b6bd01db",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/LICENSE",
+      "source_sha256": "098313b3908e2a799731aa3816386fe33af0bef21dbe6acc75e7c98958ec89ed",
+      "crm_sha256": "098313b3908e2a799731aa3816386fe33af0bef21dbe6acc75e7c98958ec89ed",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/README.md",
+      "source_sha256": "a2afc22d0233c134904150357f16bd6704380c5425490e867375bd645e47e90d",
+      "crm_sha256": "a2afc22d0233c134904150357f16bd6704380c5425490e867375bd645e47e90d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/composer.json",
+      "source_sha256": "20e6025358f27f4218ce5453eca0041f36964bb1e501d28edb1e2382c563ef1e",
+      "crm_sha256": "20e6025358f27f4218ce5453eca0041f36964bb1e501d28edb1e2382c563ef1e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/AggregateException.php",
+      "source_sha256": "c0ce339c3b78055074a0b3426ba9a45651842efa6db2beeb79ddedae39cf7105",
+      "crm_sha256": "c0ce339c3b78055074a0b3426ba9a45651842efa6db2beeb79ddedae39cf7105",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/CancellationException.php",
+      "source_sha256": "a28acd9a1d5a30184910be946de2bfd3453ddb6ac2a2aa89c6d3d3e03da368be",
+      "crm_sha256": "a28acd9a1d5a30184910be946de2bfd3453ddb6ac2a2aa89c6d3d3e03da368be",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Coroutine.php",
+      "source_sha256": "bb054e2db8e8610e331e36338f1499cc84cf9efb02900c006d5c587537d53e6d",
+      "crm_sha256": "bb054e2db8e8610e331e36338f1499cc84cf9efb02900c006d5c587537d53e6d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Create.php",
+      "source_sha256": "24503fbd24201a759c0a16d8ecfcc72114e4845e591a386d82938919a6a46468",
+      "crm_sha256": "24503fbd24201a759c0a16d8ecfcc72114e4845e591a386d82938919a6a46468",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Each.php",
+      "source_sha256": "0d97e8c8158edadc8209cc86e50a8e7e0d93f21713cf04bef8855f4399503f7b",
+      "crm_sha256": "0d97e8c8158edadc8209cc86e50a8e7e0d93f21713cf04bef8855f4399503f7b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/EachPromise.php",
+      "source_sha256": "09fd7d3d84bc7285b9a376eee29437d64dce6998b94c61812f75b8099f28d3b5",
+      "crm_sha256": "09fd7d3d84bc7285b9a376eee29437d64dce6998b94c61812f75b8099f28d3b5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/FulfilledPromise.php",
+      "source_sha256": "74e0a4c1898acbc2b171f0a3c5689cf8bd5f19e4a8cb46da762712f8c815cbb0",
+      "crm_sha256": "74e0a4c1898acbc2b171f0a3c5689cf8bd5f19e4a8cb46da762712f8c815cbb0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Is.php",
+      "source_sha256": "34bdf0c61855358046972692a23451ce2ec139a3731687285e7a065d1ea7b3df",
+      "crm_sha256": "34bdf0c61855358046972692a23451ce2ec139a3731687285e7a065d1ea7b3df",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Promise.php",
+      "source_sha256": "746d9abd0505878d0d5d10125363691fa2e48986f40cb70128679ef43075ebb0",
+      "crm_sha256": "746d9abd0505878d0d5d10125363691fa2e48986f40cb70128679ef43075ebb0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/PromiseInterface.php",
+      "source_sha256": "94dc3d5b4f142ddd62eaf4e879ce1ce16525d21e6ebb4d517bfb1292ba2cea85",
+      "crm_sha256": "94dc3d5b4f142ddd62eaf4e879ce1ce16525d21e6ebb4d517bfb1292ba2cea85",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/PromisorInterface.php",
+      "source_sha256": "d2524b54fa05e60fd200724e4160ba9fbc0b45549ca3eece922d5902e1e6a901",
+      "crm_sha256": "d2524b54fa05e60fd200724e4160ba9fbc0b45549ca3eece922d5902e1e6a901",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/RejectedPromise.php",
+      "source_sha256": "cd7e3242eefceadeb2416debf12149520e2a23b15397f8420a8fdfaf092a32a2",
+      "crm_sha256": "cd7e3242eefceadeb2416debf12149520e2a23b15397f8420a8fdfaf092a32a2",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/RejectionException.php",
+      "source_sha256": "4c29a1567b11d345b7bc7ad181b9bf34f12d05f5fa9f4a4e6388fea6f7217415",
+      "crm_sha256": "4c29a1567b11d345b7bc7ad181b9bf34f12d05f5fa9f4a4e6388fea6f7217415",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/TaskQueue.php",
+      "source_sha256": "eef98edc8a5818c0e2810d6c953c24a5ed3d905836d67c5593793ae8a30193a9",
+      "crm_sha256": "eef98edc8a5818c0e2810d6c953c24a5ed3d905836d67c5593793ae8a30193a9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/TaskQueueInterface.php",
+      "source_sha256": "af14af31d2425eb82af9bbd76564ac7ae818c28594d6e0fc5b72bef0422351c4",
+      "crm_sha256": "af14af31d2425eb82af9bbd76564ac7ae818c28594d6e0fc5b72bef0422351c4",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/promises/src/Utils.php",
+      "source_sha256": "3488264736319b1a859596ded496bcb0bf41f67e8fa52720df3d053d29dd0295",
+      "crm_sha256": "3488264736319b1a859596ded496bcb0bf41f67e8fa52720df3d053d29dd0295",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/CHANGELOG.md",
+      "source_sha256": "833d316e39502f4dc734ce02c478b15d0710379d8f2844622055ab19b2a3cc42",
+      "crm_sha256": "833d316e39502f4dc734ce02c478b15d0710379d8f2844622055ab19b2a3cc42",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/LICENSE",
+      "source_sha256": "709437fdecfeb9f22f71d0c144eb4d11938b99a7665f650e6f49fb9dcbfcce84",
+      "crm_sha256": "709437fdecfeb9f22f71d0c144eb4d11938b99a7665f650e6f49fb9dcbfcce84",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/README.md",
+      "source_sha256": "4039a7de829740a44ac0881036408df677c8ad78f47243a159cf8bd2b8510624",
+      "crm_sha256": "4039a7de829740a44ac0881036408df677c8ad78f47243a159cf8bd2b8510624",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/composer.json",
+      "source_sha256": "da073c9533bbc55cfdbb6f5ede8ea41a8a4910f7d6b680c077bb7b157872b7af",
+      "crm_sha256": "da073c9533bbc55cfdbb6f5ede8ea41a8a4910f7d6b680c077bb7b157872b7af",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/AppendStream.php",
+      "source_sha256": "c2cb3d95dad9ca604579487cc6f16a1013ce8fb893cec505de43b4dd5e358e77",
+      "crm_sha256": "c2cb3d95dad9ca604579487cc6f16a1013ce8fb893cec505de43b4dd5e358e77",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/BufferStream.php",
+      "source_sha256": "713fbd182f66b86a71f29ae331f4b9b014b8798e2df1e5d7acefb6d45c97988d",
+      "crm_sha256": "713fbd182f66b86a71f29ae331f4b9b014b8798e2df1e5d7acefb6d45c97988d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/CachingStream.php",
+      "source_sha256": "a93fbab1ed8a435e6e0026a289f15a12a1a9b3e435507988380c87673a2f8d13",
+      "crm_sha256": "a93fbab1ed8a435e6e0026a289f15a12a1a9b3e435507988380c87673a2f8d13",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/DroppingStream.php",
+      "source_sha256": "af6ae45881fda23f2160c9d4ed38c13d6890c8e12fe4263763facd189e9deb42",
+      "crm_sha256": "af6ae45881fda23f2160c9d4ed38c13d6890c8e12fe4263763facd189e9deb42",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Exception/MalformedUriException.php",
+      "source_sha256": "68bbfb1b1044c21b8ab0fda0bda047c342287d592e8f3f5252fab30ff92a852a",
+      "crm_sha256": "68bbfb1b1044c21b8ab0fda0bda047c342287d592e8f3f5252fab30ff92a852a",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/FnStream.php",
+      "source_sha256": "33f3cec2f3532ff20f7a526e145c7d84f04bb0ca80b6eeec51569ecb6a6af690",
+      "crm_sha256": "33f3cec2f3532ff20f7a526e145c7d84f04bb0ca80b6eeec51569ecb6a6af690",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Header.php",
+      "source_sha256": "89c7a908e325e23a59c355e8be93f1df20b0422b172c79dac5a9e24e57ba7eee",
+      "crm_sha256": "89c7a908e325e23a59c355e8be93f1df20b0422b172c79dac5a9e24e57ba7eee",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/HttpFactory.php",
+      "source_sha256": "99cf9f0a5b211fe411e745695e40e2254ee3f835f09afb7671955a7395abafa7",
+      "crm_sha256": "99cf9f0a5b211fe411e745695e40e2254ee3f835f09afb7671955a7395abafa7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/InflateStream.php",
+      "source_sha256": "8adb0b7299e6a8e842a60851e4218e20c70a9cf18ec0063691083ee3a875c20d",
+      "crm_sha256": "8adb0b7299e6a8e842a60851e4218e20c70a9cf18ec0063691083ee3a875c20d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/LazyOpenStream.php",
+      "source_sha256": "77176d36ccb5ae9d5e9ea510d1284a52462435c8e49ac9b7171c5be04bac2613",
+      "crm_sha256": "77176d36ccb5ae9d5e9ea510d1284a52462435c8e49ac9b7171c5be04bac2613",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/LimitStream.php",
+      "source_sha256": "b0499720a2b46353c454c7e66e24f53915572f5bcec7cd8b6483c018c9a98f82",
+      "crm_sha256": "b0499720a2b46353c454c7e66e24f53915572f5bcec7cd8b6483c018c9a98f82",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Message.php",
+      "source_sha256": "de587bc1108c06a663c671b05c977aad5bf0cd564234643fee7e78bc39c8189c",
+      "crm_sha256": "de587bc1108c06a663c671b05c977aad5bf0cd564234643fee7e78bc39c8189c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/MessageTrait.php",
+      "source_sha256": "0827e2abd619854d1ed3e00c59db956dc78e9b92704adec839addea64518aa37",
+      "crm_sha256": "0827e2abd619854d1ed3e00c59db956dc78e9b92704adec839addea64518aa37",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/MimeType.php",
+      "source_sha256": "299a5bc6f136cdd5f398b1a5b5e10da850b65e3666bfc329dd94c0e6933b6157",
+      "crm_sha256": "299a5bc6f136cdd5f398b1a5b5e10da850b65e3666bfc329dd94c0e6933b6157",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/MultipartStream.php",
+      "source_sha256": "bce0256c2feb806f085fc4f6439deb9b1cc088613d1cfa056ecdecea6e7ef7e0",
+      "crm_sha256": "bce0256c2feb806f085fc4f6439deb9b1cc088613d1cfa056ecdecea6e7ef7e0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/NoSeekStream.php",
+      "source_sha256": "d8f3fcfbba6378d0c94b8e00295eb2b873523c255216c4f6bf738bb77eb43483",
+      "crm_sha256": "d8f3fcfbba6378d0c94b8e00295eb2b873523c255216c4f6bf738bb77eb43483",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/PumpStream.php",
+      "source_sha256": "856bd2e160a893442c161a29f8540e698c717cf6538529480649043ab1e2177d",
+      "crm_sha256": "856bd2e160a893442c161a29f8540e698c717cf6538529480649043ab1e2177d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Query.php",
+      "source_sha256": "83e4e6598f73983f9d951a9659135008b0ad1f765d4b60ae922f69a9cefc9162",
+      "crm_sha256": "83e4e6598f73983f9d951a9659135008b0ad1f765d4b60ae922f69a9cefc9162",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Request.php",
+      "source_sha256": "b6348269914160057adcfe9c7c7d44067308573423005b7e8194dbd439bb7bb3",
+      "crm_sha256": "b6348269914160057adcfe9c7c7d44067308573423005b7e8194dbd439bb7bb3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Response.php",
+      "source_sha256": "85f711119e3248a8e7cc6c7a8ea74d02fb2193d0f3c7098015aed29a3376af8f",
+      "crm_sha256": "85f711119e3248a8e7cc6c7a8ea74d02fb2193d0f3c7098015aed29a3376af8f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Rfc7230.php",
+      "source_sha256": "e6e49fef87f2c0e4b101bf93d066dff65ecb71ccfb83822f1d0dacbf29c29834",
+      "crm_sha256": "e6e49fef87f2c0e4b101bf93d066dff65ecb71ccfb83822f1d0dacbf29c29834",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/ServerRequest.php",
+      "source_sha256": "b34458d129d1b8aa0a476d032c057414a5fb49f38217499cc9dbbf3cc103356f",
+      "crm_sha256": "b34458d129d1b8aa0a476d032c057414a5fb49f38217499cc9dbbf3cc103356f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Stream.php",
+      "source_sha256": "a15d98e8b94d27c77eed1cd66e2169dd833f87b34ba12d8a8051fa24d1afe0a3",
+      "crm_sha256": "a15d98e8b94d27c77eed1cd66e2169dd833f87b34ba12d8a8051fa24d1afe0a3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/StreamDecoratorTrait.php",
+      "source_sha256": "cd79f502dcc01b7e7e59da38a1255538c1111d30bacb74f9bed0810c62e0b26f",
+      "crm_sha256": "cd79f502dcc01b7e7e59da38a1255538c1111d30bacb74f9bed0810c62e0b26f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/StreamWrapper.php",
+      "source_sha256": "9ed4768051993674fc87a47e7bae3ed4b90a5f8b109e9211ba91e3da17da3ae5",
+      "crm_sha256": "9ed4768051993674fc87a47e7bae3ed4b90a5f8b109e9211ba91e3da17da3ae5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/UploadedFile.php",
+      "source_sha256": "123a1da69ceedd154827e6ea50a088fbc67a894caa30a8f22598e6a93cc64ddb",
+      "crm_sha256": "123a1da69ceedd154827e6ea50a088fbc67a894caa30a8f22598e6a93cc64ddb",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Uri.php",
+      "source_sha256": "739c34b07cf5ecdac7b90a572d1c2360169a4207d15526dd43d69cc7708e4a04",
+      "crm_sha256": "739c34b07cf5ecdac7b90a572d1c2360169a4207d15526dd43d69cc7708e4a04",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/UriComparator.php",
+      "source_sha256": "76fd693bd93822d5e5a11ba5a56328dc0aeed1639c4b0969ab7f8f9204f4989e",
+      "crm_sha256": "76fd693bd93822d5e5a11ba5a56328dc0aeed1639c4b0969ab7f8f9204f4989e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/UriNormalizer.php",
+      "source_sha256": "f34f87632152243ca2caa76eda861c622ac013f50539e7bb295d612b279f0705",
+      "crm_sha256": "f34f87632152243ca2caa76eda861c622ac013f50539e7bb295d612b279f0705",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/UriResolver.php",
+      "source_sha256": "dda49f8761722b172727edd01a7ef6b21fafeb2456d9ecee6a886dc036254dcc",
+      "crm_sha256": "dda49f8761722b172727edd01a7ef6b21fafeb2456d9ecee6a886dc036254dcc",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/guzzlehttp/psr7/src/Utils.php",
+      "source_sha256": "0066e2692f04998b98d90a44e5e58383b1b18c5c3d31f117af4075c4a44faf2d",
+      "crm_sha256": "0066e2692f04998b98d90a44e5e58383b1b18c5c3d31f117af4075c4a44faf2d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/CHANGELOG.md",
+      "source_sha256": "6b23804ba8bb7226ab80b5a68dd0b3d1e9291f4b999385c44f60c40c6585628f",
+      "crm_sha256": "6b23804ba8bb7226ab80b5a68dd0b3d1e9291f4b999385c44f60c40c6585628f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/LICENSE",
+      "source_sha256": "ea5ec78820494a5256b0ccbecef9212bc7b93b797273ab08cc2eaa34e0ab3e50",
+      "crm_sha256": "ea5ec78820494a5256b0ccbecef9212bc7b93b797273ab08cc2eaa34e0ab3e50",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/README.md",
+      "source_sha256": "2864b8d922627a18701f9f2730d1506a81ef28544d630cda0f682a94440c2b2d",
+      "crm_sha256": "2864b8d922627a18701f9f2730d1506a81ef28544d630cda0f682a94440c2b2d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/composer.json",
+      "source_sha256": "0ac2435b7bf0fd6ded53a95d2a8914d8a326f1902b512314391226ee52911af5",
+      "crm_sha256": "0ac2435b7bf0fd6ded53a95d2a8914d8a326f1902b512314391226ee52911af5",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/src/ClientExceptionInterface.php",
+      "source_sha256": "2ae6b264ddfc8d48096fe50927634a6b406e1eb26e1d00bd992e9aa36f55410b",
+      "crm_sha256": "2ae6b264ddfc8d48096fe50927634a6b406e1eb26e1d00bd992e9aa36f55410b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/src/ClientInterface.php",
+      "source_sha256": "f377b570f3211f8d824c7f1edd5c2288c97b51cc27347b1aa74988b05616e137",
+      "crm_sha256": "f377b570f3211f8d824c7f1edd5c2288c97b51cc27347b1aa74988b05616e137",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/src/NetworkExceptionInterface.php",
+      "source_sha256": "93b74d294718e772af07780a6df2bb13671701df8a1d1e752d79cb3decd08f66",
+      "crm_sha256": "93b74d294718e772af07780a6df2bb13671701df8a1d1e752d79cb3decd08f66",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-client/src/RequestExceptionInterface.php",
+      "source_sha256": "1bcf5fc2b4a6e1a982020caddab497edd889124fd8d17aea1efb1895cb96ee38",
+      "crm_sha256": "1bcf5fc2b4a6e1a982020caddab497edd889124fd8d17aea1efb1895cb96ee38",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/LICENSE",
+      "source_sha256": "d2e70341a9667b93ad542e4842b0b7022d302aa7c2d2a909b156b8f1e3c4cca8",
+      "crm_sha256": "d2e70341a9667b93ad542e4842b0b7022d302aa7c2d2a909b156b8f1e3c4cca8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/README.md",
+      "source_sha256": "d80b63e2a8c4f80af830e5307683fc73718d15e71db3c5af56e15b56b2a47d63",
+      "crm_sha256": "d80b63e2a8c4f80af830e5307683fc73718d15e71db3c5af56e15b56b2a47d63",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/composer.json",
+      "source_sha256": "1dedaf2d8613201a978dbcad920bd7a332cd28c95be57c0d75be7a8d6e868362",
+      "crm_sha256": "1dedaf2d8613201a978dbcad920bd7a332cd28c95be57c0d75be7a8d6e868362",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/RequestFactoryInterface.php",
+      "source_sha256": "95bb9e09f52d05bf09630cce49abbfdb2282d396ccc3e16e77e3a9f54cd4071f",
+      "crm_sha256": "95bb9e09f52d05bf09630cce49abbfdb2282d396ccc3e16e77e3a9f54cd4071f",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/ResponseFactoryInterface.php",
+      "source_sha256": "fb58f39db8e472bed4109f6392443a10785305ccc0c920d11f98208f91214e02",
+      "crm_sha256": "fb58f39db8e472bed4109f6392443a10785305ccc0c920d11f98208f91214e02",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/ServerRequestFactoryInterface.php",
+      "source_sha256": "8584390af1bc3c624918525e725a7cfa639366c15bb7a3c7c065d04d8a20703b",
+      "crm_sha256": "8584390af1bc3c624918525e725a7cfa639366c15bb7a3c7c065d04d8a20703b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/StreamFactoryInterface.php",
+      "source_sha256": "25fe9d048ce6718141d21c122ef9b3498be45025300717ccbe912ef5bc0083ec",
+      "crm_sha256": "25fe9d048ce6718141d21c122ef9b3498be45025300717ccbe912ef5bc0083ec",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/UploadedFileFactoryInterface.php",
+      "source_sha256": "712c705ac850b43dbf47458e571c8be314d1d1f01b0e470407ed014b702d9e5b",
+      "crm_sha256": "712c705ac850b43dbf47458e571c8be314d1d1f01b0e470407ed014b702d9e5b",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-factory/src/UriFactoryInterface.php",
+      "source_sha256": "2600f967cd969706dcdff326d3fe602e812110352c75c6b5e9773601f2d17c7d",
+      "crm_sha256": "2600f967cd969706dcdff326d3fe602e812110352c75c6b5e9773601f2d17c7d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/CHANGELOG.md",
+      "source_sha256": "0e0a6a6166edde635031315c05f880d4e792f2cdd493618f5bac0b09bd9a11a7",
+      "crm_sha256": "0e0a6a6166edde635031315c05f880d4e792f2cdd493618f5bac0b09bd9a11a7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/LICENSE",
+      "source_sha256": "8d36e938943b04ef01994bb148793c971685b746d0ced31da03a97594a47ee62",
+      "crm_sha256": "8d36e938943b04ef01994bb148793c971685b746d0ced31da03a97594a47ee62",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/README.md",
+      "source_sha256": "4cd6339fa85e7a903f2117b081de8446cd45229b9b761539dd8f440ccd2eb288",
+      "crm_sha256": "4cd6339fa85e7a903f2117b081de8446cd45229b9b761539dd8f440ccd2eb288",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/composer.json",
+      "source_sha256": "96781ea96de30367767e298f5a340a040878144b7540ce490c9089bf7e0b9b37",
+      "crm_sha256": "96781ea96de30367767e298f5a340a040878144b7540ce490c9089bf7e0b9b37",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/docs/PSR7-Interfaces.md",
+      "source_sha256": "255d8acfecf55b477403a49775c907b4a9c833237ca9a856b96d8a71b545ea30",
+      "crm_sha256": "255d8acfecf55b477403a49775c907b4a9c833237ca9a856b96d8a71b545ea30",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/docs/PSR7-Usage.md",
+      "source_sha256": "49daf54cea1064dc256357ae684b42bac35ccb6df930a2f4cb3f05fa0226e9a6",
+      "crm_sha256": "49daf54cea1064dc256357ae684b42bac35ccb6df930a2f4cb3f05fa0226e9a6",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/MessageInterface.php",
+      "source_sha256": "1ef5798924509ccea3ff3e596af4c5b6b63e121f7d0441503310b29cf837b9df",
+      "crm_sha256": "1ef5798924509ccea3ff3e596af4c5b6b63e121f7d0441503310b29cf837b9df",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/RequestInterface.php",
+      "source_sha256": "3d7531e17a3e704d7bed9f0f2bb37ffc7f1842a2cd39f789ce7e7a4023d434f9",
+      "crm_sha256": "3d7531e17a3e704d7bed9f0f2bb37ffc7f1842a2cd39f789ce7e7a4023d434f9",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/ResponseInterface.php",
+      "source_sha256": "1cc32dded30a668714b17688a2be8a0053effb7fabe7655bd4459ecfbc6eeb44",
+      "crm_sha256": "1cc32dded30a668714b17688a2be8a0053effb7fabe7655bd4459ecfbc6eeb44",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/ServerRequestInterface.php",
+      "source_sha256": "43c218d6c4426c7f1d354b20736ec77be924b94e7c1b11786057de6c3f3f66e8",
+      "crm_sha256": "43c218d6c4426c7f1d354b20736ec77be924b94e7c1b11786057de6c3f3f66e8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/StreamInterface.php",
+      "source_sha256": "0a3267552ebbcac5f0cd522dd10d96ad985595fd4f90d8566b449db2e060b385",
+      "crm_sha256": "0a3267552ebbcac5f0cd522dd10d96ad985595fd4f90d8566b449db2e060b385",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/UploadedFileInterface.php",
+      "source_sha256": "2823ae936f8f0030879fe12a507080d4eb91c6a534f57ff38e8f37561d78916c",
+      "crm_sha256": "2823ae936f8f0030879fe12a507080d4eb91c6a534f57ff38e8f37561d78916c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/http-message/src/UriInterface.php",
+      "source_sha256": "8d96e63fb984db31eaedd858ae60549dcf6332c939d4cc940ca97f1fe6d91d1e",
+      "crm_sha256": "8d96e63fb984db31eaedd858ae60549dcf6332c939d4cc940ca97f1fe6d91d1e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/LICENSE",
+      "source_sha256": "6e944907067bae93c00a9f2ad51032243820b22df34b77c77690d46cb2e98e24",
+      "crm_sha256": "6e944907067bae93c00a9f2ad51032243820b22df34b77c77690d46cb2e98e24",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/README.md",
+      "source_sha256": "4f2bc231e87cda248b1fa2aef7a930045f3e95f89ee46ff579188d2489372954",
+      "crm_sha256": "4f2bc231e87cda248b1fa2aef7a930045f3e95f89ee46ff579188d2489372954",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/composer.json",
+      "source_sha256": "1f8dfc72d50f452d0795681fde72b7c008eedd4fcbca482b70a35401c9fbb661",
+      "crm_sha256": "1f8dfc72d50f452d0795681fde72b7c008eedd4fcbca482b70a35401c9fbb661",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/AbstractLogger.php",
+      "source_sha256": "84c69c6cc60fd805eb525daa79bd04a8d0b73e52776e1a0c2a9e666b37b4512e",
+      "crm_sha256": "84c69c6cc60fd805eb525daa79bd04a8d0b73e52776e1a0c2a9e666b37b4512e",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/InvalidArgumentException.php",
+      "source_sha256": "403c6def4d4199a12cb4a54e804c7d29405968871366500f72d6f3ea401bfc64",
+      "crm_sha256": "403c6def4d4199a12cb4a54e804c7d29405968871366500f72d6f3ea401bfc64",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/LogLevel.php",
+      "source_sha256": "9f2520b22945ce1599c4fedba0a4c75985f172ca86cdf386766ebb8b2363768c",
+      "crm_sha256": "9f2520b22945ce1599c4fedba0a4c75985f172ca86cdf386766ebb8b2363768c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/LoggerAwareInterface.php",
+      "source_sha256": "076efac38ab493f4fc3e701cce9a2641135048f2bf0407b322c45712ef73813c",
+      "crm_sha256": "076efac38ab493f4fc3e701cce9a2641135048f2bf0407b322c45712ef73813c",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/LoggerAwareTrait.php",
+      "source_sha256": "eb114e265de2d1c8c1190b0fa9cb5f8a25e262a46d1d28d1aa02f01aaf025c64",
+      "crm_sha256": "eb114e265de2d1c8c1190b0fa9cb5f8a25e262a46d1d28d1aa02f01aaf025c64",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/LoggerInterface.php",
+      "source_sha256": "05aecbaded98967719d76a058ea27465ffae03b7800dc36049e1ed23c825e6b3",
+      "crm_sha256": "05aecbaded98967719d76a058ea27465ffae03b7800dc36049e1ed23c825e6b3",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/LoggerTrait.php",
+      "source_sha256": "c854406af9c4706980e93183b5f37fa9cca523df9bb1019a927f8e4713834172",
+      "crm_sha256": "c854406af9c4706980e93183b5f37fa9cca523df9bb1019a927f8e4713834172",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/psr/log/src/NullLogger.php",
+      "source_sha256": "22fbb348f7b25259ca801f595fc9aa22b9f035a44e7899687bd89bf4070d78c8",
+      "crm_sha256": "22fbb348f7b25259ca801f595fc9aa22b9f035a44e7899687bd89bf4070d78c8",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/ralouphie/getallheaders/LICENSE",
+      "source_sha256": "e97490769229e08f0a017f5c6fd5d8aa1669672110c6df5ebd0506f23ec91087",
+      "crm_sha256": "e97490769229e08f0a017f5c6fd5d8aa1669672110c6df5ebd0506f23ec91087",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/ralouphie/getallheaders/README.md",
+      "source_sha256": "a5a015ade842a81fb04d692c9a342fa17446f778110c4e9ba4c8d178f65a8478",
+      "crm_sha256": "a5a015ade842a81fb04d692c9a342fa17446f778110c4e9ba4c8d178f65a8478",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/ralouphie/getallheaders/composer.json",
+      "source_sha256": "d7ed4d1fdc4c839c1967143f303d57533d72f58bcc68450a0c68182db0d6c2c0",
+      "crm_sha256": "d7ed4d1fdc4c839c1967143f303d57533d72f58bcc68450a0c68182db0d6c2c0",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/ralouphie/getallheaders/src/getallheaders.php",
+      "source_sha256": "b2275333d82617732ad407dd55420ff16c0d0c19a5599d60aa9e1e3871d5a654",
+      "crm_sha256": "b2275333d82617732ad407dd55420ff16c0d0c19a5599d60aa9e1e3871d5a654",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/symfony/deprecation-contracts/CHANGELOG.md",
+      "source_sha256": "73122a1fa6a74b5d5235721839bef8f2756e0c0927feeeea36b141417bcea164",
+      "crm_sha256": "73122a1fa6a74b5d5235721839bef8f2756e0c0927feeeea36b141417bcea164",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/symfony/deprecation-contracts/LICENSE",
+      "source_sha256": "b92809182501f0fa422167ea44484b41877e1736e8283d0377fdc9664bb9a02d",
+      "crm_sha256": "b92809182501f0fa422167ea44484b41877e1736e8283d0377fdc9664bb9a02d",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/symfony/deprecation-contracts/README.md",
+      "source_sha256": "174b9acbcf946eb18550a41ab70d0dfca43502b11da3cdd4d8452a31b20387a7",
+      "crm_sha256": "174b9acbcf946eb18550a41ab70d0dfca43502b11da3cdd4d8452a31b20387a7",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/symfony/deprecation-contracts/composer.json",
+      "source_sha256": "9bb73f6d257c5dfa7cee0b2a5bdb186438191cb67364b68022d8feebca613210",
+      "crm_sha256": "9bb73f6d257c5dfa7cee0b2a5bdb186438191cb67364b68022d8feebca613210",
+      "status": "equal"
+    },
+    {
+      "path": "vendor/symfony/deprecation-contracts/function.php",
+      "source_sha256": "7b613b9e9473ab25c57052225446644319d4cfc18fb757921d827c278feadeb1",
+      "crm_sha256": "7b613b9e9473ab25c57052225446644319d4cfc18fb757921d827c278feadeb1",
+      "status": "equal"
+    },
+    {
+      "path": "views/cartao.php",
+      "source_sha256": "b07d13d2f436df0cc86e4a8d224535903b55976fbd0aed6de940c409faf9afc7",
+      "crm_sha256": "f29e2d88c8fa7b75fc457faf2a48fc53e6536112cb9728621f9e2209d8921f72",
+      "status": "different"
+    },
+    {
+      "path": "views/charges.php",
+      "source_sha256": "bf29821d0dd1d5b73d4c737f230cac36be680fc96c89e0cd6893c0f09a5910db",
+      "crm_sha256": "bbdd483664d6492060f1aa1ba89dde1ae465e8d5d1e690118602226fdf87e853",
+      "status": "different"
+    },
+    {
+      "path": "views/cobrancas.php",
+      "source_sha256": "6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167",
+      "crm_sha256": "6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167",
+      "status": "equal"
+    },
+    {
+      "path": "views/customers.php",
+      "source_sha256": "5cb5dd0e612f4f5c534b37165088f04aabd9336627ab674ef36e0acf521f4a77",
+      "crm_sha256": "5cb5dd0e612f4f5c534b37165088f04aabd9336627ab674ef36e0acf521f4a77",
+      "status": "equal"
+    },
+    {
+      "path": "views/error.php",
+      "source_sha256": "f5be3d3ae1290b17508b953f9351b90c09ec42d42a99e054028ef29d7dc6c3dd",
+      "crm_sha256": "f5be3d3ae1290b17508b953f9351b90c09ec42d42a99e054028ef29d7dc6c3dd",
+      "status": "equal"
+    },
+    {
+      "path": "views/logs.php",
+      "source_sha256": "145db20d63f24a5daf64c0eba605ff90c36e74116bb38e8d02f75636060ab344",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/merge.php",
+      "source_sha256": "0e8e10e6386be214e50f3e2e7a4f7bb70082da3323d7f14cab451ab99ec0cd5b",
+      "crm_sha256": "995171267faba154b7848ada0167d9c602db0b1c2b522b8a25204d99c7f72d5c",
+      "status": "different"
+    },
+    {
+      "path": "views/partials/payment_environment.php",
+      "source_sha256": "fa10706cbbbc7b26f38f39af5677e154206a81fb7d8eacd3cba6c0386ef3b0c0",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/partials/recurring_payment_option.php",
+      "source_sha256": "d8545f4303975a90d6bfde5313984e1b69223980015323c67fa7f7cd2e508adc",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/payment.php",
+      "source_sha256": "86b5bbec7f913b65772beecb8ba7638bede6aa56a11a3c21266082d13e55eb90",
+      "crm_sha256": "b8c3de01cdd8ce1e8a05868c2b8e908e2ea3655f93e3ce3983375b7d27fad109",
+      "status": "different"
+    },
+    {
+      "path": "views/payment_origins.php",
+      "source_sha256": null,
+      "crm_sha256": "69b032dcafd70568ce13d83cd08402196d4b89bd62b9eaa8b1f37a8e16e9138f",
+      "status": "crm_only"
+    },
+    {
+      "path": "views/qrcode.php",
+      "source_sha256": "2fc47cceaa45f76dfd5f731e18ad898d5b8b813845e82957f0fdb42d3af39953",
+      "crm_sha256": "fd65551fa51e39ef64bee4909e48f541ccf24b8ecb57f3c2866ef9b1085aaa00",
+      "status": "different"
+    },
+    {
+      "path": "views/recorrente.php",
+      "source_sha256": "a9a24340b9af1bd794082a72dfa9dd1b9f4128bb23204ddb2234e276e8f01dd3",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/remote_webhook_form.php",
+      "source_sha256": null,
+      "crm_sha256": "6a00c397e31013cc75e29bb0797c2990a4df63860c17ec11ab9154c792c58bd2",
+      "status": "crm_only"
+    },
+    {
+      "path": "views/remote_webhook_result.php",
+      "source_sha256": null,
+      "crm_sha256": "9d4f536ad6538d9995c8a54371f77d64d2e1445b7f47caedb181bb86b1129040",
+      "status": "crm_only"
+    },
+    {
+      "path": "views/settings/charges.php",
+      "source_sha256": "2ed14662ec0835618e4e0dddbf1fc563824039ea8a15c955858560e3f3824df9",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/settings/logs.php",
+      "source_sha256": "0a9105689d9c9dfea09e360e426ee42aa364aeb5b61ff8215c6521f1dded1d69",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/settings/monitor.php",
+      "source_sha256": "bda2dc1adf2a28f9b45189010a2044ae976891ca48223ab6fa09453f6102bf85",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/settings/tabs.php",
+      "source_sha256": "5d9e3d943a22258672e90939291185ae3f9de6e632158d8c92441250f3c2b757",
+      "crm_sha256": null,
+      "status": "source_only"
+    },
+    {
+      "path": "views/settings_summary.php",
+      "source_sha256": null,
+      "crm_sha256": "e209e1f8eb5931db1a7c982f317aa12741fc8b4b62ec650ec3d39e4c8c3799f4",
+      "status": "crm_only"
+    },
+    {
+      "path": "views/webhooks.php",
+      "source_sha256": null,
+      "crm_sha256": "62bf9429d582900e75f93ce40aff048b1c339ec93bd2d7173f59794550f35cad",
+      "status": "crm_only"
+    }
+  ]
+}

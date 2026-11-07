@@ -8,8 +8,17 @@ $prefix=$argv[1]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$prefix))exit
 $payload=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);
 $db=new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$prefix);
 try{
+    if(($payload['action']??null)==='portal'){
+        require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Checkout.php';
+        $portal=new CompanyPortal($db,$prefix,str_repeat('synthetic-',4));
+        echo (new \BancoBrasil\Checkout($db,$prefix))->portalInstrument($portal,$payload['session'],$payload['issuer'],$payload['invoice'])['cnab_boleto']['barcode'];exit(0);
+    }
+    $service=new \BancoBrasil\Cnab400Preparation($db,$prefix);
+    if(($payload['action']??null)==='print'){echo $service->boleto($payload['issuer'],$payload['actor'],$payload['preparation'])['barcode'];exit(0);}
+    if(($payload['action']??null)==='download'){echo $service->download($payload['issuer'],$payload['actor'],$payload['preparation'])['hash'];exit(0);}
+    if(($payload['action']??null)==='generate'){echo $service->generate($payload['issuer'],$payload['actor'],$payload['preparation'],$payload['date'],$payload['payer'])['export_group']['id'];exit(0);}
     $result=(new \BancoBrasil\Cnab400Preparation($db,$prefix))->prepare($payload['issuer'],$payload['actor'],$payload['connection'],$payload['binding'],$payload['invoice'],$payload['key']);
     echo (string)$result['id'];
 }catch(DomainException $error){
-    if($error->getMessage()==='bb400_preparation_access_denied')echo 'denied';else throw $error;
+    if(in_array($error->getMessage(),['bb400_preparation_access_denied','bb_checkout_access_denied'],true))echo 'denied';else throw $error;
 }

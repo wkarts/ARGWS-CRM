@@ -33,7 +33,7 @@ function cleanupAsaasNativeFixture(PDO $pdo):void
     // These are the three disposable databases configured by CI/local verification.
     if(!in_array((string)$pdo->query('SELECT DATABASE()')->fetchColumn(),['asaas_test','callback_test','crm_tests'],true)
         ||!in_array(db_prefix(),['module_test_','callback_module_test_'],true))throw new RuntimeException('Disposable native fixture database required');
-    $tables=['asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
+    $tables=['asaas_company_pix_future_workers','asaas_company_pix_receipt_jobs','asaas_company_pix_receipt_workers','asaas_company_pix_observations','asaas_company_pix_event_jobs','asaas_company_pix_events','asaas_company_pix_workers','asaas_company_card_pricing','asaas_company_invoice_edits','asaas_company_manual_settlements','asaas_company_manual_policies','asaas_company_recreations','asaas_company_card_payments','asaas_company_origin_policy','asaas_company_origin_profiles','asaas_company_profiles','asaas_company_preferences','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants','asaas_company_hosted_links','asaas_company_payers','asaas_company_remote_operations','asaas_company_fee_expenses','asaas_company_jobs','asaas_company_receipts','asaas_company_events','asaas_company_proofs','asaas_company_origin_meta','asaas_company_accounts',
         'asaas_settlement_outbox','asaas_payment_origin_events','asaas_payment_origins','asaas_webhook_admin_audit','asaas_webhook_integrations','asaas_webhook_events','asaas_payments_map','asaas_customers_map','asaas_logs',
         'company_expenses','invoicepaymentrecords','invoices','issuers_registry','clients','options','modules'];
     foreach($tables as $table)$pdo->exec('DROP TABLE IF EXISTS `'.db_prefix().$table.'`');
@@ -219,9 +219,195 @@ verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE modu
 verify((new App_module_migration('asaas'))->version('160')===true,'160 replay is native no-op');
 foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'160 preserves existing data: '.$table);
 $db->failQuery='UPDATE `module_test_modules`';
-verify((new App_module_migration('asaas'))->to_latest()===false,'161 tracking failure rejected');
+verify((new App_module_migration('asaas'))->version('161')===false,'161 tracking failure rejected');
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.0','failed161 preserves160');$db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='161','latest header reaches161');
-verify((new App_module_migration('asaas'))->to_latest()===true,'161 replay is no-op');
+verify((string)(new App_module_migration('asaas'))->version('161')==='161','latest header reaches161');
+verify((new App_module_migration('asaas'))->version('161')===true,'161 replay is no-op');
 foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'161 preserves data: '.$table);
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_card_payments`';
+$failed=false;try{(new App_module_migration('asaas'))->version('162');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.1','162 DDL failure preserves161');
+$db->failQuery='UPDATE `module_test_modules`';
+verify((new App_module_migration('asaas'))->version('162')===false,'162 tracking failure rejected after additive DDL');
+verify($db->table_exists('module_test_asaas_company_card_payments'),'162 complete table remains for safe retry');
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.1','162 failed tracking retains161');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('162')==='162','162 native retry confirms marker');
+verify((new App_module_migration('asaas'))->version('162')===true,'162 native replay no-op');
+\Asaas\CompanyCardPaymentsSchema::ensure($db,db_prefix(),false);
+verify($pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()==0,'162 never creates payment commands');
+foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'162 preserves data: '.$table);
+$db->failQuery='UPDATE `module_test_modules`';
+verify((new App_module_migration('asaas'))->version('163')===false,'163 tracking failure rejected');
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.2','163 failed tracking preserves162');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('163')==='163','163 native tracking confirmed');
+verify((new App_module_migration('asaas'))->version('163')===true,'163 replay no-op');
+foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'163 preserves data: '.$table);
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_recreations`';
+$failed=false;try{(new App_module_migration('asaas'))->version('164');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.3','164 DDL failure preserves163');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('164')===false,'164 tracking failure rejected');
+verify($db->table_exists('module_test_asaas_company_recreations'),'164 additive table retained for retry');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('164')==='164','164 retry tracked');verify((new App_module_migration('asaas'))->version('164')===true,'164 replay no-op');
+\Asaas\CompanyRecreationSchema::ensure($db,db_prefix(),false);
+verify($pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_recreations')->fetchColumn()==0,'164 creates no intentions or charges');
+foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'164 preserves data: '.$table);
+$db->failQuery='ADD COLUMN active_slot';$failed=false;
+try{(new App_module_migration('asaas'))->version('165');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.4','165 DDL failure preserves164');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('165')===false,'165 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('165')==='165','165 replay finishes tracking');verify((new App_module_migration('asaas'))->version('165')===true,'165 replay no-op');
+\Asaas\CompanyOriginGenerations::ensure($db,db_prefix(),false);
+foreach($before156 as $table=>$rows){$actual=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);if($table==='asaas_payment_origins')foreach($actual as &$row){verify((int)$row['active_slot']===1,'165 preserves active legacy origin');unset($row['active_slot']);}unset($row);verify($actual===$rows,'165 preserves data: '.$table);}
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('166')===false,'166 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('166')==='166','166 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('166')===true,'166 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('167')===false,'167 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('167')==='167','167 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('167')===true,'167 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('168')===false,'168 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('168')==='168','168 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('168')===true,'168 replay no-op');
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_manual_settlements`';$failed=false;
+try{(new App_module_migration('asaas'))->version('169');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.8','169 DDL failure preserves168');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('169')===false,'169 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('169')==='169','169 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('169')===true,'169 replay no-op');
+\Asaas\CompanyManualSettlementSchema::ensure($db,db_prefix(),false);
+foreach(['asaas_company_manual_policies','asaas_company_manual_settlements'] as $table)verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_'.$table)->fetchColumn()===0,'169 creates no policy or command: '.$table);
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_invoice_edits`';$failed=false;
+try{(new App_module_migration('asaas'))->version('170');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.6.9','170 DDL failure preserves169');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('170')===false,'170 tracking failure rejected');$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->version('170')==='170','170 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('170')===true,'170 replay no-op');
+\Asaas\CompanyInvoiceEditSchema::ensure($db,db_prefix(),false);
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_invoice_edits')->fetchColumn()===0,'170 creates no edit command');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('171')===false,'171 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.0','171 failed tracking preserves170');
+verify((string)(new App_module_migration('asaas'))->version('171')==='171','171 tracking retry confirmed');verify((new App_module_migration('asaas'))->version('171')===true,'171 replay no-op');
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_manual_settlements')->fetchColumn()===0,'171 creates no manual financial command');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('172')===false,'172 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.1','172 failed tracking preserves171');
+verify((string)(new App_module_migration('asaas'))->version('172')==='172','172 retry confirmed');verify((new App_module_migration('asaas'))->version('172')===true,'172 replay no-op');
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_payments')->fetchColumn()===0,'172 does not create card attempts');
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_card_pricing`';$failed=false;
+try{(new App_module_migration('asaas'))->version('173');}catch(RuntimeException $error){$failed=$error->getMessage()==='issuer_storage_failed';}
+$db->failQuery=null;
+verify($failed&&$pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 DDL failure preserves172');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('173')===false,'173 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.2','173 failed tracking preserves172');
+verify((string)(new App_module_migration('asaas'))->version('173')==='173','173 retry confirmed');verify((new App_module_migration('asaas'))->version('173')===true,'173 replay no-op');
+\Asaas\CompanyCardPricingSchema::ensure($db,db_prefix(),false);
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_card_pricing')->fetchColumn()===0,'173 creates no automatic pricing configuration');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('174')===false,'174 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.3','174 tracking failure preserves173');
+verify((string)(new App_module_migration('asaas'))->version('174')==='174','174 retry confirmed');verify((new App_module_migration('asaas'))->version('174')===true,'174 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('175')===false,'175 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.4','175 tracking failure preserves174');
+verify((string)(new App_module_migration('asaas'))->version('175')==='175','175 retry confirmed');verify((new App_module_migration('asaas'))->version('175')===true,'175 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('176')===false,'176 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.5','176 tracking failure preserves175');
+verify((string)(new App_module_migration('asaas'))->version('176')==='176','176 retry confirmed');verify((new App_module_migration('asaas'))->version('176')===true,'176 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('177')===false,'177 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.6','177 tracking failure preserves176');
+verify((string)(new App_module_migration('asaas'))->version('177')==='177','177 retry confirmed');verify((new App_module_migration('asaas'))->version('177')===true,'177 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('178')===false,'178 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.7','178 tracking failure preserves177');
+verify((string)(new App_module_migration('asaas'))->version('178')==='178','178 retry confirmed');verify((new App_module_migration('asaas'))->version('178')===true,'178 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('179')===false,'179 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.8','179 tracking failure preserves178');
+verify((string)(new App_module_migration('asaas'))->version('179')==='179','179 retry confirmed');verify((new App_module_migration('asaas'))->version('179')===true,'179 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('180')===false,'180 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.7.9','180 tracking failure preserves179');
+verify((string)(new App_module_migration('asaas'))->version('180')==='180','180 retry confirmed');verify((new App_module_migration('asaas'))->version('180')===true,'180 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('181')===false,'181 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.0','181 tracking failure preserves180');
+verify((string)(new App_module_migration('asaas'))->version('181')==='181','181 retry confirmed');verify((new App_module_migration('asaas'))->version('181')===true,'181 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('182')===false,'182 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.1','182 tracking failure preserves181');
+verify((string)(new App_module_migration('asaas'))->version('182')==='182','182 retry confirmed');verify((new App_module_migration('asaas'))->version('182')===true,'182 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('183')===false,'183 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.2','183 tracking failure preserves182');
+verify((string)(new App_module_migration('asaas'))->version('183')==='183','183 retry confirmed');verify((new App_module_migration('asaas'))->version('183')===true,'183 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('184')===false,'184 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.3','184 tracking failure preserves183');
+verify((string)(new App_module_migration('asaas'))->version('184')==='184','184 retry confirmed');verify((new App_module_migration('asaas'))->version('184')===true,'184 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('185')===false,'185 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.4','185 tracking failure preserves184');
+verify((string)(new App_module_migration('asaas'))->version('185')==='185','185 retry confirmed');verify((new App_module_migration('asaas'))->version('185')===true,'185 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('186')===false,'186 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.5','186 tracking failure preserves185');
+verify((string)(new App_module_migration('asaas'))->version('186')==='186','186 retry confirmed');verify((new App_module_migration('asaas'))->version('186')===true,'186 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('187')===false,'187 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.6','187 tracking failure preserves186');
+verify((string)(new App_module_migration('asaas'))->version('187')==='187','187 retry confirmed');verify((new App_module_migration('asaas'))->version('187')===true,'187 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('188')===false,'188 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.7','188 tracking failure preserves187');
+verify((string)(new App_module_migration('asaas'))->version('188')==='188','188 retry confirmed');verify((new App_module_migration('asaas'))->version('188')===true,'188 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('189')===false,'189 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.8','189 tracking failure preserves188');
+verify((string)(new App_module_migration('asaas'))->version('189')==='189','189 retry confirmed');verify((new App_module_migration('asaas'))->version('189')===true,'189 replay no-op');
+$db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_pix_event_jobs`';
+try{(new App_module_migration('asaas'))->version('190');verify(false,'190 DDL failure incorrectly accepted');}catch(RuntimeException $error){verify($error->getMessage()==='issuer_storage_failed','190 DDL failure is sanitized and propagated');}$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.9','190 partial DDL preserves189');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('190')===false,'190 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.8.9','190 tracking failure preserves189');
+verify((string)(new App_module_migration('asaas'))->version('190')==='190','190 retry confirmed');verify((new App_module_migration('asaas'))->version('190')===true,'190 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('191')===false,'191 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.0','191 tracking failure preserves190');
+verify((string)(new App_module_migration('asaas'))->version('191')==='191','191 retry confirmed');verify((new App_module_migration('asaas'))->version('191')===true,'191 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('192')===false,'192 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.1','192 tracking failure preserves191');
+verify((string)(new App_module_migration('asaas'))->version('192')==='192','192 retry confirmed');verify((new App_module_migration('asaas'))->version('192')===true,'192 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('193')===false,'193 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.2','193 tracking failure preserves192');
+verify((string)(new App_module_migration('asaas'))->version('193')==='193','193 retry confirmed');verify((new App_module_migration('asaas'))->version('193')===true,'193 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('194')===false,'194 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.3','194 tracking failure preserves193');
+verify((string)(new App_module_migration('asaas'))->version('194')==='194','194 retry confirmed');verify((new App_module_migration('asaas'))->version('194')===true,'194 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('195')===false,'195 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.4','195 tracking failure preserves194');
+verify((string)(new App_module_migration('asaas'))->version('195')==='195','195 retry confirmed');verify((new App_module_migration('asaas'))->version('195')===true,'195 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('196')===false,'196 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.5','196 tracking failure preserves195');
+verify((string)(new App_module_migration('asaas'))->version('196')==='196','196 retry confirmed');verify((new App_module_migration('asaas'))->version('196')===true,'196 replay no-op');
+
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('197')===false,'197 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.6','197 failure preserves196');
+verify((string)(new App_module_migration('asaas'))->version('197')==='197','197 retry confirmed');verify((new App_module_migration('asaas'))->version('197')===true,'197 replay no-op');
+
+
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('198')===false,'198 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.7','198 failure preserves197');
+verify((string)(new App_module_migration('asaas'))->version('198')==='198','198 retry confirmed');verify((new App_module_migration('asaas'))->version('198')===true,'198 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('199')===false,'199 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.8','199 failure preserves198');
+verify((string)(new App_module_migration('asaas'))->version('199')==='199','199 retry confirmed');verify((new App_module_migration('asaas'))->version('199')===true,'199 replay no-op');
+verify((int)$pdo->query('SELECT COUNT(*) FROM module_test_asaas_company_pix_future_workers')->fetchColumn()===0,'199 never activates a financial worker');
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('200')===false,'200 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.9.9','200 failure preserves199');
+verify((string)(new App_module_migration('asaas'))->version('200')==='200','200 retry confirmed');verify((new App_module_migration('asaas'))->version('200')===true,'200 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('201')===false,'201 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.0','201 failure preserves200');
+verify((string)(new App_module_migration('asaas'))->version('201')==='201','201 retry confirmed');verify((new App_module_migration('asaas'))->version('201')===true,'201 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('202')===false,'202 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.1','202 failure preserves201');
+verify((string)(new App_module_migration('asaas'))->version('202')==='202','202 retry confirmed');verify((new App_module_migration('asaas'))->version('202')===true,'202 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('203')===false,'203 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.2','203 failure preserves202');
+verify((string)(new App_module_migration('asaas'))->version('203')==='203','203 retry confirmed');verify((new App_module_migration('asaas'))->version('203')===true,'203 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('204')===false,'204 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.3','204 failure preserves203');
+verify((string)(new App_module_migration('asaas'))->version('204')==='204','204 retry confirmed');verify((new App_module_migration('asaas'))->version('204')===true,'204 replay no-op');
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('205')===false,'205 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.4','205 failure preserves204');
+verify((string)(new App_module_migration('asaas'))->version('205')==='205','205 retry confirmed');verify((new App_module_migration('asaas'))->version('205')===true,'205 replay no-op');
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->version('206')===false,'206 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.5','206 failure preserves205');
+verify((string)(new App_module_migration('asaas'))->version('206')==='206','206 retry confirmed');verify((new App_module_migration('asaas'))->version('206')===true,'206 replay no-op');
+
+$db->failQuery='UPDATE `module_test_modules`';verify((new App_module_migration('asaas'))->to_latest()===false,'207 tracking failure rejected');$db->failQuery=null;
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='2.0.6','207 failure preserves206');
+verify((string)(new App_module_migration('asaas'))->to_latest()==='207','207 retry confirmed');verify((new App_module_migration('asaas'))->to_latest()===true,'207 replay no-op');
+
 echo "OK: {$n} native module migration MySQL assertions.\n";

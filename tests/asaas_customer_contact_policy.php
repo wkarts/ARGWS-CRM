@@ -38,7 +38,8 @@ final class ContactDb
     private string $from = '';
     private int $affected = 0;
     public function table_exists($table) { return isset($this->tables[$table]); }
-    public function field_exists($field, $table) { return true; }
+    // Historical contact fixture has no165 active-slot column or SQL defaults.
+    public function field_exists($field, $table) { return $field !== 'active_slot'; }
     public function select($columns) { return $this; }
     public function from($table) { $this->from = $table; return $this; }
     public function limit($n) { return $this; }

@@ -47,6 +47,7 @@ jobs:
       - run: node tests/banco_brasil_checkout_browser.cjs
         env:
           BB_CHECKOUT_SCREENSHOT_DIR: /tmp/bb-checkout-render
+      - run: node tests/browser/bb_settings.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -193,6 +194,18 @@ jobs:
           ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: root
+      - name: Validate open batches and printable boleto beyond preserved SQL plan
+        if: ${{ matrix.shard == 0 }}
+        run: |
+          php tests/banco_brasil_cnab_boleto_mysql.php
+          php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab_portal_mysql.php
+          php tests/banco_brasil_cnab400_groups_mysql.php
+          php tests/banco_brasil_invoice_issuance_mysql.php
+        env:
+          ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: root
       - name: Preserve exact SQL completion receipt
         if: always()
         uses: actions/upload-artifact@v4
@@ -321,6 +334,18 @@ jobs:
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php
           BB_SQL_COMMANDS
+      - name: Validate open batches and printable boleto beyond preserved SQL plan
+        if: ${{ matrix.shard == 0 }}
+        run: |
+          php tests/banco_brasil_cnab_boleto_mysql.php
+          php tests/banco_brasil_cnab400_boleto_mysql.php
+          php tests/banco_brasil_cnab_portal_mysql.php
+          php tests/banco_brasil_cnab400_groups_mysql.php
+          php tests/banco_brasil_invoice_issuance_mysql.php
+        env:
+          ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-ci-password
       - name: Preserve exact SQL completion receipt
         if: always()
         uses: actions/upload-artifact@v4

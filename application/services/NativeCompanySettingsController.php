@@ -205,6 +205,16 @@ final class NativeCompanySettingsController
             if($selected===null)throw new DomainException('native_settings_group_unavailable');
             $selected['installation_controls']=$installationSettings;
             if($group==='payment_gateways'){
+                $gateway=$ci->input->get('gateway',false);
+                if($gateway==='banco_brasil'){
+                    if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
+                    require_once __DIR__.'/NativeCompanyBancoBrasilSettings.php';NativeCompanyBancoBrasilSettings::render($ci);return;
+                }
+                if($gateway==='asaas'){
+                    if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
+                    $ci->asaas();return;
+                }
+                if($gateway!==null&&$gateway!=='')throw new DomainException('native_settings_invalid');
                 if(!in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)){show_error('Use o formulário do meio de pagamento selecionado.',405);return;}
                 $selected['view']='admin/settings/includes/native_payment_gateways';
                 $selected['without_submit_button']=true;

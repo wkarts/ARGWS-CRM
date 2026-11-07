@@ -391,10 +391,11 @@ class Invoices extends AdminController
                     require_once APPPATH.'services/NativeCompanyInvoiceIdentity.php';
                     $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
                     if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
-                    (new CompanyInvoices($this->db,db_prefix()))->change($issuer,$actor,$reference['source_id'],$input['revision']);
+                    require_once APPPATH.'services/CompanyAsaasInvoiceCancellation.php';
+                    (new CompanyAsaasInvoiceCancellation($this->db,db_prefix()))->cancel($issuer,$actor,$reference['source_id'],$input['revision'],function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                 }
                 $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
-            }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível cancelar esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
+            }catch(DomainException$error){$reason=$error->getMessage();if($reason==='asaas_invoice_cancellation_pending')show_error('Cancelamento pendente de confirmação no Asaas. A fatura local continua ativa; uma nova consulta não repetirá a exclusão.',409);else show_error('Não foi possível cancelar esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
             catch(Throwable$error){show_error('Não foi possível confirmar o cancelamento.',503);}
             return;
         }
@@ -428,7 +429,8 @@ class Invoices extends AdminController
                 if($reference['source_kind']==='company_invoice_draft')throw new DomainException('company_invoice_reopen_review_required');
                 $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
                 if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
-                (new CompanyInvoices($this->db,db_prefix()))->reopen($issuer,$actor,$reference['source_id'],$input['revision']);
+                require_once APPPATH.'services/CompanyAsaasInvoiceRecreation.php';
+                (new CompanyAsaasInvoiceRecreation($this->db,db_prefix()))->reopen($issuer,$actor,$reference['source_id'],$input['revision'],function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                 $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
             }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível reabrir esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
             catch(Throwable$error){show_error('Não foi possível confirmar a reabertura.',503);}
@@ -547,7 +549,7 @@ class Invoices extends AdminController
                     CompanyRequestScope::assertNativeMutation($this);
                     $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
                     if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
-                    $result=$id===''?$form->create($context->issuerId(),$context->staffId(),$input):$form->update($context->issuerId(),$context->staffId(),$id,$input);
+                    $result=$id===''?$form->create($context->issuerId(),$context->staffId(),$input):$form->update($context->issuerId(),$context->staffId(),$id,$input,function($value){$this->load->library('encryption');return $this->encryption->decrypt($value);});
                     if($result['action']==='save_and_record_payment')$this->session->set_userdata('record_payment',true);
                     set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('invoice')));
                     redirect(admin_url('invoices/list_invoices/'.$result['result']['canonical_id']));
@@ -559,7 +561,7 @@ class Invoices extends AdminController
                     $this->load->view('admin/invoices/invoice',$data);
                 } else { show_error('Método não permitido.',405); }
             } catch (DomainException $error) {
-                $key=$error->getMessage();$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
+                $key=$error->getMessage();if($key==='bb_invoice_issuance_invalid'){show_error('Confira os parâmetros do título para o perfil CNAB selecionado. A fatura e o título não foram emitidos.',422);return;}$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
                 show_error('Não foi possível confirmar esta operação da fatura nesta empresa.',$status);
             } catch (Throwable $error) {  show_error('Não foi possível confirmar a fatura.',503); }
             return;

@@ -26,3 +26,16 @@ $viewNew=$guiView[1];$newHtml=$billingRenderer->render($viewNew);essentialCheck(
 $resetBilling([],array_replace($convertPost,['expense_id'=>NativeCompanyResourceId::encode('company_expense',$eb),'origin_id'=>$ob2]));$controllerBilling->index();essentialCheck($outBilling->status===403,'actual conversion route rejects known B expense ID');CompanyRequestScope::$actor=12;$db->query('UPDATE '.$p.'issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=12',[$a]);$resetBilling([],$convertPost);$controllerBilling->index();essentialCheck($outBilling->status===403,'saved genuine conversion form loses authority after actor membership revoked');CompanyRequestScope::$actor=7;CompanyRequestScope::$sealed=false;$resetBilling([],$convertPost);$controllerBilling->index();essentialCheck($outBilling->status===503,'unsealed company route refuses all billing actions');
 echo 'Expense billing actual controller/forms/renderers: '.$GLOBALS['essentialChecks'].' cumulative checks passed ('.$db->driver().').'.PHP_EOL;
 
+
+require_once APPPATH.'services/NativeCompanyExpenseCategorySchema.php';
+NativeCompanyExpenseCategorySchema::ensure($db,$p);
+// Category has no expense ID: PRG must preserve the retained workspace explicitly.
+$categoryPost=['action'=>'category','category_name'=>'Workspace redirect category','category_description'=>'Synthetic','category_active'=>'1','request_key'=>$bk('workspace-category'),'native_expenses_csrf'=>$preparePost['native_expenses_csrf']];
+CompanyRequestScope::$issuer=$a;CompanyRequestScope::$actor=7;CompanyRequestScope::$sealed=true;
+$resetBilling([],$categoryPost);$controllerBilling->index();
+essentialCheck($outBilling->status===303&&$GLOBALS['billingRedirect']==='https://synthetic.invalid/admin/expenses?source=company&workspace=1','category POST preserves the retained workspace when no expense ID exists');
+parse_str(parse_url($GLOBALS['billingRedirect'],PHP_URL_QUERY),$workspaceGet);
+$resetBilling($workspaceGet);$controllerBilling->index();
+$workspaceView=end($GLOBALS['CI']->load->views);
+essentialCheck($outBilling->status===200&&$workspaceView[0]==='admin/expenses/native','redirect GET returns the actual expense creation workspace');
+echo 'Expense category PRG: 2 added controller/SQL checks passed ('.$db->driver().').'.PHP_EOL;

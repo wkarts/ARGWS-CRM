@@ -1,0 +1,25 @@
+<?php
+require __DIR__.'/asaas_preferences_controller.php';
+require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyManualSettlements.php';
+$db->queries=[];$manualStart=$GLOBALS['essentialChecks'];
+\Asaas\CompanyOriginPolicy::ensure($db,$p,true);
+\Asaas\CompanyManualSettlementSchema::ensure($db,$p);
+$db->query("UPDATE {$p}modules SET installed_version='1.6.9' WHERE module_name='asaas'");
+$manualProbe=new \Asaas\CompanyManualSettlements($db,$p);$manualProbe->policy($a,7,$accounts[$a]);$manualProbe->pending($a,7);
+$controller->input->verb='GET';$controller->input->posted=[];$run();$dto=$controller->load->view;
+essentialCheck($dto['manual_ready']&&$dto['manual_policies'][$accounts[$a]]['operation']==='disabled','native controller defaults full policy disabled');
+$manual=new \Asaas\CompanyManualSettlements($db,$p);$account=$asaas->accounts($a,7)[0];$original=$manual->policy($a,7,$accounts[$a]);
+$post=['action'=>'save_manual_policy','account_row'=>(string)$accounts[$a],'account_revision'=>$account['revision'],'policy_revision'=>$original['revision'],'operation'=>'cash','notify_customer'=>'0','confirm'=>'1'];
+$controller->input->verb='POST';$controller->input->posted=$post;$controller->output->status=200;$run();
+essentialCheck($controller->output->status===409&&$manual->policy($a,7,$accounts[$a])===$original,'missing CSRF leaves policy unchanged');
+$post['company_asaas_preferences_csrf']=$controller->session->data['company_asaas_preferences_csrf'];$post['confirm']='0';$controller->input->posted=$post;$controller->output->status=200;$run();
+essentialCheck($controller->output->status===422&&$manual->policy($a,7,$accounts[$a])===$original,'explicit confirmation required');
+$post['confirm']='1';$controller->input->posted=$post;$controller->output->status=200;$run();
+essentialCheck($controller->output->status===200&&$manual->policy($a,7,$accounts[$a])['operation']==='cash','real native controller saves reviewed policy');
+$saved=$manual->policy($a,7,$accounts[$a]);$controller->input->posted=$post;$run();essentialCheck($manual->policy($a,7,$accounts[$a])===$saved,'stale controller submission cannot overwrite policy');
+$run($b);essentialCheck($manual->policy($a,7,$accounts[$a])===$saved&&$manual->policy($b,7,$accounts[$b])['operation']==='disabled','foreign account form does not modify either policy');
+$controller->input->verb='GET';$controller->input->posted=[];$run();$dto=$controller->load->view;
+$renderManual=function($dto){extract($dto);$e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$environmentLabel=static fn($v)=>$v;$hidden=function($values)use($e,$context_token){echo '<input name="_company_context" value="'.$e($context_token).'">';foreach($values as $k=>$v)echo '<input name="'.$e($k).'" value="'.$e($v).'">';};ob_start();include APPPATH.'views/admin/settings/native_asaas_manual.php';return ob_get_clean();};
+$html=$renderManual($dto);essentialCheck(str_contains($html,'name="policy_revision"')&&str_contains($html,'name="company_asaas_preferences_csrf"')&&str_contains($html,'name="_company_context"'),'rendered manual forms preserve revision scope and CSRF');
+$dto['can_configure']=false;essentialCheck(!str_contains($renderManual($dto),'name="operation"'),'read-only native view exposes no policy mutation');
+echo 'Asaas manual controller: '.($GLOBALS['essentialChecks']-$manualStart).' added checks passed; no provider requests.'.PHP_EOL;

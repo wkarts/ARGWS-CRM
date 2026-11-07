@@ -170,7 +170,7 @@ trait NativeCompanySpecializedOperations
                         if($action==='rotate'&&($post['confirm']??null)!=='1'){show_error('Confirme a substituição do token desta conta.',403);return;}
                         foreach(['token','webhook_token','one_time_token','api_key'] as $field)if(array_key_exists($field,$post)){show_error('O token é gerado exclusivamente pelo CRM.',400);return;}
                     }
-                    if(in_array($action,['save_profile','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
+                    if(in_array($action,['open_installment_recreation','review_installment_recreation','execute_installment_recreation','recover_installment_recreation','open_installment_edit','review_installment_edit','execute_installment_edit','resume_installment_edit','review_pix_replacement','confirm_pix_replacement','configure_pix_future_worker','review_pix_series','confirm_pix_series','open_pix_series','stop_pix_series','issue_pix_cycle','observe_pix_cycle','settle_pix_cycle','cancel_pix','pix_receipt_worker','reserve_pix','observe_pix_initial','settle_pix_initial','review_installment_batch_removal','remove_installment_batch','remove_installment','refresh_installment_removal','confirm_legacy_installments','open_installment_group','observe_installment','reconcile_installment','preview_legacy_installments','preview_legacy_binding','confirm_legacy_binding','batch_compare','batch_reconcile','account_report','export_account_report','pix_worker','pix_observe','automatic_pix_monitor','remote_monitor','export_payment_report','save_profile','save_card_settings','save_card_pricing','preview_card_pricing','save_manual_policy','recover_manual','recover_invoice_edit','card_pay','card_query','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
                     if(str_starts_with($action,'refund_')){if(($post['confirm']??null)!=='1'||!is_string($post['company_asaas_refund_csrf']??null)||!hash_equals($refundCsrf,$post['company_asaas_refund_csrf'])){show_error('Reabra o formulário e confirme esta ação no reembolso.',403);return;}}
                     $this->load->library('encryption');
                     $decrypt=fn($value)=>$this->encryption->decrypt($value);
@@ -179,12 +179,215 @@ trait NativeCompanySpecializedOperations
                             if(!is_array($post['profile']??null))throw new DomainException('asaas_company_profile_invalid');
                             foreach(['environment','profile_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
                             (new \Asaas\CompanyPreferences($this->db,db_prefix()))->saveProfile($issuer,$actor,(string)($post['environment']??''),$post['profile'],(string)($post['profile_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_saved');break;
+                        case 'save_manual_policy':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyManualSettlements.php';
+                            if(($post['confirm']??null)!=='1'||!in_array($post['notify_customer']??null,['0','1'],true))throw new DomainException('asaas_company_confirmation_required');
+                            foreach(['account_revision','policy_revision','operation'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_manual_policy_invalid');
+                            (new \Asaas\CompanyManualSettlements($this->db,db_prefix()))->configure($issuer,$actor,IssuerPolicy::id($post['account_row']??null),(string)($post['account_revision']??''),(string)($post['policy_revision']??''),(string)($post['operation']??''),$post['notify_customer']==='1');$saved='Política de recebimento integral salva para esta conta e ambiente.';break;
+                        case 'recover_manual':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyManualSettlements.php';
+                            if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            if(!is_string($post['request_key']??null))throw new DomainException('asaas_manual_command_invalid');
+                            $payment=(new \Asaas\CompanyManualSettlements($this->db,db_prefix()))->recover($issuer,$actor,(string)($post['request_key']??''),$decrypt);$saved='Recebimento nativo confirmado #'.$payment.'. Intenção de notificação preservada para processamento/revisão.';break;
+                        case 'recover_invoice_edit':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInvoiceEdits.php';
+                            if(($post['confirm']??null)!=='1'||!is_string($post['request_key']??null))throw new DomainException('asaas_company_confirmation_required');
+                            $edited=(new \Asaas\CompanyInvoiceEdits($this->db,db_prefix()))->recover($issuer,$actor,$post['request_key'],$decrypt);$saved='Edição confirmada na fatura #'.$edited['invoice_id'].'. Histórico preservado.';break;
+                        case 'batch_compare':case 'batch_reconcile':
+                            try{
+                                if($action==='batch_reconcile'&&($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                                require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyBatchReconciliation.php';
+                                $item=(new \Asaas\CompanyBatchReconciliation($this->db,db_prefix()))->item($issuer,$actor,$post['origin_id']??null,$action==='batch_reconcile',$decrypt);
+                                $payload=['ok'=>true,'item'=>$item];$status=200;
+                            }catch(DomainException $failure){$payload=['ok'=>false,'outcome'=>'review_required'];$status=422;}
+                            catch(Throwable $failure){$payload=['ok'=>false,'outcome'=>'unconfirmed'];$status=503;}
+                            $this->output->set_status_header($status);$this->output->set_content_type('application/json');$this->output->set_output(json_encode($payload,JSON_THROW_ON_ERROR));return;
+                        case 'preview_legacy_installments':case 'confirm_legacy_installments':
+                            if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            $approval='';if($action==='confirm_legacy_installments'){if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null)||$post['review_hash']==='')throw new DomainException('asaas_company_confirmation_required');$approval=$post['review_hash'];}
+                            $legacyReview=$service->reviewLegacyInstallments($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,$post['remote_id'],$decrypt,null,$approval);
+                            if($legacyReview['bound']){$installmentPanel=$service->installmentGroupPage($issuer,$actor,$legacyReview['origin_id']);$legacyReview=null;$saved='Grupo vinculado. Nenhum recebimento aplicado.';}break;
+                        case 'open_installment_recreation':case 'review_installment_recreation':case 'execute_installment_recreation':case 'recover_installment_recreation':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if($action==='review_installment_recreation'||$action==='execute_installment_recreation'){
+                                if(!is_string($post['installment_count']??null)||!preg_match('/^(?:[2-9]|[1-9][0-9]|100)$/D',$post['installment_count'])||!is_string($post['due_date']??null))throw new DomainException('asaas_installment_recreation_invalid');
+                                if($action==='review_installment_recreation')$installmentRecreationReview=$service->reviewInstallmentRecreation($issuer,$actor,$groupOrigin,(int)$post['installment_count'],$post['due_date'],$decrypt);
+                                else{if(!is_string($post['review_hash']??null))throw new DomainException('asaas_installment_recreation_invalid');$installmentRecreationResult=$service->recreateInstallmentGroup($issuer,$actor,$groupOrigin,(int)$post['installment_count'],$post['due_date'],$post['review_hash'],($post['confirm']??null)==='1',$decrypt);}
+                            }elseif($action==='recover_installment_recreation'){
+                                if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null))throw new DomainException('asaas_company_confirmation_required');
+                                $installmentRecreationResult=$service->recoverInstallmentRecreation($issuer,$actor,$groupOrigin,$post['review_hash'],$decrypt);
+                            }
+                            if(($installmentRecreationResult['complete']??false))$installmentPanel=$service->installmentGroupPage($issuer,$actor,$installmentRecreationResult['origin_id']);
+                            else $installmentRecreationPanel=$service->installmentRecreationPage($issuer,$actor,$groupOrigin);break;
+                        case 'open_installment_edit':case 'review_installment_edit':case 'execute_installment_edit':case 'resume_installment_edit':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if($action==='review_installment_edit'||$action==='execute_installment_edit'){
+                                if(!is_array($post['changes']??null))throw new DomainException('asaas_installment_edit_invalid');
+                                if($action==='review_installment_edit')$installmentEditReview=$service->reviewInstallmentEdit($issuer,$actor,$groupOrigin,$post['changes'],$decrypt);
+                                else{if(!is_string($post['review_hash']??null))throw new DomainException('asaas_installment_edit_invalid');$installmentEditResult=$service->executeInstallmentEdit($issuer,$actor,$groupOrigin,$post['changes'],$post['review_hash'],($post['confirm']??null)==='1',$decrypt);}
+                            }elseif($action==='resume_installment_edit'){
+                                if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null))throw new DomainException('asaas_company_confirmation_required');
+                                $installmentEditResult=$service->resumeInstallmentEdit($issuer,$actor,$groupOrigin,$post['review_hash'],$decrypt);
+                            }
+                            $installmentEditPanel=$service->installmentEditPage($issuer,$actor,$groupOrigin);break;
+                        case 'review_installment_batch_removal':case 'remove_installment_batch':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if($action==='remove_installment_batch'){
+                                if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null))throw new DomainException('asaas_company_confirmation_required');
+                                $installmentBatchResult=$service->removeInstallmentBatch($issuer,$actor,$groupOrigin,$post['review_hash'],$decrypt);
+                                $saved=$installmentBatchResult['complete']?'Exclusão confirmada para todas as parcelas selecionadas. A fatura foi preservada.':'Operação parcial. Confira o estado de cada parcela antes de retomar.';
+                            }
+                            $installmentBatchReview=$service->reviewInstallmentRemoval($issuer,$actor,$groupOrigin,$decrypt);
+                            $installmentPanel=$service->installmentGroupPage($issuer,$actor,$groupOrigin);break;
+                        case 'remove_installment':case 'refresh_installment_removal':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            if($action==='remove_installment'){
+                                if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                                $operation=$service->removeInstallment($issuer,$actor,$groupOrigin,$post['remote_id'],hash('sha256','installment-removal:'.$issuer.':'.$groupOrigin.':'.$post['remote_id']),$decrypt);
+                            }else $operation=$service->refreshInstallmentRemoval($issuer,$actor,$groupOrigin,$post['remote_id'],$decrypt);
+                            $saved='Exclusão da parcela: '.$operation['state'].'. A fatura e os recebimentos das outras parcelas foram preservados.';
+                            $installmentPanel=$service->installmentGroupPage($issuer,$actor,$groupOrigin);break;
+                        case 'open_installment_group':case 'observe_installment':case 'reconcile_installment':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if($action!=='open_installment_group'){
+                                if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                                if($action==='reconcile_installment'){if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');$service->authorize($issuer,$actor,'settle');}
+                                $proof=$service->observeInstallment($issuer,$actor,$groupOrigin,$post['remote_id'],$decrypt);
+                                if($action==='reconcile_installment'){require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInstallmentReceipt.php';$payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($issuer,$actor,new \Asaas\CompanyInstallmentReceipt($groupOrigin,$post['remote_id'],$proof));$saved='Recebimento nativo #'.$payment.' conferido para esta parcela.';}
+                            }
+                            $installmentPanel=$service->installmentGroupPage($issuer,$actor,$groupOrigin);break;
+                        case 'preview_legacy_binding':case 'confirm_legacy_binding':
+                            if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            $approval='';if($action==='confirm_legacy_binding'){if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null)||$post['review_hash']==='')throw new DomainException('asaas_company_confirmation_required');$approval=$post['review_hash'];}
+                            $legacyReview=$service->reviewLegacyBinding($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,$post['remote_id'],$decrypt,null,$approval);
+                            if($legacyReview['bound']){$saved='Vínculo revisado salvo na origem #'.$legacyReview['origin_id'].'. Nenhum recebimento aplicado; conciliação permanece explícita.';$legacyReview=null;}break;
+                        case 'export_payment_report':
+                            if(!is_string($post['account_revision']??null)||!is_array($post['remote_filters']??null))throw new DomainException('asaas_monitor_filters_invalid');
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPaymentReport.php';
+                            $report=(new \Asaas\CompanyPaymentReport($this->db,db_prefix()))->export($issuer,$actor,$post['account_row']??null,$post['account_revision'],$post['remote_filters'],$decrypt);
+                            if(method_exists($this->output,'enable_profiler'))$this->output->enable_profiler(false);
+                            $this->output->set_header('Cache-Control: private, no-store, max-age=0')->set_header('Pragma: no-cache')->set_header('X-Content-Type-Options: nosniff')->set_header('Content-Disposition: attachment; filename="'.$report['filename'].'"')->set_content_type('text/csv','utf-8')->set_output($report['bytes']);
+                            return;
+                        case 'account_report':case 'export_account_report':
+                            if(!is_string($post['account_revision']??null)||!is_string($post['report_kind']??null)||!is_array($post['report_filters']??null))throw new DomainException('asaas_report_invalid');
+                            try{$reportResult=$service->accountReport($issuer,$actor,$post['account_row']??null,$post['account_revision'],$post['report_kind'],$post['report_filters'],$action==='export_account_report',$decrypt);}
+                            catch(InvalidArgumentException $invalid){throw new DomainException('asaas_report_invalid');}
+                            if($action==='export_account_report'){
+                                try{$bytes=stream_get_contents($reportResult->stream());if(!is_string($bytes))throw new RuntimeException('asaas_report_storage_failed');}finally{$reportResult->close();}
+                                if(method_exists($this->output,'enable_profiler'))$this->output->enable_profiler(false);
+                                $this->output->set_header('Cache-Control: private, no-store, max-age=0')->set_header('Pragma: no-cache')->set_header('X-Content-Type-Options: nosniff')->set_header('Content-Disposition: attachment; filename="'.$reportResult->filename.'"')->set_content_type('text/csv','utf-8')->set_output($bytes);return;
+                            }
+                            $accountReport=['account_row'=>IssuerPolicy::id($post['account_row']),'account_revision'=>$post['account_revision'],'kind'=>$post['report_kind'],'filters'=>$post['report_filters'],'page'=>$reportResult['report']];
+                            $saved='Relatório consultado na conta indicada. Nenhuma baixa ou alteração financeira foi aplicada.';break;
+                        case 'review_pix_replacement':case 'confirm_pix_replacement':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixReplacement.php';
+                            $replacement=new \Asaas\CompanyPixReplacement($this->db,db_prefix());$old=IssuerPolicy::id($post['old_origin_id']??null);$root=IssuerPolicy::id($post['origin_id']??null);$schedule=IssuerPolicy::id($post['schedule_id']??null);
+                            if(!is_string($post['holidays']??null))throw new DomainException('asaas_pix_calendar_invalid');$holidays=preg_split('/[\s,]+/',trim($post['holidays']),-1,PREG_SPLIT_NO_EMPTY);
+                            if($action==='review_pix_replacement')$pixReplacementReview=$replacement->review($issuer,$actor,$old,$root,$schedule,$holidays,$decrypt);
+                            else{foreach(['review_hash','replacement_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_pix_replacement_stale');$replacement->confirm($issuer,$actor,$old,$root,$schedule,$holidays,$post['review_hash'],$post['replacement_revision'],($post['confirm']??null)==='1');$pixSeries=(new \Asaas\CompanyPixFutureSchedules($this->db,db_prefix()))->status($issuer,$actor,$root);$saved='Vínculo substituído. Histórico anterior preservado e automação antiga desabilitada. Nova automação exige confirmação própria.';}break;
+                        case 'configure_pix_future_worker':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixFutureWorker.php';
+                            foreach(['review_hash','worker_revision','enabled'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_stale');
+                            if(!in_array($post['enabled'],['0','1'],true))throw new DomainException('asaas_company_invalid_input');$root=IssuerPolicy::id($post['origin_id']??null);
+                            (new \Asaas\CompanyPixFutureWorker($this->db,db_prefix()))->configure($issuer,$actor,$root,$post['review_hash'],$post['worker_revision'],$post['enabled']==='1',($post['confirm']??null)==='1');
+                            $pixSeries=(new \Asaas\CompanyPixFutureSchedules($this->db,db_prefix()))->status($issuer,$actor,$root);$saved='Política automática atualizada para este vínculo. Nenhum envio financeiro foi executado por esta configuração.';break;
+                        case 'review_pix_series':case 'confirm_pix_series':case 'open_pix_series':case 'stop_pix_series':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixFutureSchedules.php';
+                            $series=new \Asaas\CompanyPixFutureSchedules($this->db,db_prefix());$root=IssuerPolicy::id($post['origin_id']??null);
+                            if(in_array($action,['review_pix_series','confirm_pix_series'],true)){
+                                $schedule=IssuerPolicy::id($post['schedule_id']??null);
+                                if(!is_string($post['holidays']??null))throw new DomainException('asaas_pix_calendar_invalid');
+                                $holidays=preg_split('/[\s,]+/',trim($post['holidays']),-1,PREG_SPLIT_NO_EMPTY);
+                                if($action==='review_pix_series')$pixSeriesReview=$series->review($issuer,$actor,$root,$schedule,$holidays,$decrypt);
+                                else{if(!is_string($post['review_hash']??null))throw new DomainException('asaas_pix_schedule_stale');$series->confirm($issuer,$actor,$root,$schedule,$holidays,$post['review_hash'],($post['confirm']??null)==='1');$saved='Vínculo revisado salvo. Emissões futuras continuam exigindo ação explícita; nenhum cron foi habilitado.';}
+                            }
+                            if($action==='stop_pix_series'){if(!is_string($post['review_hash']??null))throw new DomainException('asaas_pix_schedule_stale');$series->stop($issuer,$actor,$root,$post['review_hash'],($post['confirm']??null)==='1');$saved='Novas emissões deste vínculo foram interrompidas. Cobranças já enviadas e autorização bancária preservadas.';}
+                            $pixSeries=$series->status($issuer,$actor,$root);break;
+                        case 'issue_pix_cycle':case 'observe_pix_cycle':case 'settle_pix_cycle':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixFutureCycle.php';
+                            $cycle=new \Asaas\CompanyPixFutureCycle($this->db,db_prefix(),$issuer,$actor,IssuerPolicy::id($post['origin_id']??null),IssuerPolicy::id($post['invoice_id']??null));
+                            if($action!=='observe_pix_cycle'&&($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            if($action==='issue_pix_cycle'){$id=$cycle->dispatch($decrypt);$saved='Origem Pix #'.$id.' registrada. Confira o resultado; um envio incerto não será repetido.';}
+                            else{$proof=$cycle->observe($decrypt);if($action==='settle_pix_cycle'){$id=$cycle->settle($proof);$saved='Recebimento nativo #'.$id.' confirmado para esta ocorrência.';}else $saved='Consulta canônica #'.$proof.' registrada. Nenhum recebimento aplicado.';}
+                            break;
+                        case 'cancel_pix':
+                            if(!is_string($post['account_revision']??null)||($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixRevocation.php';
+                            $cancel=(new \Asaas\CompanyPixRevocation($this->db,db_prefix()))->cancel($issuer,$actor,IssuerPolicy::id($post['origin_id']??null),$post['account_revision'],true,$decrypt);
+                            $saved=$cancel['state']==='cancelled'?'Cancelamento da autorização confirmado. Histórico e recebimentos preservados.':'Consentimento local revogado. Cancelamento bancário não confirmado; repetir consulta não repete envio incerto.';break;
+                        case 'pix_receipt_worker':
+                            foreach(['account_revision','worker_revision','enabled'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_stale');
+                            if(!in_array($post['enabled'],['0','1'],true)||($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixReceiptJobs.php';
+                            (new \Asaas\CompanyPixReceiptJobs($this->db,db_prefix()))->configure($issuer,$actor,IssuerPolicy::id($post['account_row']??null),$post['account_revision'],$post['worker_revision'],$post['enabled']==='1');
+                            $saved='Política de recebimentos iniciais Pix atualizada. Somente novos eventos serão elegíveis; nenhuma cobrança futura foi autorizada.';break;
+                        case 'reserve_pix':
+                            foreach(['customer_id','invoice_revision','request_key','frequency','start_date','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_invalid_input');
+                            if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            $service->reservePixAuthorization($issuer,$actor,IssuerPolicy::id($post['invoice_id']??null),IssuerPolicy::id($post['account_row']??null),$post['customer_id'],$post['invoice_revision'],$post['request_key'],$post['frequency'],$post['start_date'],$post['account_revision']);
+                            $saved='Reserva Pix criada. O contato deverá revisar e aceitar no portal antes do envio. Nenhuma autorização bancária foi emitida.';break;
+                        case 'observe_pix_initial':
+                            if(!is_string($post['payment_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            $service->observePixInitialPayment($issuer,$actor,IssuerPolicy::id($post['origin_id']??null),$post['payment_id'],$decrypt);
+                            $saved='Recebimento inicial consultado por cobrança e transação. Confira a prova antes de aplicar a baixa.';break;
+                        case 'settle_pix_initial':
+                            if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixInitialReceipt.php';
+                            (new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($issuer,$actor,new \Asaas\CompanyPixInitialReceipt(IssuerPolicy::id($post['origin_id']??null),IssuerPolicy::id($post['proof_id']??null)));
+                            $saved='Recebimento inicial Pix aplicado pelo escritor nativo. Repetição não duplica pagamento.';break;
+                        case 'pix_worker':case 'pix_observe':
+                            if(!is_string($post['account_revision']??null))throw new DomainException('asaas_company_stale');
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixInbox.php';
+                            $pixInboxService=new \Asaas\CompanyPixInbox($this->db,db_prefix());
+                            if($action==='pix_worker'){
+                                if(!is_string($post['worker_revision']??null)||!in_array($post['enabled']??null,['0','1'],true))throw new DomainException('asaas_company_stale');
+                                $pixInboxService->configure($issuer,$actor,$post['account_row']??null,$post['account_revision'],$post['worker_revision'],$post['enabled']==='1');
+                                $saved='Observação automática atualizada. Isso não autoriza emissão ou baixa de cobranças.';
+                            }else{
+                                $pixResult=$pixInboxService->process($issuer,$actor,$post['event_id']??null,$post['account_revision'],$decrypt);
+                                $saved=$pixResult['state']==='observed'?'Estado consultado; nenhuma baixa financeira aplicada.':'Consulta não concluída. Confira a situação do evento.';
+                            }break;
+                        case 'automatic_pix_monitor':
+                            if(!is_string($post['account_revision']??null)||!is_array($post['pix_filters']??null))throw new DomainException('asaas_pix_filters_invalid');
+                            $automaticPixMonitor=['account_row'=>IssuerPolicy::id($post['account_row']??null),'account_revision'=>$post['account_revision'],'filters'=>$post['pix_filters'],'page'=>$service->automaticPixAuthorizations($issuer,$actor,$post['account_row']??null,$post['account_revision'],$post['pix_filters'],$decrypt)];
+                            $saved='Autorizações consultadas nesta conta. Nenhum consentimento local ou cobrança foi criado.';break;
+                        case 'remote_monitor':
+                            if(!is_string($post['account_revision']??null)||!is_array($post['remote_filters']??null))throw new DomainException('asaas_monitor_filters_invalid');
+                            $remoteMonitor=['account_row'=>IssuerPolicy::id($post['account_row']??null),'account_revision'=>$post['account_revision'],'filters'=>$post['remote_filters'],'page'=>$service->remotePayments($issuer,$actor,$post['account_row']??null,$post['account_revision'],$post['remote_filters'],$decrypt)];
+                            $saved='Consulta remota concluída. Nenhum vínculo ou recebimento foi criado.';break;
+                        case 'save_card_pricing':case 'preview_card_pricing':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyCardPricing.php';
+                            $pricingService=new \Asaas\CompanyCardPricing($this->db,db_prefix());$pricingAccount=IssuerPolicy::id($post['account_row']??null);
+                            if($action==='save_card_pricing'){
+                                if(!is_array($post['pricing']??null)||!is_string($post['pricing_revision']??null)||!is_string($post['account_revision']??null))throw new DomainException('asaas_card_pricing_invalid');
+                                $pricingService->save($issuer,$actor,$pricingAccount,$post['pricing'],$post['pricing_revision'],$post['account_revision']);$saved='Condições de cartão salvas somente nesta conta e ambiente.';
+                            }else{
+                                if(!is_string($post['balance']??null)||!is_string($post['installments']??null)||!preg_match('/^[1-9][0-9]?$/D',$post['installments']))throw new DomainException('asaas_card_pricing_invalid');
+                                $cardPricingPreview=['account_row'=>$pricingAccount,'pricing'=>$pricingService->preview($issuer,$actor,$pricingAccount,$post['balance'],(int)$post['installments'])];$saved='Simulação calculada com as condições salvas. Nenhuma fatura ou cobrança foi alterada.';
+                            }break;
+                        case 'save_card_settings':
+                            require_once APPPATH.'services/NativeCompanyAsaasCardPreferences.php';
+                            NativeCompanyAsaasCardPreferences::save($this->db,db_prefix(),$issuer,$actor,$post);$saved='Configuração de cartão salva somente neste ambiente.';break;
+                        case 'card_pay':case 'card_query':
+                            require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyCardPayments.php';
+                            if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                            $cardService=new \Asaas\CompanyCardPayments($this->db,db_prefix());
+                            if($action==='card_pay'){
+                                if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443'))throw new DomainException('asaas_card_https_required');
+                                $operation=$post['card_operation']??null;$token=$post['card_token']??null;
+                                if(!is_string($operation)||!is_string($token)||!is_string($post['request_key']??null))throw new DomainException('asaas_card_request_invalid');
+                                $payload=$operation==='payWithCreditCard'?['creditCardToken'=>$token]:['cardType'=>'CREDIT','cardToken'=>$token];
+                                unset($post['card_token'],$_POST['card_token']);
+                                try{$cardResult=$cardService->pay($issuer,$actor,$post['origin_id']??null,$operation,$payload,(string)($post['request_key']??''),$decrypt);}finally{unset($token,$payload);}
+                            }else $cardResult=$cardService->refresh($issuer,$actor,$post['origin_id']??null,$decrypt);
+                            $saved='Tentativa de cartão: '.$cardResult['state'].'. Nenhum recebimento local foi lançado por esta ação. Tentativa enviada não será repetida.';break;
                         case 'select_environment':
                             foreach(['environment','selection_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
                             (new \Asaas\CompanyPreferences($this->db,db_prefix()))->selectEnvironment($issuer,$actor,(string)($post['environment']??''),(string)($post['selection_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_environment_saved');break;
                         case 'save_account':$service->saveAccount($issuer,$actor,(string)($post['environment']??''),(string)($post['account_id']??''),(string)($post['api_key']??''),(string)($post['revision']??''),fn($value)=>$this->encryption->encrypt($value));$saved='Credencial protegida. Confira a conta por API antes de emitir.';break;
                         case 'verify':$service->verifyAccount($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='A credencial confirmou a carteira configurada para este ambiente.';break;
-                        case 'reveal_api_key':$revealedApiKey=$service->revealApiKey($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='Chave API recuperada desta conta e ambiente; a credencial não foi alterada.';break;
+                        case 'reveal_api_key':throw new DomainException('asaas_company_secret_export_disabled');
                         case 'remote_webhook':
                             require_once FCPATH.'modules/asaas/libraries/Asaas/RemoteWebhook.php';
                             $remoteAction=$post['remote_action']??null;$remoteInput=$post['remote_config']??[];
@@ -241,8 +444,12 @@ trait NativeCompanySpecializedOperations
                 }
                 if($oneTime!==null||$revealedApiKey!==null){$webhookCsrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_asaas_webhook_csrf',$webhookCsrf);}
                 $data=$service->overview($issuer,$actor);
-            }catch(DomainException $e){$this->output->set_status_header(str_contains($e->getMessage(),'stale')?409:422);$error='Não foi possível concluir. Confira a empresa, permissões, ambiente, revisão e estado da operação. Recarregue antes de repetir.';$data=$service->overview($issuer,$actor);}
-            catch(Throwable $e){$this->output->set_status_header(503);$error='Operação não confirmada. Uma operação remota incerta não deve ser repetida: consulte a cobrança para confirmar seu estado.';try{$data=$service->overview($issuer,$actor);}catch(Throwable $ignored){show_error('Integração indisponível. Confira a ativação e as migrations do módulo.',503);return;}}
+            }catch(DomainException $e){$this->output->set_status_header($e->getMessage()==='asaas_report_access_denied'?403:(str_contains($e->getMessage(),'stale')?409:422));$error='Não foi possível concluir. Confira a empresa, permissões, ambiente, revisão e estado da operação. Recarregue antes de repetir.';$data=$service->overview($issuer,$actor);}
+            catch(Throwable $e){
+                // Bounded code location only; provider payloads, SQL and exception messages may contain secrets.
+                $source=preg_replace('/[^A-Za-z0-9_.-]/','_',basename($e->getFile()));
+                log_message('error','native_asaas_operation_failure class='.($e instanceof Error?'engine':'runtime').' file='.$source.' line='.$e->getLine());
+                $this->output->set_status_header(503);$error='Operação não confirmada. Uma operação remota incerta não deve ser repetida: consulte a cobrança para confirmar seu estado.';try{$data=$service->overview($issuer,$actor);}catch(Throwable $ignored){show_error('Integração indisponível. Confira a ativação e as migrations do módulo.',503);return;}}
             $checkoutReady=false;$payers=[];$canPayer=CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view')&&CompanySettingsRuntime::canResource('customers','create');
             try{$service->checkoutModule();$checkoutReady=true;if($canPayer)$payers=(new \Asaas\CompanyPayers($this->db,db_prefix()))->page($issuer,$actor);}catch(DomainException $unavailable){}
             $invoice=null;$invoiceId=$this->input->get('invoice');if($invoiceId){try{$id=IssuerPolicy::id($invoiceId);$invoices=new CompanyInvoices($this->db,db_prefix());$invoice=['id'=>$id,'data'=>$invoices->document($issuer,$actor,$id)->data(),'revision'=>$invoices->revision($issuer,$actor,$id),'request_key'=>hash('sha256','company-asaas-issue:'.$issuer.':'.$id)];}catch(Throwable $ignored){show_error('Fatura indisponível nesta empresa.',403);return;}}
@@ -255,7 +462,45 @@ trait NativeCompanySpecializedOperations
             $base=defined('APP_BASE_URL')?(string)APP_BASE_URL:'';$indexPage=(string)$this->config->item('index_page');
             $callbackUrls=[];foreach($data['accounts'] as $account)$callbackUrls[(int)$account['id']]=\Asaas\WebhookAdminPresentation::companyCallbackUrl($base,$account['webhook_public_id'],$indexPage);
             $canWebhook=false;try{$service->authorizeWebhook($issuer,$actor);$canWebhook=true;}catch(DomainException $denied){}
-            $this->load->view('admin/settings/native_asaas',$data+['remote_webhook_result'=>$remoteWebhookResult,'remote_webhook_error'=>$remoteWebhookError,'remote_webhook_audit'=>$canWebhook?$service->remoteWebhookAudit($issuer,$actor):[],'translate'=>$translate,'preferences'=>$preferences,'preferences_active_tab'=>$post['environment']??null,'preferences_csrf'=>$preferencesCsrf,'revealed_api_key'=>$revealedApiKey,'api_urls'=>\Asaas\SettingsPresentation::apiUrls(),'webhook_csrf'=>$webhookCsrf,'can_webhook'=>$canWebhook,'callback_urls'=>$callbackUrls,'full_refund_ready'=>$fullRefundReady,'refund_ready'=>$refundReady,'refund_panel'=>$refundPanel,'refund_grant'=>$refundGrant,'can_refund'=>$canRefund,'refund_actor'=>$actor,'refund_csrf'=>$refundCsrf,'refund_request_key'=>bin2hex(random_bytes(32)),'checkout_ready'=>$checkoutReady,'can_payer'=>$canPayer,'payers'=>$payers,'error'=>$error,'saved'=>$saved,'one_time'=>$oneTime,'invoice'=>$invoice,'can_configure'=>CompanySettingsRuntime::canResource('settings','edit'),'can_remove'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','delete')&&CompanySettingsRuntime::canResource('settings','edit'),'can_fee'=>CompanySettingsRuntime::canResource('expenses','view')&&CompanySettingsRuntime::canResource('expenses','create')&&CompanySettingsRuntime::canResource('payments','create'),'can_settle'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('payments','create'),'can_issue'=>CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view'),'context_token'=>CompanyRequestScope::token(),'action_url'=>CompanyRequestScope::adminUrl($this,'settings/asaas')]);
+            $cardPricing=[];$cardPricingReady=false;
+            if(CompanySettingsRuntime::canResource('settings','view')){
+                try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyCardPricing.php';$pricingService=new \Asaas\CompanyCardPricing($this->db,db_prefix());
+                    foreach($data['accounts'] as $account)$cardPricing[(int)$account['id']]=$pricingService->page($issuer,$actor,(int)$account['id']);
+                    $cardPricingReady=$cardPricing!==[];
+                }catch(Throwable $unavailable){$cardPricing=[];}
+            }
+            $cardPaymentsReady=false;$cardPayments=[];
+            try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyCardPayments.php';$cardPayments=(new \Asaas\CompanyCardPayments($this->db,db_prefix()))->page($issuer,$actor);$cardPaymentsReady=true;}catch(Throwable $unavailable){}
+            $manualReady=false;$manualPolicies=[];$manualPending=[];
+            if($this->db->table_exists(db_prefix().'asaas_company_manual_settlements')){
+                try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyManualSettlements.php';\Asaas\CompanyManualSettlementSchema::ensure($this->db,db_prefix(),false);
+                    $manual=new \Asaas\CompanyManualSettlements($this->db,db_prefix());
+                    if(CompanySettingsRuntime::canResource('settings','view'))foreach($data['accounts'] as $account)$manualPolicies[(int)$account['id']]=$manual->policy($issuer,$actor,(int)$account['id']);
+                    if(CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('payments','create'))$manualPending=$manual->pending($issuer,$actor);
+                    $manualReady=true;
+                }catch(Throwable $ignored){$manualReady=false;}
+            }
+            $editReady=false;$editPending=[];
+            if($this->db->table_exists(db_prefix().'asaas_company_invoice_edits')&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view')){
+                try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInvoiceEdits.php';$editPending=(new \Asaas\CompanyInvoiceEdits($this->db,db_prefix()))->pending($issuer,$actor);$editReady=true;}catch(Throwable $ignored){$editReady=false;}
+            }
+            $monitor=null;$monitorError=null;
+            if($this->input->method(true)==='GET'&&$this->input->get('monitor_kind')!==null){
+                try{
+                    require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyMonitor.php';
+                    $filters=[];foreach(['kind','account','before','state'] as $field){$value=$this->input->get('monitor_'.$field);if($value!==null)$filters[$field]=$value;}
+                    $monitor=(new \Asaas\CompanyMonitor($this->db,db_prefix()))->page($issuer,$actor,$filters);
+                }catch(DomainException $failure){$this->output->set_status_header(422);$monitorError='Confira os filtros, a conta e suas permissões nesta empresa.';}
+                catch(Throwable $failure){$this->output->set_status_header(503);$monitorError='Histórico local indisponível para conferência. Nenhuma consulta remota foi iniciada.';}
+            }
+            $pixInbox=null;
+            if($this->db->table_exists(db_prefix().'asaas_company_pix_events')&&CompanySettingsRuntime::canResource('asaas_reports','view')){
+                try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixInbox.php';$pixInbox=(new \Asaas\CompanyPixInbox($this->db,db_prefix()))->page($issuer,$actor);}catch(Throwable $ignored){$pixInbox=null;}
+            }
+            $pixReceiptJobs=null;if($this->db->table_exists(db_prefix().'asaas_company_pix_receipt_workers')){try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixReceiptJobs.php';$pixReceiptJobs=(new \Asaas\CompanyPixReceiptJobs($this->db,db_prefix()))->page($issuer,$actor);}catch(DomainException $unavailable){}}
+            $pixOperations=[];try{$pixOperations=$service->pixOperations($issuer,$actor);}catch(DomainException $unavailable){}
+            $pixFutureWorker=null;$pixFutureReady=false;if(is_array($pixSeries??null)&&$this->db->table_exists(db_prefix().'asaas_company_pix_future_workers')){try{require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPixFutureWorker.php';$pixFutureWorker=(new \Asaas\CompanyPixFutureWorker($this->db,db_prefix()))->page($issuer,$actor,(int)$pixSeries['binding']['root_origin']);$pixFutureReady=true;}catch(DomainException $unavailable){}}
+            $this->load->view('admin/settings/native_asaas',$data+['installment_recreation_ready'=>version_compare(IssuerStorage::query($this->db,'SELECT installed_version FROM '.db_prefix().'modules WHERE module_name=?',['asaas'])->row_array()['installed_version']??'0','2.0.2','>='),'installment_recreation_panel'=>$installmentRecreationPanel??null,'installment_recreation_review'=>$installmentRecreationReview??null,'installment_recreation_result'=>$installmentRecreationResult??null,'installment_edit_ready'=>version_compare(IssuerStorage::query($this->db,'SELECT installed_version FROM '.db_prefix().'modules WHERE module_name=?',['asaas'])->row_array()['installed_version']??'0','2.0.1','>='),'installment_edit_panel'=>$installmentEditPanel??null,'installment_edit_review'=>$installmentEditReview??null,'installment_edit_result'=>$installmentEditResult??null,'pix_replacement_review'=>$pixReplacementReview??null,'pix_future_ready'=>$pixFutureReady,'pix_future_worker'=>$pixFutureWorker,'pix_series_review'=>$pixSeriesReview??null,'pix_series'=>$pixSeries??null,'pix_receipt_jobs'=>$pixReceiptJobs,'pix_operations'=>$pixOperations,'pix_inbox'=>$pixInbox,'account_report'=>$accountReport??null,'can_view_account_reports'=>CompanySettingsRuntime::canResource('asaas_account_reports','view'),'can_export_account_reports'=>CompanySettingsRuntime::canResource('asaas_account_reports','view')&&CompanySettingsRuntime::canResource('asaas_account_reports','export'),'automatic_pix_monitor'=>$automaticPixMonitor??null,'can_view_asaas_reports'=>CompanySettingsRuntime::canResource('asaas_reports','view'),'installment_batch_review'=>$installmentBatchReview??null,'installment_batch_result'=>$installmentBatchResult??null,'installment_groups'=>$service->installmentGroups($issuer,$actor),'installment_panel'=>$installmentPanel??null,'legacy_review'=>$legacyReview??null,'remote_monitor'=>$remoteMonitor??null,'monitor'=>$monitor,'monitor_error'=>$monitorError,'card_pricing_ready'=>$cardPricingReady,'card_pricing'=>$cardPricing,'card_pricing_preview'=>$cardPricingPreview??null,'invoice_edit_ready'=>$editReady,'invoice_edit_pending'=>$editPending,'manual_ready'=>$manualReady,'manual_policies'=>$manualPolicies,'manual_pending'=>$manualPending,'card_payments_ready'=>$cardPaymentsReady,'card_payments'=>$cardPayments,'card_request_key'=>bin2hex(random_bytes(32)),'remote_webhook_result'=>$remoteWebhookResult,'remote_webhook_error'=>$remoteWebhookError,'remote_webhook_audit'=>$canWebhook?$service->remoteWebhookAudit($issuer,$actor):[],'translate'=>$translate,'preferences'=>$preferences,'preferences_active_tab'=>$post['environment']??null,'preferences_csrf'=>$preferencesCsrf,'revealed_api_key'=>$revealedApiKey,'api_urls'=>\Asaas\SettingsPresentation::apiUrls(),'webhook_csrf'=>$webhookCsrf,'can_webhook'=>$canWebhook,'callback_urls'=>$callbackUrls,'full_refund_ready'=>$fullRefundReady,'refund_ready'=>$refundReady,'refund_panel'=>$refundPanel,'refund_grant'=>$refundGrant,'can_refund'=>$canRefund,'refund_actor'=>$actor,'refund_csrf'=>$refundCsrf,'refund_request_key'=>bin2hex(random_bytes(32)),'checkout_ready'=>$checkoutReady,'can_payer'=>$canPayer,'payers'=>$payers,'error'=>$error,'saved'=>$saved,'one_time'=>$oneTime,'invoice'=>$invoice,'can_export_asaas_reports'=>CompanySettingsRuntime::canResource('asaas_reports','view')&&CompanySettingsRuntime::canResource('asaas_reports','export')&&CompanySettingsRuntime::canResource('settings','view')&&CompanySettingsRuntime::canResource('invoices','view'),'can_configure'=>CompanySettingsRuntime::canResource('settings','edit'),'can_remove'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','delete')&&CompanySettingsRuntime::canResource('settings','edit'),'can_fee'=>CompanySettingsRuntime::canResource('expenses','view')&&CompanySettingsRuntime::canResource('expenses','create')&&CompanySettingsRuntime::canResource('payments','create'),'can_settle'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('payments','create'),'can_issue'=>CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view'),'context_token'=>CompanyRequestScope::token(),'action_url'=>CompanyRequestScope::adminUrl($this,'settings/asaas')]);
         }
     protected function nativeInvoiceStandaloneBilling()
         {

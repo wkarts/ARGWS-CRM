@@ -1,6 +1,31 @@
 (function () {
     'use strict';
 
+  window.init_btn_with_tooltips = function () {
+    var $ = window.jQuery;
+    if (!is_mobile() || navigator.userAgent.match(/iPad/i)) return false;
+    $('._buttons').find('.btn-with-tooltip, .btn-with-tooltip-group').each(function () {
+      var node = $(this), title = node.attr('title') || node.attr('data-title');
+      if (!title) return;
+      if (node.hasClass('btn-with-tooltip-group')) node.find('.btn').eq(0).append(' ' + title);
+      else node.append(' ' + title);
+      node.removeClass('btn-with-tooltip btn-with-tooltip-group');
+    });
+  };
+
+  window.init_tabs_scrollable = function () {
+    var $ = window.jQuery;
+    if (isRTL !== 'true') {
+      if ($(window).width() <= 768) $('body').find('.toggle_view').remove();
+      $('.horizontal-scrollable-tabs').horizontalTabs();
+      return;
+    }
+    $('.arrow-left, .arrow-right').hide();
+    $('.horizontal-scrollable-tabs').removeClass('horizontal-scrollable-tabs');
+    $('.nav-tabs-horizontal').removeClass('nav-tabs-horizontal');
+  };
+
+
     function tabParts(tab) {
         var tablist = tab.closest('[role="tablist"]');
         var panelBody = tablist && tablist.closest('.panel-body');

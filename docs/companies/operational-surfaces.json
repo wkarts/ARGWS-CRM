@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "79a78e99dee9a295708f9625c5d74d969b26ed399fe1e38e07165ddf05eda1cd",
+    "source_manifest_sha256": "e1b0bc8d0aba9732e1cf19a0e86f8c184cae61a7516e01e92f17351409935897",
     "counts": {
         "modules": 38,
-        "source_files": 4783,
+        "source_files": 4950,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
-        "job_file_candidates": 74,
-        "report_file_candidates": 304,
-        "table_name_candidates": 926,
-        "database_call_candidates": 12540
+        "job_file_candidates": 76,
+        "report_file_candidates": 310,
+        "table_name_candidates": 946,
+        "database_call_candidates": 12542
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.6.1",
+            "version": "2.0.7",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -476,6 +476,8 @@
             "job_candidates": [
                 "modules/asaas/controllers/gateways/Callback.php",
                 "modules/asaas/libraries/Asaas/CompanyCron.php",
+                "modules/asaas/libraries/Asaas/CompanyPixFutureWorker.php",
+                "modules/asaas/libraries/Asaas/CompanyPixFutureWorkerSchema.php",
                 "modules/asaas/libraries/Asaas/RemoteWebhook.php",
                 "modules/asaas/libraries/Asaas/WebhookAdminPresentation.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationSchema.php",
@@ -489,7 +491,13 @@
                 "modules/asaas/views/remote_webhook_result.php",
                 "modules/asaas/views/webhooks.php"
             ],
-            "report_candidates": [],
+            "report_candidates": [
+                "modules/asaas/libraries/Asaas/AsaasReportCatalog.php",
+                "modules/asaas/libraries/Asaas/AsaasReportException.php",
+                "modules/asaas/libraries/Asaas/AsaasReportExport.php",
+                "modules/asaas/libraries/Asaas/CompanyPaymentReport.php",
+                "modules/asaas/libraries/Asaas/CompanyReportEngine.php"
+            ],
             "option_keys": [
                 "paymentmethod_asaas_profile_schema",
                 "paymentmethod_asaas_sandbox",
@@ -500,18 +508,31 @@
             "table_candidates": [
                 "asaas_company_",
                 "asaas_company_accounts",
+                "asaas_company_card_payments",
+                "asaas_company_card_pricing",
                 "asaas_company_events",
                 "asaas_company_fee_expenses",
                 "asaas_company_hosted_links",
+                "asaas_company_invoice_edits",
                 "asaas_company_jobs",
+                "asaas_company_manual_policies",
+                "asaas_company_manual_settlements",
                 "asaas_company_origin_meta",
                 "asaas_company_origin_policy",
                 "asaas_company_origin_profiles",
                 "asaas_company_payers",
+                "asaas_company_pix_event_jobs",
+                "asaas_company_pix_events",
+                "asaas_company_pix_future_workers",
+                "asaas_company_pix_observations",
+                "asaas_company_pix_receipt_jobs",
+                "asaas_company_pix_receipt_workers",
+                "asaas_company_pix_workers",
                 "asaas_company_preferences",
                 "asaas_company_profiles",
                 "asaas_company_proofs",
                 "asaas_company_receipts",
+                "asaas_company_recreations",
                 "asaas_company_refund_grants",
                 "asaas_company_refund_observations",
                 "asaas_company_refund_requests",
@@ -530,6 +551,7 @@
                 "company_asaas_refund_postings",
                 "company_expense_categories",
                 "company_expenses",
+                "company_payment_receipts",
                 "contact_permissions",
                 "contacts",
                 "credits",
@@ -575,7 +597,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.3.6",
+            "version": "1.4.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -605,14 +627,18 @@
                 "bb_audit",
                 "bb_batch_actions",
                 "bb_batch_origins",
+                "bb_batch_requests",
                 "bb_batches",
                 "bb_checkout_publications",
+                "bb_cnab_group_members",
+                "bb_cnab_groups",
                 "bb_cnab_preparations",
                 "bb_connections",
                 "bb_contract_declarations",
                 "bb_event_links",
                 "bb_event_receipts",
                 "bb_event_reviews",
+                "bb_invoice_issuances",
                 "bb_layout_bindings",
                 "bb_number_reservations",
                 "bb_origin_snapshots",
@@ -1719,7 +1745,7 @@
         {
             "name": "pige_bridge",
             "entry": "modules/pige_bridge/pige_bridge.php",
-            "version": "1.0.7",
+            "version": "1.1.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1760,7 +1786,8 @@
                 "pige_bridge_connections",
                 "pige_bridge_external_config",
                 "pige_bridge_invoice_origins",
-                "pige_bridge_requests"
+                "pige_bridge_requests",
+                "staff"
             ]
         },
         {
@@ -6844,7 +6871,7 @@
         {
             "path": "application/views/admin/estimates/estimate_template.php",
             "line": 3,
-            "source_sha256": "d659d2078520e7d907ed7e6901ae6040cf963c3bdf697defe5d307bd2c39fdbe",
+            "source_sha256": "bf735145b51bb29171ec3ec62e9c28d9c7f48664ae0398f4d7b9378f4fff7a45",
             "call": "get_option",
             "expression": "$key",
             "state": "requires_call_site_review"
@@ -6852,7 +6879,7 @@
         {
             "path": "application/views/admin/proposals/proposal.php",
             "line": 3,
-            "source_sha256": "51ee7c87fd85bddd485e3c0fc59b89f43dc26a64eb7c1dc000b1cd03505c2a56",
+            "source_sha256": "dbac7651c0cc65ee328f1b686c6ce28ac4db7a5fd71fb17ab5d499abdbef7c4e",
             "call": "get_option",
             "expression": "$key",
             "state": "requires_call_site_review"
@@ -8689,7 +8716,7 @@
         },
         {
             "path": "application/controllers/Portal.php",
-            "source_sha256": "24f89338d778bfd7a01ba1ace0f704cc78f940418e356c981d8d0263a37473ec",
+            "source_sha256": "bdd2a2c1cc83d74c4ff5917f2fed239bb65010f8237da2df1332bfe77b64fec7",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -8784,7 +8811,7 @@
         },
         {
             "path": "application/controllers/Recurring_worker.php",
-            "source_sha256": "c190c36ac213da0638516911abf313a68fe29f683922b99d1c06687e2a0c6891",
+            "source_sha256": "85f2803da76631e434b162a0e426df3c182ea732640ff486fdb0007b43269cb2",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -10474,7 +10501,7 @@
         },
         {
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "d47f9fb4a012f71fbc274b46ace6551062cb797a72f3c6dc1a45eb24d431f021",
+            "source_sha256": "c1fe04f3743e414ab432d8ec9d3824d8f9fe9f3bca588d7b23ba3203305eb7e7",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10556,97 +10583,97 @@
                 },
                 {
                     "method": "unmark_as_cancelled",
-                    "line": 414,
+                    "line": 415,
                     "visibility": "public"
                 },
                 {
                     "method": "copy",
-                    "line": 447,
+                    "line": 449,
                     "visibility": "public"
                 },
                 {
                     "method": "drafts",
-                    "line": 471,
+                    "line": 473,
                     "visibility": "public"
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 482,
+                    "line": 484,
                     "visibility": "public"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 518,
+                    "line": 520,
                     "visibility": "public"
                 },
                 {
                     "method": "invoice",
-                    "line": 538,
+                    "line": 540,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 686,
+                    "line": 688,
                     "visibility": "public"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 784,
+                    "line": 786,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 806,
+                    "line": 808,
                     "visibility": "public"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 843,
+                    "line": 845,
                     "visibility": "public"
                 },
                 {
                     "method": "record_payment",
-                    "line": 871,
+                    "line": 873,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 907,
+                    "line": 909,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 966,
+                    "line": 968,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 998,
+                    "line": 1000,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1017,
+                    "line": 1019,
                     "visibility": "public"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 1045,
+                    "line": 1047,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 1067,
+                    "line": 1069,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1136,
+                    "line": 1138,
                     "visibility": "public"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1157,
+                    "line": 1159,
                     "visibility": "public"
                 }
             ],
@@ -16301,7 +16328,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "6145b1e3b0a99f339bb0668adf8477280a273a835ce46bb1290c52d78cf26984",
+            "source_sha256": "3eb55bb91a424bcfb2729b71938f3a5baeefa3b41f1d84befe7bcdd166e19cf0",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16318,232 +16345,242 @@
                 },
                 {
                     "method": "save_channel_preferences",
-                    "line": 61,
+                    "line": 63,
                     "visibility": "public"
                 },
                 {
                     "method": "register_connection",
-                    "line": 73,
+                    "line": 75,
                     "visibility": "public"
                 },
                 {
                     "method": "register_layout",
-                    "line": 87,
+                    "line": 89,
                     "visibility": "public"
                 },
                 {
                     "method": "import_return",
-                    "line": 101,
+                    "line": 103,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_contract",
-                    "line": 123,
+                    "line": 125,
                     "visibility": "public"
                 },
                 {
                     "method": "generate_remittance",
-                    "line": 133,
+                    "line": 135,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_remittance",
-                    "line": 144,
+                    "line": 146,
                     "visibility": "public"
                 },
                 {
                     "method": "download_remittance",
-                    "line": 151,
+                    "line": 153,
+                    "visibility": "public"
+                },
+                {
+                    "method": "print_cnab_boleto",
+                    "line": 161,
                     "visibility": "public"
                 },
                 {
                     "method": "download_return",
-                    "line": 159,
+                    "line": 172,
                     "visibility": "public"
                 },
                 {
                     "method": "report_transmission",
-                    "line": 170,
+                    "line": 183,
                     "visibility": "public"
                 },
                 {
                     "method": "link_event",
-                    "line": 177,
+                    "line": 190,
                     "visibility": "public"
                 },
                 {
                     "method": "prepare_cnab400",
-                    "line": 184,
+                    "line": 197,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_cnab400_approval",
-                    "line": 195,
+                    "line": 208,
                     "visibility": "public"
                 },
                 {
                     "method": "generate_cnab400",
-                    "line": 202,
-                    "visibility": "public"
-                },
-                {
-                    "method": "download_cnab400",
-                    "line": 209,
-                    "visibility": "public"
-                },
-                {
-                    "method": "report_cnab400",
                     "line": 215,
                     "visibility": "public"
                 },
                 {
-                    "method": "candidate_cnab400",
+                    "method": "download_cnab400",
                     "line": 222,
                     "visibility": "public"
                 },
                 {
+                    "method": "print_cnab400_boleto",
+                    "line": 228,
+                    "visibility": "public"
+                },
+                {
+                    "method": "report_cnab400",
+                    "line": 240,
+                    "visibility": "public"
+                },
+                {
+                    "method": "candidate_cnab400",
+                    "line": 247,
+                    "visibility": "public"
+                },
+                {
                     "method": "reserve_cnab400",
-                    "line": 234,
+                    "line": 259,
                     "visibility": "public"
                 },
                 {
                     "method": "recover_cnab400",
-                    "line": 245,
-                    "visibility": "public"
-                },
-                {
-                    "method": "compare_cnab400",
-                    "line": 255,
-                    "visibility": "public"
-                },
-                {
-                    "method": "review_event",
                     "line": 270,
                     "visibility": "public"
                 },
                 {
+                    "method": "compare_cnab400",
+                    "line": 280,
+                    "visibility": "public"
+                },
+                {
+                    "method": "review_event",
+                    "line": 295,
+                    "visibility": "public"
+                },
+                {
                     "method": "settle_cnab400",
-                    "line": 277,
+                    "line": 302,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_event",
-                    "line": 289,
+                    "line": 314,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_components_event",
-                    "line": 296,
+                    "line": 321,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_tariff_event",
-                    "line": 303,
+                    "line": 328,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_external_reversal",
-                    "line": 310,
+                    "line": 335,
                     "visibility": "public"
                 },
                 {
                     "method": "preview_checkout",
-                    "line": 322,
+                    "line": 347,
                     "visibility": "public"
                 },
                 {
                     "method": "publish_checkout",
-                    "line": 332,
+                    "line": 363,
                     "visibility": "public"
                 },
                 {
                     "method": "declare_api_profile",
-                    "line": 344,
+                    "line": 375,
                     "visibility": "public"
                 },
                 {
                     "method": "save_api_credentials",
-                    "line": 351,
+                    "line": 382,
                     "visibility": "public"
                 },
                 {
                     "method": "issue_api",
-                    "line": 358,
+                    "line": 389,
                     "visibility": "public"
                 },
                 {
                     "method": "resume_api_issue",
-                    "line": 365,
+                    "line": 396,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api",
-                    "line": 372,
+                    "line": 403,
                     "visibility": "public"
                 },
                 {
                     "method": "query_api_movements",
-                    "line": 379,
+                    "line": 410,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api",
-                    "line": 386,
+                    "line": 417,
                     "visibility": "public"
                 },
                 {
                     "method": "configure_api_webhook",
-                    "line": 393,
+                    "line": 424,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_due",
-                    "line": 400,
+                    "line": 431,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_abatement",
-                    "line": 407,
+                    "line": 438,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_reference",
-                    "line": 414,
+                    "line": 445,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_address",
-                    "line": 421,
+                    "line": 452,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_discount",
-                    "line": 428,
+                    "line": 459,
                     "visibility": "public"
                 },
                 {
                     "method": "amend_api_receipt_window",
-                    "line": 435,
+                    "line": 466,
                     "visibility": "public"
                 },
                 {
                     "method": "cancel_api_discount",
-                    "line": 442,
+                    "line": 473,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_api_discount",
-                    "line": 449,
+                    "line": 480,
                     "visibility": "public"
                 },
                 {
                     "method": "settle_api",
-                    "line": 456,
+                    "line": 487,
                     "visibility": "public"
                 },
                 {
                     "method": "local_noncash",
-                    "line": 474,
+                    "line": 505,
                     "visibility": "public"
                 }
             ],
@@ -21541,7 +21578,7 @@
         },
         {
             "path": "modules/pige_bridge/controllers/Settings.php",
-            "source_sha256": "34f53fe05c4523937630ac6c04d03d5d2df580fca7d8a704dffd98286e42f8a7",
+            "source_sha256": "de96bb7b56b807605379e513c6d325039ca79c1c2cb0099478005862817f1a08",
             "module": "pige_bridge",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21557,23 +21594,38 @@
                     "visibility": "public"
                 },
                 {
+                    "method": "discover",
+                    "line": 40,
+                    "visibility": "public"
+                },
+                {
+                    "method": "prepare_remote",
+                    "line": 62,
+                    "visibility": "public"
+                },
+                {
+                    "method": "test_connection",
+                    "line": 84,
+                    "visibility": "public"
+                },
+                {
                     "method": "save",
-                    "line": 37,
+                    "line": 100,
                     "visibility": "public"
                 },
                 {
                     "method": "disable",
-                    "line": 48,
+                    "line": 111,
                     "visibility": "public"
                 },
                 {
                     "method": "mapping",
-                    "line": 61,
+                    "line": 124,
                     "visibility": "public"
                 },
                 {
                     "method": "external",
-                    "line": 68,
+                    "line": 131,
                     "visibility": "public"
                 }
             ],
@@ -26200,17 +26252,27 @@
         {
             "name": "asaas_company_",
             "state": "not_verified",
-            "reference_count": 3
+            "reference_count": 6
         },
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 22
+            "reference_count": 37
+        },
+        {
+            "name": "asaas_company_card_payments",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "asaas_company_card_pricing",
+            "state": "not_verified",
+            "reference_count": 2
         },
         {
             "name": "asaas_company_events",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 40
         },
         {
             "name": "asaas_company_fee_expenses",
@@ -26223,19 +26285,34 @@
             "reference_count": 9
         },
         {
+            "name": "asaas_company_invoice_edits",
+            "state": "not_verified",
+            "reference_count": 8
+        },
+        {
             "name": "asaas_company_jobs",
             "state": "not_verified",
-            "reference_count": 17
+            "reference_count": 21
+        },
+        {
+            "name": "asaas_company_manual_policies",
+            "state": "not_verified",
+            "reference_count": 6
+        },
+        {
+            "name": "asaas_company_manual_settlements",
+            "state": "not_verified",
+            "reference_count": 15
         },
         {
             "name": "asaas_company_origin_meta",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 29
         },
         {
             "name": "asaas_company_origin_policy",
             "state": "not_verified",
-            "reference_count": 2
+            "reference_count": 3
         },
         {
             "name": "asaas_company_origin_profiles",
@@ -26246,6 +26323,41 @@
             "name": "asaas_company_payers",
             "state": "not_verified",
             "reference_count": 8
+        },
+        {
+            "name": "asaas_company_pix_event_jobs",
+            "state": "not_verified",
+            "reference_count": 8
+        },
+        {
+            "name": "asaas_company_pix_events",
+            "state": "not_verified",
+            "reference_count": 7
+        },
+        {
+            "name": "asaas_company_pix_future_workers",
+            "state": "not_verified",
+            "reference_count": 11
+        },
+        {
+            "name": "asaas_company_pix_observations",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "asaas_company_pix_receipt_jobs",
+            "state": "not_verified",
+            "reference_count": 7
+        },
+        {
+            "name": "asaas_company_pix_receipt_workers",
+            "state": "not_verified",
+            "reference_count": 10
+        },
+        {
+            "name": "asaas_company_pix_workers",
+            "state": "not_verified",
+            "reference_count": 5
         },
         {
             "name": "asaas_company_preferences",
@@ -26260,12 +26372,17 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 66
         },
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 35
+        },
+        {
+            "name": "asaas_company_recreations",
+            "state": "not_verified",
+            "reference_count": 15
         },
         {
             "name": "asaas_company_refund_grants",
@@ -26275,17 +26392,17 @@
         {
             "name": "asaas_company_refund_observations",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 8
         },
         {
             "name": "asaas_company_refund_requests",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 16
         },
         {
             "name": "asaas_company_remote_operations",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 16
         },
         {
             "name": "asaas_customers_map",
@@ -26305,12 +26422,12 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 56
+            "reference_count": 118
         },
         {
             "name": "asaas_payments_map",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 14
         },
         {
             "name": "asaas_settlement_outbox",
@@ -26380,7 +26497,7 @@
         {
             "name": "bb_api_profiles",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 8
         },
         {
             "name": "bb_api_receipts",
@@ -26395,7 +26512,7 @@
         {
             "name": "bb_audit",
             "state": "not_verified",
-            "reference_count": 25
+            "reference_count": 26
         },
         {
             "name": "bb_batch_actions",
@@ -26405,32 +26522,47 @@
         {
             "name": "bb_batch_origins",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 12
+        },
+        {
+            "name": "bb_batch_requests",
+            "state": "not_verified",
+            "reference_count": 5
         },
         {
             "name": "bb_batches",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 23
         },
         {
             "name": "bb_checkout_publications",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 15
+        },
+        {
+            "name": "bb_cnab_group_members",
+            "state": "not_verified",
+            "reference_count": 7
+        },
+        {
+            "name": "bb_cnab_groups",
+            "state": "not_verified",
+            "reference_count": 9
         },
         {
             "name": "bb_cnab_preparations",
             "state": "not_verified",
-            "reference_count": 20
+            "reference_count": 26
         },
         {
             "name": "bb_connections",
             "state": "not_verified",
-            "reference_count": 24
+            "reference_count": 28
         },
         {
             "name": "bb_contract_declarations",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 11
         },
         {
             "name": "bb_event_links",
@@ -26448,9 +26580,14 @@
             "reference_count": 7
         },
         {
+            "name": "bb_invoice_issuances",
+            "state": "not_verified",
+            "reference_count": 6
+        },
+        {
             "name": "bb_layout_bindings",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 17
         },
         {
             "name": "bb_number_reservations",
@@ -26460,12 +26597,12 @@
         {
             "name": "bb_origin_snapshots",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
         },
         {
             "name": "bb_origins",
             "state": "not_verified",
-            "reference_count": 70
+            "reference_count": 82
         },
         {
             "name": "bb_return_events",
@@ -26610,7 +26747,7 @@
         {
             "name": "company_asaas_refund_postings",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 12
         },
         {
             "name": "company_bank_receipt_components",
@@ -26983,6 +27120,11 @@
             "reference_count": 1
         },
         {
+            "name": "company_invoice_reprice_proposals",
+            "state": "not_verified",
+            "reference_count": 10
+        },
+        {
             "name": "company_invoice_requests",
             "state": "not_verified",
             "reference_count": 55
@@ -26998,9 +27140,19 @@
             "reference_count": 3
         },
         {
+            "name": "company_invoice_schedule_item_links",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
             "name": "company_invoice_schedule_modes",
             "state": "not_verified",
             "reference_count": 10
+        },
+        {
+            "name": "company_invoice_schedule_prices",
+            "state": "not_verified",
+            "reference_count": 1
         },
         {
             "name": "company_invoice_schedule_requests",
@@ -27015,7 +27167,7 @@
         {
             "name": "company_invoice_schedules",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 17
         },
         {
             "name": "company_item_groups",
@@ -27210,7 +27362,7 @@
         {
             "name": "company_payment_receipts",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 25
         },
         {
             "name": "company_portal_",
@@ -27980,7 +28132,7 @@
         {
             "name": "contact_permissions",
             "state": "not_verified",
-            "reference_count": 58
+            "reference_count": 62
         },
         {
             "name": "contactpermissions",
@@ -27990,7 +28142,7 @@
         {
             "name": "contacts",
             "state": "not_verified",
-            "reference_count": 348
+            "reference_count": 351
         },
         {
             "name": "contract_comments",
@@ -28060,12 +28212,12 @@
         {
             "name": "credits",
             "state": "not_verified",
-            "reference_count": 44
+            "reference_count": 49
         },
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 119
+            "reference_count": 120
         },
         {
             "name": "currency_rate_logs",
@@ -28915,7 +29067,7 @@
         {
             "name": "invoicepaymentrecords",
             "state": "not_verified",
-            "reference_count": 142
+            "reference_count": 152
         },
         {
             "name": "invoicepaymentsmodes",
@@ -28925,7 +29077,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 644
+            "reference_count": 658
         },
         {
             "name": "issuer_certificate_audit",
@@ -28945,7 +29097,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 276
+            "reference_count": 297
         },
         {
             "name": "issuers_client_links",
@@ -28955,7 +29107,7 @@
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 169
+            "reference_count": 172
         },
         {
             "name": "issuers_installation_identity",
@@ -28965,7 +29117,7 @@
         {
             "name": "issuers_invoice_documents",
             "state": "not_verified",
-            "reference_count": 59
+            "reference_count": 60
         },
         {
             "name": "issuers_lock",
@@ -28980,7 +29132,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 273
+            "reference_count": 275
         },
         {
             "name": "issuers_resource_permissions",
@@ -29395,7 +29547,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 107
+            "reference_count": 157
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -29525,7 +29677,7 @@
         {
             "name": "pige_bridge_connections",
             "state": "not_verified",
-            "reference_count": 14
+            "reference_count": 16
         },
         {
             "name": "pige_bridge_external_config",
@@ -30100,7 +30252,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 510
+            "reference_count": 511
         },
         {
             "name": "staff_contract",

@@ -29,7 +29,7 @@ essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'n
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
 // The current136 runtime keeps the historical116 checks above, then advances
 // through every new native step before any current operational service is used.
-foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128','1.2.9'=>'129','1.3.0'=>'130','1.3.1'=>'131','1.3.2'=>'132','1.3.3'=>'133','1.3.4'=>'134','1.3.5'=>'135','1.3.6'=>'136'] as $nativeVersion439=>$nativeStep439){
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128','1.2.9'=>'129','1.3.0'=>'130','1.3.1'=>'131','1.3.2'=>'132','1.3.3'=>'133','1.3.4'=>'134','1.3.5'=>'135','1.3.6'=>'136','1.3.7'=>'137','1.3.8'=>'138','1.3.9'=>'139','1.4.0'=>'140','1.4.1'=>'141','1.4.2'=>'142','1.4.3'=>'143','1.4.4'=>'144'] as $nativeVersion439=>$nativeStep439){
     $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
     $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
     if($nativeStep439==='130'){
@@ -37,6 +37,18 @@ foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'1
         essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed130 DDL preserves129 tracking');
         $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_archive_outer_transaction_not_allowed','130 never implicitly commits caller transaction');
         essentialCheck($db->pdo->inTransaction(),'130 preserves caller transaction');$db->trans_rollback();
+    }
+    if($nativeStep439==='142'){
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_invoice_issuance_outer_transaction_not_allowed','142 refuses caller transaction before DDL');$db->trans_rollback();
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_invoice_issuances`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_invoice_issuance_schema_failed','142 DDL failure preserves141');$db->failOn=null;
+    }
+    if($nativeStep439==='141'){
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb400_group_outer_transaction_not_allowed','141 refuses caller transaction before DDL');$db->trans_rollback();
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_cnab_groups`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb400_group_schema_failed','141 DDL failure cannot advance tracking');$db->failOn=null;
+    }
+    if($nativeStep439==='138'){
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_open_batch_schema_outer_transaction_not_allowed','138 refuses caller transaction before additive DDL');$db->trans_rollback();
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_batch_requests`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_open_batch_schema_migration_failed','138 DDL failure preserves old tracking');$db->failOn=null;
     }
     if($nativeStep439==='133'){
         $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_return_rejections`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_rejection_schema_migration_failed','133 DDL failure cannot advance native tracking');$db->failOn=null;
@@ -52,7 +64,7 @@ foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'1
     essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$nativeVersion439,'native'.$nativeStep439.' readback confirms its exact version');
     essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native'.$nativeStep439.' replay preserves current tracking');
 }
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.3.6','final136 marker follows independently verified135');
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.4.4','final144 marker follows independently verified143');
 $archiveRows131=$db->query('SELECT * FROM '.$p.'bb_return_originals ORDER BY id')->result_array();$beforeArchiveReplay131=count($db->queries);
 \BancoBrasil\ReturnArchiveSchema::upgrade($db,$p);\BancoBrasil\ReturnArchiveSchema::upgrade($db,$p);
 essentialCheck(!array_filter(array_slice($db->queries,$beforeArchiveReplay131),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])),'130 reconciler replay validates existing archive without any extra DDL');
@@ -122,8 +134,10 @@ essentialThrows(fn()=>$writer->recordCompanyManual($a,7,$fresh,$payment,str_repe
 essentialThrows(fn()=>$bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('c',64)),'bb_invoice_already_bound','new request cannot assign second number to same invoice');
 $second=$s->create($a,7,$input,str_repeat('a',63).'1');$secondTitle=array_replace($title,['invoice_id'=>$second]);
 $broken=new \BancoBrasil\Origination($db,$p,static function(){throw new RuntimeException('synthetic encoder outage');});
-essentialThrows(fn()=>$broken->generate($a,7,$connection,$binding,'2026-10-19',[$secondTitle],str_repeat('d',64)),'bb_generation_unconfirmed_numbers_reserved','post-commit encoder failure preserves reservation');
-$failed=(int)$db->query("SELECT id FROM {$p}bb_batches WHERE generation_state='generation_failed'")->row()->id;
+$failed=$broken->generate($a,7,$connection,$binding,'2026-10-19',[$secondTitle],str_repeat('d',64));
+essentialCheck($failed!==$batch,'emission after first download creates another batch');
+essentialThrows(fn()=>$broken->download($a,7,$failed),'issuer_storage_failed','failed first download preserves open reservation');
+essentialCheck($db->query("SELECT generation_state FROM {$p}bb_batches WHERE id=?",[$failed])->row()->generation_state==='open','encoder failure cannot freeze incomplete bytes');
 essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===102,'failed generation does not recycle committed number');
 $bank->finish($a,7,$failed);$retry=$bank->download($a,7,$failed);
 essentialCheck(str_contains($retry['content'],'12345670000000101'),'resume uses original number from immutable snapshot');

@@ -7,7 +7,7 @@ require_once __DIR__.'/CompanyPortalInvoices.php';
 /** Original invoice route, with contact and invoice ownership revalidated before delivery. */
 final class NativePortalInvoiceDetailHttp
 {
- public function __construct(private $ci){}
+ public function __construct(private $ci,private $pixTransport=null){}
  private function verified(array $identity,NativePortalIdentity $identities,int $issuer):void{
   if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');$binding=$identity['binding'];$rows=IssuerStorage::query($this->ci->db,'SELECT email_verified_at FROM '.db_prefix().'contacts WHERE id=? AND userid=?',[$binding['contact_id'],$binding['client_id']])->result_array();if(count($rows)!==1||$rows[0]['email_verified_at']===null)throw new DomainException('company_portal_invoice_unavailable');
  }
@@ -20,10 +20,36 @@ final class NativePortalInvoiceDetailHttp
   $legacy=null;$legacyState=null;if($row['issuer_id']===null){require_once __DIR__.'/NativePortalLegacyInvoice.php';$legacy=new NativePortalLegacyInvoice($this->ci->db,db_prefix(),$portal);$legacyState=$legacy->read($identity['binding'],$issuer,(int)$id,$hash);$data=$legacyState['document'];}
   else{if((int)$row['issuer_id']!==$issuer)throw new DomainException('company_portal_invoice_unavailable');$document=$documents->document($identity['binding'],$issuer,$id);$data=$document->data();}
   if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
-  $bbInstrument=null;$paymentAction=$this->ci->input->method(true)==='POST'?$this->ci->input->post('native_payment_action'):null;
+  $bbInstrument=null;$pixInstrument=null;$pixNotice=null;$paymentAction=$this->ci->input->method(true)==='POST'?$this->ci->input->post('native_payment_action'):null;
   if($paymentAction!==null){
    PortalRequestScope::assertMutation($this->ci);if($legacy)throw new DomainException('company_portal_invoice_unavailable');
-   if($paymentAction==='bb'&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}
+   if($paymentAction==='asaas_pix_consent'){
+    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
+    $revision=$this->ci->input->post('pix_consent_revision');$accepted=$this->ci->input->post('pix_consent_accept');
+    if(!is_string($revision)||$accepted!=='1')throw new DomainException('asaas_pix_explicit_consent_required');
+    (new \Asaas\CompanyPixConsent($this->ci->db,db_prefix()))->accept($portal,$identity['binding'],$issuer,(int)$id,$revision,true);
+    $this->verified($identity,$identities,$issuer);
+    redirect(NativePortalPresentation::url('invoice/'.$id.'/'.$hash),'location',303);return;
+   }
+   elseif($paymentAction==='asaas_pix_withdraw'){
+    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixRevocation.php';
+    $revision=$this->ci->input->post('pix_consent_revision');if(!is_string($revision))throw new DomainException('asaas_pix_consent_stale');
+    (new \Asaas\CompanyPixRevocation($this->ci->db,db_prefix()))->withdraw($portal,$identity['binding'],$issuer,(int)$id,$revision,$this->ci->input->post('pix_withdraw_confirm')==='1');
+    $this->verified($identity,$identities,$issuer);redirect(NativePortalPresentation::url('invoice/'.$id.'/'.$hash),'location',303);return;
+   }
+   elseif($paymentAction==='asaas_pix_enroll'){
+    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
+    $revision=$this->ci->input->post('pix_consent_revision');if(!is_string($revision))throw new DomainException('asaas_pix_consent_stale');
+    $this->ci->load->library('encryption');$decrypt=fn($value)=>$this->ci->encryption->decrypt($value);
+    $pixService=new \Asaas\CompanyPixConsent($this->ci->db,db_prefix());
+    $pixService->dispatch($portal,$identity['binding'],$issuer,(int)$id,$revision,$decrypt,$this->pixTransport);
+    try{$pixInstrument=$pixService->instrument($portal,$identity['binding'],$issuer,(int)$id,$revision,$decrypt,$this->pixTransport);}
+    catch(DomainException $unavailable){if(!in_array($unavailable->getMessage(),['asaas_pix_qr_unavailable','asaas_pix_recovery_not_found','asaas_pix_recovery_incomplete','asaas_pix_recovery_conflict'],true))throw $unavailable;$pixNotice='Código indisponível para entrega. O envio anterior não será repetido. Aguarde a confirmação ou solicite revisão à empresa.';}
+    if($pixInstrument!==null){require_once __DIR__.'/NativePortalPixQr.php';$pixInstrument['svg']=NativePortalPixQr::svg($pixInstrument['payload']);}
+    $this->verified($identity,$identities,$issuer);
+    if(method_exists($this->ci->output,'enable_profiler'))$this->ci->output->enable_profiler(false);
+   }
+   elseif($paymentAction==='bb'&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}
    elseif($paymentAction==='asaas'&&$this->ci->db->table_exists(db_prefix().'asaas_company_hosted_links')){require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$link=(new \Asaas\CompanyHostedLinks($this->ci->db,db_prefix()))->portalLink($portal,$identity['binding'],$issuer,$id);$this->verified($identity,$identities,$issuer);$this->ci->output->set_header('Referrer-Policy: no-referrer');redirect($link['url'],'location',303);return;}
    else throw new DomainException('company_portal_invoice_unavailable');
   }
@@ -44,6 +70,16 @@ final class NativePortalInvoiceDetailHttp
   $payments=$legacy?$legacyState['payments']:$documents->payments($identity['binding'],$issuer,$id);if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   $attachments=$legacy?$legacy->attachments($identity['binding'],$issuer,(int)$id,$hash):$documents->attachments($identity['binding'],$issuer,$id);$available=['bb'=>false,'asaas'=>false];if(!$legacy&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$available['bb']=!empty((new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_hosted_links')){require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$available['asaas']=!empty((new \Asaas\CompanyHostedLinks($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   if($bbInstrument!==null){$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}$this->verified($identity,$identities,$issuer);
-  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
+  $pixConsent=null;$pixRevocation=null;
+  if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_proofs')){
+   require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
+   try{$pixConsent=(new \Asaas\CompanyPixConsent($this->ci->db,db_prefix()))->page($portal,$identity['binding'],$issuer,(int)$id);}
+   catch(DomainException $denied){$pixConsent=null;}
+   require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixRevocation.php';
+   try{$pixRevocation=(new \Asaas\CompanyPixRevocation($this->ci->db,db_prefix()))->page($portal,$identity['binding'],$issuer,(int)$id);}catch(DomainException $denied){$pixRevocation=null;}
+  }
+  $this->verified($identity,$identities,$issuer);
+  $this->ci->output->set_header('Cache-Control: private, no-store')->set_header('Referrer-Policy: no-referrer');
+  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_pix_instrument'=>$pixInstrument,'native_portal_pix_notice'=>$pixNotice,'native_portal_pix_revocation'=>$pixRevocation,'native_portal_pix_consent'=>$pixConsent,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
  }
 }

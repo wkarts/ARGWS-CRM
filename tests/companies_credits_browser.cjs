@@ -44,7 +44,15 @@ async function issue(issuer,client,label){
  const first=page.locator('.credit-item').first();await first.locator('textarea[name$="[description]"]').fill(label);assert.equal(await first.locator('input[name$="[unit]"]').inputValue(),'hour');
  assert.equal(await first.locator('.credit-tax').count(),2);await first.locator('[data-credit-tax]').click();await first.locator('[data-credit-tax-remove="2"]').click();
  await page.locator('#credit-add-item').click();const second=page.locator('.credit-item').nth(1);await second.locator('textarea[name$="[description]"]').fill('Second credit item');await second.locator('input[name$="[rate]"]').fill('50.00');await second.locator('textarea[name$="[long_description]"]').fill('PUBLIC second item detail');await second.locator('input[name$="[unit]"]').fill('unit');
- for(const row of[first,second]){const group=creditField(row,fixture.fields.line.name);await group.locator('input[type=checkbox]').nth(0).check();await group.locator('input[type=checkbox]').nth(1).check();}
+ // Native styled checkboxes expose the label as the visible click target; the input is transparent.
+ // Keep real pointer actionability and verify the actual submitted control, without force or DOM mutation.
+ for(const row of[first,second]){const group=creditField(row,fixture.fields.line.name);for(let option=0;option<2;option++){
+  const control=group.locator('input[type=checkbox]').nth(option),id=await control.getAttribute('id');assert.match(id,/^credit-cf-[a-f0-9]+-[0-9]+-line-[0-9]+$/);
+  const selectedFromCatalog=row===first;assert.equal(await control.isChecked(),selectedFromCatalog,'catalog choices are copied; a new manual row starts unchecked');
+  const optionLabel=group.locator('label[for="'+id+'"]');
+  await optionLabel.click();assert.equal(await control.isChecked(),!selectedFromCatalog,'visible label toggles its own checkbox');
+  if(selectedFromCatalog){await optionLabel.click();assert.equal(await control.isChecked(),true,'second pointer click restores the catalog selection');}
+ }}
  await page.locator('#credit-add-item').click();await page.locator('.credit-item').nth(2).locator('[data-credit-remove]').click();
  await second.locator('[data-credit-drag]').press('ArrowUp');assert.equal(await page.locator('.credit-item').first().locator('textarea[name$="[description]"]').inputValue(),'Second credit item','original row ordering keeps distinct line metadata');
  await page.locator('#credit-reference').fill('PUBLIC '+label);await page.locator('#credit-adminnote').fill('NEVER-PDF-ADMIN-NOTE');await page.locator('#credit-terms').fill('PUBLIC CREDIT CUSTOM TERMS');

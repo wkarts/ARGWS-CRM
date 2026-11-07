@@ -11,7 +11,7 @@ final class CompanyRemoteOperations
     private CompanyService $service;
     public function __construct(private $db,private string $p){$this->service=new CompanyService($db,$p);}
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
-    private function tables():array{return array_values(array_unique(array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
+    public function tables():array{return array_values(array_unique(array_merge(CompanyService::tables($this->db,$this->p),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),[CompanyRemoteOperationsSchema::TABLE],$this->db->table_exists($this->p.'asaas_company_manual_settlements')?['asaas_company_manual_settlements']:[],$this->db->table_exists($this->p.'asaas_company_card_payments')?['asaas_company_card_payments']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[])));}
     private function run(int $issuer,int $actor,callable $fn)
     {
         CompanySchema::ensure($this->db,$this->p,false);CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);
@@ -23,7 +23,7 @@ final class CompanyRemoteOperations
     private function proof(array $origin,array $account,bool $deleted=false):array
     {
         $proof=$this->rows('SELECT * FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin['id']])[0]??null;
-        if(!$proof||$proof['operation']!=='query'||$proof['account_revision']!==$account['revision']||$proof['created_at']<gmdate('Y-m-d H:i:s',time()-300))throw new \DomainException('asaas_company_remote_fresh_query_required');
+        if(!$proof||$proof['operation']!=='query'||$proof['account_revision']!==$account['revision']||($proof['created_at']<gmdate('Y-m-d H:i:s',time()-300)||$proof['created_at']>gmdate('Y-m-d H:i:s')))throw new \DomainException('asaas_company_remote_fresh_query_required');
         $safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);
         if(!hash_equals($proof['evidence_hash'],hash('sha256',json_encode($safe,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)))||!in_array($safe['status']??'',['PENDING','OVERDUE'],true)||($safe['deleted']??null)!==$deleted||($safe['adverse']??true)||($safe['payment_date']??'')!==''||($safe['credit_date']??'')!=='')throw new \DomainException('asaas_company_remote_unpaid_required');
         return $proof;
@@ -31,9 +31,10 @@ final class CompanyRemoteOperations
     private function eligible(array $origin,array $meta,array $account,bool $confirmation=false):array
     {
         $id=(int)$origin['id'];$invoice=(int)$origin['invoice_id'];
+        if($this->db->table_exists($this->p.'asaas_company_card_payments')&&$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_card_payments WHERE origin_id=? FOR UPDATE',[$id]))throw new \DomainException('asaas_card_attempt_requires_review');
         if(!$origin['remote_id']||(!$confirmation&&$origin['state']==='review_required'))throw new \DomainException('asaas_company_remote_review_required');
         if($this->rows('SELECT id FROM '.$this->p.'invoicepaymentrecords WHERE invoiceid=? FOR UPDATE',[$invoice])||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=? FOR UPDATE',[$invoice])||$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? FOR UPDATE',[$id]))throw new \DomainException('asaas_company_remote_financial_history');
-        if($this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND id<>? FOR UPDATE',[$invoice,$id])||($this->db->table_exists($this->p.'bb_origins')&&$this->rows('SELECT id FROM '.$this->p.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice])))throw new \DomainException('asaas_company_multiple_providers');
+        if($this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND id<>?'.CompanyOriginGenerations::predicate($this->db,$this->p).' FOR UPDATE',[$invoice,$id])||($this->db->table_exists($this->p.'bb_origins')&&$this->rows('SELECT id FROM '.$this->p.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice])))throw new \DomainException('asaas_company_multiple_providers');
         if($this->rows("SELECT event_id FROM {$this->p}asaas_company_jobs WHERE origin_id=? AND state IN ('pending','processing') FOR UPDATE",[$id]))throw new \DomainException('asaas_company_remote_job_pending');
         $events=$this->rows('SELECT event_type,state FROM '.$this->p.'asaas_company_events WHERE account_row=? AND remote_id=? FOR UPDATE',[$account['id'],$origin['remote_id']]);
         foreach($events as $event)if(($event['state']==='conflict'||($event['state']==='review_required'&&!($confirmation&&$event['event_type']==='PAYMENT_DELETED')))||!in_array($event['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true))throw new \DomainException('asaas_company_adverse_history');
@@ -45,6 +46,17 @@ final class CompanyRemoteOperations
         \IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_payment_origins SET state=?,last_code=?,updated_at=? WHERE id=? AND issuer_id=?',[$state==='deleted'?'remote_removed':'remote_removal_pending',$code,$now,$origin,$issuer]);
         \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,'company_asaas_remote_'.$state,$issuer,$origin,$now]);
         if(($this->ledger($issuer,$origin)['state']??'')!==$state)throw new \RuntimeException('asaas_company_remote_state_unconfirmed');
+    }
+    /** Closed local-cancellation composition; no provider request happens under this lock. */
+    public function assertCancellationInOwned(int $issuer,int $actor,int $invoice,int $origin):void
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
+        [$row,$meta,$account]=$this->source($issuer,$actor,$origin);
+        $op=$this->ledger($issuer,$origin);
+        if((int)$row['invoice_id']!==$invoice||!$op||$op['state']!=='deleted'||$row['state']!=='remote_removed'||$op['sent_at']===null||$op['account_revision']!==$account['revision'])throw new \DomainException('asaas_invoice_cancellation_unconfirmed');
+        $proof=$this->eligible($row,$meta,$account,true);
+        foreach($this->rows('SELECT created_at FROM '.$this->p.'asaas_company_events WHERE account_row=? AND remote_id=? FOR UPDATE',[$account['id'],$row['remote_id']]) as $event)
+            if($event['created_at']>$proof['created_at'])throw new \DomainException('asaas_company_remote_fresh_query_required');
     }
     public function remove($issuer,$actor,$origin,string $key,callable $decrypt,?callable $transport=null):array
     {

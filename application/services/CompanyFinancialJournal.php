@@ -44,7 +44,7 @@ final class CompanyFinancialJournal
         if(count($this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=? FOR UPDATE',[$issuer,$event['actor_id'],$issuer,'company_financial_event_recorded',$metadata]))!==1)throw new DomainException('company_invoice_reopen_review_required');
         return $event;
     }
-    private function source(int $issuer,array $event,?string $evidenceKey=null):void
+    private function source(int $issuer,array $event,?string $evidenceKey=null,?CompanyAsaasRecreationSource $recreation=null):void
     {
         $id=$event['source_id'];$type=$event['source_type'];$p=$this->p;
         if($type==='expense'){$row=$this->rows('SELECT currency FROM '.$p.'company_expenses WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$row||$row['currency']!==$event['currency'])throw new DomainException('company_financial_event_source_denied');return;}
@@ -54,7 +54,8 @@ final class CompanyFinancialJournal
             $guards=['invoicepaymentrecords','credits','itemable','item_tax'];
             $providerTables=CompanyInvoiceProviderTables::current($this->db,$p);$guards=array_merge($guards,$providerTables);
             IssuerTransaction::assertOwned($this->db,$p,array_merge($guards,(new CompanyInvoiceBalance($this->db,$p))->tables()));
-            foreach($providerTables as $table)if($this->rows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$id]))throw new DomainException('company_financial_event_source_denied');
+            if($recreation!==null){$before=json_decode($event['before_json'],true,32,JSON_THROW_ON_ERROR);$recreation->assertJournal($this->db,$p,$issuer,$event['actor_id'],(int)$id,(string)($before['revision']??''));}
+            foreach($providerTables as $table)if(($table!=='asaas_payment_origins'||$recreation===null)&&$this->rows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$id]))throw new DomainException('company_financial_event_source_denied');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$p.$table.' WHERE '.$column.'=? FOR UPDATE',[$id]))throw new DomainException('company_financial_event_source_denied');
             if((new CompanyBankReceiptComponents($this->db,$p))->forInvoiceInOwned($issuer,$event['actor_id'],(int)$id))throw new DomainException('company_financial_event_source_denied');
             $before=json_decode($event['before_json'],true,32,JSON_THROW_ON_ERROR);$after=json_decode($event['after_json'],true,32,JSON_THROW_ON_ERROR);
@@ -83,9 +84,9 @@ final class CompanyFinancialJournal
 
     }
     /** Must be composed with the canonical writer's active ownership/ACL/financial transaction. */
-    public function recordInOwned($issuer,$actor,array $event,string $evidenceKey):string
+    public function recordInOwned($issuer,$actor,array $event,string $evidenceKey,?CompanyAsaasRecreationSource $recreation=null):string
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);if(!preg_match('/^[a-f0-9]{64}$/D',$evidenceKey))throw new DomainException('company_financial_event_invalid');$prepared=$this->normalize($issuer,$actor,$event);if($prepared['basis']!==self::CAPTURED)throw new DomainException('company_financial_event_invalid');IssuerTransaction::assertOwned($this->db,$this->p,$this->tables($prepared['source_type']));CompanyFinancialJournalSchema::assertValid($this->db,$this->p);$acl=new IssuerResourceAccess($this->db,$this->p);[$type,$feature,$cap]=self::KINDS[$prepared['kind']];$view=match($prepared['source_type']){'payment'=>'invoices','credit_entry'=>'credit_notes',default=>$feature};if(!$acl->can($issuer,$actor,$view,'view')||!$acl->can($issuer,$actor,$feature,$cap))throw new DomainException('company_financial_event_source_denied');if($prepared['source_type']==='credit_entry'&&!$acl->can($issuer,$actor,'credit_notes','edit'))throw new DomainException('company_financial_event_source_denied');if(in_array($prepared['kind'],['credit_applied','credit_unapplied'],true)&&!$acl->can($issuer,$actor,'invoices','view'))throw new DomainException('company_financial_event_source_denied');$this->source($issuer,$prepared,$evidenceKey);return $this->persist($prepared,$evidenceKey);
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);if(!preg_match('/^[a-f0-9]{64}$/D',$evidenceKey))throw new DomainException('company_financial_event_invalid');$prepared=$this->normalize($issuer,$actor,$event);if($prepared['basis']!==self::CAPTURED)throw new DomainException('company_financial_event_invalid');IssuerTransaction::assertOwned($this->db,$this->p,$this->tables($prepared['source_type']));CompanyFinancialJournalSchema::assertValid($this->db,$this->p);$acl=new IssuerResourceAccess($this->db,$this->p);[$type,$feature,$cap]=self::KINDS[$prepared['kind']];$view=match($prepared['source_type']){'payment'=>'invoices','credit_entry'=>'credit_notes',default=>$feature};if(!$acl->can($issuer,$actor,$view,'view')||!$acl->can($issuer,$actor,$feature,$cap))throw new DomainException('company_financial_event_source_denied');if($prepared['source_type']==='credit_entry'&&!$acl->can($issuer,$actor,'credit_notes','edit'))throw new DomainException('company_financial_event_source_denied');if(in_array($prepared['kind'],['credit_applied','credit_unapplied'],true)&&!$acl->can($issuer,$actor,'invoices','view'))throw new DomainException('company_financial_event_source_denied');$this->source($issuer,$prepared,$evidenceKey,$recreation);return $this->persist($prepared,$evidenceKey);
     }
     private function persist(array $event,string $key):string
     {

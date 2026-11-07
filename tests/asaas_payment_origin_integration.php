@@ -49,7 +49,8 @@ namespace {
             throw new \RuntimeException('Unexpected scope query: '.$sql);
         }
         public function table_exists($t) { return isset($this->tables[$t]); }
-        public function field_exists($c, $t) { return true; }
+        // This fixture models the pre165 unique-invoice schema, without generation metadata.
+        public function field_exists($c, $t) { return $c !== 'active_slot'; }
         public function select($s) { return $this; }
         public function from($t) { $this->from=$t; return $this; }
         public function limit($n) { return $this; }

@@ -33,17 +33,17 @@ class RegistryShardsTest(unittest.TestCase):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
         commands = runner.load_commands()
-        self.assertEqual(len(commands), 473)
+        self.assertEqual(len(commands), 474)
         self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
         self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
-                         '714f4d521984a3ce24e8be4bf49e459bc7e625f449d5592a9a5c160d36d7303c')
+                         '3548f14790cc52abd1462a9c53dbaf62be8f33ffbde362a1f4308f3a0f34c846')
         self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
-                         '371a4b0d636192b8d5f2604e22ab0368c285ad4ba33ad3e8ae59fe160b0ba197')
+                         'd324698e3468eb04d50dc2e5744fe0d8d958b49e5e64d629abb30ac619fdeb65')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
         shards = [runner.select_commands(commands, i) for i in range(1, runner.SHARDS + 1)]
-        self.assertEqual([len(shard) for shard in shards], [95,95,95,94,94])
+        self.assertEqual([len(shard) for shard in shards], [95,95,95,95,94])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -129,10 +129,10 @@ class RegistryShardsTest(unittest.TestCase):
                         if line.strip().startswith('php tests/')]
         self.assertEqual(all_external, external, 'no duplicated or moved external invocations')
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
-        self.assertEqual(len(manifest_php), 471)
+        self.assertEqual(len(manifest_php), 472)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 501)
-        self.assertEqual(len(set(map(tuple, combined))), 501)
+        self.assertEqual(len(combined), 502)
+        self.assertEqual(len(set(map(tuple, combined))), 502)
 
     def test_operational_inventory_runs_once_for_the_matrix(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -264,7 +264,11 @@ class RegistryShardsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'plan.json'
             invalid = json.loads(runner.PLAN.read_text())
-            invalid['assignments'][1] = invalid['assignments'][1] % runner.SHARDS + 1  # break 94/95 capacities
+            counts = {shard: invalid['assignments'].count(shard) for shard in range(1, runner.SHARDS + 1)}
+            smallest = min(counts, key=counts.get)
+            largest = max(counts, key=counts.get)
+            index = invalid['assignments'].index(smallest)
+            invalid['assignments'][index] = largest  # force 93/96, outside balanced capacities
             path.write_text(json.dumps(invalid))
             with self.assertRaises(ValueError):
                 runner.load_assignment(commands, path)

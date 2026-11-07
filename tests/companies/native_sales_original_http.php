@@ -5,9 +5,9 @@ function show_error($message,$status=500){$GLOBALS['CI']->output->set_status_hea
 function redirect($url,$method='auto',$status=null){$GLOBALS['CI']->output->set_status_header($status??302)->set_header('Location: '.$url);}
 class AdminController{public function __construct(){}public function __get($key){return $GLOBALS['CI']->$key;}public function __isset($key){return isset($GLOBALS['CI']->$key);}}
 class OriginalSalesHttpLoader{
-    public array $views=[];
+    public array $views=[];public bool $failRender=false;
     public function model($name){throw new RuntimeException('Ambient model is forbidden in original Sales HTTP fixture: '.$name);}
-    public function view($path,$data=[],$return=false){$this->views[]=[$path,$data];$loader=new OriginalSalesViewLoader($data,'admin/'.$path);return $loader->view($path,[],$return);}
+    public function view($path,$data=[],$return=false){if($this->failRender)throw new RuntimeException('sensitive synthetic customer or credential detail');$this->views[]=[$path,$data];$loader=new OriginalSalesViewLoader($data,'admin/'.$path);return $loader->view($path,[],$return);}
 }
 require_once APPPATH.'controllers/admin/Estimates.php';require_once APPPATH.'controllers/admin/Proposals.php';require_once APPPATH.'controllers/admin/Invoice_items.php';
 $GLOBALS['CI']->input=new class{public string $verb='GET';public bool $ajax=true;public array $posts=[],$gets=[];public function method($upper=false){return$upper?$this->verb:strtolower($this->verb);}public function post($key=null,$filter=false){return$key===null?$this->posts:($this->posts[$key]??null);}public function get($key=null,$filter=false){return$key===null?$this->gets:($this->gets[$key]??null);}public function is_ajax_request(){return$this->ajax;}};
@@ -78,3 +78,10 @@ foreach(['estimates'=>'estimate','proposals'=>'proposal']as$kind=>$type){
 }
 $customers->setSharing($b,7,$cb,[]);$reset('GET',[],['native_sales_id'=>'','native_sales_revision'=>'']);(new Estimates())->client_change_data((string)$cb);essentialCheck($out->status===403,'revoked customer sharing closes original callback immediately');
 echo 'Original Sales actual controller/view/POST/customer/catalogue: '.($GLOBALS['essentialChecks']-$httpStart).' added checks ('.$db->driver().'); framework and sealed-scope I/O are explicit seams.'.PHP_EOL;
+
+$reset('GET',[],['customer_id'=>(string)$ca]);$GLOBALS['CI']->load->failRender=true;$beforeLogs=count($GLOBALS['essentialLogs']??[]);
+try{(new Estimates())->estimate();}finally{$GLOBALS['CI']->load->failRender=false;}
+$failureLogs=array_slice($GLOBALS['essentialLogs']??[],$beforeLogs);
+essentialCheck($out->status===503&&count($failureLogs)===1&&preg_match('/^native_sales_form_failure kind=estimates class=runtime file=native_sales_original_http\.php line=[0-9]+$/D',$failureLogs[0][1])===1,'render failure retains503 and logs only bounded code location');
+essentialCheck(!str_contains($out->body,'sensitive synthetic')&&!str_contains(json_encode($failureLogs),'sensitive synthetic'),'render failure never exposes exception text in response or log');
+echo 'Original Sales failure diagnostics:2 redaction checks passed.'.PHP_EOL;

@@ -49,8 +49,9 @@ $minimum=(new ReflectionClass(App_modules::class))->newInstanceWithoutConstructo
 $config154=new class{public string $version='457';public function load($name){}public function item($name){return $this->version;}};
 $registry154=new ReflectionClass($minimum);$registry154->getProperty('ci')->setValue($minimum,(object)['config'=>$config154]);
 $registry154->getProperty('modules')->setValue($minimum,['asaas'=>['headers'=>['requires_at_least'=>$requirement[1]??'']]]);
-migration154Check(($requirement[1]??null)==='4.5.8'&&!$minimum->is_minimum_version_requirement_met('asaas'),'native module compatibility rejects core457 without tab-parent integration');
-$config154->version='458';migration154Check($minimum->is_minimum_version_requirement_met('asaas'),'native module compatibility accepts core458');
+migration154Check(($requirement[1]??null)==='4.9.2'&&!$minimum->is_minimum_version_requirement_met('asaas'),'current module rejects core457 and declares native edit dependency');
+foreach(['458','491'] as $oldCore){$config154->version=$oldCore;migration154Check(!$minimum->is_minimum_version_requirement_met('asaas'),'old core lacks the native edit authority: '.$oldCore);}
+$config154->version='492';migration154Check($minimum->is_minimum_version_requirement_met('asaas'),'current module accepts core492 with native edit authority');
 $tables=['modules','options','asaas_webhook_integrations','asaas_company_accounts'];
 $version=fn()=>$db->get_where($p.'modules',['module_name'=>'asaas'])->row_array()['installed_version'];
 $option=fn($name)=>$db->get_where($p.'options',['name'=>$name])->row_array()['value']??null;

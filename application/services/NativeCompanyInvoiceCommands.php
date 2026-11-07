@@ -90,12 +90,13 @@ final class NativeCompanyInvoiceCommands
         if(!is_array($result)||($result['draft_id']??null)!==$id)throw new RuntimeException('issuer_native_invoice_command_unconfirmed');return$result;
     }
     /** Issued manual invoice edit, metadata and retry receipt share the financial writer's transaction. */
-    public function updateIssued(int $issuer,int $actor,int $id,string $revision,array $invoice,array $metadata,string $key):array
+    public function updateIssued(int $issuer,int $actor,int $id,string $revision,array $invoice,array $metadata,string $key,?CompanyAsaasInvoiceEditSource $editing=null):array
     {
         $key=CompanyInvoiceDraftsInput::key($key);$payload=CompanyInvoiceDraftsInput::normalize($invoice);
         $keys=['invoice_fields','line_fields','tags','tags_revision','line_sources','removed_line_ids'];
         if(array_diff(array_keys($metadata),$keys)||array_diff($keys,array_keys($metadata))||!is_array($metadata['invoice_fields'])||!is_array($metadata['line_fields'])||!array_is_list($metadata['line_fields'])||!is_array($metadata['tags'])||!array_is_list($metadata['tags'])||!is_array($metadata['line_sources'])||!array_is_list($metadata['line_sources'])||!is_array($metadata['removed_line_ids'])||!array_is_list($metadata['removed_line_ids'])||count($metadata['line_fields'])!==count($payload['items'])||count($metadata['line_sources'])!==count($payload['items'])||!is_string($metadata['tags_revision'])||!preg_match('/^[a-f0-9]{64}$/D',$metadata['tags_revision']))throw new DomainException('native_invoice_metadata_invalid');
         NativeCompanyInvoiceCommandSchema::assertValid($this->db,$this->p);
+        if($editing!==null)$editing->bind($payload,$metadata,$key,$revision);
         $hash=CompanyInvoiceDraftsInput::hash(self::canonical(['invoice_id'=>$id,'revision'=>$revision,'payload'=>$payload,'metadata'=>$metadata]));$operation='invoice_update';
         $writer=new CompanyInvoices($this->db,$this->p);$fields=new NativeCompanyCustomFields($this->db,$this->p);$tags=new NativeCompanyResourceTags($this->db,$this->p);$result=null;
         $guard=function(string $stage)use($issuer,$actor,$id,$revision,$payload,$metadata,$key,$hash,$operation,$writer,$fields,$tags,&$result):bool{
@@ -114,7 +115,7 @@ final class NativeCompanyInvoiceCommands
             $receipt=$tags->replaceInOwnedTransaction($issuer,$actor,'invoice',$id,$metadata['tags_revision'],$metadata['tags']);
             $result=$this->complete($issuer,$actor,$key,$operation,$hash,['invoice_id'=>$id,'canonical_id'=>NativeCompanyResourceId::encode('invoice',$id),'revision'=>$writer->revision($issuer,$actor,$id),'line_ids'=>array_map('intval',array_column($lines,'id')),'tags_revision'=>$receipt['revision']]);return true;
         };
-        $writer->change($issuer,$actor,$id,$revision,$payload,$guard,$this->tables(),['sources'=>$metadata['line_sources'],'removed'=>$metadata['removed_line_ids']]);
+        $writer->change($issuer,$actor,$id,$revision,$payload,$guard,$this->tables(),['sources'=>$metadata['line_sources'],'removed'=>$metadata['removed_line_ids']],null,$editing);
         if(!is_array($result)||($result['invoice_id']??null)!==$id)throw new RuntimeException('issuer_native_invoice_command_unconfirmed');return$result;
     }
     public function updateDraft(int $issuer,int $actor,int $draft,int $revision,array $invoice,array $metadata,string $key):array

@@ -9,7 +9,7 @@ if($mysql)$engine=' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin';e
 $tables155=['modules','issuers_registry','asaas_payment_origins','asaas_company_accounts',...\Asaas\CompanyPreferencesSchema::tables()];
 $version155=fn()=>$db->get_where($p.'modules',['module_name'=>'asaas'])->row_array()['installed_version'];
 try{
-    migration154Check(($match[1]??null)==='1.6.1','current161 header preserves the historical155 migration');
+    migration154Check(($match[1]??null)==='2.0.7','current198 header preserves the historical155 migration');
     $db->query('CREATE TABLE `'.$p.'modules` (module_name VARCHAR(50) PRIMARY KEY,installed_version VARCHAR(20))'.$engine);
     $db->query('CREATE TABLE `'.$p.'issuers_registry` (id INT UNSIGNED NOT NULL PRIMARY KEY)'.$engine);
     $db->query('CREATE TABLE `'.$p.'asaas_payment_origins` (id INT NOT NULL PRIMARY KEY,environment VARCHAR(16) NOT NULL)'.$engine);
@@ -90,11 +90,11 @@ try{
     migration154Check((new App_module_migration('asaas'))->version('160')===true,'160 native replay is no-op');
     foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'160 preserves historical rows: '.$table);
     $db->failVersionWrite=true;$runner161=new App_module_migration('asaas');
-    migration154Check($runner161->to_latest()===false&&$version155()==='1.6.0','161 failed tracking preserves160');$db->failVersionWrite=false;
+    migration154Check($runner161->version('161')===false&&$version155()==='1.6.0','161 failed tracking preserves160');$db->failVersionWrite=false;
     $db->ignoreVersionWrite=true;$runner161=new App_module_migration('asaas');
-    migration154Check($runner161->to_latest()===false&&$runner161->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.6.0','161 lying tracking success denied');$db->ignoreVersionWrite=false;
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='161'&&$version155()==='1.6.1','161 marker confirmed');
-    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'161 replay is native no-op');
+    migration154Check($runner161->version('161')===false&&$runner161->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.6.0','161 lying tracking success denied');$db->ignoreVersionWrite=false;
+    migration154Check((string)(new App_module_migration('asaas'))->version('161')==='161'&&$version155()==='1.6.1','161 marker confirmed');
+    migration154Check((new App_module_migration('asaas'))->version('161')===true,'161 replay is native no-op');
     foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'161 preserves historical rows: '.$table);
     $db->query('ALTER TABLE `'.$p.'asaas_company_profiles` ADD `unexpected` INT NULL');
     migration154Throws(fn()=>\Asaas\CompanyPreferencesSchema::ensure($db,$p,false),'issuer_asaas_preferences_schema_invalid');

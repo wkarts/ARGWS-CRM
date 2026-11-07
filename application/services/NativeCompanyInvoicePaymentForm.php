@@ -19,6 +19,7 @@ final class NativeCompanyInvoicePaymentForm
         $allowed=array_map('strval',$allowed);$modes=array_values(array_filter((new NativeCompanyPaymentModes($this->db,$this->prefix))->listing($issuer,$actor,'invoices',false),static fn($mode)=>in_array($mode['id'],$allowed,true)));
         $after=IssuerStorage::query($this->db,'SELECT allowed_payment_modes FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$id,$issuer])->row_array();
         if($after!==$row||!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'payments','create'))throw new DomainException('company_payment_access_denied');
-        return ['invoice'=>$preview['document'],'revision'=>$preview['revision'],'balance'=>$preview['balance'],'payments'=>$preview['payments'],'payment_modes'=>$modes,'request_key'=>bin2hex(random_bytes(32))];
+        $asaas=false;if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$asaas=(bool)IssuerStorage::query($this->db,'SELECT id FROM '.$this->prefix.'asaas_payment_origins WHERE invoice_id=? AND issuer_id=?',[$id,$issuer])->row_array();
+        return ['asaas_partial_manual'=>$asaas,'invoice'=>$preview['document'],'revision'=>$preview['revision'],'balance'=>$preview['balance'],'payments'=>$preview['payments'],'payment_modes'=>$modes,'request_key'=>bin2hex(random_bytes(32))];
     }
 }

@@ -55,7 +55,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(await page.locator('body.native-company-admin #header').count(),1,'BB uses the original CRM header');
    assert.equal(await page.locator('body.company-context-shell').count(),0,'BB no longer uses the company application shell');
    assert.equal(await page.locator('#bb_issuer').count(),0,'sidebar is the sole company selector');
-   await page.locator('#bb-tab-auth').click();
+   await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');
+   await page.locator('[href="#bb-settings-account"]').click();
    for(const channel of ['api','cnab']){
     const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});
     assert.equal(await form.count(),1,'each company has two independent native channel controls');
@@ -66,7 +67,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+id),'true');
    if(id===b)assert.equal((await context.request.post(url+'/admin/banco_brasil/save_channel_preferences',{form:capturedChannelA})).status(),409,'A channel form cannot change B after company switch');
   }
-  await select(a);await page.goto(url+'/admin/banco_brasil?issuer_id='+a);
+  await select(a);await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');
+  await page.locator('[href="#bb-settings-account"]').click();
   const apiToggle=()=>page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value=api]')});
   await navigate(page,apiToggle().locator('button'));
   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+a),'false');
@@ -82,25 +84,26 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await native.date(page,'#date',new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await native.line(page,{description:'SYNTHETIC BB SERVICE',qty:'1',rate:'100.00'});
   const {id:invoice}=await native.save(page,url);assert.match(invoice,/^[1-9]\d*$/);
-  let response=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
-  await page.locator('#bb-tab-account').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
+  let response=await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
+  await page.locator('[href="#bb-settings-account"]').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
   const variation=page.locator('input[name=variation]');await variation.fill('019');
   await navigate(page,variation.locator('xpath=ancestor::form').locator('button'));
   const connection=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+a);assert.match(connection,/^[1-9]\d*$/);
-  await page.locator('#bb-tab-account').click();const layoutForm=page.locator('form[action*="register_layout"]');
+  await page.locator('[href="#bb-settings-account"]').click();const layoutForm=page.locator('form[action*="register_layout"]');
   await layoutForm.locator('select[name=connection_id]').selectOption(connection);await layoutForm.locator('select[name=layout_id]').selectOption('bb-cobranca-240-2026-06-084-043');await navigate(page,layoutForm.locator('button'));
   const binding=sql('SELECT id FROM tblbb_layout_bindings WHERE connection_id='+connection);
-  await page.locator('#bb-tab-remittance').click();
+  await page.locator('[href="#bb-settings-cnab240"]').click();
   for(const [key,value]of Object.entries({beneficiary_name:'SYNTHETIC PORTAL A',first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC CONTRACT ONLY'}))await page.locator('#bb-contract-'+key).fill(value);
-  await page.locator('input[name="contract[interest_exempt]"]').check();await page.locator('input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
+  await page.locator('#bb-settings-cnab240 input[name="contract[interest_exempt]"]').check();await page.locator('#bb-settings-cnab240 input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
   const nativeContract=page.locator('form').filter({has:page.locator('#bb-contract-beneficiary_name')});
   assert.equal(await nativeContract.count(),1);
   await navigate(page,nativeContract.getByRole('button',{name:'Registrar declaração do operador',exact:true,includeHidden:true}));
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
   await page.waitForFunction(()=>document.querySelector('#bb-remittance').getAttribute('aria-hidden')==='false');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_contract_declarations WHERE issuer_id='+a),'1');
   for(const [key,value]of Object.entries({invoice_id:invoice,payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA'}))await page.locator('#bb-title-'+key).fill(value);
   await navigate(page,page.locator('form[action*="generate_remittance"]').locator('button'));
-  const batch=sql('SELECT id FROM tblbb_batches WHERE issuer_id='+a);assert.match(batch,/^[1-9]\d*$/);assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+batch),'generated');
+  const batch=sql('SELECT id FROM tblbb_batches WHERE issuer_id='+a);assert.match(batch,/^[1-9]\d*$/);assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+batch),'open');
   assert.equal(sql('SELECT delivery_state FROM tblbb_batches WHERE id='+batch),'not_submitted');
   const downloadForm=page.locator('form[action*="download_remittance"]');const data=await downloadForm.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
   const download=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(download.status(),200);
@@ -136,7 +139,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'2');assert.equal(sql('SELECT financial_state FROM tblbb_return_events WHERE id='+event),'applied_assisted');
   const retry=await context.request.post(url+'/admin/banco_brasil/settle_event',{form:settlementData});assert.equal(retry.status(),200);await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1','retry and reimport cannot duplicate reviewed payment');
   // Configure native API vault through the real UI. This browser never invokes an API banking operation.
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-auth');await page.locator('#bb-api-connection').selectOption(connection);await page.locator('#bb-api-stage').selectOption('homologation');
+  await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');await page.locator('#bb-api-connection').selectOption(connection);await page.locator('#bb-api-stage').selectOption('homologation');
   for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC API CONTRACT ONLY'}))await page.locator('#bb-api-'+key).fill(value);
   await page.locator('#bb-api-interest-policy').selectOption('exempt');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
   const apiProfile=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+a);assert.match(apiProfile,/^[1-9]\d*$/);
@@ -164,24 +167,24 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal((await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields})).status(),409,'old original download form is rejected after switching company');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   // Complete positive UI credit path for B, with a distinct account/agreement/profile.
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();
+  await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-account');await page.locator('[href="#bb-settings-account"]').click();
   await page.locator('#bb_account_id').fill('001:00452-3:000000223873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('7654321');
   await page.locator('input[name=variation]').fill('019');await navigate(page,page.locator('input[name=variation]').locator('xpath=ancestor::form').locator('button'));
-  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('#bb-tab-auth').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
+  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('[href="#bb-settings-api"]').click();await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
   for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC B API CONTRACT'}))await page.locator('#bb-api-'+key).fill(value);
   await page.locator('#bb-api-interest-policy').selectOption('exempt');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
   const profileB=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+b);await page.locator('#bb-api-credential-profile').selectOption(profileB);
   for(const [key,value]of Object.entries({client_id:'SYNTHETIC-B-CLIENT',client_secret:'SYNTHETIC-B-SECRET',application_key:'SYNTHETIC-B-KEY'}))await page.locator('#bb-api-credential-'+key).fill(value);
   await navigate(page,page.locator('form[action*="save_api_credentials"] button'));
   const fixtureB=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_api_credit_http_fixture.php','b'],{encoding:'utf8'}));
-  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#bb-tab-billing').click();
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+b+'#bb-billing');await page.locator('#bb-tab-billing').click();
   const creditB=page.locator('form[action*=settle_api]').filter({has:page.locator('input[name=operation_id][value="'+fixtureB.operation+'"]')});await creditB.locator('input[type=checkbox]').check();await navigate(page,creditB.locator('button'));
   assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+fixtureB.invoice+' AND issuer_id='+b),'2','B positive credit settles its independently owned invoice');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+fixtureB.origin+' AND issuer_id='+b),'1');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','B positive flow preserves A payment');
   // Explicit positive daily-interest profile and authenticated movement observation in A and B.
   for(const [issuer,conn,letter] of [[a,connection,'a'],[b,connectionB,'b']]){
-   await select(issuer);await page.goto(url+'/admin/banco_brasil?issuer_id='+issuer+'#bb-auth');await page.locator('#bb-api-connection').selectOption(conn);await page.locator('#bb-api-stage').selectOption('homologation');
+   await select(issuer);await page.goto(url+'/admin/settings?group=payment_gateways&gateway=banco_brasil#bb-settings-api');await page.locator('#bb-api-connection').selectOption(conn);await page.locator('#bb-api-stage').selectOption('homologation');
    for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC DAILY INTEREST '+letter}))await page.locator('#bb-api-'+key).fill(value);
    const beforeNumber=sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+issuer);
    await page.locator('#bb-api-interest-policy').selectOption('daily_fixed');await page.locator('input[name="api_profile[interest_policy_confirmed]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
@@ -189,11 +192,88 @@ async function next(page) { await navigate(page, page.locator('section form butt
    const interestProfile=sql('SELECT MAX(id) FROM tblbb_api_profiles WHERE issuer_id='+issuer);assert.equal(JSON.parse(sql('SELECT definition_json FROM tblbb_api_profiles WHERE id='+interestProfile)).interest_policy,'daily_fixed');
    await page.locator('#bb-api-credential-profile').selectOption(interestProfile);for(const [key,value]of Object.entries({client_id:'SYNTHETIC-DAILY-'+letter,client_secret:'SYNTHETIC-DAILY-SECRET-'+letter,application_key:'SYNTHETIC-DAILY-KEY-'+letter}))await page.locator('#bb-api-credential-'+key).fill(value);await navigate(page,page.locator('form[action*="save_api_credentials"] button'));
    const interestFixture=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_api_credit_http_fixture.php',letter,'daily'],{encoding:'utf8'}));
-   await page.reload({waitUntil:'domcontentloaded'});await page.locator('#bb-tab-billing').click();assert.equal(await page.locator('#bb-api-daily-interest').count(),1);assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+interestFixture.invoice),'0','interest registration/query/movement observation creates no financial receipt');
+   await page.goto(url+'/admin/banco_brasil?issuer_id='+issuer+'#bb-billing');await page.locator('#bb-tab-billing').click();assert.equal(await page.locator('#bb-api-daily-interest').count(),1);assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+interestFixture.invoice),'0','interest registration/query/movement observation creates no financial receipt');
    const movementProof=JSON.parse(sql('SELECT result_json FROM tblbb_api_operations WHERE id='+interestFixture.movementOperation));assert.equal(movementProof.movements[0].fee,'0.50');assert.equal(movementProof.movements[0].received,'20.00');
    const movementDetails=page.locator('details').filter({has:page.locator('summary').filter({hasText:new RegExp('^Operação #'+interestFixture.movementOperation+' /')})});await movementDetails.evaluate(element=>{element.open=true;});assert.equal(await movementDetails.getAttribute('open'),'');
    assert.ok((await page.locator('body').innerText()).includes('movement_page_observed'));assert.ok((await page.locator('body').innerText()).includes('Sem autoridade financeira automática.'));
   }
+  // New native invoice opt-in: production form -> canonical writer -> open CNAB240 group.
+  await select(a);
+  const contract240=sql('SELECT MAX(d.id) FROM tblbb_contract_declarations d JOIN tblbb_layout_bindings b ON b.id=d.layout_binding_id WHERE d.issuer_id='+a+" AND b.layout_id='bb-cobranca-240-2026-06-084-043'");
+  await native.createForm(page,url,client);
+  const localToday=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+  const dueDate=new Date(localToday+'T12:00:00Z');dueDate.setUTCDate(dueDate.getUTCDate()+30);
+  await native.date(page,'#date',localToday);await native.date(page,'#duedate',dueDate.toISOString().slice(0,10));
+  await native.line(page,{description:'SYNTHETIC AUTOMATIC CNAB',qty:'1',rate:'100.00'});
+  await native.picker(page,'#invoice-form [name="allowed_payment_modes[]"]',['banco_brasil_cnab']);
+  assert.equal(await page.locator('#bank-issue-enabled').isChecked(),false,'bank issuance never inferred from payment mode');
+  await page.locator('#bank-issue-enabled').check();await page.locator('#bank-issue-contract').selectOption(contract240);
+  await page.locator('#bank-issue-timezone').fill('America/Sao_Paulo');
+  for(const [field,value]of Object.entries({payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA',species:'02',acceptance:'N'}))await page.locator('#bank-issue-'+field).fill(value);
+  const beforeInvalidTitle=sql('SELECT COUNT(*) FROM tblinvoices WHERE issuer_id='+a);
+  const beforeInvalidRange=sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+a);
+  const invalidTitle=await page.locator('#invoice-form').evaluate(form=>new URLSearchParams(new FormData(form)).toString());
+  // The native submit handler enables the currency selector before serialization.
+  const invalidParams=new URLSearchParams(invalidTitle);invalidParams.set('currency',await page.locator('#invoice-form select[name=currency]').inputValue());for(const [key,value] of Object.entries(await native.security(page)))invalidParams.set(key,value);invalidParams.set('bank_issuance[payer][species]','01');
+  const invalidResponse=await context.request.post(url+'/admin/invoices/invoice',{data:invalidParams.toString(),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+  assert.equal(invalidResponse.status(),422,'unsupported CNAB240 species is rejected as input, never a storage success/failure ambiguity');
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoices WHERE issuer_id='+a),beforeInvalidTitle,'rejected title does not leave an invoice');
+  assert.equal(sql('SELECT next_number FROM tblbb_number_reservations WHERE issuer_id='+a),beforeInvalidRange,'rejected title does not consume a bank number');
+  const {id:automaticInvoice}=await native.save(page,url);
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_invoice_issuances WHERE invoice_id='+automaticInvoice+' AND issuer_id='+a),'1','actual native save and idempotent retry create one bank linkage');
+  const automaticBatch=sql('SELECT m.batch_id FROM tblbb_batch_origins m JOIN tblbb_origins o ON o.id=m.origin_id WHERE o.invoice_id='+automaticInvoice+' AND o.issuer_id='+a);
+  assert.match(automaticBatch,/^[1-9]\d*$/);assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+automaticBatch),'open');
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
+  const printAutomatic=page.locator('form[action*="print_cnab_boleto"]').filter({has:page.locator('input[name=batch_id][value="'+automaticBatch+'"]')});
+  await printAutomatic.locator('input[name=invoice_id]').fill(automaticInvoice);
+  const printFields=await printAutomatic.evaluate(form=>Object.fromEntries(new FormData(form).entries()));
+  const printResponse=await context.request.post(url+'/admin/banco_brasil/print_cnab_boleto',{form:printFields});
+  assert.equal(printResponse.status(),200,'invoice-issued title is printable before remittance download');assert.match(printResponse.headers()['cache-control'],/no-store/);
+  assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+automaticBatch),'open','printing leaves group open');
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+automaticInvoice),'0','printing never settles the invoice');
+  // Explicit CNAB publication uses real staff review and an independently authenticated contact.
+  await page.goto(url+'/admin/clients/client/'+client+'?group=contacts');
+  const grantInvoiceAccess=page.getByRole('button',{name:'Permitir acesso a faturas',exact:true});
+  const grantedForCnab=await grantInvoiceAccess.count()===1;
+  if(grantedForCnab)await navigate(page,grantInvoiceAccess);
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
+  const publicContext=await browser.newContext();
+  try{
+   await publicContext.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
+   await publicContext.addInitScript(()=>{window.print=()=>{window.__printedCnab=true;};});
+   const publicPage=await publicContext.newPage();publicPage.on('pageerror',e=>errors.push(e.message));
+   await publicPage.goto(url+'/company_portal/index/'+a);
+   await publicPage.locator('#login-email').fill('changed-portal@example.invalid');
+   await publicPage.locator('#login-password').fill('synthetic-password-a');
+   await navigate(publicPage,publicPage.locator('#portal-login button[type=submit]'));
+   const logout=publicPage.locator('form').filter({has:publicPage.locator('input[name=action][value=logout]')});
+   assert.equal(await logout.count(),1,'real contact login required before portal test');
+   const portalFields=await logout.evaluate(form=>Object.fromEntries(new FormData(form).entries()));
+   const request={...portalFields,action:'invoice_bb_checkout',invoice_id:automaticInvoice};
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+a,{form:request})).status(),404,'unpublished CNAB is denied through the real portal controller');
+   const reviewForm=()=>page.locator('form[action*="preview_checkout"]').filter({has:page.locator('input[name=invoice_id]')});
+   await reviewForm().locator('input[name=invoice_id]').fill(automaticInvoice);await navigate(page,reviewForm().locator('button'));
+   await page.locator('#bb-tab-billing').click();
+   const automaticOrigin=sql('SELECT id FROM tblbb_origins WHERE invoice_id='+automaticInvoice+' AND issuer_id='+a);
+   const publication=value=>page.locator('form[action*="publish_checkout"]').filter({has:page.locator('input[name=origin_id][value="'+automaticOrigin+'"]')}).filter({has:page.locator('input[name=enabled][value="'+value+'"]')});
+   await navigate(page,publication('1').locator('button'));
+   await publicPage.goto(url+'/company_portal/index/'+a);
+   const instrumentForm=publicPage.locator('form').filter({has:publicPage.locator('input[name=action][value=invoice_bb_checkout]')}).filter({has:publicPage.locator('input[name=invoice_id][value="'+automaticInvoice+'"]')});
+   assert.equal(await instrumentForm.count(),1,'published CNAB appears only on its own invoice');
+   await navigate(publicPage,instrumentForm.locator('button'));
+   assert.equal(await publicPage.getByText('HOMOLOGAÇÃO — NÃO PAGAR',{exact:true}).count(),1);
+   assert.equal(await publicPage.locator('.barcode svg').count(),1);
+   await publicPage.locator('#bb-print-boleto').click();assert.equal(await publicPage.evaluate(()=>window.__printedCnab),true,'nonce-bound print handler works under actual portal CSP');
+   assert.equal(sql('SELECT generation_state FROM tblbb_batches WHERE id='+automaticBatch),'open','portal printing never freezes an open remittance');
+   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+automaticInvoice),'0');
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+b,{form:request})).status(),404,'A contact cannot disclose an A boleto under B context');
+   await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-remittance');
+   await reviewForm().locator('input[name=invoice_id]').fill(automaticInvoice);await navigate(page,reviewForm().locator('button'));
+   await page.locator('#bb-tab-billing').click();await navigate(page,publication('0').locator('button'));
+   assert.equal((await publicContext.request.post(url+'/company_portal/index/'+a,{form:request})).status(),404,'saved portal form cannot disclose a hidden instrument');
+   if(grantedForCnab){await page.goto(url+'/admin/clients/client/'+client+'?group=contacts');await navigate(page,page.getByRole('button',{name:'Revogar acesso a faturas',exact:true}));}
+
+  }finally{await publicContext.close();}
   assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
  }catch(error){const logs=spawnSync('docker',['logs','--tail','80',app],{encoding:'utf8'});console.error('Disposable BB HTTP server diagnostic:',(logs.stdout||'')+(logs.stderr||''));throw error;}finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

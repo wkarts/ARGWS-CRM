@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');const {execFileSync}=require('node:ch
 
 // Diagnostic fields are allowlisted. Never serialize exception messages, URLs, bodies,
 // field values, page content, CSRF material, or browser console arguments.
-const PHASES = /^(?:authenticate|install-native|preferences-unselected|preferences-selected|isolation|capture-evidence|[ab]:(?:select-company|open-company|save-account|prepare-origin|refresh-account|rotate-token|refresh-proof|refresh-token|reveal-token|refresh-reveal|settle|fee|callback|automation|worker|refresh-worker))$/;
+const PHASES = /^(?:authenticate|install-native|preferences-unselected|preferences-selected|isolation|capture-evidence|[ab]:(?:select-company|open-company|save-account|save-pricing|preview-pricing|prepare-origin|refresh-account|rotate-token|refresh-proof|refresh-token|reveal-token|refresh-reveal|settle|fee|callback|automation|worker|refresh-worker))$/;
 function safeResponse(response) {
  const request=response.request();let pathname='other';
  try {const path=new URL(response.url()).pathname;if(['/admin','/admin/','/admin/authentication','/admin/authentication/admin','/admin/issuers/select','/admin/settings/asaas'].includes(path))pathname=path;}catch{}
@@ -67,15 +67,27 @@ try{
  async function select(id,letter){trace.stage(letter+':select-company');await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer,letter);await openCompany(page,url,trace,letter+':open-company');
-  await page.locator('#asaas-new-environment').selectOption('sandbox');await page.locator('#asaas-new-account').fill('wallet-browser-'+letter);await page.locator('#asaas-new-key').fill('synthetic-browser-key-'+letter);
+  await page.locator('#asaas-tab-credentials').click();await page.locator('#asaas-new-environment').selectOption('sandbox');await page.locator('#asaas-new-account').fill('wallet-browser-'+letter);await page.locator('#asaas-new-key').fill('synthetic-browser-key-'+letter);
   await go(page,page.locator('form').filter({has:page.locator('#asaas-new-key')}).locator('button[type=submit]'),trace,letter+':save-account');
   assert.equal(await page.locator('#asaas-new-key').inputValue(),'');assert.ok(!await page.content().then(v=>v.includes('synthetic-browser-key-'+letter)),'stored API secret is never rendered');
+  await page.locator('#asaas-tab-card').click();
+  const pricing=page.locator('[data-card-pricing-account]').first();
+  const pricingSave=pricing.locator('form').filter({has:page.locator('input[name=action][value=save_card_pricing]')});
+  assert.equal(await pricingSave.locator('select[name="pricing[card_fee_mode]"]').inputValue(),'absorb','another company cannot inherit surcharge');
+  await pricingSave.locator('select[name="pricing[card_fee_mode]"]').selectOption(letter==='a'?'customer':'absorb');
+  await go(page,pricingSave.locator('button[type=submit]'),trace,letter+':save-pricing');
+  await page.locator('#asaas-tab-card').click();
+  const pricingPreview=page.locator('[data-card-pricing-account]').first().locator('form').filter({has:page.locator('input[name=action][value=preview_card_pricing]')});
+  await pricingPreview.locator('input[name=balance]').fill('100.00');
+  await go(page,pricingPreview.locator('button[type=submit]'),trace,letter+':preview-pricing');
+  await page.locator('#asaas-tab-card').click();
+  assert.ok((await page.locator('[data-card-pricing-account]').first().innerText()).includes(letter==='a'?'103.59':'100.00'),'nominal simulation uses this account settings');
   trace.stage(letter+':prepare-origin');const x=fixture(letter);prepared[issuer]=x;await openCompany(page,url,trace,letter+':refresh-account');
-  await page.locator('#webhooks details summary').click();const rotate=page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')});await rotate.locator('input[name=confirm]').check();await go(page,rotate.locator('button[type=submit]'),trace,letter+':rotate-token');
+  await page.locator('#asaas-tab-webhooks').click();await page.locator('#webhooks details summary').click();const rotate=page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')});await rotate.locator('input[name=confirm]').check();await go(page,rotate.locator('button[type=submit]'),trace,letter+':rotate-token');
   const token=(await page.locator('#asaas-one-time-token').inputValue()).trim();assert.match(token,/^[a-f0-9]{64}$/);
   trace.stage(letter+':refresh-proof');fixture(letter,'refresh',x.origin);await openCompany(page,url,trace,letter+':refresh-token');assert.equal(await page.locator('#asaas-one-time-token').count(),0,'GET never hydrates plaintext token');
-  const reveal=page.locator('form').filter({has:page.locator('input[name=action][value=reveal_webhook]')});await go(page,reveal.locator('button[type=submit]'),trace,letter+':reveal-token');assert.equal(await page.locator('#asaas-one-time-token').inputValue(),token,'explicit reveal recovers the original token');assert.equal(await page.locator('#asaas-one-time-token').getAttribute('type'),'password','recovered token starts masked');await openCompany(page,url,trace,letter+':refresh-reveal');
-  const settle=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=settle]')});const retry=await hidden(settle);await settle.locator('input[name=confirm]').check();await go(page,settle.locator('button[type=submit]'),trace,letter+':settle');
+  await page.locator('#asaas-tab-webhooks').click();const reveal=page.locator('form').filter({has:page.locator('input[name=action][value=reveal_webhook]')});await go(page,reveal.locator('button[type=submit]'),trace,letter+':reveal-token');assert.equal(await page.locator('#asaas-one-time-token').inputValue(),token,'explicit reveal recovers the original token');assert.equal(await page.locator('#asaas-one-time-token').getAttribute('type'),'password','recovered token starts masked');await openCompany(page,url,trace,letter+':refresh-reveal');
+  await page.locator('#asaas-tab-charges').click();const settle=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=settle]')});const retry=await hidden(settle);await settle.locator('input[name=confirm]').check();await go(page,settle.locator('button[type=submit]'),trace,letter+':settle');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+x.invoice),'2');
   assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:{...retry,confirm:'1'}})).status(),200,'same proof retry is idempotent');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');
   const fee=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=fee]')});await fee.locator('select[name=category_id]').selectOption(String(x.category));await fee.locator('input[name=confirm]').check();await go(page,fee.locator('button[type=submit]'),trace,letter+':fee');
@@ -84,9 +96,38 @@ try{
   const cb=url+'/company_asaas_callback/integration/'+publicId;assert.equal((await context.request.get(cb)).status(),405);const headers={'Content-Type':'application/json','asaas-access-token':token};
   assert.equal((await context.request.post(cb,{headers,data:JSON.stringify(event)})).status(),200);assert.equal((await context.request.post(cb,{headers,data:JSON.stringify(event)})).status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblasaas_company_events WHERE account_row=(SELECT id FROM tblasaas_company_accounts WHERE issuer_id='+issuer+" AND environment='sandbox')"),'1');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1','callback does not produce another payment');
-  const automation=page.locator('form').filter({has:page.locator('input[name=action][value=automation]')});await go(page,automation.locator('button[type=submit]'),trace,letter+':automation');
+  await page.locator('#asaas-tab-accounts').click();const automation=page.locator('form').filter({has:page.locator('input[name=action][value=automation]')});await go(page,automation.locator('button[type=submit]'),trace,letter+':automation');
   trace.stage(letter+':worker');const asyncTitle=fixture(letter);const asyncEvent={id:'evt_browser_async_'+letter,event:'PAYMENT_RECEIVED',payment:{id:asyncTitle.remote}};assert.equal((await context.request.post(cb,{headers,data:JSON.stringify(asyncEvent)})).status(),200);
   fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','opt-in worker creates exactly one canonical nominal receipt');fixture(letter,'worker');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+asyncTitle.invoice),'1','worker retry preserves canonical receipt');await openCompany(page,url,trace,letter+':refresh-worker');
+  const monitorResponse=await page.goto(url+'/admin/settings/asaas?monitor_kind=origins#monitor',{waitUntil:'domcontentloaded'});
+  assert.equal(monitorResponse.status(),200,'scoped monitor GET succeeds');
+  assert.equal(await page.locator('#monitor').isVisible(),true,'native tab opens filtered local history');
+  assert.ok((await page.locator('#monitor').innerText()).includes(x.remote),'owned origin is visible in local monitor');
+  if(letter==='b')assert.ok(!(await page.locator('#monitor').innerText()).includes(prepared[a].remote),'monitor hides other company origins');
+  const batchForm=page.locator('#asaas-batch-form'),batchHidden=await hidden(batchForm);
+  const deniedBatch=await context.request.post(url+'/admin/settings/asaas',{form:{...batchHidden,action:'batch_reconcile',origin_id:String(x.origin)}});
+  assert.equal(deniedBatch.status(),422,'batch application requires explicit confirmation');
+  assert.deepEqual(await deniedBatch.json(),{ok:false,outcome:'review_required'});
+  const legacyForm=page.locator('#monitor form').filter({has:page.locator('[name=action][value=preview_legacy_binding]')});
+  assert.equal(await legacyForm.count(),1,'native legacy review is available in authorized company');
+  const legacyHidden=await hidden(legacyForm);
+  const deniedLegacy=await context.request.post(url+'/admin/settings/asaas',{form:{...legacyHidden,action:'confirm_legacy_binding',invoice_id:String(x.invoice),account_row:String(x.account),remote_id:x.remote}});
+  assert.equal(deniedLegacy.status(),422,'legacy binding requires a reviewed approval and confirmation');
+  let batchUiCalls=0;
+  const batchUiRoute=async route=>{
+   const data=new URLSearchParams(route.request().postData()||'');
+   if(data.get('action')!=='batch_compare')return route.continue();
+   batchUiCalls++;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,item:{origin_id:Number(data.get('origin_id')),outcome:'compared'}})});
+  };
+  await page.route('**/admin/settings/asaas',batchUiRoute);
+  try{
+   await batchForm.locator('[name=batch_origin][value="'+x.origin+'"]').check();
+   await batchForm.locator('[data-batch-start]').click();
+   await page.waitForFunction(()=>document.querySelector('[data-batch-log]').textContent.includes('Processamento da seleção encerrado'));
+   assert.equal(batchUiCalls,1,'real batch view and JS consume one simulated response without provider call');
+  }finally{await page.unroute('**/admin/settings/asaas',batchUiRoute);}
+
+  await openCompany(page,url,trace,letter+':refresh-worker');
   if(letter==='a')oldForm={...await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}))};
  }
  trace.stage('isolation');assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:oldForm})).status(),409,'obsolete A company editor denied before effects');

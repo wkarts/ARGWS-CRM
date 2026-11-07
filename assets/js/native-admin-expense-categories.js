@@ -57,7 +57,7 @@
         current(); var data = $(form).serializeArray().filter(function (item) { return item.name !== 'active'; });
         data.push({ name: 'active', value: form.elements.active.type === 'checkbox' ? (form.elements.active.checked ? '1' : '0') : form.elements.active.value });
         busy = true; $(form).find('button[type="submit"]').prop('disabled', true);
-        root.NativeCompanyTransport.request('expenses/category?source=company', 'POST', data, { dataType: 'json' }).done(function (reply) {
+        root.NativeCompanyTransport.request('expenses/category?source=company', 'POST', $.param(data), { dataType: 'json' }).done(function (reply) {
           try {
             current(); var result = response(reply);
             if (doc.querySelector('[data-native-category-modal]').dataset.inline === '1') { var select = selectCreated(doc, result); if (select && $.fn.selectpicker) $(select).selectpicker('refresh'); }

@@ -1,0 +1,40 @@
+<?php
+require __DIR__.'/asaas_installment_review.php';
+require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInstallmentReceipt.php';
+$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.8.4','asaas']);
+$group['installmentCount']=3;$first['value']='30.00';$first['netValue']='29.00';$second['value']='35.53';$second['netValue']='34.53';
+$third=array_replace($first,['id'=>'pay_group_three','installmentNumber'=>3,'value'=>'40.00','netValue'=>'39.00','status'=>'RECEIVED','paymentDate'=>$originalResponse['paymentDate'],'creditDate'=>$originalResponse['creditDate']]);
+$members=[$first,$second,$third];$deletes=[];$lost=true;$during=null;
+$batchTransport=function($env,$method,$path,$payload,$secret)use(&$first,&$second,&$third,&$members,&$group,&$deletes,&$lost,&$during,$mock){
+ essentialCheck($payload===null,'batch transport remains bodyless');
+ if($path==='installments/grp_review')return $group;
+ if($path==='installments/grp_review/payments')return ['data'=>[$first,$second,$third],'hasMore'=>false,'totalCount'=>3];
+ foreach(['first','second','third'] as $name){$member=&$$name;if($path==='payments/'.$member['id']){if($method==='DELETE'){essentialCheck($name!=='third','received member never deleted');$deletes[]=$member['id'];$member['deleted']=true;if($name==='first'&&$during){$callback=$during;$during=null;$callback();}if($name==='first'&&$lost)throw new RuntimeException('synthetic lost response');return ['id'=>$member['id'],'deleted'=>true];}return $member;}}
+ return $mock($env,$method,$path,$payload,$secret);
+};
+$review=$asaas->reviewLegacyInstallments($b,7,$invoice,$accounts[$b],'pay_group_one',$dec,$batchTransport);
+$root=$asaas->reviewLegacyInstallments($b,7,$invoice,$accounts[$b],'pay_group_one',$dec,$batchTransport,$review['review_hash'])['origin_id'];
+$proof=$asaas->observeInstallment($b,7,$root,'pay_group_three',$dec,$batchTransport);
+$payment=$writer->recordCompanyProviderReceipt($b,7,new \Asaas\CompanyInstallmentReceipt($root,'pay_group_three',$proof));
+$before=$db->query('SELECT * FROM '.$p.'invoicepaymentrecords WHERE invoiceid=?',[$invoice])->result_array();
+$plan=$asaas->reviewInstallmentRemoval($b,7,$root,$dec,$batchTransport);
+essentialCheck(array_column($plan['members'],'id')===['pay_group_one','pay_group_two']&&$plan['excluded']===[['id'=>'pay_group_three','reason'=>'received_local']]&&!$deletes,'preview selects only unpaid members and performs no DELETE');
+$confirm=fn()=>$asaas->removeInstallmentBatch($b,7,$root,$plan['review_hash'],$dec,$batchTransport);
+essentialThrows(fn()=>$asaas->removeInstallmentBatch($a,7,$root,$plan['review_hash'],$dec,$batchTransport),'asaas_installment_origin_denied','foreign group batch denied');
+essentialThrows(fn()=>$asaas->removeInstallmentBatch($b,7,$root,hash('sha256','stale'),$dec,$batchTransport),'asaas_legacy_review_changed','different review cannot authorize batch');
+$first['status']='RECEIVED';$first['paymentDate']=$originalResponse['paymentDate'];$first['creditDate']=$originalResponse['creditDate'];
+essentialThrows($confirm,'asaas_legacy_review_changed','newly received member changes the reviewed selection before dispatch');
+essentialCheck(!$deletes,'stale selection never dispatches');$first['status']='PENDING';$first['paymentDate']='';$first['creditDate']='';
+$db->failOn='INSERT INTO '.$p.'issuers_audit';essentialThrows($confirm,'issuer_storage_failed','failed approval audit rolls batch intent back');$db->failOn=null;
+essentialCheck(!$deletes&&(int)$db->query("SELECT COUNT(*) n FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='group_remove'",[$root])->row()->n===0,'no remote dispatch or durable batch after failed audit');
+$during=function()use($confirm){$concurrent=$confirm();essentialCheck(!$concurrent['complete']&&array_column($concurrent['items'],'state')===['sending','deleted'],'concurrent batch reuses manifest and skips in-flight member');};
+$partial=$confirm();essentialCheck(!$partial['complete']&&array_column($partial['items'],'state')===['uncertain','deleted']&&$deletes===['pay_group_one','pay_group_two'],'batch records partial outcome and continues independent unpaid member');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='group_remove'",[$root])->row()->n===1,'concurrent confirmation freezes exactly one approved set');
+$stored=$db->query("SELECT result_json,evidence_hash FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='group_remove'",[$root])->row_array();
+$complete=$confirm();essentialCheck($complete['complete']&&array_column($complete['items'],'state')===['deleted','deleted']&&count($deletes)===2,'resume queries uncertain result without resending any DELETE');
+essentialCheck($db->query("SELECT result_json,evidence_hash FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='group_remove'",[$root])->row_array()===$stored,'resume preserves immutable selected set');
+essentialCheck($db->query('SELECT * FROM '.$p.'invoicepaymentrecords WHERE invoiceid=?',[$invoice])->result_array()===$before&&$s->position($b,7,$invoice)['receivable']==='65.53','batch preserves paid member and native receivable');
+$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');essentialThrows($confirm,'asaas_company_access_denied','revoked actor cannot resume batch');$db->query('UPDATE '.$p.'staff SET active=1 WHERE staffid=7');
+$db->query("UPDATE {$p}asaas_company_proofs SET evidence_hash=? WHERE origin_id=? AND operation='group_remove'",[str_repeat('0',64),$root]);
+essentialThrows($confirm,'asaas_installment_batch_conflict','corrupt approved set cannot authorize recovery');
+echo 'Installment batch removal: '.($GLOBALS['essentialChecks']-$start).' additional MySQL checks; provider simulated.'.PHP_EOL;

@@ -32,7 +32,70 @@ class Settings extends AdminController
         try{$caller=(int)get_staff_user_id();$acl=new IssuerResourceAccess($this->db,db_prefix());$issuers=array_values(array_filter((new IssuerRegistry($this->db,db_prefix()))->available($caller),fn($issuer)=>$acl->can((int)$issuer['id'],$caller,'settings','edit')));$connections=$this->service()->listed($caller);}
         catch(Throwable $e){show_error('Configuração PIGE indisponível. Confirme a atualização nativa do módulo.',503);return;}
         $external=[];try{require_once __DIR__.'/../libraries/PigeBridgeExternalConfiguration.php';$ext=new PigeBridgeExternalConfiguration($this->db,$this->encryption,db_prefix());foreach($connections as $connection)$external[$connection['connection_key']]=$ext->get($connection['connection_key']);}catch(Throwable $e){$external=[];}
-        $this->load->view('pige_bridge/settings',['title'=>'Integração PIGE — ponte CRM','issuers'=>$issuers,'connections'=>$connections,'external'=>$external,'pige_csrf'=>$token,'company_context_token'=>CompanyRequestScope::token()]);
+        $choices=[];try{require_once __DIR__.'/../libraries/PigeBridgeSettingsChoices.php';$selector=new PigeBridgeSettingsChoices($this->db,db_prefix());foreach($connections as $connection)$choices[$connection['connection_key']]=$selector->forScope($caller,$connection['scope']);}catch(Throwable $e){$choices=[];}
+        $this->load->view('pige_bridge/settings',['title'=>'Integração PIGE — ponte CRM','issuers'=>$issuers,'connections'=>$connections,'external'=>$external,'choices'=>$choices,'pige_csrf'=>$token,'company_context_token'=>CompanyRequestScope::token()]);
+    }
+    protected function discoveryService(callable $authorize):PigeBridgeDiscovery{return new PigeBridgeDiscovery($authorize);}
+    /** Read-only remote discovery; POST prevents credentials entering URLs/history. */
+    public function discover()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            require_once __DIR__.'/../libraries/PigeBridgeDiscovery.php';
+            if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443'))throw new DomainException('pige_discovery_https');
+            $issuer=$this->integer('issuer_id');$caller=(int)get_staff_user_id();
+            $authorize=function()use($issuer,$caller):void{
+                if(!is_admin()||(int)get_staff_user_id()!==$caller||!(new IssuerResourceAccess($this->db,db_prefix()))->can($issuer,$caller,'settings','edit'))throw new DomainException('pige_discovery_access');
+                $module=IssuerStorage::query($this->db,'SELECT active,installed_version FROM '.db_prefix().'modules WHERE module_name=?',['pige_bridge'])->row_array();
+                if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.1')throw new DomainException('pige_discovery_upgrade');
+            };
+            $service=$this->discoveryService($authorize);$action=$this->value('discovery_action');
+            if($action==='schools')$data=['schools'=>$service->schools($this->value('pige_url'),$this->value('admin_credential'))];
+            elseif($action==='configuration')$data=['configuration'=>$service->configuration($this->value('pige_url'),$this->value('admin_credential'),$this->value('school_id'),$issuer,(string)$this->config->item('base_url'))];
+            else throw new DomainException('pige_discovery_input');
+            $authorize();$this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true]+$data,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT));
+        }catch(Throwable $error){
+            // Do not echo remote bodies, URLs, JWTs or exception messages.
+            $this->output->set_status_header(422)->set_content_type('application/json')->set_output(json_encode(['success'=>false,'message'=>'Consulta não confirmada. Confira a URL HTTPS pública, credencial administrativa, permissões, empresa e configuração existente no PIGE. Nenhuma configuração foi salva.']));
+        }
+    }
+    public function prepare_remote()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            require_once __DIR__.'/../libraries/PigeBridgeDiscovery.php';
+            if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443')||!$this->checked('confirm_transfer'))throw new DomainException('pige_preparation_confirmation');
+            $caller=(int)get_staff_user_id();$key=$this->value('connection_key');$revision=$this->integer('revision');
+            $store=$this->service();$snapshot=$store->preparationSnapshot($key,$revision,$caller);
+            $authorize=function()use($store,$key,$revision,$caller,$snapshot):void{
+                if(!is_admin()||(int)get_staff_user_id()!==$caller)throw new DomainException('pige_discovery_access');
+                $current=$store->preparationSnapshot($key,$revision,$caller);
+                if($current['scope']!==$snapshot['scope']||!hash_equals($current['secret'],$snapshot['secret']))throw new DomainException('pige_configuration_changed_reload');
+            };
+            $result=$this->discoveryService($authorize)->prepareRemote($this->value('pige_url'),$this->value('admin_credential'),$snapshot['scope'],$snapshot['secret'],(string)$this->config->item('base_url'));
+            unset($snapshot,$_POST['admin_credential']);
+            set_alert('success','Configuração preparada no PIGE, desativada. Autenticação HMAC não verificada. Nenhuma permissão financeira foi habilitada.');
+        }catch(Throwable $error){
+            unset($snapshot,$_POST['admin_credential']);
+            set_alert('danger','Preparação não confirmada. Não repita sem consultar o PIGE: a conexão pode ter sido criada desativada. Configuração existente nunca é sobrescrita; confira URL, revisões, permissões e estado desativado.');
+        }
+        redirect(admin_url('pige_bridge/settings'));
+    }
+    public function test_connection()
+    {
+        if(!$this->writeAllowed())return;
+        try{
+            require_once __DIR__.'/../libraries/PigeBridgeDiscovery.php';
+            if(!((isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&$_SERVER['HTTPS']!=='')||(string)($_SERVER['SERVER_PORT']??'')==='443'))throw new DomainException('pige_discovery_https');
+            $caller=(int)get_staff_user_id();$key=$this->value('connection_key');$revision=$this->integer('revision');
+            $store=$this->service();$scope=$store->diagnosticSnapshot($key,$revision,$caller);
+            $authorize=function()use($store,$key,$revision,$caller,$scope):void{
+                if(!is_admin()||(int)get_staff_user_id()!==$caller||$store->diagnosticSnapshot($key,$revision,$caller)!==$scope)throw new DomainException('pige_configuration_changed_reload');
+            };
+            $this->discoveryService($authorize)->testConnection($this->value('pige_url'),$this->value('admin_credential'),$scope,(string)$this->config->item('base_url'));
+            set_alert('success','PIGE confirmou o diagnóstico HMAC para esta conexão e revisão. Nenhuma cobrança foi criada nem permissão financeira habilitada.');
+        }catch(Throwable $error){set_alert('danger','Diagnóstico não confirmado. Confira URL, credencial, revisões, escopo e habilitação nas duas pontas. Nenhuma configuração foi alterada.');}
+        unset($_POST['admin_credential']);redirect(admin_url('pige_bridge/settings'));
     }
     public function save()
     {

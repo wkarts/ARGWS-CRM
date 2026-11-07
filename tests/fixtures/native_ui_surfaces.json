@@ -273,7 +273,7 @@
     {
       "path": "modules/pige_bridge/views/settings.php",
       "kind": "native-shell",
-      "reason": "Painel HMVC administrativo com init_head/init_tail nativos, sem bypass CompanyRequestScope; contém somente empresas autorizadas e token mascarado.",
+      "reason": "Native shell, multiple-connection grid and Bootstrap modals; scoped staff/currency/provider selectors verified by rendered Chromium desktop/mobile tests and real MySQL ACL checks. No secret rendered or consent enabled by selection. Discovery109 adds native form controls inside the existing modal; read-only API projection, temporary separate JWT and late-response cleanup are covered by actual-view Chromium tests. Preparation110 adds an explicitly confirmed disabled remote-configuration form in the same modal; actual-view Chromium desktop/mobile checks cover native tabs, disabled-state guard, unchecked confirmation and temporary credential cleanup. Diagnostic111 uses the existing native setup tab; enabled-only form, scoped revision and temporary JWT cleanup covered by the real-view browser test.",
       "owners": [
         "modules/pige_bridge/controllers/Settings.php"
       ],
@@ -283,15 +283,15 @@
           "classless_presentation_candidates": 0
         },
         "button": {
-          "literal_tags": 8,
+          "literal_tags": 12,
           "classless_presentation_candidates": 0
         },
         "input": {
-          "literal_tags": 26,
+          "literal_tags": 38,
           "classless_presentation_candidates": 0
         },
         "select": {
-          "literal_tags": 3,
+          "literal_tags": 7,
           "classless_presentation_candidates": 0
         },
         "textarea": {
@@ -553,6 +553,9 @@
       "public_methods": [
         "__construct",
         "index",
+        "discover",
+        "prepare_remote",
+        "test_connection",
         "save",
         "disable",
         "mapping",
@@ -562,7 +565,7 @@
         "pige_bridge/settings"
       ],
       "presentation": "views",
-      "reason": "Painel nativo de conexões por empresa e delegação local, admin/CSRF/ACL antes da persistência; runtime visual ainda pendente."
+      "reason": "Painel nativo de conexões por empresa e delegação local, admin/CSRF/ACL antes da persistência; runtime visual ainda pendente. discover is a POST-only administrative JSON action with native CSRF, HTTPS and company settings ACL; no additional view or financial write. prepare_remote is a native POST/CSRF administrative action with HTTPS, revision and permission checks; it only prepares an absent remote configuration disabled after explicit confirmation. MySQL/controller tests use simulated remote transport; authenticated end-to-end acceptance remains pending. test_connection requires native POST/CSRF, HTTPS and enabled scoped revision; remote diagnostic never enables financial consent."
     }
   ]
 }

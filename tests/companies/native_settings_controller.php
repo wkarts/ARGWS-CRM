@@ -29,6 +29,17 @@ $controller->input->query=['group'=>'payment_gateways'];
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 $gatewayView=end($controller->load->views);
 essentialCheck($gatewayView[1]['group']['view']==='admin/settings/includes/native_payment_gateways' && !$gatewayView[1]['native_settings_can_edit'],'secondary gateway directory never renders global credential controls');
+// Route selection uses the same sealed Settings authorization before dispatch.
+$gatewayController=new class extends Settings {public int $asaasReads=0;public function asaas(){$this->asaasReads++;}};
+foreach(['db','session','input','security','load']as$property)$gatewayController->$property=$controller->$property;
+$controller->input->query=['group'=>'payment_gateways','gateway'=>'asaas'];
+CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$gatewayController->index());
+essentialCheck($gatewayController->asaasReads===1,'payment gateway Asaas selection reaches existing native handler');
+$controller->input->verb='POST';
+try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$gatewayController->index());throw new RuntimeException('Selector mutation accepted');}catch(NativeSettingsHttpError $e){essentialCheck($e->getCode()===405&&$gatewayController->asaasReads===1,'gateway selector is read-only; mutations retain original guarded endpoints');}
+$controller->input->verb='GET';$controller->input->query['gateway']='unknown';
+try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$gatewayController->index());throw new RuntimeException('Unknown gateway accepted');}catch(NativeSettingsHttpError $e){essentialCheck($e->getCode()===422,'unknown gateway cannot dispatch another controller');}
+$controller->input->query=['group'=>'payment_gateways'];
 $controller->input->verb='POST';
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Gateway directory mutation accepted');}catch(NativeSettingsHttpError $e){essentialCheck($e->getCode()===405,'directory cannot mutate global gateways');}
 $controller->input->query=['group'=>'localization'];

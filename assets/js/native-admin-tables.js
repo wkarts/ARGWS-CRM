@@ -373,6 +373,31 @@ function fix_kanban_height(col_px, container_px) {
 /* The same native ready lifecycle is used by both admin bootstraps. */
 (function(root){
   var select_picker_validated_event=false,selectBound=false;
+  // Bind before Bootstrap window-load auto-initialization can render a picker.
+  // Shared original picker lifecycle: reveal rendered groups in both admin shells.
+// On render select remove the placeholder
+$("body").on("rendered.bs.select", "select", function () {
+  $(this).parents().removeClass("select-placeholder");
+  $(this)
+    .parents(".form-group")
+    .find(".select-placeholder")
+    .removeClass("select-placeholder");
+});
+
+$("body").on("loaded.bs.select", "select", function () {
+  if ($(this).data("toggle") == 1) {
+    $(this).selectpicker("toggle");
+  }
+});
+
+// Init bootstrap selectpicker
+$("body").on("loaded.bs.select", "._select_input_group", function (e) {
+  $(this)
+    .parents(".form-group")
+    .find(".input-group-select .input-group-addon")
+    .css("opacity", "1");
+});
+
   root.NativeAdminWidgets={
     initTags:function(){init_tags_inputs();},
     initTables:function(){init_color_pickers();initDataTableInline();},

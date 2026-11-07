@@ -12,5 +12,12 @@
       "tests/companies/asaas_remote_webhooks.php"
     ],
     "reason": "Added with Asaas 1.6.1; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
+  },
+  {
+    "argv": [
+      "php",
+      "tests/companies/sales_pdf_bootstrap.php"
+    ],
+    "reason": "Cold portal PDF dependency regression; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
   }
 ]

@@ -247,6 +247,7 @@ async function captureRealScreens(page, routes) {
    assert.equal((await context.request.post(url+'/admin/invoices/mark_as_cancelled/'+expandedId,{form:{...prior,revision}})).status(),409);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
   }
+  for(const issuer of [a,b]){await select(issuer);await require('./helpers/native_payments_driver.cjs').paymentsTable(page,url);}
   const visualIssuer = await page.locator('.company-selector').getAttribute('data-company-current');
   assert.ok(ids[visualIssuer], 'invoice evidence belongs to the currently selected company');
   await captureRealScreens(page, [['company-settings-isolated',url + '/admin/settings?group=company'], ['invoices-grid',url + '/admin/invoices'], ['invoice-detail',url + '/admin/invoices/list_invoices/' + ids[visualIssuer]]]);

@@ -11,13 +11,15 @@ if(($argv[1]??'')==='worker'){
     $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p)){exit(2);}
     $input=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);$db=raceConnection($p);$GLOBALS['essentialPrefix']=$p;
     try{
+        if(($input['action']??'generate')==='print'){echo (new \BancoBrasil\Origination($db,$p))->boleto($input['issuer'],7,$input['batch'],$input['invoice'])['barcode'];exit(0);}
+        if(($input['action']??'generate')==='download'){echo (new \BancoBrasil\Origination($db,$p))->download($input['issuer'],7,$input['batch'])['hash'];exit(0);}
         echo (new \BancoBrasil\Origination($db,$p))->generate($input['issuer'],7,$input['connection'],$input['binding'],'2026-10-19',[$input['title']],$input['key']);
     }catch(DomainException $error){if($error->getMessage()==='bb_origination_access_denied'){echo 'denied';}else{throw $error;}}
     exit(0);
 }
 require __DIR__.'/banco_brasil_origination_mysql.php';
 $observer=raceConnection($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;
-function race(array $input,?callable $beforeRelease=null): array
+function race(array $input,?callable $beforeRelease=null,?array $secondInput=null): array
 {
     global $db,$observer,$p,$blocker;
     $db->trans_begin();$db->query("SELECT id FROM {$p}issuers_lock WHERE id=1 FOR UPDATE");$workers=[];
@@ -25,7 +27,7 @@ function race(array $input,?callable $beforeRelease=null): array
         for($i=0;$i<2;$i++){
             $pipes=[];$process=proc_open([PHP_BINARY,__FILE__,'worker',$p],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
             if(!is_resource($process)){throw new RuntimeException('worker unavailable');}
-            fwrite($pipes[0],json_encode($input,JSON_THROW_ON_ERROR));fclose($pipes[0]);$workers[]=[$process,$pipes];
+            fwrite($pipes[0],json_encode($i===1&&$secondInput!==null?$secondInput:$input,JSON_THROW_ON_ERROR));fclose($pipes[0]);$workers[]=[$process,$pipes];
         }
         $deadline=microtime(true)+15;$waiters=0;
         do{
@@ -49,6 +51,26 @@ $out=race($raceInput);
 essentialCheck($out[0]===$out[1]&&ctype_digit($out[0]),'concurrent remittance retry returns one batch and reserved number');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$newInvoice])->row()->n===1,'exactly one immutable origin after two real writers');
 essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===104,'concurrent retry consumes only one additional number');
+// First download races with another emission under the same observed SQL mutex.
+$initial=(int)$out[0];$raceInvoice=$s->create($a,7,$input,hash('sha256','download-race-invoice'));
+$other=$raceInput;$other['title']['invoice_id']=$raceInvoice;$other['key']=hash('sha256','download-race-command');
+$raceResult=race(['action'=>'download','issuer'=>$a,'batch'=>$initial],null,$other);
+$emitted=(int)$raceResult[1];$frozen=$bank->download($a,7,$initial);
+essentialCheck($raceResult[0]===$frozen['hash'],'download racing emission returns permanently frozen hash');
+$members=$db->query("SELECT origin_id FROM {$p}bb_batch_origins WHERE batch_id=?",[$initial])->result_array();
+essentialCheck(($emitted===$initial&&count($members)===2)||($emitted!==$initial&&count($members)===1),'emission joins before freeze or creates next batch after freeze, never mutates closed bytes');
+essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$other['title']],$other['key'])===$emitted,'racing emission retry preserves exact batch membership');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$raceInvoice])->row()->n===1,'race reserves exactly one origin');
+$printRaceInvoice=$s->create($a,7,$input,hash('sha256','print-race-invoice'));
+$printRaceBatch=$bank->generate($a,7,$connection,$binding,'2026-10-19',[array_replace($title,['invoice_id'=>$printRaceInvoice])],hash('sha256','print-race-batch'));
+$printCode=$bank->boleto($a,7,$printRaceBatch,$printRaceInvoice)['barcode'];
+$printInput=['action'=>'print','issuer'=>$a,'batch'=>$printRaceBatch,'invoice'=>$printRaceInvoice];
+$counterBeforePrint=$db->query("SELECT * FROM {$p}bb_number_reservations")->result_array();
+$printRace=race($printInput,null,['action'=>'download','issuer'=>$a,'batch'=>$printRaceBatch]);
+essentialCheck($printRace[0]===$printCode&&$printRace[1]===$bank->download($a,7,$printRaceBatch)['hash'],'print and first download serialize without changed instrument or frozen bytes');
+essentialCheck($db->query("SELECT * FROM {$p}bb_number_reservations")->result_array()===$counterBeforePrint,'concurrent printing/download reserve no additional number');
+essentialCheck(race($printInput,fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7"))===['denied','denied'],'revocation observed while print workers wait prevents both documents');
+$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
 $revokedInvoice=$s->create($a,7,$input,str_repeat('6',64));$raceInput['title']['invoice_id']=$revokedInvoice;$raceInput['key']=str_repeat('6',64);
 essentialCheck(race($raceInput,fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7"))===['denied','denied'],'revocation while both writers wait prevents reservation');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$revokedInvoice])->row()->n===0,'revocation leaves no orphan bank number or charge');
