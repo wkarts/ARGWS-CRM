@@ -979,3 +979,10 @@ Controller Pix:4 guards adicionais aprovados (CSRF e revisão), fixture com migr
 - Runner nativo:387 verificações MySQL, incluindo191 falha de tracking/retry/replay e preservação190.
 - Chromium:10 cenários de grupos desktop/mobile e permissões; link de reembolso aponta exclusivamente para a parcela recebida escolhida.
 - Sintaxe PHP, callback-version13 e contratos de relatórios155 aprovados. Nenhuma homologação financeira ou chamada real.
+
+### Asaas192 — contrato de autorização e identidade inicial
+
+- 69 verificações PHP com transporte sintético: campos/estados inválidos, conciliação imutável, datas, identidade inicial sem externalReference, divergências, falta de retry e ausência de falsa baixa/consentimento.
+- 391 verificações do runner nativo em MySQL descartável, incluindo falha/retry/replay192 sem reduzir191.
+- Regressões: callback-version13, política de retry847 (middleware real com transporte sintético) e instrumentos/allowlist aprovados.
+- CI Asaas do SHA anterior6429371300bd0f6913b1b251b046b11eadc53f2a aprovado. Não comprova CI deste incremento nem adesão financeira integrada.

@@ -57,6 +57,12 @@ final class CompanyClient
         $query=array_map(static fn($value)=>is_bool($value)?($value?'true':'false'):$value,$query);
         return $this->perform('GET',substr($endpoint,4).($query?'?'.http_build_query($query,'','&',PHP_QUERY_RFC3986):''),null);
     }
+    /** Typed authorization operation; caller must first persist and claim its one-shot intention. */
+    public function createPixAuthorization(array $source):array
+    {
+        require_once __DIR__.'/CompanyPixAuthorizationContract.php';
+        return $this->perform('POST','pix/automatic/authorizations',CompanyPixAuthorizationContract::request($source));
+    }
     private function perform(string $method,string $path,?array $payload):array
     {
         try {
@@ -66,7 +72,7 @@ final class CompanyClient
             try{
                 curl_setopt_array($handle,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>['Accept: application/json','Content-Type: application/json','User-Agent: CRM Asaas integration','access_token: '.$this->secret],CURLOPT_FOLLOWLOCATION=>false,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>30,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS,CURLOPT_WRITEFUNCTION=>static function($handle,$chunk)use(&$body){if(strlen($body)+strlen($chunk)>1048576)return 0;$body.=$chunk;return strlen($chunk);}]);
                 // Decimal strings are rendered as JSON number literals without float arithmetic.
-                if($payload!==null){$json=json_encode($payload,JSON_THROW_ON_ERROR);$json=preg_replace('/"value":"([0-9]+\.[0-9]{2})"/','"value":$1',$json);curl_setopt($handle,CURLOPT_POSTFIELDS,$json);}
+                if($payload!==null){$json=json_encode($payload,JSON_THROW_ON_ERROR);$json=preg_replace('/"(value|originalValue)":"([0-9]+\.[0-9]{2})"/','"$1":$2',$json);curl_setopt($handle,CURLOPT_POSTFIELDS,$json);}
                 if(curl_exec($handle)===false||(int)curl_getinfo($handle,CURLINFO_RESPONSE_CODE)<200||(int)curl_getinfo($handle,CURLINFO_RESPONSE_CODE)>=300)throw new \RuntimeException();
                 $response=self::decodeExact($body);if(!is_array($response)||array_is_list($response))throw new \RuntimeException();return $response;
             }finally{unset($handle);}

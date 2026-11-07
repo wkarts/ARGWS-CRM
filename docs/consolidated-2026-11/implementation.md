@@ -279,3 +279,11 @@ O normalizador só aceita parcela Pix quando `installment` e `installmentNumber`
 Página nativa de grupos permite consultar histórico sem tratar revogação posterior como corrupção da prova. Parcela Pix recebida possui acesso ao painel de reembolso por ID local exato, condicionado à permissão. Ações mutantes continuam com as verificações anteriores de estado/autoridade.
 
 Referência oficial: [estornar cobrança](https://docs.asaas.com/reference/estornar-cobranca). Sem operação real, alteração no SDK ou repositório Perfex. Migration191 NOOP, sem backfill/grants. Ainda pendentes: edição/recriação de grupos e ciclo integral de alocações/reembolsos parciais. Observar agregado parcial não inventa identidade de um estorno individual.
+
+### Asaas192 — contrato estrito de adesão Pix (integração financeira ainda pendente)
+
+Validação tipada do pedido MANUAL e da resposta de autorização, vinculando cliente, contrato, frequência, data, ID remoto e conciliação. Estados terminais não ressuscitam, ACTIVE não retorna a CREATED, datas inválidas não são normalizadas silenciosamente, e somente CREATED entrega QR no DTO interno. Nenhum QR é persistido por este contrato. Transporte limitado ao endpoint fixo, sem retry automático, mantém valores decimais exatos incluindo originalValue.
+
+O contrato de identidade do primeiro Pix exige cobrança, transação CREDIT, cliente, valor e conciliação correspondentes. Não exige externalReference inexistente; quando presente, exige correspondência. Essa prova não equivale a recebimento nem a consentimento recorrente: o primeiro pagamento pode existir mesmo com adesão REFUSED. O chamador ainda deve autenticar conta/empresa/ambiente antes de qualquer consulta.
+
+Não há rota pública ou cron chamando o novo POST. Intenção durável, consentimento, reserva da fatura, recuperação de resultado incerto, cifragem do QR e jobs financeiros permanecem trabalho de implementação. A migration192 é NOOP, sem dados/grants. Este incremento não completa a adesão Pix nem sua homologação.

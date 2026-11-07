@@ -99,6 +99,7 @@ jobs:
           php tests/asaas_mutation_no_retry.php
           php tests/asaas_sdk_030.php
           php tests/asaas_account_report_contract.php
+          php tests/asaas_pix_authorization_contract.php
           php tests/asaas_settings_policy.php
           php tests/asaas_environment_profiles.php
           php tests/asaas_settings_presentation.php
