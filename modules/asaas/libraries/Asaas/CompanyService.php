@@ -209,6 +209,34 @@ final class CompanyService
         $response=$client->request('GET',$path);
         return $run(function()use($guard,$response,$filters):array{$guard();return AutomaticPixQuery::read($response,$filters);});
     }
+    /** Full account reporting requires a distinct grant: these are not company-filtered invoice totals. */
+    public function accountReport($issuer,$actor,$account,string $revision,string $report,array $filters,bool $export,callable $decrypt,?callable $transport=null)
+    {
+        require_once __DIR__.'/CompanyReportEngine.php';
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
+        CompanySchema::ensure($this->db,$this->p,false);
+        $guard=function()use($issuer,$actor,$account,$revision,$export):array{
+            if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+            $this->authorize($issuer,$actor,'configuration');$this->authorize($issuer,$actor,'query');
+            $acl=new \IssuerResourceAccess($this->db,$this->p);
+            if(!$acl->can($issuer,$actor,'asaas_account_reports','view')||($export&&!$acl->can($issuer,$actor,'asaas_account_reports','export')))throw new \DomainException('asaas_report_access_denied');
+            $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+            if(version_compare($version,'1.8.9','<'))throw new \DomainException('asaas_module_189_required');
+            $row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            return $row;
+        };
+        $run=fn(callable $work)=>\IssuerTransaction::run($this->db,$this->p,CompanyPreferences::tables(),$work);
+        $snapshot=$run($guard);$scope=['issuer_id'=>$issuer,'account_row'=>$account,'account_id'=>$snapshot['account_id'],'environment'=>$snapshot['environment']];
+        $reader=function(string $kind,array $path,array $query)use($run,$guard,$snapshot,$decrypt,$transport){
+            $current=$run($guard);if($current!==$snapshot)throw new \DomainException('asaas_company_stale');
+            $client=$this->client($current,$decrypt,$transport);self::wallet($client,$current);$run($guard);
+            $response=$client->report($kind,$path,$query);$run($guard);return $response;
+        };
+        $engine=new CompanyReportEngine($reader,$scope);
+        $result=$export?$engine->export($report,$filters):$engine->page($report,$filters);
+        try{$run(function()use($guard,$issuer,$actor,$account,$report,$export){$guard();$this->audit($issuer,$actor,'company_asaas_report_'.($export?'export_':'read_').$report,$account);});return $result;}catch(\Throwable $e){if($result instanceof AsaasReportExport)$result->close();throw $e;}
+    }
     public function verifyAccount($issuer,$actor,$account,string $revision,callable $decrypt,?callable $transport=null):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorize($issuer,$actor,'configure');

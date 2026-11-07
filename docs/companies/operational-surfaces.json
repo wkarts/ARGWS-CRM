@@ -10,16 +10,16 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "8144f6f382618a405536757668fec268872e1e7f67c94eae81005c932a748eda",
+    "source_manifest_sha256": "1a7cf6790aa8e5c39bbe08c3eea4b1c514d52c9d12b22463c4f5552bb14683af",
     "counts": {
         "modules": 38,
-        "source_files": 4895,
+        "source_files": 4901,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 74,
-        "report_file_candidates": 305,
+        "report_file_candidates": 310,
         "table_name_candidates": 939,
         "database_call_candidates": 12542
     },
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.8.8",
+            "version": "1.8.9",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -490,7 +490,11 @@
                 "modules/asaas/views/webhooks.php"
             ],
             "report_candidates": [
-                "modules/asaas/libraries/Asaas/CompanyPaymentReport.php"
+                "modules/asaas/libraries/Asaas/AsaasReportCatalog.php",
+                "modules/asaas/libraries/Asaas/AsaasReportException.php",
+                "modules/asaas/libraries/Asaas/AsaasReportExport.php",
+                "modules/asaas/libraries/Asaas/CompanyPaymentReport.php",
+                "modules/asaas/libraries/Asaas/CompanyReportEngine.php"
             ],
             "option_keys": [
                 "paymentmethod_asaas_profile_schema",
@@ -29499,7 +29503,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 140
+            "reference_count": 141
         },
         {
             "name": "mrp_manufacturing_orders",

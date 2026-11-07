@@ -98,6 +98,7 @@ jobs:
           php tests/asaas_company_instruments.php
           php tests/asaas_mutation_no_retry.php
           php tests/asaas_sdk_030.php
+          php tests/asaas_account_report_contract.php
           php tests/asaas_settings_policy.php
           php tests/asaas_environment_profiles.php
           php tests/asaas_settings_presentation.php
@@ -152,6 +153,7 @@ jobs:
           php tests/companies/asaas_remote_monitor.php
           php tests/companies/asaas_payment_report.php
           php tests/companies/asaas_automatic_pix_monitor.php
+          php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php
           php tests/companies/asaas_legacy_binding_concurrency.php
           php tests/companies/asaas_legacy_binding_controller.php
@@ -181,6 +183,7 @@ jobs:
           node tests/browser/asaas_installments.cjs
           node tests/browser/asaas_payment_report.cjs
           node tests/browser/asaas_automatic_pix.cjs
+          node tests/browser/asaas_account_reports.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
           chrome="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"

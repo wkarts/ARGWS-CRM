@@ -35,6 +35,30 @@ final class CompanyClient
             ||($method==='DELETE'&&preg_match('~^webhooks/[A-Za-z0-9_-]{1,128}$~D',$path)&&$payload===null);
         $readPath=AutomaticPixQuery::allowed($path)||preg_match('~^installments/[A-Za-z0-9_-]{1,120}(?:/payments)?$~D',$path)||PaymentListQuery::allowed($path)||preg_match('~^(?:wallets/|payments\?externalReference=[A-Za-z0-9_-]{1,200}&limit=100&offset=(?:0|[1-9][0-9]{0,3})|customers/[A-Za-z0-9_-]{1,64}|customers\?externalReference=[a-f0-9]{64}&limit=100&offset=(?:0|[1-9][0-9]{0,3})|payments/[A-Za-z0-9_-]{1,64}(?:/(?:pixQrCode|identificationField))?)$~D',$path);
         if(!$invoiceEdit&&!$webhookRead&&!$webhookWrite&&(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/(?:refund|payWithCreditCard|payWithCard|receiveInCash)$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))))throw new \DomainException('asaas_company_request_invalid');
+        return $this->perform($method,$path,$payload);
+    }
+    /** Only approved report resources, never a URL/HTTP method selected by the caller. */
+    public function report(string $report,array $path,array $query):array
+    {
+        require_once __DIR__.'/AsaasReportCatalog.php';
+        $definition=AsaasReportCatalog::definitions()[$report]??null;
+        if($definition===null)throw new \DomainException('asaas_report_invalid');
+        $endpoint=$definition['endpoint'];
+        if(str_contains($endpoint,'{id}')){
+            if(array_keys($path)!==['id']||!is_string($path['id'])||!preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/D',$path['id']))throw new \DomainException('asaas_report_invalid');
+            $endpoint=str_replace('{id}',$path['id'],$endpoint);
+        }elseif($path!==[])throw new \DomainException('asaas_report_invalid');
+        $allowed=array_column($definition['filters'],'key');$allowed=array_diff($allowed,[$definition['path_filter']??'']);
+        if($definition['kind']==='list')array_push($allowed,'limit','offset');
+        foreach($definition['dates'] as $field=>$label)foreach(($definition['range']??[$field.'[ge]',$field.'[le]']) as $key)$allowed[]=$key;
+        foreach($query as $key=>$value)if(!in_array($key,$allowed,true)||!is_scalar($value)||strlen((string)$value)>200||preg_match('/[\x00-\x1f\x7f]/',(string)$value))throw new \DomainException('asaas_report_invalid');
+        if(isset($query['limit'])&&(!is_int($query['limit'])||$query['limit']<1||$query['limit']>100))throw new \DomainException('asaas_report_invalid');
+        if(!str_starts_with($endpoint,'/v3/')||str_contains($endpoint,'..'))throw new \DomainException('asaas_report_invalid');
+        $query=array_map(static fn($value)=>is_bool($value)?($value?'true':'false'):$value,$query);
+        return $this->perform('GET',substr($endpoint,4).($query?'?'.http_build_query($query,'','&',PHP_QUERY_RFC3986):''),null);
+    }
+    private function perform(string $method,string $path,?array $payload):array
+    {
         try {
             if($this->transport!==null){$response=($this->transport)($this->environment,$method,$path,$payload,$this->secret);if(is_string($response))$response=self::decodeExact($response);if(!is_array($response)||array_is_list($response))throw new \RuntimeException();return $response;}
             $base=$this->environment==='sandbox'?'https://api-sandbox.asaas.com/v3/':'https://api.asaas.com/v3/';

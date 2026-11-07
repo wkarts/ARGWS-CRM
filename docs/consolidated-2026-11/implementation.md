@@ -255,3 +255,7 @@ Catálogo nativo inclui `asaas_reports.view/export` por empresa. Exportação n�
 ### Pix Automático188 — consultas nativas com isolamento
 
 A guia Pix Automático consulta autorizações existentes por página ou ID sob empresa, conta, ambiente e revisão explícitos. Exige permissão de relatórios da empresa além das permissões de configuração/leitura e revalida durante a chamada. O DTO exclui cliente, QR e dados bancários. Nenhuma adesão, emissão ou baixa é ativada por observar `ACTIVE`. Migration188 NOOP; etapas de consentimento, jobs, cron e webhook Pix permanecem trabalho pendente, assim como a paridade completa da referência1.5.8.
+
+### Relatórios da conta189
+
+Catálogo completo de20 relatórios da fonte1.5.8 adaptado na configuração nativa, com consulta e CSV, permissão específica de conta inteira, verificação de carteira/ACL/revisão em cada página e auditoria da empresa. Sem gateway/log global, concessão automática ou escrita financeira. CSV inclui empresa/conta/ambiente; consulta não produz snapshot remoto. Rota delegada fora de Configurações e homologação de disponibilidade dos20 recursos continuam pendentes.

@@ -8,6 +8,7 @@ final class CompanyResourceCatalog
     {
         $crud=['view'=>'Consultar','create'=>'Criar','edit'=>'Editar','delete'=>'Cancelar quando elegível'];
         $result=[];foreach(['invoices'=>'Faturas da empresa','credit_notes'=>'Créditos da empresa','payments'=>'Recebimentos e estornos','projects'=>'Projetos da empresa','tasks'=>'Tarefas da empresa','expenses'=>'Despesas da empresa','contracts'=>'Contratos da empresa','tickets'=>'Atendimento da empresa','estimates'=>'Orçamentos da empresa','proposals'=>'Propostas da empresa'] as $key=>$name)$result[$key]=['name'=>$name,'capabilities'=>$crud];
+        $result['asaas_account_reports']=['name'=>'Asaas — relatórios da conta inteira (inclui operações externas ao CRM)','capabilities'=>['view'=>'Consultar todos os movimentos e saldos da conta','export'=>'Exportar todos os movimentos e saldos da conta']];
         $result['asaas_reports']=['name'=>'Asaas — relatórios da empresa','capabilities'=>['view'=>'Consultar relatórios da conta própria','export'=>'Exportar relatórios da conta própria']];
         $result['roles']=['name'=>'Funções da equipe','capabilities'=>['view'=>'Consultar','create'=>'Criar','edit'=>'Editar','delete'=>'Excluir quando sem vínculos']];
         $result['staff']=['name'=>'Equipe da empresa','capabilities'=>['view'=>'Consultar vínculos próprios','create'=>'Criar ou vincular colaborador','edit'=>'Editar perfil permitido e concessões próprias','delete'=>'Revogar vínculo próprio']];

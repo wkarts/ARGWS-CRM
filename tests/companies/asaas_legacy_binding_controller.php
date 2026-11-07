@@ -5,6 +5,8 @@ $controller->input->verb='GET';$controller->output->status=200;$run();
 $csrf=$controller->session->data['company_asaas_preferences_csrf'];
 $before=$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array();
 foreach([
+ ['action'=>'account_report','account_row'=>1],
+ ['action'=>'export_account_report','account_row'=>1,'account_revision'=>[],'report_kind'=>'balance','report_filters'=>[],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'automatic_pix_monitor','account_row'=>1],
  ['action'=>'automatic_pix_monitor','account_row'=>1,'account_revision'=>[],'pix_filters'=>[],'company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'export_payment_report','account_row'=>1],

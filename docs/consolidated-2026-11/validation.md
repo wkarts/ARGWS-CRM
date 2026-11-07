@@ -956,3 +956,7 @@ Suíte completa de preferências/PDF com fonte SQL real:436 verificações cumul
 ## Pix Automático — consulta administrativa 188
 
 Consulta pontual por conta/ambiente na configuração nativa; somente GET e DTO mínimo. MySQL com transporte simulado, controlador CSRF/tipos, quatro cenários Chromium e migration188 (373 asserts) executados. Nenhuma autorização criada ou transação financeira. Adesão, jobs e webhooks Pix ainda não implementados; não declarar Pix Automático completo.
+
+## Relatórios integrais da conta189
+
+Executados:24 scripts de contratos do workflow Asaas em PHP8.3.36 (incluindo155 assertions novas dos20 tipos de relatório e falhas de exportação); MySQL8.4 com26 verificações adicionais de isolamento e permissões; controlador28 guards; runner nativo377 asserts; históricas154/155:48/101; seis cenários Chromium1280/390 de catálogo, ACL, escape e formulários. Sintaxe e diff verificados. Provedor simulado em todos os casos; nenhuma consulta a conta real. Inventários continuam `operational_ready=false`/rollout bloqueado, sem confundir inventário com homologação.
