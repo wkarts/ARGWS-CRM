@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "91dd96596f43e9b11b7a1a3bab673023e1f30ecf8ec3448b06780d3a1bb85b67",
+      "sha256": "b440fdf3410dfd0ff06c2d7b1ff2fd8ec9c3b271f9a7c9badefc3ce37ce878ff",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8748,12 +8748,12 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRecreation.php": {
-      "sha256": "bfd00171dbaa22d68be44ba1897b7e6d9009ed1dbe0572271c15d9b5dfbc45d0",
+      "sha256": "f091623a8ef7f41a8d19cd643221b1f0cd6396fe76b8f6a1c4f21e84d0303067",
       "categories": [
         "payments"
       ],
       "signal_lines": [
-        14
+        15
       ],
       "state": "unreviewed",
       "evidence": ""

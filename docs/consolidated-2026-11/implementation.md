@@ -2,11 +2,11 @@
 
 **Entrega parcial em draft. Não atende integralmente o consolidado e não está pronta para merge/deploy.**
 
-Estado atual: a referência funcional é Asaas **1.5.8**, adaptada ao CRM multiempresa; o marcador próprio do CRM avança para **2.0.6/206**, sem renumerar migrations anteriores. Núcleo4.9.2/492. Os relatos abaixo preservam a evolução histórica e não substituem os testes do SHA final.
+Estado atual: a referência funcional é Asaas **1.5.8**, adaptada ao CRM multiempresa; o marcador próprio do CRM avança para **2.0.7/207**, sem renumerar migrations anteriores. Núcleo4.9.2/492. Os relatos abaixo preservam a evolução histórica e não substituem os testes do SHA final.
 
 A sucessão agora mantém o principal pago no grupo anterior e recria somente o saldo elegível. Recibos, vínculos e provas originais permanecem imutáveis; o novo grupo não recebe cópias desses pagamentos. A revisão exibe separadamente valor retido e saldo. Somente parcelas excluídas ou integralmente revertidas entram novamente na obrigação, com conservação exata dos centavos e uma única tentativa de envio. Acesso ao reembolso explícito da parcela paga histórica permanece sujeito às permissões atuais.
 
-Continuam incompletos: reversões parciais sucessivas e redistribuição revisada do saldo reaberto por reembolso posterior de principal retido; aceites funcionais/visuais integrais R01–R11; homologação externa. Cartão com trânsito de dados continua aguardando decisão específica. Não houve expansão da SDK, alteração do módulo Perfex, merge, deploy ou transação real.
+Continuam incompletos: reversões parciais sucessivas e alocações parciais avulsas; aceites funcionais/visuais integrais R01–R11; homologação externa. Cartão com trânsito de dados continua aguardando decisão específica. Não houve expansão da SDK, alteração do módulo Perfex, merge, deploy ou transação real.
 
 ## Fonte e bases verificadas
 
@@ -424,3 +424,10 @@ MySQL:31 verificações novas de sucessão,7 de reembolso histórico,53 de remo�
 ## Incremento206 — prova da consulta que confirmou o principal retido
 
 A prova original do recibo continua imutável. A sucessão também congela ID/hash da consulta canônica que confirmou a retenção. Isso permite atualizações legítimas observadas entre recebimento e sucessão sem tratá-las depois como eventos inexplicados; eventos adversos ou posteriores à consulta continuam bloqueados. Links205 existentes conservam sua validação original, sem backfill. Migration206 NOOP. O teste de sucessão inclui evento de atualização posterior ao recibo e anterior à nova consulta; o reembolso histórico continua validado separadamente.
+
+
+## Incremento207 — redistribuição revisada do saldo histórico reaberto
+
+O saldo reaberto por reversão integral de uma parcela retida pode entrar no próximo grupo mediante revisão explícita. A revisão lista origem, valor e prova da reversão. A nova obrigação soma somente o saldo elegível atual e os reembolsos históricos ainda não alocados; o saldo nativo precisa coincidir exatamente. Cada origem só pode ser consumida uma vez. A cadeia valida ancestralidade, empresa/conta/ambiente, provas, journal pareado e conservação dos valores. Recibos/reversões permanecem imutáveis.
+
+Caso sintético: fatura105,53; principal retido40,00; recebimento posterior32,76; devolução comprovada dos40,00. A revisão cria obrigação72,77 (32,77 ainda aberto +40,00 reaberto), preservando32,76 pagos. Nova revisão após excluir esse grupo continua72,77 e não acrescenta os40,00 de novo. Provedor simulado, sem operação real. Migration207 NOOP. Reversões parciais sucessivas e aceites R01–R11 ainda exigem implementação/validação; não são bloqueios externos presumidos.

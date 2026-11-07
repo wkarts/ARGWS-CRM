@@ -4,7 +4,7 @@ A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale
 
 Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-payment-module-perfex-crm/releases/download/v1.5.8/asaas-module-v1.5.8.zip). SHA-256 `a8c5d140c6b099805d34758aaae6fb4187d0afd1495bf8f55d96f5cb74a05da3`, 660 arquivos (768 entradas incluindo diretórios). O manifesto `asaas-158-source-manifest.json` registra hash de cada arquivo, inclusive vendor. O hash do ZIP não é o hash de outro empacotamento. Comparação com a cópia local 1.5.7 identificou 49 arquivos não-vendor adicionados/alterados; isso não é contagem de todas as diferenças de dependências.
 
-## Matriz atual da adaptação (206; seções seguintes preservam a evolução)
+## Matriz atual da adaptação (207; seções seguintes preservam a evolução)
 
 | Requisito/fonte | Código atual do CRM | Adaptação/evidência | Situação |
 |---|---|---|---|
@@ -14,7 +14,7 @@ Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-paymen
 | Saldo/extrato/estatísticas e demais relatórios | Catálogo189 com20 recursos | CompanyReportEngine e permissões empresariais separadas, carteira/ambiente exclusivos; MySQL e apresentação testados | Implementado189; homologação individual no provedor e delegação fora de Configurações pendentes |
 | Pix Automático: autorização, jobs, cron e rotas públicas | Monitor188; inbox190; adesão/portal194–196; retirada197; ciclos198; worker199; sucessão200 | Consentimento explícito, envio único, QR privado, baixa nativa, recuperação, jobs por vínculo e substituição revisada; testes MySQL/controller/Chromium e provedor simulado | Fluxos operacionais implementados nos incrementos; homologação bancária e aceites integrados completos permanecem pendentes |
 | SDK 0.3.0/dependências da referência | Lock e runtime da release incorporados no186 | 534 assinaturas públicas preservadas, 14 novas; 23 suites de contrato do CRM passaram | Dependência adaptada; isso não habilita Pix Automático nem completa os relatórios |
-| Edição/reembolso/recriação de grupos e alocações parciais | Associação/baixa182; remoção184; reembolso191; edição201; sucessão202–205 | Principal fixo, membros elegíveis, cadeia auditada, envio único/recuperação e testes reais MySQL; ver asaas-installment-groups.md | Parcial: sucessão preserva principal pago e recria saldo elegível; reembolso histórico integral validado. Redistribuição do saldo posteriormente reaberto e reversões parciais sucessivas ainda pendentes |
+| Edição/reembolso/recriação de grupos e alocações parciais | Associação/baixa182; remoção184; reembolso191; edição201; sucessão202–205 | Principal fixo, membros elegíveis, cadeia auditada, envio único/recuperação e testes reais MySQL; ver asaas-installment-groups.md | Parcial: sucessão preserva principal pago e recria saldo elegível; reembolso histórico integral validado. Redistribuição revisada do saldo integralmente reaberto implementada207; reversões parciais sucessivas ainda pendentes |
 | Cartão com trânsito de dados | Decisão específica ainda pendente | Nenhum novo fluxo de coleta implementado | Aguarda decisão |
 
 ## Escopo da exportação de cobranças185
@@ -96,3 +96,12 @@ Migration205 NOOP; histórico preservado. Rollback: suspender novas sucessões, 
 A retenção agora distingue o recibo original da prova canônica de confirmação: ambos possuem ID e hash verificados. Um PAYMENT_UPDATED legítimo entre essas provas não invalida a cadeia após o envio. A consulta congelada não pode ser substituída por uma consulta posterior; eventos adversos e eventos posteriores ao seu horário permanecem sujeitos a revisão. Compatibilidade205 sem reescrever journals. Migration206 NOOP. As demais pendências da matriz permanecem abertas.
 
 Validação206:31 verificações de sucessão e7 de reembolso histórico MySQL com atualização intermediária legítima e provedor simulado;448 asserts de migration nativa;13 de callback e sintaxe PHP. CI remoto final registrado na PR, sem presumir conclusão.
+
+
+### 2.0.7 — saldo reaberto reaproveitado uma única vez
+
+Requisito → código existente → lacuna → implementação → evidência:205/206 preservavam principal pago e seu reembolso, mas bloqueavam nova sucessão com saldo histórico reaberto. `CompanyInstallmentReopened` reúne apenas reversões integrais válidas de origens retidas ancestrais ainda não consumidas; revisão/confirmacão apresentam a composição; `CompanyInstallmentGenerations` rejeita reuso e origem fora da ancestralidade. `asaas_installment_reopened_allocation.php` valida saldo, histórico, isolamento, rollback, recuperação e nova geração sem dupla alocação. O transporte financeiro é simulado.
+
+Migration207 NOOP; nenhuma alteração em migrations anteriores ou recibos. Rollback exige preservar provas/relações de alocação, suspender novas sucessões e corrigir de forma aditiva. Não reduzir marcadores ou reintroduzir uma obrigação já alocada. Reversões parciais múltiplas, alocações avulsas e R01–R11 permanecem abertos.
+
+Validação207:16 verificações adicionais MySQL de redistribuição, incluindo dois processos concorrentes sob lock InnoDB, além das31 de sucessão paga e7 de reembolso histórico; regressões157 de recriação e51 pós-reembolso;452 asserts de migrations;8 cenários Chromium de revisão/ACL/escape/responsividade;13 de callback. Não é homologação do provedor.

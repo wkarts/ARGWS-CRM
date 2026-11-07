@@ -17,11 +17,12 @@ final class CompanyInstallmentGenerations
  }
  public static function currentMembers($db,string $p,array $active,array $all,int $actor):array
  {
+  require_once __DIR__.'/CompanyInstallmentReopened.php';
   $rows=static fn($sql,$args=[])=>\IssuerStorage::query($db,$sql,$args)->result_array();$issuer=(int)$active['issuer_id'];$roots=[];$seen=[];
   foreach($all as $o){if((int)$o['issuer_id']!==$issuer||$o['provider']!=='asaas'||!in_array($o['channel'],['installments','installment'],true))throw new \DomainException('asaas_installment_generation_conflict');if($o['channel']==='installments')$roots[(int)$o['id']]=$o;}
   if(!isset($roots[(int)$active['id']]))throw new \DomainException('asaas_installment_generation_conflict');
-  $cursor=(int)$active['id'];$visited=[];
-  while(true){if(isset($visited[$cursor]))throw new \DomainException('asaas_installment_generation_conflict');$visited[$cursor]=true;$root=$roots[$cursor]??null;if(!$root)throw new \DomainException('asaas_installment_generation_conflict');
+  $cursor=(int)$active['id'];$visited=[];$allocated=[];$ancestry=[];
+  while(true){if(isset($visited[$cursor]))throw new \DomainException('asaas_installment_generation_conflict');$visited[$cursor]=count($visited)+1;$root=$roots[$cursor]??null;if(!$root)throw new \DomainException('asaas_installment_generation_conflict');
    $members=array_values(array_filter($all,static fn($o)=>$o['batch_id']===$root['batch_id']&&$o['account_id']===$root['account_id']&&$o['environment']===$root['environment']));foreach($members as $m)$seen[(int)$m['id']]=true;
    $previous=CompanyInstallmentEditJournal::records($db,$p,$issuer,$cursor,'group_prev');if(!$previous)break;if(count($previous)!==1)throw new \DomainException('asaas_installment_generation_conflict');
    $link=$previous[0]['value'];$oldId=$link['previous_root']??null;$old=$roots[$oldId]??null;if(!$old||$old['state']!=='installment_bound'||$old['active_slot']!==null||($link['successor_root']??null)!==$cursor)throw new \DomainException('asaas_installment_generation_conflict');
@@ -39,9 +40,19 @@ final class CompanyInstallmentGenerations
     if(!$proof||$proof['state']!=='installment_observed'||$proof['account_revision']!==$plans[0]['account_revision']||($safe['customer']??null)!==$member['member']['customer']||($safe['billing_type']??null)!==$member['member']['billing_type']||!in_array($member['origin']['state'],['installment_bound','review_required'],true)||($member['origin']['state']==='review_required'&&$member['origin']['last_code']!=='company_adverse_event')||($e['proof_hash']??null)!==$proof['evidence_hash']||!hash_equals($proof['evidence_hash'],CompanyInstallmentEditJournal::hash($safe))||($safe['id']??null)!==$remote||($safe['deleted']??null)!==true||!in_array($safe['status']??null,['PENDING','OVERDUE'],true)||($safe['value']??null)!==$member['member']['value']||($safe['due_date']??null)!==$member['member']['due_date']||($safe['external_reference']??null)!==$member['member']['external_reference']||($safe['adverse']??true)||($safe['payment_date']??null)!==''||($safe['credit_date']??null)!==''||$rows('SELECT origin_id FROM '.$p.'asaas_company_receipts WHERE origin_id=?',[$origin])||($rows('SELECT state FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$origin])[0]['state']??null)!=='deleted')throw new \DomainException('asaas_installment_generation_conflict');
     foreach($rows('SELECT event_type,state,created_at FROM '.$p.'asaas_company_events WHERE account_row=? AND remote_id=?',[$historical['account']['id'],$remote]) as $event)if(!in_array($event['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true)||$event['state']==='conflict'||$event['created_at']>$proof['created_at'])throw new \DomainException('asaas_installment_generation_conflict');
    }
-   if(\CompanyInvoiceAmounts::minor($historical['review']['amount'])-$retained!==\CompanyInvoiceAmounts::minor($results[0]['value']['review']['amount'])||$results[0]['value']['review']['amount']!==$plans[0]['value']['amount'])throw new \DomainException('asaas_installment_generation_conflict');
+   $reopened=0;foreach($link['reopened']??[] as $allocation){
+    $id=$allocation['origin_id']??0;if(!is_int($id)||isset($allocated[$id]))throw new \DomainException('asaas_installment_reopened_conflict');$allocated[$id]=true;
+    $source=CompanyInstallmentIdentity::member($db,$p,$issuer,$id);$o=$source['origin'];
+    if((int)$o['invoice_id']!==(int)$active['invoice_id']||$o['account_id']!==$active['account_id']||$o['environment']!==$active['environment']||(int)$source['root']['id']!==($allocation['source_root']??null)||$source['identity']['member_value']!==($allocation['value']??null))throw new \DomainException('asaas_installment_reopened_conflict');
+    $receipt=$rows('SELECT payment_id FROM '.$p.'asaas_company_receipts WHERE origin_id=? AND issuer_id=?',[$id,$issuer])[0]??null;if(!$receipt||!self::retainedPayment($db,$p,$issuer,(int)$active['invoice_id'],(int)$receipt['payment_id']))throw new \DomainException('asaas_installment_reopened_conflict');
+    CompanyInstallmentRefundClosure::evidence($db,$p,$issuer,$actor,$source['members'][$o['remote_id']],$plans[0]['account_revision'],false,$allocation['closure']??[]);
+    $reopened+=\CompanyInvoiceAmounts::minor($allocation['value']);$ancestry[]=[$allocation['source_root'],$oldId];
+   }
+   if(CompanyInstallmentReopened::summary($link['reopened']??[])!==($plans[0]['value']['reopened']??[]))throw new \DomainException('asaas_installment_reopened_conflict');
+   if(\CompanyInvoiceAmounts::minor($historical['review']['amount'])-$retained+$reopened!==\CompanyInvoiceAmounts::minor($results[0]['value']['review']['amount'])||$results[0]['value']['review']['amount']!==$plans[0]['value']['amount'])throw new \DomainException('asaas_installment_generation_conflict');
    $cursor=$oldId;
   }
+  foreach($ancestry as [$sourceRoot,$oldRoot])if(!isset($visited[$sourceRoot],$visited[$oldRoot])||$visited[$sourceRoot]<=$visited[$oldRoot])throw new \DomainException('asaas_installment_reopened_conflict');
   if(count($visited)!==count($roots)||count($seen)!==count($all))throw new \DomainException('asaas_installment_generation_conflict');
   return array_values(array_filter($all,static fn($o)=>$o['batch_id']===$active['batch_id']&&$o['account_id']===$active['account_id']&&$o['environment']===$active['environment']));
  }
