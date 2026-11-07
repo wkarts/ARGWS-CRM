@@ -65,3 +65,10 @@ reembolso após edição, principal parcial, rollback e concorrência. A suíte
 carteira distinta das secundárias e negação de empréstimo de credenciais/acesso
 cruzado. A suíte passou em MySQL8.4 com7 verificações adicionais após74 da associação;
 transporte sintético, nenhuma chamada externa. O CI final continua necessário.
+
+Correção de CI após a publicação178: run42316831146/job128231380744 rejeitou a
+nova fixture de recebimento após edição porque `gmdate` já indicava7/11 enquanto
+o dia em `America/Sao_Paulo` ainda era6/11. Mantido o guard financeiro contra data
+futura; a fixture usa a data de pagamento sintética original. Um caso negativo
+novo exige rejeição de amanhã no fuso do provedor e zero recibos. A suíte passou
+novamente em MySQL com55 checks adicionais. Nenhuma regra financeira foi afrouxada.

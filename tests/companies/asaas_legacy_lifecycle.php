@@ -110,7 +110,11 @@ essentialCheck($originAfter['invoice_total']===$originBefore['invoice_total']&&$
 essentialCheck(\Asaas\CompanyOriginPolicy::isManual($db,$p,$editOrigin),'explicit edit never enables automatic reconciliation');
 $refundPage=$refunds->page($b,7,$editOrigin);
 essentialCheck($refundPage['source']['nominal']===$legacyResponse['value'],'refund read model uses audited effective legacy amount after edit');
-$legacyResponse['status']='RECEIVED';$legacyResponse['paymentDate']=gmdate('Y-m-d');$legacyResponse['creditDate']=gmdate('Y-m-d');
+$legacyResponse['status']='RECEIVED';
+$legacyResponse['paymentDate']=(new DateTimeImmutable('tomorrow',new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');$legacyResponse['creditDate']=$legacyResponse['paymentDate'];
+essentialThrows(fn()=>$batch->item($b,7,$editOrigin,true,$dec,$editMock),'asaas_company_receipt_requires_review','future payment date in provider timezone remains denied');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'asaas_company_receipts WHERE origin_id=?',[$editOrigin])->row()->n===0,'future-date rejection does not create a receipt');
+$legacyResponse['paymentDate']=$originalResponse['paymentDate'];$legacyResponse['creditDate']=$originalResponse['creditDate'];
 $editedPaid=$batch->item($b,7,$editOrigin,true,$dec,$editMock);
 essentialCheck($editedPaid['payment_id']>0,'explicit settlement verifies edited legacy charge against audited current amount');
 $editedRefundMock=function($env,$method,$path,$payload,$secret)use(&$legacyResponse,$editMock){
