@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "42353ae06150275ba59a3234c1e84aae6fe12a406370a731578301c71e0b9657",
+    "source_manifest_sha256": "6aafd7d263f0a89bb65840a691ae1e03fb5bb2a70f133bd47a3e359c9d86db5f",
     "counts": {
         "modules": 38,
-        "source_files": 4885,
+        "source_files": 4888,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.8.3",
+            "version": "1.8.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26322,12 +26322,12 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 24
+            "reference_count": 26
         },
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 19
         },
         {
             "name": "asaas_company_recreations",
@@ -29047,7 +29047,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 293
+            "reference_count": 294
         },
         {
             "name": "issuers_client_links",
@@ -29497,7 +29497,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 137
+            "reference_count": 138
         },
         {
             "name": "mrp_manufacturing_orders",

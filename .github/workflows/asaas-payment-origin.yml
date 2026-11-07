@@ -156,6 +156,7 @@ jobs:
           php tests/companies/asaas_legacy_primary_scope.php
           php tests/companies/asaas_installment_receipts.php
           php tests/companies/asaas_installment_removal.php
+          php tests/companies/asaas_installment_batch_removal.php
           php tests/companies/asaas_card_payments_concurrency.php
 
   settings-ui:

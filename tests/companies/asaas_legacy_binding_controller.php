@@ -5,6 +5,11 @@ $controller->input->verb='GET';$controller->output->status=200;$run();
 $csrf=$controller->session->data['company_asaas_preferences_csrf'];
 $before=$db->query('SELECT * FROM '.$p.'asaas_payment_origins')->result_array();
 foreach([
+ ['action'=>'review_installment_batch_removal','group_origin'=>1],
+ ['action'=>'remove_installment_batch','group_origin'=>1],
+ ['action'=>'remove_installment_batch','group_origin'=>1,'review_hash'=>str_repeat('a',64),'company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'remove_installment_batch','group_origin'=>1,'confirm'=>'1','review_hash'=>['invalid'],'company_asaas_preferences_csrf'=>$csrf],
+ ['action'=>'remove_installment_batch','group_origin'=>1,'confirm'=>'1','review_hash'=>'invalid','company_asaas_preferences_csrf'=>$csrf],
  ['action'=>'remove_installment','group_origin'=>1,'remote_id'=>'pay_synthetic'],
  ['action'=>'refresh_installment_removal','group_origin'=>1,'remote_id'=>'pay_synthetic'],
  ['action'=>'remove_installment','group_origin'=>1,'remote_id'=>'pay_synthetic','company_asaas_preferences_csrf'=>$csrf],

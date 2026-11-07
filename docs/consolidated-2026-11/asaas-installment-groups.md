@@ -1,5 +1,9 @@
 # Parcelamentos Asaas: revisão por empresa e conta
 
+Estado atual: adaptação1.8.4. Associação, baixa individual, exclusão individual e
+remoção conjunta revisada estão implementadas. As seções181–183 abaixo preservam
+o histórico; edição, reembolso e recriação de grupos permanecem pendentes.
+
 Referência funcional: módulo1.5.7, commit e790c33ade267b73027c167b468f06309d5d61e6,
 `AsaasReconciliation::expandInstallments`. Adaptador ARGWS: módulo1.8.1/181.
 
@@ -198,3 +202,57 @@ DELETE bem-sucedida seguida de GET, retry local após confirmação e preservaç
 do saldo nativo quando todas as parcelas são removidas. Chromium ampliado para
 seis cenários:1280/390px × escrita/leitura/exclusão incerta; estado incerto não
 oferece novo DELETE nem conciliação, somente consulta de recuperação com CSRF.
+
+## Remoção conjunta revisada — módulo1.8.4/184
+
+Na grade de parcelas, **Revisar exclusão das parcelas pendentes** consulta cada
+membro e apresenta a seleção exata antes de qualquer DELETE. Parcelas com recibo
+local, recebimento remoto observado ou intenção individual anterior aparecem
+separadamente como preservadas. A confirmação compara o digest da revisão refeita;
+um recebimento ocorrido desde a tela anterior muda a seleção e impede envio.
+
+A seleção aprovada é congelada em prova `group_remove`, com hash, ator, empresa,
+revisão da conta, snapshot original e auditoria, antes da primeira chamada. Falha
+nessa auditoria desfaz a intenção inteira, sem envio. Retomadas usam exatamente
+esse conjunto; não incorporam outra parcela silenciosamente. Mudança de conta,
+revogação de ACL, prova corrompida ou aprovação divergente bloqueiam execução.
+
+Cada parcela usa o journal de exclusão183. Falha/resultado incerto de uma parcela
+não é sucesso do conjunto: a tela mostra estados individuais e a retomada consulta
+a intenção enviada, sem novo DELETE. Concorrentes compartilham a aprovação e os
+journals dos membros. O resultado é recalculado sob lock a partir dos estados
+persistidos e guardado em prova append-only `group_result`.
+
+Esta é uma operação conjunta no CRM composta por exclusões individuais da API;
+não é uma transação atômica remota, nem chama DELETE do recurso installment.
+"Completo" significa somente que todas as parcelas da seleção aprovada tiveram
+exclusão confirmada. Não cancela a fatura, encerra recorrência, devolve valores,
+apaga recibos, elimina o grupo histórico ou restaura cobranças. A revisão continua
+visível para retomada pelo ator autorizado da aprovação; não há delegação implícita
+para outro ator.
+
+Migration184 NOOP; provas/auditoria/journals existentes, sem DDL ou backfill.
+Implantação futura requer backup e runner nativo confirmando1.8.4. Rollback de
+código não desfaz exclusões remotas; preserve a intenção e os estados por membro,
+não repita envios ou apague histórico. SDK e coleta de cartão continuam intocados.
+
+Primeira validação:79 verificações adicionais MySQL de seleção, rollback da
+aprovação, resultado parcial, recuperação, isolamento, revogação e adulteração.
+Runner184:357 assertions MySQL. Controller:21 guards após179 cumulativos.
+Chromium:10 cenários1280/390px × escrita/leitura/exclusão incerta/revisão de lote/
+revisão sem permissão; confirmação e CSRF, digest oculto, escapes e retomada.
+Transporte simulado; sem homologação Asaas ou operações reais.
+
+Rodada ampliada184:95 verificações MySQL adicionais. Inclui recebimento remoto
+entre revisão e confirmação (seleção obsoleta bloqueada), confirmação concorrente
+por reentrada durante o DELETE, aprovação única, preservação do membro já recebido
+e retomada sem duplicação. O envio único entre processos distintos permanece
+coberto pela suíte de remoção individual183, com dois workers reais.
+
+CI anterior5181094e: Asaas completo (contratos8.1/8.5, interface e MySQL) passou.
+A rodada agregada detectou falha em registry-shards8.1/5, job128275676322, teste
+`asaas_boundaries.php`: fixture de view não fornecia `preferences_csrf` e não
+abria CompanySettingsRuntime. Ambos reproduzidos localmente. Corrigida somente
+a fixture, mantendo StrictViewFixture e a exigência de contexto/CSRF; adicionada
+asserção do token dedicado nos formulários reais. Resultado:18 checks adicionais,
+136 cumulativos MySQL. Não houve remoção de guard ou redução de cobertura.

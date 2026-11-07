@@ -228,3 +228,15 @@ Ver `asaas-installment-groups.md` para formato, evidências e ciclo ainda penden
 
 Migration183 NOOP; core4.9.2 preservado. Cartão com trânsito de dados aguarda decisão;
 SDK sem ampliação. Sem merge/deploy/operações financeiras reais.
+
+### Continuação184 — remoção conjunta com revisão e retomada
+
+| Requisito | Código existente | Implementação | Evidência/limite |
+|---|---|---|---|
+| Remoção conjunta preservando parcelas recebidas | Exclusão individual183 | Seleção canônica, digest revisado, intenção auditada antes de dispatch | MySQL: preview sem DELETE, pagamento novo invalida revisão |
+| Resultado parcial e idempotência | Journal por membro | Conjunto imutável, retomada por GET, resultado persistido por parcela | Falha de resposta, reentrada concorrente, recibo irmão preservado |
+| Configuração e operação nativas | Grade de parcelas | Revisão e confirmação no mesmo monitor, CSRF/ACL/contexto | Controller21 guards; Chromium10 cenários |
+| Edição/reembolso/recriação de grupos e ciclo das alocações | Fontes avulsas e snapshots anteriores | Ainda pendente; não liberar por remoção de guards | Nenhuma conclusão integral alegada |
+
+Migration184 NOOP. Remoção conjunta por membros não equivale a DELETE do recurso
+installment nem a operação remota atômica. Sem alterações de SDK ou fluxo de cartão.
