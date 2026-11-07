@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "90fee7cca57b62a3e9a014e52fbdbcc8d2081c94694226158cef9d46b00a0be1",
+    "source_manifest_sha256": "77131b4f19188c6f9930efacdc143af7c46d6463c7346a239b0e2effe3e2b5c7",
     "counts": {
         "modules": 38,
-        "source_files": 4929,
+        "source_files": 4932,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
         "hook_candidates": 555,
-        "job_file_candidates": 74,
+        "job_file_candidates": 76,
         "report_file_candidates": 310,
-        "table_name_candidates": 945,
+        "table_name_candidates": 946,
         "database_call_candidates": 12542
     },
     "infrastructure_options": [
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.9.8",
+            "version": "1.9.9",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -476,6 +476,8 @@
             "job_candidates": [
                 "modules/asaas/controllers/gateways/Callback.php",
                 "modules/asaas/libraries/Asaas/CompanyCron.php",
+                "modules/asaas/libraries/Asaas/CompanyPixFutureWorker.php",
+                "modules/asaas/libraries/Asaas/CompanyPixFutureWorkerSchema.php",
                 "modules/asaas/libraries/Asaas/RemoteWebhook.php",
                 "modules/asaas/libraries/Asaas/WebhookAdminPresentation.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationSchema.php",
@@ -521,6 +523,7 @@
                 "asaas_company_payers",
                 "asaas_company_pix_event_jobs",
                 "asaas_company_pix_events",
+                "asaas_company_pix_future_workers",
                 "asaas_company_pix_observations",
                 "asaas_company_pix_receipt_jobs",
                 "asaas_company_pix_receipt_workers",
@@ -26332,6 +26335,11 @@
             "reference_count": 7
         },
         {
+            "name": "asaas_company_pix_future_workers",
+            "state": "not_verified",
+            "reference_count": 9
+        },
+        {
             "name": "asaas_company_pix_observations",
             "state": "not_verified",
             "reference_count": 1
@@ -26364,12 +26372,12 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 56
+            "reference_count": 58
         },
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
-            "reference_count": 24
+            "reference_count": 25
         },
         {
             "name": "asaas_company_recreations",
@@ -26414,7 +26422,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 109
+            "reference_count": 111
         },
         {
             "name": "asaas_payments_map",
@@ -29069,7 +29077,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 657
+            "reference_count": 658
         },
         {
             "name": "issuer_certificate_audit",
@@ -29539,7 +29547,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 151
+            "reference_count": 152
         },
         {
             "name": "mrp_manufacturing_orders",

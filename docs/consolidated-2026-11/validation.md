@@ -1041,3 +1041,11 @@ Runner de migrations:415 verificações MySQL; callback13; controller real16 gua
 CI do incremento197 remoto0d12e14f: Asaas completo aprovado em42352621834; agregado ainda em andamento na última consulta desta etapa. Não usar esse resultado como CI198 ou homologação bancária.
 
 Complemento198: os26 scripts de contrato sem rede passaram; sintaxe PHP dos serviços/views e diff sem whitespace inválido. Inventários conservadores regenerados sem marcar paridade/isolamento global como concluídos.
+
+## Incremento199 — worker financeiro Pix e correção de CI
+
+21 verificações MySQL adicionais do worker: vínculo preparado não ativa cron, confirmação separada, isolamento, revisão otimista, rollback da auditoria, responsável revogado antes do HTTP, envio único, pausa entre tentativas, baixa nativa idempotente, desabilitação durante POST e recuperação após reativação sem novo envio. Dois processos aguardam lock real e somente um obtém lease/envia; resposta perdida mantém uma única origem. Regressão198:15 checks de vínculo e27 de ciclos novamente aprovados.
+
+Migrations:420 assertions no runner nativo, incluindo falha de tracking199/retry/replay/tabela vazia;154/15548/101; callback13. Controller:17 guards. Contratos:26 scripts sem rede. Chromium:8 cenários existentes da guia Pix e4 da view de vínculo, incluindo habilitação/desabilitação explícitas, confirmação inicialmente desmarcada e revisões. Nenhum provedor real ou homologação financeira.
+
+CI198 feee484: contratos8.1/8.5 passaram; settings-ui falhou porque o teste anterior esperava cinco formulários e a consulta de vínculo acrescentou o sexto. Corrigida a matriz para validar as ações novas e conservar CSRF, conta/revisão das ações bancárias e ausência de formulários em perfil negado. A guia completa passou localmente após correção; MySQL daquele run foi cancelado pela orquestração. Não declarar CI198 verde nem atribuir esse resultado ao próximo SHA.

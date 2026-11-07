@@ -351,3 +351,13 @@ A configuração Asaas oferece revisão/confirmação, consulta do vínculo, emi
 Interromper o vínculo bloqueia novas emissões; não cancela cobranças já enviadas nem revoga o contrato bancário. Retirada do consentimento durante POST impede falso sucesso, preservando resultado técnico recuperável. A consulta de cobranças históricas permanece possível após interrupção/retirada. Migration198 NOOP; journals existentes, sem backfill, permissões ou chamadas externas. Rollback não apaga provas nem reduz marcador; suspender uso e corrigir aditivamente.
 
 Ainda pendentes: worker automático das cobranças futuras com ativação própria, substituição completa de autorização, fluxos restantes de grupos/alocações, paridade integral1.5.8 e R01–R11. Esta etapa implementa emissão operacional explícita, não automatização total nem homologação financeira. Cartão continua aguardando decisão específica; SDK sem ampliação.
+
+## Incremento199 — processamento automático por vínculo Pix
+
+Política separada, desabilitada por ausência de registro, exige confirmação explícita de emissão e recebimento sob o responsável da recorrência. Confere vínculo imutável e permissões atuais settings.edit/invoices/customers/payments. O cron não usa gateway global nem empresa de sessão para escolher contas: cada registro carrega empresa, origem e responsável; escopos são novamente verificados nos serviços. Seleção rotativa por vínculo e cursor de fatura, limite20/45s por chamada, próxima tentativa e lease de300s evitam sobreposição e repetição imediata.
+
+Cada ocorrência utiliza a reserva/POST único198. Origens já enviadas são somente consultadas, incluindo resultados incertos. RECEIVED canônico passa pelo escritor nativo, com lease/política/revisão/ACL revalidados dentro da transação financeira antes e depois da inserção. Desabilitar durante HTTP invalida o lease; resultado técnico permanece recuperável e o fechamento da tentativa não sobrescreve a política nova. Pausa, retirada ou mudança do contrato da série bloqueiam automação; consultas/baixas históricas explícitas continuam disponíveis198.
+
+Migration199 adiciona uma tabela de políticas/leases por origem, com FK e índice de próximas tentativas. Sem seed, ativação, backfill ou grants. Implantação futura exige runner/backup/tracking e revisão explícita de cada vínculo. Suspender política não estorna recebimentos; preservar tabela/journals e corrigir aditivamente, sem reduzir marcadores.
+
+Substituição completa de autorização, ciclos restantes de grupos/alocações e aceites integrais R01–R11 ainda pendentes. Cartão aguarda decisão, SDK sem ampliação. Sem merge, deploy ou operações financeiras reais.

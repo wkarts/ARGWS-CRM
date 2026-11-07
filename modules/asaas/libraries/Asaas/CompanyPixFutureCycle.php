@@ -10,14 +10,14 @@ final class CompanyPixFutureCycle
  private CompanyPixFutureSchedules $bindings;
  private ?array $frozen=null;
  private bool $remoteChecked=false;
- public function __construct(private $db,private string $p,private int $issuer,private int $actor,private int $root,private int $invoice,private $clock=null){$this->service=new CompanyService($db,$p);$this->bindings=new CompanyPixFutureSchedules($db,$p);}
- public function tables():array{return $this->bindings->tables();}
+ public function __construct(private $db,private string $p,private int $issuer,private int $actor,private int $root,private int $invoice,private $clock=null,private $workerGuard=null,private array $workerTables=[]){$this->service=new CompanyService($db,$p);$this->bindings=new CompanyPixFutureSchedules($db,$p);}
+ public function tables():array{return array_values(array_unique(array_merge($this->bindings->tables(),$this->workerTables)));}
  private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
  private static function hash(array $value):string{return hash('sha256',json_encode($value,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));}
  private function run(callable $work){return \IssuerTransaction::run($this->db,$this->p,$this->tables(),$work);}
  private function current():array
  {
-  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());[$proof,$context]=$this->bindings->bindingInOwnedTransaction($this->issuer,$this->actor,$this->root);[$root,$account,$source,,,$document]=$context;$binding=$proof['value'];
+  \IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());if($this->workerGuard!==null)($this->workerGuard)();[$proof,$context]=$this->bindings->bindingInOwnedTransaction($this->issuer,$this->actor,$this->root);[$root,$account,$source,,,$document]=$context;$binding=$proof['value'];
   $run=array_values(array_filter($document['runs'],fn($run)=>$run['state']==='completed'&&(int)$run['canonical_invoice_id']===$this->invoice));
   if(count($run)!==1||$this->invoice<=$binding['cutoff_invoice_id']||$this->invoice===(int)$root['invoice_id'])throw new \DomainException('asaas_pix_cycle_not_future');
   $invoice=$this->rows('SELECT i.id,i.hash,i.clientid,i.currency,i.duedate,i.total FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$this->invoice,$this->issuer])[0]??null;
@@ -52,6 +52,7 @@ final class CompanyPixFutureCycle
  private function historicalSource():array
  {
   \IssuerTransaction::assertOwned($this->db,$this->p,$this->service->tablesForRun());
+  if($this->workerGuard!==null)($this->workerGuard)();
   if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$this->issuer||\CompanySettingsRuntime::staffId()!==$this->actor))throw new \DomainException('asaas_company_access_denied');
   $origin=$this->rows('SELECT id FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? AND issuer_id=? AND channel=? AND active_slot=1 FOR UPDATE',[$this->invoice,$this->issuer,'api'])[0]??null;
   if(!$origin)throw new \DomainException('asaas_pix_cycle_not_sent');$source=$this->service->manualSourceInOwnedTransaction($this->issuer,$this->actor,(int)$origin['id']);
@@ -59,19 +60,19 @@ final class CompanyPixFutureCycle
  }
  public function observe(callable $decrypt,?callable $transport=null):int
  {
-  $read=fn()=>$this->historicalSource();$transaction=fn($work)=>\IssuerTransaction::run($this->db,$this->p,$this->service->tablesForRun(),$work);[$origin,$meta,$account,$invoice]=$transaction($read);
+  $read=fn()=>$this->historicalSource();$transaction=fn($work)=>\IssuerTransaction::run($this->db,$this->p,$this->tables(),$work);[$origin,$meta,$account,$invoice]=$transaction($read);
   $remote=$origin['remote_id'];
   if($remote===null){$secret=$decrypt($account['secret_cipher']);if(!is_string($secret))throw new \DomainException('asaas_company_credentials_required');$client=new CompanyClient($account['environment'],$secret,$transport);$wallet=$client->request('GET','wallets/');$transaction($read);
    if(!is_array($wallet['data']??null)||count($wallet['data'])!==1||($wallet['hasMore']??null)!==false||($wallet['data'][0]['id']??null)!==$account['account_id'])throw new \DomainException('asaas_company_account_unverified');
    $list=$client->request('GET','payments?externalReference='.$invoice['hash'].'&limit=100&offset=0');$transaction($read);
    if(!is_array($list['data']??null)||!array_is_list($list['data'])||count($list['data'])!==1||($list['hasMore']??null)!==false||($list['data'][0]['externalReference']??null)!==$invoice['hash']||!is_string($list['data'][0]['id']??null))throw new \DomainException('asaas_pix_cycle_recovery_required');$remote=$list['data'][0]['id'];
   }
-  return $this->service->observe($this->issuer,$this->actor,(int)$origin['id'],$decrypt,$transport,$remote,$read,$this->service->tablesForRun());
+  return $this->service->observe($this->issuer,$this->actor,(int)$origin['id'],$decrypt,$transport,$remote,$read,$this->tables());
  }
  public function settle(int $proof):int
  {
-  require_once __DIR__.'/CompanyReceivedReceipt.php';$read=fn()=>$this->historicalSource();[$origin,$meta]=\IssuerTransaction::run($this->db,$this->p,$this->service->tablesForRun(),$read);
-  return (new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($this->issuer,$this->actor,CompanyReceivedReceipt::explicit((int)$origin['id'],$proof,$meta['pix_cycle_reference'],$read,$this->service->tablesForRun()));
+  require_once __DIR__.'/CompanyReceivedReceipt.php';$read=fn()=>$this->historicalSource();[$origin,$meta]=\IssuerTransaction::run($this->db,$this->p,$this->tables(),$read);
+  return (new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($this->issuer,$this->actor,CompanyReceivedReceipt::explicit((int)$origin['id'],$proof,$meta['pix_cycle_reference'],$read,$this->tables()));
  }
  public function dispatch(callable $decrypt,?callable $transport=null):int
  {

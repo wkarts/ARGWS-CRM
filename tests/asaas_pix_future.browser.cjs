@@ -12,6 +12,7 @@ const {chromium}=require('playwright');
    for(const field of ['_company_context','csrf_test','company_asaas_preferences_csrf'])assert.equal(await form.locator('[name="'+field+'"]').count(),1);
    for(const check of await form.locator('[type="checkbox"]').all()){assert.equal(await check.isChecked(),false);assert.equal(await check.getAttribute('required'),'');}
   }
+  const automation=page.locator('form').filter({has:page.locator('input[value="configure_pix_future_worker"]')});assert.equal(await automation.count(),1);assert.equal(await automation.locator('[name="enabled"]').inputValue(),stopped?'0':'1');assert.equal(await automation.locator('[name="worker_revision"]').inputValue(),(stopped?'d':'0').repeat(64));
   assert.equal(await page.locator('input[value="issue_pix_cycle"]').count(),stopped?0:1);
   assert.equal(await page.locator('input[value="observe_pix_cycle"]').count(),1);
   assert.equal(await page.locator('input[value="settle_pix_cycle"]').count(),1);
