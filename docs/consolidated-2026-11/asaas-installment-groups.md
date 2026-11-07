@@ -174,3 +174,21 @@ cumulativos;353 assertions MySQL do runner nativo até183;13 callback/version;
 quatro cenários Chromium de view PHP real,1280/390px, leitura/escrita, confirmação
 separada e CSRF. Reentrada concorrente no transporte verifica envio único e veto
 à baixa; a suíte182 mantém o teste de dois processos para recibo canônico.
+
+Rodada ampliada183:49 verificações MySQL na remoção. Dois processos PHP distintos
+foram observados esperando o mutex nativo; o transporte sintético persistiu um
+único DELETE e ambos conservaram a mesma intenção. Não é apenas reentrada no
+mesmo processo. A fatura concorrente permaneceu sem recebimentos.
+
+Regressões independentes do CRM: apresentação nativa com templates reais e
+contextos A/B/nulo/obsoleto passou; view de pagamentos11 checks com SQLite e
+render real; formulário de fatura213 cumulativos MySQL, com seams de renderização
+explicitados pelo teste. Nenhuma dessas execuções equivale a prova HTTP/browser
+completa ou a paridade universal R01–R11.
+
+CI ff53a1bc: job128272650775 avançou pelo preço corrigido e encontrou a mesma
+preparação incompleta no controlador do monitor local (`asaas_monitor.php:27`).
+Reprodução local confirmou. A fixture agora testa a recusa com schema ausente,
+depois instala journal170/política157 antes de simular a configuração1.7.4.
+Monitor remoto independente:24 verificações MySQL adicionais após172 cumulativas.
+Monitor local corrigido:17 verificações MySQL adicionais após179 cumulativas.

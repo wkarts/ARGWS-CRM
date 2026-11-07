@@ -24,7 +24,11 @@ $renderMonitor=function($monitor)use($e){$accounts=[];$monitor_error=null;$actio
 $first['rows'][0]['remote_id']='<img src=x onerror=alert(1)>';
 $html=$renderMonitor($first);essentialCheck(str_contains($html,'&lt;img')&&!str_contains($html,'<img')&&str_contains($html,'monitor_before='),'view escapes provider identifiers and links older page');
 $controller->input=new class{public string $verb='GET';public array $posted=[];public array $filters=['monitor_kind'=>'events','monitor_state'=>'monitor_fixture'];public function method($upper){return $this->verb;}public function post($name=null,$clean=false){return $name===null?$this->posted:($this->posted[$name]??null);}public function get($name){return $this->filters[$name]??null;}};
-$controller->output->status=200;$run();
+$controller->output->status=200;
+essentialThrows(fn()=>$run(),'asaas_invoice_edit_schema_required','tracked monitor upgrade without required journal fails closed');
+\Asaas\CompanyInvoiceEditSchema::ensure($db,$p);
+\Asaas\CompanyOriginPolicy::ensure($db,$p,true);
+$run();
 essentialCheck($controller->output->status===200&&count($controller->load->view['monitor']['rows'])===50,'controller GET loads bounded local history');
 $controller->input->filters['monitor_kind']=['events'];$controller->output->status=200;$run();
 essentialCheck($controller->output->status===422&&$controller->load->view['monitor']===null,'invalid controller filters fail without fallback full history');
