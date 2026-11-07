@@ -952,3 +952,7 @@ O conteúdo usa o mesmo HTMLPurifier do writer, com política específica de PDF
 Teste real TCPDF+pdftotext passou: assunto, conteúdo anterior/posterior aos itens, ordem do marcador, fallback sem marcador, rejeição de script/elemento tcpdf/imagem/URI file e separação de metadados de Proposta em Orçamento. A ausência de conteúdo próprio em snapshots históricos conserva o renderer anterior. Isso fecha esta omissão específica, não a paridade integral R01.
 
 Suíte completa de preferências/PDF com fonte SQL real:436 verificações cumulativas SQLite e437 MySQL (129 específicas de PDF em cada motor), incluindo A/B/principal, formatos, orientação, replay/conversão e preservação de snapshots históricos. Regressão do sanitizador usado nas views nativas também passou. No CRM local autenticado, uma nova Proposta sintética criada pelo writer canônico retornou PDF200; o texto extraído confirmou assunto e corpo ordenado. Nenhum envio de email ou provedor. CI do próximo commit ainda pendente.
+
+## Pix Automático — consulta administrativa 188
+
+Consulta pontual por conta/ambiente na configuração nativa; somente GET e DTO mínimo. MySQL com transporte simulado, controlador CSRF/tipos, quatro cenários Chromium e migration188 (373 asserts) executados. Nenhuma autorização criada ou transação financeira. Adesão, jobs e webhooks Pix ainda não implementados; não declarar Pix Automático completo.

@@ -188,6 +188,27 @@ final class CompanyService
             return $result;
         });
     }
+    /** Account-bound observation only: remote ACTIVE never grants local consent or issuance. */
+    public function automaticPixAuthorizations($issuer,$actor,$account,string $revision,array $filters,callable $decrypt,?callable $transport=null):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
+        $path=AutomaticPixQuery::path($filters);CompanySchema::ensure($this->db,$this->p,false);
+        $guard=function()use($issuer,$actor,$account,$revision):array{
+            if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+            $this->authorize($issuer,$actor,'configuration');$this->authorize($issuer,$actor,'query');
+            if(!(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'asaas_reports','view'))throw new \DomainException('asaas_report_access_denied');
+            $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+            if(version_compare($version,'1.8.8','<'))throw new \DomainException('asaas_module_188_required');
+            $row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            return $row;
+        };
+        $run=fn(callable $work)=>\IssuerTransaction::run($this->db,$this->p,CompanyPreferences::tables(),$work);
+        $snapshot=$run($guard);$client=$this->client($snapshot,$decrypt,$transport);
+        self::wallet($client,$snapshot);$run($guard);
+        $response=$client->request('GET',$path);
+        return $run(function()use($guard,$response,$filters):array{$guard();return AutomaticPixQuery::read($response,$filters);});
+    }
     public function verifyAccount($issuer,$actor,$account,string $revision,callable $decrypt,?callable $transport=null):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorize($issuer,$actor,'configure');

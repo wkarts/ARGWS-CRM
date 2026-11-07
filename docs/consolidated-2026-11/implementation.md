@@ -251,3 +251,7 @@ SDK0.3.0 e dependências exatas do lock oficial incorporadas sem alterar o repos
 ### Permissões específicas de relatórios187
 
 Catálogo nativo inclui `asaas_reports.view/export` por empresa. Exportação não exige nem concede settings.edit; exige grants de leitura/exportação e os acessos de consulta atuais. Nenhum grant automático ou seed. Isolamento, ator restrito, admin global sem concessões e revogação durante HTTP cobertos no MySQL; demais relatórios/monitor/Pix e R01–R11 não declarados completos.
+
+### Pix Automático188 — consultas nativas com isolamento
+
+A guia Pix Automático consulta autorizações existentes por página ou ID sob empresa, conta, ambiente e revisão explícitos. Exige permissão de relatórios da empresa além das permissões de configuração/leitura e revalida durante a chamada. O DTO exclui cliente, QR e dados bancários. Nenhuma adesão, emissão ou baixa é ativada por observar `ACTIVE`. Migration188 NOOP; etapas de consentimento, jobs, cron e webhook Pix permanecem trabalho pendente, assim como a paridade completa da referência1.5.8.
