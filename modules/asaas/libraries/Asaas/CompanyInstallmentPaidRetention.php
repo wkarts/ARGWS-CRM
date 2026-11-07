@@ -20,12 +20,19 @@ final class CompanyInstallmentPaidRetention
   self::canonical($proof,$safe,$m,$hash);
   if($safe['payment_date']!==$payment['date']||$r['evidence_hash']!==$hash([$member['meta']['snapshot_hash'],$safe['value'],$safe['net_value'],$safe['fee'],$safe['payment_date'],$safe['billing_type'],$m['id']]))throw new \DomainException('asaas_installment_retained_receipt_conflict');
   $result=['type'=>'retained','origin_id'=>$id,'payment_id'=>(int)$r['payment_id'],'receipt_hash'=>$hash($r),'native_hash'=>$hash($payment),'core_hash'=>$hash($core),'proof_id'=>(int)$proof['id'],'proof_hash'=>$proof['evidence_hash'],'amount'=>$m['value']];
+  $validated=$proof;
+  if($fresh||isset($frozen['validated_id'])){
+   $validated=$fresh?($rows("SELECT * FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='parcel_query' ORDER BY id DESC LIMIT 1",[$id])[0]??null):($rows("SELECT * FROM {$p}asaas_company_proofs WHERE id=? AND origin_id=? AND operation='parcel_query'",[$frozen['validated_id'],$id])[0]??null);
+   $current=$validated?json_decode($validated['result_json'],true,32,JSON_THROW_ON_ERROR):[];self::canonical($validated,$current,$m,$hash);
+   if($validated['account_revision']!==$revision)throw new \DomainException('asaas_installment_retained_query_stale');
+   $result['validated_id']=(int)$validated['id'];$result['validated_hash']=$validated['evidence_hash'];
+  }
   if($frozen!==null&&$frozen!==$result)throw new \DomainException('asaas_installment_retained_receipt_conflict');
   if($frozen!==null){
    // Refund events have their own durable writer; other new/adverse facts require review.
    foreach($rows('SELECT event_type,state,created_at FROM '.$p.'asaas_company_events WHERE account_row=? AND remote_id=?',[$member['meta']['account_row'],$m['id']]) as $e){
     $refund=in_array($e['event_type'],['PAYMENT_REFUNDED','PAYMENT_REFUND_IN_PROGRESS','PAYMENT_PARTIALLY_REFUNDED'],true);
-    if($e['state']==='conflict'||!$refund&&(!in_array($e['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_RECEIVED'],true)||$e['state']==='review_required'||$e['created_at']>$proof['created_at']))throw new \DomainException('asaas_installment_retained_financial_review');
+    if($e['state']==='conflict'||!$refund&&(!in_array($e['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_RECEIVED'],true)||$e['state']==='review_required'||$e['created_at']>$validated['created_at']))throw new \DomainException('asaas_installment_retained_financial_review');
    }
   }
   if($fresh){

@@ -1,7 +1,7 @@
 <?php
 require __DIR__.'/asaas_installment_review.php';
 require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyInstallmentReceipt.php';
-$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['2.0.5','asaas']);
+$start=$GLOBALS['essentialChecks'];$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['2.0.6','asaas']);
 $root=$asaas->reviewLegacyInstallments($b,7,$invoice,$accounts[$b],'pay_group_one',$dec,$transport,$review()['review_hash'])['origin_id'];
 $payments=['pay_group_one'=>$first,'pay_group_two'=>$second];$posts=0;$new=[];$newGroup=[];$onPost=null;
 $paidTransport=function($env,$method,$path,$payload,$secret)use(&$payments,&$posts,&$new,&$newGroup,&$onPost,$mock){
@@ -15,6 +15,9 @@ $paidTransport=function($env,$method,$path,$payload,$secret)use(&$payments,&$pos
 };
 $payments['pay_group_one']['status']='RECEIVED';$payments['pay_group_one']['paymentDate']=$originalResponse['paymentDate'];$payments['pay_group_one']['creditDate']=$originalResponse['creditDate'];
 $proof=$asaas->observeInstallment($b,7,$root,'pay_group_one',$dec,$paidTransport);$payment=$writer->recordCompanyProviderReceipt($b,7,new \Asaas\CompanyInstallmentReceipt($root,'pay_group_one',$proof));
+// A legitimate update after the original receipt must be covered by a distinct canonical query.
+$oldProofTime=gmdate('Y-m-d H:i:s',time()-10);$db->query('UPDATE '.$p.'asaas_company_proofs SET created_at=? WHERE id=?',[$oldProofTime,$proof]);
+$db->query('INSERT INTO '.$p.'asaas_company_events(account_row,event_id,event_type,remote_id,payload_hash,state,created_at) VALUES(?,?,?,?,?,?,?)',[$accounts[$b],'retained-update','PAYMENT_UPDATED','pay_group_one',hash('sha256','synthetic-updated'),'observed',gmdate('Y-m-d H:i:s',time()-2)]);
 $asaas->removeInstallment($b,7,$root,'pay_group_two',hash('sha256','delete-unpaid-retain-paid'),$dec,$paidTransport);
 $before=$db->query('SELECT * FROM '.$p.'invoicepaymentrecords WHERE invoiceid=?',[$invoice])->result_array();
 $proposal=$asaas->reviewInstallmentRecreation($b,7,$root,2,'2027-01-05',$dec,$paidTransport);

@@ -2,7 +2,7 @@
 
 **Entrega parcial em draft. Não atende integralmente o consolidado e não está pronta para merge/deploy.**
 
-Estado atual: a referência funcional é Asaas **1.5.8**, adaptada ao CRM multiempresa; o marcador próprio do CRM avança para **2.0.5/205**, sem renumerar migrations anteriores. Núcleo4.9.2/492. Os relatos abaixo preservam a evolução histórica e não substituem os testes do SHA final.
+Estado atual: a referência funcional é Asaas **1.5.8**, adaptada ao CRM multiempresa; o marcador próprio do CRM avança para **2.0.6/206**, sem renumerar migrations anteriores. Núcleo4.9.2/492. Os relatos abaixo preservam a evolução histórica e não substituem os testes do SHA final.
 
 A sucessão agora mantém o principal pago no grupo anterior e recria somente o saldo elegível. Recibos, vínculos e provas originais permanecem imutáveis; o novo grupo não recebe cópias desses pagamentos. A revisão exibe separadamente valor retido e saldo. Somente parcelas excluídas ou integralmente revertidas entram novamente na obrigação, com conservação exata dos centavos e uma única tentativa de envio. Acesso ao reembolso explícito da parcela paga histórica permanece sujeito às permissões atuais.
 
@@ -419,3 +419,8 @@ Ainda pendentes: sucessão mantendo parcelas efetivamente pagas, reversão parci
 Recibos históricos permanecem byte a byte; provas de origem e valores ligam as gerações. O grupo sucessor contém somente o saldo elegível. Reembolso explícito da parcela histórica permanece possível e idempotente; não realoca automaticamente o saldo reaberto. Eventos adversos posteriores bloqueiam operações para revisão. [Matriz, evidências e limitações atuais](asaas-158-adaptation.md#205--sucessão-com-principal-pago-preservado).
 
 MySQL:31 verificações novas de sucessão,7 de reembolso histórico,53 de remoção incluindo correção da expectativa de CI204. Runner444; Chromium14 grupos/8 recriação. Provedor exclusivamente simulado. Migration205 NOOP, sem alteração das anteriores. CI do SHA publicado deve ser consultado separadamente; não há homologação nem conclusão integral do consolidado.
+
+
+## Incremento206 — prova da consulta que confirmou o principal retido
+
+A prova original do recibo continua imutável. A sucessão também congela ID/hash da consulta canônica que confirmou a retenção. Isso permite atualizações legítimas observadas entre recebimento e sucessão sem tratá-las depois como eventos inexplicados; eventos adversos ou posteriores à consulta continuam bloqueados. Links205 existentes conservam sua validação original, sem backfill. Migration206 NOOP. O teste de sucessão inclui evento de atualização posterior ao recibo e anterior à nova consulta; o reembolso histórico continua validado separadamente.

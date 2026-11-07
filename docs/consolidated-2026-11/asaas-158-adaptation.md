@@ -4,7 +4,7 @@ A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale
 
 Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-payment-module-perfex-crm/releases/download/v1.5.8/asaas-module-v1.5.8.zip). SHA-256 `a8c5d140c6b099805d34758aaae6fb4187d0afd1495bf8f55d96f5cb74a05da3`, 660 arquivos (768 entradas incluindo diretórios). O manifesto `asaas-158-source-manifest.json` registra hash de cada arquivo, inclusive vendor. O hash do ZIP não é o hash de outro empacotamento. Comparação com a cópia local 1.5.7 identificou 49 arquivos não-vendor adicionados/alterados; isso não é contagem de todas as diferenças de dependências.
 
-## Matriz atual da adaptação (205; seções seguintes preservam a evolução)
+## Matriz atual da adaptação (206; seções seguintes preservam a evolução)
 
 | Requisito/fonte | Código atual do CRM | Adaptação/evidência | Situação |
 |---|---|---|---|
@@ -89,3 +89,10 @@ Validação local: `asaas_installment_paid_succession.php`31 verificações MySQ
 CI204 falhou no teste de remoção: após204, um evento de reembolso sem reversão nativa produz `asaas_installment_full_refund_required`, antes do antigo erro genérico de vínculo. O teste mantém a rejeição exata e acrescenta que não há chamada remota nem mudança no journal; nenhum guard foi removido.
 
 Migration205 NOOP; histórico preservado. Rollback: suspender novas sucessões, preservar provas/recibos e aplicar correção aditiva; não reduzir marcador nem apagar grupos já criados. Uma reversão posterior de pagamento retido pode criar saldo fora do grupo ativo: a igualdade exigida com o saldo nativo bloqueia nova recriação até revisão de alocação, ainda pendente. Reversões parciais múltiplas continuam trabalho de implementação, não limitação atribuída ao provedor. Aceites R01–R11 e CI final continuam separados destas evidências.
+
+
+### 2.0.6 — consulta de confirmação congelada
+
+A retenção agora distingue o recibo original da prova canônica de confirmação: ambos possuem ID e hash verificados. Um PAYMENT_UPDATED legítimo entre essas provas não invalida a cadeia após o envio. A consulta congelada não pode ser substituída por uma consulta posterior; eventos adversos e eventos posteriores ao seu horário permanecem sujeitos a revisão. Compatibilidade205 sem reescrever journals. Migration206 NOOP. As demais pendências da matriz permanecem abertas.
+
+Validação206:31 verificações de sucessão e7 de reembolso histórico MySQL com atualização intermediária legítima e provedor simulado;448 asserts de migration nativa;13 de callback e sintaxe PHP. CI remoto final registrado na PR, sem presumir conclusão.
