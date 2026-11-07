@@ -4,9 +4,17 @@ namespace Asaas;
 require_once __DIR__.'/CompanyInstallmentEditJournal.php';
 require_once __DIR__.'/CompanyInstallmentIdentity.php';
 require_once __DIR__.'/CompanyInstallmentRefundClosure.php';
-/** An active group may coexist only with explicitly retired, canonically deleted predecessors. */
+require_once __DIR__.'/CompanyInstallmentPaidRetention.php';
+/** An active group may coexist only with audited predecessors: deleted, fully refunded or retained paid members. */
 final class CompanyInstallmentGenerations
 {
+ public static function retainedPayment($db,string $p,int $issuer,int $invoice,int $payment):bool
+ {
+  $r=\IssuerStorage::query($db,'SELECT r.origin_id FROM '.$p.'asaas_company_receipts r JOIN '.$p.'asaas_payment_origins o ON o.id=r.origin_id WHERE r.payment_id=? AND r.issuer_id=? AND o.invoice_id=? AND o.channel=?',[$payment,$issuer,$invoice,'installment'])->result_array();if(count($r)!==1)return false;
+  $bound=CompanyInstallmentIdentity::member($db,$p,$issuer,(int)$r[0]['origin_id']);$links=CompanyInstallmentEditJournal::records($db,$p,$issuer,(int)$bound['root']['id'],'group_next');if(count($links)!==1)return false;
+  $e=$links[0]['value']['retired'][$bound['origin']['remote_id']]??null;if(($e['type']??null)!=='retained')return false;
+  CompanyInstallmentPaidRetention::evidence($db,$p,$issuer,$bound['members'][$bound['origin']['remote_id']],$links[0]['account_revision'],false,$e);return true;
+ }
  public static function currentMembers($db,string $p,array $active,array $all,int $actor):array
  {
   $rows=static fn($sql,$args=[])=>\IssuerStorage::query($db,$sql,$args)->result_array();$issuer=(int)$active['issuer_id'];$roots=[];$seen=[];
@@ -27,10 +35,11 @@ final class CompanyInstallmentGenerations
    $bound=$rows("SELECT result_json FROM {$p}asaas_company_proofs WHERE origin_id=? AND operation='installment_bind'",[$cursor]);if(count($bound)!==1||(json_decode($bound[0]['result_json'],true,64,JSON_THROW_ON_ERROR)['review']??null)!==$results[0]['value']['review'])throw new \DomainException('asaas_installment_generation_conflict');
    $oldMembers=array_values(array_filter($all,static fn($o)=>$o['batch_id']===$old['batch_id']&&$o['channel']==='installment'));if(!$oldMembers)throw new \DomainException('asaas_installment_generation_conflict');$historical=CompanyInstallmentIdentity::member($db,$p,$issuer,(int)$oldMembers[0]['id']);
    if(count($link['retired']??[])!==count($historical['members']))throw new \DomainException('asaas_installment_generation_conflict');
-   foreach($historical['members'] as $remote=>$member){$origin=(int)$member['origin']['id'];$e=$link['retired'][$remote]??[];if(($e['type']??null)==='refunded'){CompanyInstallmentRefundClosure::evidence($db,$p,$issuer,$actor,$member,$plans[0]['account_revision'],false,$e);continue;}$proof=$rows("SELECT * FROM {$p}asaas_company_proofs WHERE id=? AND origin_id=? AND operation='parcel_query'",[$e['proof_id']??0,$origin])[0]??null;$safe=$proof?json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR):[];
+   $retained=0;foreach($historical['members'] as $remote=>$member){$origin=(int)$member['origin']['id'];$e=$link['retired'][$remote]??[];if(($e['type']??null)==='retained'){$retained+=\CompanyInvoiceAmounts::minor($e['amount']);CompanyInstallmentPaidRetention::evidence($db,$p,$issuer,$member,$plans[0]['account_revision'],false,$e);continue;}if(($e['type']??null)==='refunded'){CompanyInstallmentRefundClosure::evidence($db,$p,$issuer,$actor,$member,$plans[0]['account_revision'],false,$e);continue;}$proof=$rows("SELECT * FROM {$p}asaas_company_proofs WHERE id=? AND origin_id=? AND operation='parcel_query'",[$e['proof_id']??0,$origin])[0]??null;$safe=$proof?json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR):[];
     if(!$proof||$proof['state']!=='installment_observed'||$proof['account_revision']!==$plans[0]['account_revision']||($safe['customer']??null)!==$member['member']['customer']||($safe['billing_type']??null)!==$member['member']['billing_type']||!in_array($member['origin']['state'],['installment_bound','review_required'],true)||($member['origin']['state']==='review_required'&&$member['origin']['last_code']!=='company_adverse_event')||($e['proof_hash']??null)!==$proof['evidence_hash']||!hash_equals($proof['evidence_hash'],CompanyInstallmentEditJournal::hash($safe))||($safe['id']??null)!==$remote||($safe['deleted']??null)!==true||!in_array($safe['status']??null,['PENDING','OVERDUE'],true)||($safe['value']??null)!==$member['member']['value']||($safe['due_date']??null)!==$member['member']['due_date']||($safe['external_reference']??null)!==$member['member']['external_reference']||($safe['adverse']??true)||($safe['payment_date']??null)!==''||($safe['credit_date']??null)!==''||$rows('SELECT origin_id FROM '.$p.'asaas_company_receipts WHERE origin_id=?',[$origin])||($rows('SELECT state FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$origin])[0]['state']??null)!=='deleted')throw new \DomainException('asaas_installment_generation_conflict');
     foreach($rows('SELECT event_type,state,created_at FROM '.$p.'asaas_company_events WHERE account_row=? AND remote_id=?',[$historical['account']['id'],$remote]) as $event)if(!in_array($event['event_type'],['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_OVERDUE','PAYMENT_DELETED'],true)||$event['state']==='conflict'||$event['created_at']>$proof['created_at'])throw new \DomainException('asaas_installment_generation_conflict');
    }
+   if(\CompanyInvoiceAmounts::minor($historical['review']['amount'])-$retained!==\CompanyInvoiceAmounts::minor($results[0]['value']['review']['amount'])||$results[0]['value']['review']['amount']!==$plans[0]['value']['amount'])throw new \DomainException('asaas_installment_generation_conflict');
    $cursor=$oldId;
   }
   if(count($visited)!==count($roots)||count($seen)!==count($all))throw new \DomainException('asaas_installment_generation_conflict');

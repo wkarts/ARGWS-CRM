@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "9f32acc52178f99c4d2afa53403a83def048fb11d46c4dcfbe00fdc780352310",
+      "sha256": "4cfc16aa75285f96d5d2753e06156c1e720f0be233489c3da1b503dab4e7706d",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8726,7 +8726,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentEdits.php": {
-      "sha256": "e5c92bb749a6640dca1aa08069c68048d3edf2d6797461559931b2c2d8b36696",
+      "sha256": "6c7be9999dfe360b5b3eb7a6e97f38672dd7aa3ddc1e6c57921879a05ca48b68",
       "categories": [
         "payments"
       ],
@@ -8736,8 +8736,19 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/asaas/libraries/Asaas/CompanyInstallmentPaidRetention.php": {
+      "sha256": "932acff19fca7203ebf60509a1ccd07cbdaec39cfc06bcc8f07788be03ff420b",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        12
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRecreation.php": {
-      "sha256": "2c7e94db8f5d1998f8a64452815393aa3a9a7a0363f05a55cddf801ff5222d68",
+      "sha256": "bfd00171dbaa22d68be44ba1897b7e6d9009ed1dbe0572271c15d9b5dfbc45d0",
       "categories": [
         "payments"
       ],
@@ -8748,7 +8759,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyInstallmentRemoval.php": {
-      "sha256": "fcfb95c602570e1e2b8816b0a641baa645b909d29fc5626a3eea3cc696b65fdd",
+      "sha256": "37cf0be782f7f05cb6ddac4de07b71dc69a9e77e771cdd63224d8eeb6065d8e6",
       "categories": [
         "payments"
       ],
@@ -8945,7 +8956,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "33230c4175b433d1fb4b348f2f80bf9664a8b436d54d3e8aaa393a5b14e0deae",
+      "sha256": "082dc954d1501ef607e69c6858e8630d0ee7e18b5b6a509f974b64bfba1804d3",
       "categories": [
         "customer_privacy",
         "invoice_table",

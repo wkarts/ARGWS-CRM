@@ -48,7 +48,9 @@ essentialCheck($db->query('SELECT * FROM '.$p.'invoicepaymentrecords WHERE invoi
 essentialCheck($db->query('SELECT * FROM '.$p.'asaas_company_origin_meta WHERE origin_id IN (SELECT id FROM '.$p.'asaas_payment_origins WHERE invoice_id=?) ORDER BY origin_id',[$invoice])->result_array()===$bindings,'original binding snapshots never rewritten');
 $second['deleted']=false;essentialCheck($asaas->refreshInstallmentRemoval($b,7,$root,'pay_group_two',$dec,$remote)['state']==='review_required','canonical contradiction withdraws confirmation');$second['deleted']=true;
 $db->query('UPDATE '.$p.'asaas_company_events SET event_type=? WHERE event_id=?',['PAYMENT_REFUNDED','evt_member_deleted']);
-essentialThrows(fn()=>$asaas->refreshInstallmentRemoval($b,7,$root,'pay_group_two',$dec,$remote),'asaas_installment_binding_conflict','refund webhook is never reinterpreted as deletion');
+$beforeRefundCalls=count($calls);$beforeRefundState=$db->query('SELECT * FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$origin])->result_array();
+essentialThrows(fn()=>$asaas->refreshInstallmentRemoval($b,7,$root,'pay_group_two',$dec,$remote),'asaas_installment_full_refund_required','refund webhook requires native full reversal and is never reinterpreted as deletion');
+essentialCheck(count($calls)===$beforeRefundCalls&&$beforeRefundState===$db->query('SELECT * FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$origin])->result_array(),'unexplained refund event cannot call provider or change deletion journal');
 // Independent processes contend on the actual native mutex before any provider dispatch.
 $raceInvoice=$s->create($b,7,array_replace($input,['client_id'=>$customerB]),hash('sha256','installment-delete-race'));
 $raceHash=$db->query('SELECT hash FROM '.$p.'invoices WHERE id=?',[$raceInvoice])->row()->hash;

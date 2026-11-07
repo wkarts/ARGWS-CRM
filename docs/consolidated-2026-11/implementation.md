@@ -2,12 +2,11 @@
 
 **Entrega parcial em draft. Não atende integralmente o consolidado e não está pronta para merge/deploy.**
 
-Retomada após desconexão: arquivos locais preservados e comparados ao remoto8bcff568.
-Asaas1.5.6 confirmado emc3f169e7 é a fonte funcional vigente. A SDK fixada pela
-fonte foi consumida em172;173 adapta parâmetros/simulação de cartão por conta,
-174 acrescenta monitor local paginado;175 inclui consulta remota por conta e fila de comparação/conciliação;176 elimina agendamento indireto ao comparar;177 acrescenta vínculo legado revisado e recebimento parcial de uma cobrança Pix/boleto, com origem manual e writer nativo. [Matriz específica e evidências](asaas-156-adaptation.md).
-Parâmetros ainda não alimentam captura/oferta parcelada. Associação de grupos/parcelamentos, múltiplos candidatos, cartão e composição de encargos continuam pendentes; edição/remoção/reembolso/recriação dos novos vínculos legados exigem adaptação própria. Trânsito de dados
-de cartão continua aguardando decisão; a ampliação remota da SDK permanece pausada.
+Estado atual: a referência funcional é Asaas **1.5.8**, adaptada ao CRM multiempresa; o marcador próprio do CRM avança para **2.0.5/205**, sem renumerar migrations anteriores. Núcleo4.9.2/492. Os relatos abaixo preservam a evolução histórica e não substituem os testes do SHA final.
+
+A sucessão agora mantém o principal pago no grupo anterior e recria somente o saldo elegível. Recibos, vínculos e provas originais permanecem imutáveis; o novo grupo não recebe cópias desses pagamentos. A revisão exibe separadamente valor retido e saldo. Somente parcelas excluídas ou integralmente revertidas entram novamente na obrigação, com conservação exata dos centavos e uma única tentativa de envio. Acesso ao reembolso explícito da parcela paga histórica permanece sujeito às permissões atuais.
+
+Continuam incompletos: reversões parciais sucessivas e redistribuição revisada do saldo reaberto por reembolso posterior de principal retido; aceites funcionais/visuais integrais R01–R11; homologação externa. Cartão com trânsito de dados continua aguardando decisão específica. Não houve expansão da SDK, alteração do módulo Perfex, merge, deploy ou transação real.
 
 ## Fonte e bases verificadas
 
@@ -413,3 +412,10 @@ Parcelas da nova geração podem ser recebidas e as pendentes editadas/removidas
 Asaas2.0.4/204, migration NOOP, sem DDL/backfill/grants. Backup, runner nativo e marcador204 são pré-requisitos de futura implantação. Rollback não apaga devoluções ou cobranças: preservar os pares de sucessão, provas, claims e lançamentos; suspender uso e corrigir aditivamente. Nenhum merge/deploy ou operação financeira real.
 
 Ainda pendentes: sucessão mantendo parcelas efetivamente pagas, reversão parcial canônica e ciclo integral de alocações avulsas, paridade integral Asaas1.5.8/R01–R11 e homologação financeira. O suporte ao grupo com devolução integral não encerra essas lacunas. Cartão aguarda decisão específica.
+
+
+## Incremento205 — sucessão mantendo principal pago
+
+Recibos históricos permanecem byte a byte; provas de origem e valores ligam as gerações. O grupo sucessor contém somente o saldo elegível. Reembolso explícito da parcela histórica permanece possível e idempotente; não realoca automaticamente o saldo reaberto. Eventos adversos posteriores bloqueiam operações para revisão. [Matriz, evidências e limitações atuais](asaas-158-adaptation.md#205--sucessão-com-principal-pago-preservado).
+
+MySQL:31 verificações novas de sucessão,7 de reembolso histórico,53 de remoção incluindo correção da expectativa de CI204. Runner444; Chromium14 grupos/8 recriação. Provedor exclusivamente simulado. Migration205 NOOP, sem alteração das anteriores. CI do SHA publicado deve ser consultado separadamente; não há homologação nem conclusão integral do consolidado.

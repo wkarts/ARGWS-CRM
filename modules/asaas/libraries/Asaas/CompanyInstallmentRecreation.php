@@ -10,21 +10,29 @@ trait CompanyInstallmentRecreation
   $this->authorize($issuer,$actor,'remote_remove');$this->authorize($issuer,$actor,'issue');(new \IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);
   $v=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($v,'2.0.2','<'))throw new \DomainException('asaas_module_202_required');
   $s=$this->installmentGroupInOwned($issuer,$actor,$group);
-  if(!in_array((int)$s[3]['status'],[1,4],true)||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=?',[$s[0]['invoice_id']]))throw new \DomainException('asaas_installment_recreation_unpaid_required');
+  if(!in_array((int)$s[3]['status'],version_compare($v,'2.0.5','>=')?[1,3,4]:[1,4],true)||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=?',[$s[0]['invoice_id']]))throw new \DomainException('asaas_installment_recreation_unpaid_required');
   $payments=$this->rows('SELECT id,amount FROM '.$this->p.'invoicepaymentrecords WHERE invoiceid=?',[$s[0]['invoice_id']]);
+  $retained=0;foreach($s[5] as $remote=>$member){$e=$this->installmentRetirementEvidence($s,$remote,$actor,$fresh);if(($e['type']??null)==='retained')$retained+=\CompanyInvoiceAmounts::minor($e['amount']);}
+  $amount=\CompanyInvoiceAmounts::minor($s[4]['amount'])-$retained;
   if($payments){
    if(version_compare($v,'2.0.4','<'))throw new \DomainException('asaas_installment_recreation_unpaid_required');
    $posted=(new \CompanyAsaasRefundPostings($this->db,$this->p))->forInvoiceInOwned($issuer,$actor,(int)$s[0]['invoice_id']);
-   foreach($payments as $payment)if(!isset($posted[(int)$payment['id']])||$posted[(int)$payment['id']]['returned_paid']!==self::money($payment['amount']))throw new \DomainException('asaas_installment_recreation_unpaid_required');
-   $balance=(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$s[0]['invoice_id']);if($balance['received']!=='0.00'||$balance['receivable']!==self::money($s[3]['total']))throw new \DomainException('asaas_installment_recreation_unpaid_required');
+   foreach($payments as $payment){$receipt=$this->rows('SELECT o.id FROM '.$this->p.'asaas_company_receipts r JOIN '.$this->p.'asaas_payment_origins o ON o.id=r.origin_id WHERE r.payment_id=? AND r.issuer_id=? AND o.invoice_id=? AND o.channel=?',[$payment['id'],$issuer,$s[0]['invoice_id'],'installment']);if(count($receipt)!==1||version_compare($v,'2.0.5','<')&&(!isset($posted[(int)$payment['id']])||$posted[(int)$payment['id']]['returned_paid']!==self::money($payment['amount'])))throw new \DomainException('asaas_installment_recreation_unpaid_required');}
   }
-  foreach($s[5] as $remote=>$member)$this->installmentRetirementEvidence($s,$remote,$actor,$fresh);
+  $balance=(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$s[0]['invoice_id']);
+  if($amount<=0||$balance['receivable']!==\CompanyInvoiceAmounts::decimal($amount))throw new \DomainException('asaas_installment_recreation_allocation_review');
+  $s[6]=['amount'=>\CompanyInvoiceAmounts::decimal($amount),'retained'=>\CompanyInvoiceAmounts::decimal($retained)];
   return $s;
  }
  private function installmentRetirementEvidence(array $s,string $remote,int $actor,bool $fresh):array
  {
   $origin=(int)$s[5][$remote]['origin']['id'];$issuer=(int)$s[0]['issuer_id'];
-  if($this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=?',[$origin]))return CompanyInstallmentRefundClosure::evidence($this->db,$this->p,$issuer,$actor,$s[5][$remote],$s[2]['revision'],$fresh);
+  if($receipt=$this->rows('SELECT payment_id FROM '.$this->p.'asaas_company_receipts WHERE origin_id=?',[$origin])){
+   $posted=(new \CompanyAsaasRefundPostings($this->db,$this->p))->forInvoiceInOwned($issuer,$actor,(int)$s[0]['invoice_id']);
+   if(isset($posted[(int)$receipt[0]['payment_id']]))return CompanyInstallmentRefundClosure::evidence($this->db,$this->p,$issuer,$actor,$s[5][$remote],$s[2]['revision'],$fresh);
+   $v=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';if(version_compare($v,'2.0.5','<'))throw new \DomainException('asaas_installment_recreation_unpaid_required');
+   return CompanyInstallmentPaidRetention::evidence($this->db,$this->p,$issuer,$s[5][$remote],$s[2]['revision'],$fresh);
+  }
   $op=$this->installmentRemovalLedger($origin);if(!$op||$op['state']!=='deleted'||$op['account_revision']!==$s[2]['revision'])throw new \DomainException('asaas_installment_recreation_deleted_required');
   if($this->db->table_exists($this->p.'asaas_company_refund_requests')&&$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_refund_requests WHERE origin_id=?',[$origin]))throw new \DomainException('asaas_installment_recreation_unpaid_required');
   if(!$fresh)return []; $proof=$this->installmentRemovalProof($s,$remote,true,$actor);return ['proof_id'=>(int)$proof['id'],'proof_hash'=>$proof['evidence_hash']];
@@ -33,6 +41,7 @@ trait CompanyInstallmentRecreation
  {
   foreach($s[5] as $remote=>$member){$issuer=(int)$s[0]['issuer_id'];$origin=(int)$member['origin']['id'];$closed=$this->transaction(fn()=>$this->installmentRetirementEvidence($s,$remote,$actor,false));
    if(($closed['type']??null)==='refunded'){require_once __DIR__.'/CompanyRefunds.php';(new CompanyRefunds($this->db,$this->p))->refresh($issuer,$actor,$closed['refund_request'],$decrypt,$transport);}
+   elseif(($closed['type']??null)==='retained')$this->observeInstallment($issuer,$actor,(int)$s[0]['id'],$remote,$decrypt,$transport);
    else $this->refreshInstallmentRemoval($issuer,$actor,(int)$s[0]['id'],$remote,$decrypt,$transport);
   }
  }
@@ -46,18 +55,18 @@ trait CompanyInstallmentRecreation
  {
   $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$dueDate);if($count<2||$count>100||!$date||$date->format('Y-m-d')!==$dueDate)throw new \DomainException('asaas_installment_recreation_invalid');
   $s=$this->transaction(fn()=>$this->installmentRecreationSource($issuer,$actor,$group,false));$this->refreshInstallmentRetirement($s,$actor,$decrypt,$transport);
-  return $this->transaction(function()use($issuer,$actor,$group,$count,$dueDate){$s=$this->installmentRecreationSource($issuer,$actor,$group,true);if($this->installmentRecreationPlan($issuer,$actor,$group))throw new \DomainException('asaas_installment_recreation_pending');$amount=$s[4]['amount'];if(\CompanyInvoiceAmounts::minor($amount)<$count)throw new \DomainException('asaas_installment_recreation_invalid');$review=['issuer_id'=>$issuer,'actor_id'=>$actor,'previous_root'=>$group,'invoice_id'=>(int)$s[0]['invoice_id'],'account_revision'=>$s[2]['revision'],'customer'=>$s[1]['customer_id'],'billing_type'=>$s[1]['billing_type'],'amount'=>$amount,'count'=>$count,'due_date'=>$dueDate,'binding_hash'=>self::hash($s[4])];$review['key']=self::hash(['group-recreation-v1',$review]);return $review;});
+  return $this->transaction(function()use($issuer,$actor,$group,$count,$dueDate){$s=$this->installmentRecreationSource($issuer,$actor,$group,true);if($this->installmentRecreationPlan($issuer,$actor,$group))throw new \DomainException('asaas_installment_recreation_pending');$amount=$s[6]['amount'];if(\CompanyInvoiceAmounts::minor($amount)<$count)throw new \DomainException('asaas_installment_recreation_invalid');$review=['issuer_id'=>$issuer,'actor_id'=>$actor,'previous_root'=>$group,'invoice_id'=>(int)$s[0]['invoice_id'],'account_revision'=>$s[2]['revision'],'customer'=>$s[1]['customer_id'],'billing_type'=>$s[1]['billing_type'],'amount'=>$amount,'retained'=>$s[6]['retained'],'count'=>$count,'due_date'=>$dueDate,'binding_hash'=>self::hash($s[4])];$review['key']=self::hash(['group-recreation-v1',$review]);return $review;});
  }
  public function installmentRecreationPage(int $issuer,int $actor,int $group):array
  {
-  return $this->transaction(function()use($issuer,$actor,$group){$plan=$this->installmentRecreationPlan($issuer,$actor,$group);$s=$this->installmentRecreationSource($issuer,$actor,$group,false);return ['group_origin'=>$group,'group_id'=>$s[0]['batch_id'],'amount'=>$s[4]['amount'],'count'=>count($s[5]),'due_date'=>$s[4]['members'][0]['due_date'],'pending'=>$plan?$plan['value']:null];});
+  return $this->transaction(function()use($issuer,$actor,$group){$plan=$this->installmentRecreationPlan($issuer,$actor,$group);$s=$this->installmentRecreationSource($issuer,$actor,$group,false);return ['group_origin'=>$group,'group_id'=>$s[0]['batch_id'],'amount'=>$s[6]['amount'],'retained'=>$s[6]['retained'],'count'=>count($s[5]),'due_date'=>$s[4]['members'][0]['due_date'],'pending'=>$plan?$plan['value']:null];});
  }
  public function recreateInstallmentGroup(int $issuer,int $actor,int $group,int $count,string $dueDate,string $approval,bool $confirmed,callable $decrypt,?callable $transport=null):array
  {
   if(!$confirmed)throw new \DomainException('asaas_company_confirmation_required');if(!preg_match('/^[a-f0-9]{64}$/D',$approval))throw new \DomainException('asaas_installment_recreation_invalid');
   $plan=$this->transaction(fn()=>$this->installmentRecreationPlan($issuer,$actor,$group));
   if(!$plan){$review=$this->reviewInstallmentRecreation($issuer,$actor,$group,$count,$dueDate,$decrypt,$transport);if($review['key']!==$approval)throw new \DomainException('asaas_legacy_review_changed');
-   $plan=$this->transaction(function()use($issuer,$actor,$group,$review){$s=$this->installmentRecreationSource($issuer,$actor,$group,true);$old=$this->installmentRecreationPlan($issuer,$actor,$group);if($old)return $old;if(self::hash($s[4])!==$review['binding_hash']||$s[2]['revision']!==$review['account_revision'])throw new \DomainException('asaas_company_stale');return CompanyInstallmentEditJournal::append($this->db,$this->p,$issuer,$actor,$group,$s[2]['revision'],'group_recreate',$review);});
+   $plan=$this->transaction(function()use($issuer,$actor,$group,$review){$s=$this->installmentRecreationSource($issuer,$actor,$group,true);$old=$this->installmentRecreationPlan($issuer,$actor,$group);if($old)return $old;if(self::hash($s[4])!==$review['binding_hash']||$s[2]['revision']!==$review['account_revision']||$s[6]['amount']!==$review['amount'])throw new \DomainException('asaas_company_stale');return CompanyInstallmentEditJournal::append($this->db,$this->p,$issuer,$actor,$group,$s[2]['revision'],'group_recreate',$review);});
   }
   if($plan['value']['key']!==$approval||$plan['value']['count']!==$count||$plan['value']['due_date']!==$dueDate)throw new \DomainException('asaas_legacy_review_changed');
   return $this->recoverInstallmentRecreation($issuer,$actor,$group,$approval,$decrypt,$transport);
@@ -65,7 +74,7 @@ trait CompanyInstallmentRecreation
  public function recoverInstallmentRecreation(int $issuer,int $actor,int $group,string $key,callable $decrypt,?callable $transport=null):array
  {
   $read=function()use($issuer,$actor,$group,$key){$plan=$this->installmentRecreationPlan($issuer,$actor,$group);if(!$plan||$plan['value']['key']!==$key)throw new \DomainException('asaas_installment_recreation_conflict');$links=CompanyInstallmentEditJournal::records($this->db,$this->p,$issuer,$group,'group_next');if($links){if(count($links)!==1)throw new \DomainException('asaas_installment_recreation_conflict');$new=(int)$links[0]['value']['successor_root'];$this->installmentGroupInOwned($issuer,$actor,$new);return ['complete'=>true,'origin_id'=>$new,'key'=>$key];}
-   $s=$this->installmentRecreationSource($issuer,$actor,$group,false);if($s[2]['revision']!==$plan['account_revision']||self::hash($s[4])!==$plan['value']['binding_hash'])throw new \DomainException('asaas_company_stale');return ['complete'=>false,'source'=>$s,'plan'=>$plan];};
+   $s=$this->installmentRecreationSource($issuer,$actor,$group,false);if($s[2]['revision']!==$plan['account_revision']||self::hash($s[4])!==$plan['value']['binding_hash']||$s[6]['amount']!==$plan['value']['amount'])throw new \DomainException('asaas_company_stale');return ['complete'=>false,'source'=>$s,'plan'=>$plan];};
   $state=$this->transaction($read);if($state['complete'])return $state;$s=$state['source'];$plan=$state['plan'];$input=$plan['value'];$reference=hash('sha256','installment-successor:'.$key);
   $this->refreshInstallmentRetirement($s,$actor,$decrypt,$transport);
   $client=$this->client($s[2],$decrypt,$transport);self::wallet($client,$s[2]);$this->transaction($read);self::customer($client,$s[1]['customer_id'],$s[3]);

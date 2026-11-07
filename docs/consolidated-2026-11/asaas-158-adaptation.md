@@ -4,7 +4,7 @@ A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale
 
 Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-payment-module-perfex-crm/releases/download/v1.5.8/asaas-module-v1.5.8.zip). SHA-256 `a8c5d140c6b099805d34758aaae6fb4187d0afd1495bf8f55d96f5cb74a05da3`, 660 arquivos (768 entradas incluindo diretórios). O manifesto `asaas-158-source-manifest.json` registra hash de cada arquivo, inclusive vendor. O hash do ZIP não é o hash de outro empacotamento. Comparação com a cópia local 1.5.7 identificou 49 arquivos não-vendor adicionados/alterados; isso não é contagem de todas as diferenças de dependências.
 
-## Matriz atual da adaptação (204; seções seguintes preservam a evolução)
+## Matriz atual da adaptação (205; seções seguintes preservam a evolução)
 
 | Requisito/fonte | Código atual do CRM | Adaptação/evidência | Situação |
 |---|---|---|---|
@@ -14,7 +14,7 @@ Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-paymen
 | Saldo/extrato/estatísticas e demais relatórios | Catálogo189 com20 recursos | CompanyReportEngine e permissões empresariais separadas, carteira/ambiente exclusivos; MySQL e apresentação testados | Implementado189; homologação individual no provedor e delegação fora de Configurações pendentes |
 | Pix Automático: autorização, jobs, cron e rotas públicas | Monitor188; inbox190; adesão/portal194–196; retirada197; ciclos198; worker199; sucessão200 | Consentimento explícito, envio único, QR privado, baixa nativa, recuperação, jobs por vínculo e substituição revisada; testes MySQL/controller/Chromium e provedor simulado | Fluxos operacionais implementados nos incrementos; homologação bancária e aceites integrados completos permanecem pendentes |
 | SDK 0.3.0/dependências da referência | Lock e runtime da release incorporados no186 | 534 assinaturas públicas preservadas, 14 novas; 23 suites de contrato do CRM passaram | Dependência adaptada; isso não habilita Pix Automático nem completa os relatórios |
-| Edição/reembolso/recriação de grupos e alocações parciais | Associação/baixa182; remoção184; reembolso191; edição201; sucessão202–204 | Principal fixo, membros elegíveis, cadeia auditada, envio único/recuperação e testes reais MySQL; ver asaas-installment-groups.md | Parcial: recriação para grupos excluídos ou com devolução integral registrada; grupos com principal ainda pago/reembolsado parcialmente e reversão parcial canônica ainda pendentes |
+| Edição/reembolso/recriação de grupos e alocações parciais | Associação/baixa182; remoção184; reembolso191; edição201; sucessão202–205 | Principal fixo, membros elegíveis, cadeia auditada, envio único/recuperação e testes reais MySQL; ver asaas-installment-groups.md | Parcial: sucessão preserva principal pago e recria saldo elegível; reembolso histórico integral validado. Redistribuição do saldo posteriormente reaberto e reversões parciais sucessivas ainda pendentes |
 | Cartão com trânsito de dados | Decisão específica ainda pendente | Nenhum novo fluxo de coleta implementado | Aguarda decisão |
 
 ## Escopo da exportação de cobranças185
@@ -78,3 +78,14 @@ Cada página verifica carteira remota, ACL, conta habilitada/verificada e revis�
 CSV inclui empresa, conta local e carteira, além de ambiente, filtros e horário. Arquivo temporário privado0600, limite10mil linhas/8MiB/45s, entrega só depois da conclusão e revalidação. Falhas fecham o arquivo; fórmulas são neutralizadas; somente colunas declaradas são projetadas. Valores monetários preservam decimal exato (sem conversão para float); valores fora do formato aceito falham. A API não fornece snapshot entre páginas. Relatórios consultam fatos remotos, sem aplicar baixa, autorização ou reembolso.
 
 Migration189 NOOP. Histórico preservado. Sem mudança na SDK ou repositório Perfex. Testes contratuais locais cobrem os20 recursos e falhas de paginação/exportação; testes MySQL cobrem permissões separadas, A/B, ambientes, revogação e ausência de lançamentos financeiros; navegador cobre catálogo, formulários, escape e responsividade. Homologação de cada recurso com a disponibilidade da conta no provedor não foi executada.
+
+
+### 2.0.5 — sucessão com principal pago preservado
+
+Requisito → existente → lacuna → implementação → evidência: a sucessão202/204 admitia apenas saldo integralmente aberto; faltava preservar parcelas pagas. `CompanyInstallmentPaidRetention` ancora recibo nativo, recibo do provedor, prova canônica e hash do writer original; `CompanyInstallmentGenerations` conserva valor entre gerações; recriação envia somente saldo revisado. Edição/remoção das novas parcelas aceitam o principal anterior comprovado. Reembolso histórico conserva autorização atual e origem original.
+
+Validação local: `asaas_installment_paid_succession.php`31 verificações MySQL adicionais, incluindo dois processos sob lock InnoDB, perda de resposta, envio único, rollback de auditoria, acesso cruzado, adulteração do recibo, nova baixa e revisão de reembolso histórico. `asaas_installment_retained_refund.php`7 verificações adicionais de envio único, rollback, reversão histórica, replay e bloqueio de saldo não alocado. Runner nativo444 asserts;14 cenários Chromium de grupos e8 de recriação. Provedor simulado; as views executam PHP real, mas não equivalem a homologação HTTP completa.
+
+CI204 falhou no teste de remoção: após204, um evento de reembolso sem reversão nativa produz `asaas_installment_full_refund_required`, antes do antigo erro genérico de vínculo. O teste mantém a rejeição exata e acrescenta que não há chamada remota nem mudança no journal; nenhum guard foi removido.
+
+Migration205 NOOP; histórico preservado. Rollback: suspender novas sucessões, preservar provas/recibos e aplicar correção aditiva; não reduzir marcador nem apagar grupos já criados. Uma reversão posterior de pagamento retido pode criar saldo fora do grupo ativo: a igualdade exigida com o saldo nativo bloqueia nova recriação até revisão de alocação, ainda pendente. Reversões parciais múltiplas continuam trabalho de implementação, não limitação atribuída ao provedor. Aceites R01–R11 e CI final continuam separados destas evidências.
