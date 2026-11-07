@@ -36,10 +36,10 @@ trait CompanyLegacyBinding
         if(version_compare($version,'1.7.8','<'))throw new \DomainException('asaas_module_178_required');
     }
     private static function legacyAudit(int $proof,string $hash):string{return json_encode(['proof_id'=>$proof,'evidence_hash'=>$hash],JSON_THROW_ON_ERROR);}
-    public function legacyReferenceInOwned(int $issuer,int $actor,int $origin):?string
+    public function legacyReferenceInOwned(int $issuer,int $actor,int $origin,?string $editKey=null):?string
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());$this->authorize($issuer,$actor,'configuration');
-        [$row,$meta]=$this->source($issuer,$origin,null,true);
+        [$row,$meta]=$this->source($issuer,$origin,$editKey,true);
         if(isset($meta['legacy_reference']))return $meta['legacy_reference'];
         if(!CompanyOriginPolicy::isManual($this->db,$this->p,$origin)||!$this->db->table_exists($this->p.'asaas_company_recreations'))return null;
         $links=$this->rows('SELECT origin_id FROM '.$this->p.'asaas_company_recreations WHERE successor_origin_id=? FOR UPDATE',[$origin]);

@@ -9,7 +9,7 @@ if($mysql)$engine=' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin';e
 $tables155=['modules','issuers_registry','asaas_payment_origins','asaas_company_accounts',...\Asaas\CompanyPreferencesSchema::tables()];
 $version155=fn()=>$db->get_where($p.'modules',['module_name'=>'asaas'])->row_array()['installed_version'];
 try{
-    migration154Check(($match[1]??null)==='1.7.9','current179 header preserves the historical155 migration');
+    migration154Check(($match[1]??null)==='1.8.0','current179 header preserves the historical155 migration');
     $db->query('CREATE TABLE `'.$p.'modules` (module_name VARCHAR(50) PRIMARY KEY,installed_version VARCHAR(20))'.$engine);
     $db->query('CREATE TABLE `'.$p.'issuers_registry` (id INT UNSIGNED NOT NULL PRIMARY KEY)'.$engine);
     $db->query('CREATE TABLE `'.$p.'asaas_payment_origins` (id INT NOT NULL PRIMARY KEY,environment VARCHAR(16) NOT NULL)'.$engine);

@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "92fa6f0f6000c25ac44eb3d2197f0e1b555ff93d417b3d16a4939e48f2d06a56",
+    "source_manifest_sha256": "d2546e051ca28f1e30f9bb8d34866f6a73ed12ef13ae8a06fd71dfe2c566a3e1",
     "counts": {
         "modules": 38,
-        "source_files": 4877,
+        "source_files": 4878,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.7.9",
+            "version": "1.8.0",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -29496,7 +29496,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 132
+            "reference_count": 133
         },
         {
             "name": "mrp_manufacturing_orders",

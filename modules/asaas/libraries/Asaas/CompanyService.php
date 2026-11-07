@@ -448,7 +448,16 @@ final class CompanyService
     /** Closed invoice-edit composition; pending-key bypass remains internal to the edit writer. */
     public function editSourceInOwnedTransaction(int $issuer,int $actor,int $origin,?string $key=null):array
     {
-        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');$source=$this->source($issuer,$origin,$key,true);$this->legacyLifecycleVersion($source[1]);if(isset($source[1]['legacy_reference'])&&!$source[1]['legacy_full_invoice'])throw new \DomainException('asaas_legacy_partial_edit_allocation_required');return $source;
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'issue');$source=$this->source($issuer,$origin,$key,true);$this->legacyLifecycleVersion($source[1]);if(isset($source[1]['legacy_reference'])&&!$source[1]['legacy_full_invoice'])throw new \DomainException('asaas_legacy_partial_edit_allocation_required');
+        if(!isset($source[1]['legacy_reference'])&&CompanyOriginPolicy::isManual($this->db,$this->p,$origin)){
+            $reference=$this->legacyReferenceInOwned($issuer,$actor,$origin,$key);
+            if($reference!==null){
+                $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
+                if(version_compare($version,'1.8.0','<'))throw new \DomainException('asaas_module_180_required');
+                $source[1]['legacy_reference']=$reference;$source[1]['legacy_full_invoice']=true;
+            }
+        }
+        return $source;
     }
     public function editSnapshotInOwnedTransaction(int $issuer,int $actor,int $invoice,bool $profile):array
     {

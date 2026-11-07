@@ -26,7 +26,7 @@ Git retornados pelo conector. Isso não é uma nova verificação do ZIP da Libr
 | Resumo/cartão/titular em blocos e CSS responsivo | Futuras telas de checkout/adesão dentro do shell nativo, com autorização/conta/empresa próprias | Ainda não portado; fluxo de trânsito de dados de cartão aguarda decisão |
 | Aviso Visa/Mastercard apenas para opção disponível selecionada de13–21 parcelas | Oferta validada no servidor, sem aviso de elegibilidade baseado só em parâmetro global | Testes oficiais confirmados; adaptação do checkout pendente |
 | Card de recorrência compacto após totais | Documento/portal nativo, consentimento explícito, sem redesenho global | Adaptação pendente, não ativada por esta atualização de referência |
-| Migration157 vazia e header1.5.7 | Histórico do CRM avança para1.7.9/179 | Não copiar157: esse ID já pertence ao CRM |
+| Migration157 vazia e header1.5.7 | Histórico do CRM avança para1.8.0/180 | Não copiar157: esse ID já pertence ao CRM |
 | Backend, contrato e SDK sem delta nesta versão | Serviços por empresa/conta/ambiente já existentes | SDK0.2.64 preservada, sem ampliação |
 
 `AsaasRecurring::scope` da fonte rejeita `issuer_id`/`emitter_id` e contas diferentes
@@ -87,8 +87,7 @@ para baixa automática. Uma cadeia incompleta ou alterada bloqueia o recebimento
 
 A migration179 é NOOP e seu tracking é obrigatório. Não há DDL, backfill, seed,
 credencial, permissão nova nem chamada financeira real. Alocações parciais não
-podem ser convertidas em cobranças integrais; grupos e edição de sucessores
-continuam pendentes. Implantação futura exige runner nativo e backup consistente;
+podem ser convertidas em cobranças integrais; grupos continuam pendentes. Implantação futura exige runner nativo e backup consistente;
 rollback de código não desfaz cobranças, recebimentos ou gerações registradas.
 Preservar journals e marcadores; tratar resultados incertos antes de retomar.
 
@@ -104,3 +103,22 @@ tracking antigo negado, cadeia alterada negada, baixa automática negada, replay
 e recusa de conversão de principal parcial em integral. Transportes simulados.
 CI anterior8b6b02b7: Asaas contracts8.1/8.5, settings-ui e MySQL passaram no
 run42317871022. Ainda havia jobs globais na fila; não é CI do novo commit179.
+
+## Edição explícita de sucessores integrais — módulo1.8.0/180
+
+O writer de edição agora aceita um sucessor manual somente após validar toda a
+cadeia até a associação legada integral revisada. As mesmas restrições de fatura
+sem recebimentos/créditos, eventos elegíveis, conta/revisão, prova recente e
+edição nativa continuam aplicadas. A chave do comando em recuperação atravessa
+somente a composição interna do journal; não libera outros comandos pendentes.
+
+O journal projeta valor/vencimento atualizado sem reescrever snapshots originais.
+A alteração não ativa recebimento automático, não adota origens manuais PIGE e
+não edita alocações parciais. Migration180 NOOP, tracking obrigatório. Runner
+nativo passou em341 assertions MySQL; callback13 e históricas154/155:48/101.
+
+Suíte ampliada `asaas_legacy_successors.php`:41 verificações adicionais MySQL
+após as mesmas suítes antecedentes. Inclui recusa antes do tracking180, PUT
+aceito com resposta perdida, recuperação sem novo PUT, valor nativo auditado,
+segunda recriação após edição e conciliação explícita do sucessor final.
+Nenhum PAN/CVV, transação real ou mudança no SDK.

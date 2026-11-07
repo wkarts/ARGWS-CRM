@@ -9,10 +9,10 @@ $invoice=$s->create($b,7,array_replace($input,['client_id'=>$customerB]),hash('s
 $legacyRemote='pay_legacy_successor_root';$legacyResponse=array_replace($originalResponse,['id'=>$legacyRemote,'externalReference'=>$db->query('SELECT hash FROM '.$p.'invoices WHERE id=?',[$invoice])->row()->hash,'value'=>'105.53','netValue'=>'104.53','status'=>'PENDING','paymentDate'=>'','creditDate'=>'']);
 $review=$asaas->reviewLegacyBinding($b,7,$invoice,$accounts[$b],$legacyRemote,$dec,$legacyTransport);
 $root=$asaas->reviewLegacyBinding($b,7,$invoice,$accounts[$b],$legacyRemote,$dec,$legacyTransport,$review['review_hash'])['origin_id'];
-$chainResponses=[$legacyRemote=>$legacyResponse];$postCount=0;$deleteCount=0;$newRemote=null;$losePost=true;
-$chainTransport=function($env,$method,$path,$payload,$secret)use(&$chainResponses,&$postCount,&$deleteCount,&$newRemote,&$losePost,$mock){
+$chainResponses=[$legacyRemote=>$legacyResponse];$postCount=0;$deleteCount=0;$putCount=0;$losePut=true;$newRemote=null;$losePost=true;
+$chainTransport=function($env,$method,$path,$payload,$secret)use(&$chainResponses,&$postCount,&$deleteCount,&$newRemote,&$losePost,&$putCount,&$losePut,$mock){
  if($method==='POST'&&$path==='payments'){$postCount++;$newRemote='pay_legacy_successor_'.$postCount;$chainResponses[$newRemote]=$payload+['id'=>$newRemote,'status'=>'PENDING','netValue'=>$payload['value'],'paymentDate'=>'','creditDate'=>'','deleted'=>false];if($losePost)throw new RuntimeException('synthetic accepted POST, lost response');return $chainResponses[$newRemote];}
- if(str_starts_with($path,'payments/')){$id=substr($path,9);if($method==='DELETE'){$deleteCount++;$chainResponses[$id]['deleted']=true;}return $chainResponses[$id]??[];}
+ if(str_starts_with($path,'payments/')){$id=substr($path,9);if($method==='PUT'){$putCount++;$chainResponses[$id]=array_replace($chainResponses[$id],$payload);$chainResponses[$id]['netValue']=$payload['value'];if($losePut)throw new RuntimeException('synthetic accepted PUT, lost response');}if($method==='DELETE'){$deleteCount++;$chainResponses[$id]['deleted']=true;}return $chainResponses[$id]??[];}
  return $mock($env,$method,$path,$payload,$secret);
 };
 $cancel=new CompanyAsaasInvoiceCancellation($db,$p);$intents=new \Asaas\CompanyRecreationIntents($db,$p);$successors=new \Asaas\CompanyRecreationSuccessors($db,$p);$current=$root;
@@ -31,6 +31,18 @@ for($generation=1;$generation<=2;$generation++){
  $source=new CompanyAsaasRecreationSource($db,$p,$b,7,$current,$key);$s->reopen($b,7,$invoice,$revision,$source);
  essentialCheck($postCount===$generation&&$deleteCount===$generation,'one DELETE and one POST per explicit generation');
  essentialCheck((int)$db->query('SELECT status FROM '.$p.'invoices WHERE id=?',[$invoice])->row()->status!==5,'native reopening follows confirmed successor only');
+ if($generation===1){
+  $revision=$s->revision($b,7,$invoice);$payload=array_replace($input,['client_id'=>$customerB,'due_date'=>'2026-12-20']);$payload['items'][0]['rate']='180.00';
+  $lines=$db->query("SELECT id FROM {$p}itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$invoice])->result_array();
+  $metadata=['invoice_fields'=>[],'line_fields'=>array_fill(0,count($lines),[]),'tags'=>[],'tags_revision'=>(new NativeCompanyResourceTags($db,$p))->read($b,7,'invoice',$invoice)['revision'],'line_sources'=>array_map('intval',array_column($lines,'id')),'removed_line_ids'=>[]];
+  $editKey=hash('sha256','legacy-successor-edit');
+  essentialThrows(fn()=>$edits->update($b,7,$invoice,$revision,$payload,$metadata,$editKey,$dec,$chainTransport),'asaas_module_180_required','successor edit requires tracking180');
+  $db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.8.0','asaas']);
+  essentialThrows(fn()=>$edits->update($b,7,$invoice,$revision,$payload,$metadata,$editKey,$dec,$chainTransport),'asaas_invoice_edit_remote_unconfirmed','successor PUT uncertainty preserves native invoice');
+  $losePut=false;$edits->recover($b,7,$editKey,$dec,$chainTransport);
+  essentialCheck($putCount===1&&\Asaas\CompanyOriginPolicy::isManual($db,$p,$next),'edited successor remains manual and recovery never resends PUT');
+  essentialCheck($db->query('SELECT total FROM '.$p.'invoices WHERE id=?',[$invoice])->row()->total===$chainResponses[$newRemote]['value'],'successor edit applies audited remote amount to native invoice');
+ }
  $old['active_slot']=null;essentialCheck($db->query('SELECT * FROM '.$p.'asaas_payment_origins WHERE id=?',[$current])->row_array()===$old,'retirement preserves all predecessor evidence');$current=$next;
 }
 $chainResponses[$newRemote]['status']='RECEIVED';$chainResponses[$newRemote]['paymentDate']=$originalResponse['paymentDate'];$chainResponses[$newRemote]['creditDate']=$originalResponse['creditDate'];

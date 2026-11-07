@@ -196,3 +196,10 @@ Ver `asaas-157-reference.md`. Recriação preserva política manual, origem revi
 imutável e cadeia completa entre gerações. Conciliação explícita valida essa
 cadeia; não habilita baixa automática. Alocações parciais e grupos permanecem
 pendentes. Migration179 NOOP; histórico anterior intacto.
+
+### Continuidade180 — edição de sucessor legado integral
+
+A edição explícita valida a cadeia revisada e conserva autoridade manual.
+Journal de edição permite recuperar PUT incerto sem repetir envio e mantém
+snapshots originais. Testes cobrem edição seguida de outra recriação/recebimento.
+Migration180 NOOP; alocações parciais e grupos continuam pendentes.
