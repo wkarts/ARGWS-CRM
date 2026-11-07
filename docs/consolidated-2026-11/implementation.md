@@ -244,3 +244,6 @@ installment nem a operação remota atômica. Sem alterações de SDK ou fluxo d
 ## Atualização de referência1.5.8 / módulo CRM1.8.5
 
 A nova referência funcional é a release Asaas1.5.8, inventariada por arquivo em `asaas-158-source-manifest.json`. A matriz de adaptação e os limites estão em `asaas-158-adaptation.md`. Primeira capacidade adaptada nesta etapa: exportação paginada das cobranças da conta/ambiente verificados, pela tela nativa, com ACL/CSRF, arquivo privado e descarte em falha. Não representa adaptação completa dos relatórios, Pix Automático, SDK0.3.0, grupos ou R01–R11. Migrations e isolamento anteriores preservados; migration185 NOOP.
+
+### Dependência da referência1.5.8 —186
+SDK0.3.0 e dependências exatas do lock oficial incorporadas sem alterar o repositório SDK. Compatibilidade de534 assinaturas preservada;23 suites PHP do workflow passaram, mais365 assertions do runner e regressões históricas48/101. Adaptação Pix/relatórios/grupos continua pendente; instalar a SDK não concede autoridade financeira. Ver matriz `asaas-158-adaptation.md`.

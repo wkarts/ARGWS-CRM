@@ -97,6 +97,7 @@ jobs:
           php tests/asaas_customer_contact_policy.php
           php tests/asaas_company_instruments.php
           php tests/asaas_mutation_no_retry.php
+          php tests/asaas_sdk_030.php
           php tests/asaas_settings_policy.php
           php tests/asaas_environment_profiles.php
           php tests/asaas_settings_presentation.php

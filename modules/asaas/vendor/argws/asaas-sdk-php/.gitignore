@@ -1,0 +1,9 @@
+/vendor/
+/.phpunit.result.cache
+/.idea/
+/.vscode/
+
+playground/.env
+playground/vendor/
+playground/storage/database.sqlite
+playground/storage/downloads/*

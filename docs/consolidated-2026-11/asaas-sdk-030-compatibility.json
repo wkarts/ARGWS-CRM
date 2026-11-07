@@ -1,0 +1,22 @@
+{
+  "old_public_methods": 534,
+  "new_public_methods": 548,
+  "removed": [],
+  "changed": [],
+  "added": [
+    "Asaas\\Sdk\\Service\\AutomaticPixService::__construct",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::cancelAnAutomaticPixAuthorization",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::createAnAutomaticPixAuthorization",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::createAnAutomaticPixPaymentInstructionRetry",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::listAutomaticPixAuthorizations",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::listAutomaticPixPaymentInstructions",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::retrieveASingleAutomaticPixAuthorization",
+    "Asaas\\Sdk\\Service\\AutomaticPixService::retrieveASingleAutomaticPixPaymentInstruction",
+    "Asaas\\Sdk\\Service\\Generated\\AutomaticPixService::createAnAutomaticPixPaymentInstructionRetry",
+    "Asaas\\Sdk\\Service\\Generated\\SubaccountService::closeNonBaasSubaccount",
+    "Asaas\\Sdk\\Service\\Generated\\SubaccountService::resendNonBaasSubaccountActivationLink",
+    "Asaas\\Sdk\\Service\\PaymentService::createHostedCardPayment",
+    "Asaas\\Sdk\\Service\\SubaccountService::closeNonBaasSubaccount",
+    "Asaas\\Sdk\\Service\\SubaccountService::resendNonBaasSubaccountActivationLink"
+  ]
+}
