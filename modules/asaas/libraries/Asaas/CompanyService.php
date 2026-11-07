@@ -15,6 +15,7 @@ require_once __DIR__.'/CompanyInstruments.php';
 require_once __DIR__.'/CompanyRemoteOperationsSchema.php';
 require_once __DIR__.'/CompanyClient.php';
 require_once __DIR__.'/CompanyPixReservations.php';
+require_once __DIR__.'/CompanyPixInitialPayments.php';
 require_once __DIR__.'/CompanyCardSettlement.php';
 require_once __DIR__.'/CompanyCheckoutSchema.php';
 require_once __DIR__.'/HostedCardCheckout.php';
@@ -31,7 +32,7 @@ require_once APPPATH.'services/CompanyCurrencyUnits.php';
 /** Named-company adapter. Never enters the legacy gateway, global configuration or invoice map. */
 final class CompanyService
 {
-    use CompanyPixReservations, CompanyLegacyBinding, CompanyInstallmentBindings, CompanyInstallmentRemoval, CompanyInstallmentBatchRemoval;
+    use CompanyPixInitialPayments, CompanyPixReservations, CompanyLegacyBinding, CompanyInstallmentBindings, CompanyInstallmentRemoval, CompanyInstallmentBatchRemoval;
     public function __construct(private $db,private string $p,private ?WebhookTokenCipher $webhookCipher=null)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('asaas_company_prefix_invalid');

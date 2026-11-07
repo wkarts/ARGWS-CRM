@@ -23,7 +23,15 @@ final class NativePortalInvoiceDetailHttp
   $bbInstrument=null;$paymentAction=$this->ci->input->method(true)==='POST'?$this->ci->input->post('native_payment_action'):null;
   if($paymentAction!==null){
    PortalRequestScope::assertMutation($this->ci);if($legacy)throw new DomainException('company_portal_invoice_unavailable');
-   if($paymentAction==='bb'&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}
+   if($paymentAction==='asaas_pix_consent'){
+    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
+    $revision=$this->ci->input->post('pix_consent_revision');$accepted=$this->ci->input->post('pix_consent_accept');
+    if(!is_string($revision)||$accepted!=='1')throw new DomainException('asaas_pix_explicit_consent_required');
+    (new \Asaas\CompanyPixConsent($this->ci->db,db_prefix()))->accept($portal,$identity['binding'],$issuer,(int)$id,$revision,true);
+    $this->verified($identity,$identities,$issuer);
+    redirect(NativePortalPresentation::url('invoice/'.$id.'/'.$hash),'location',303);return;
+   }
+   elseif($paymentAction==='bb'&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}
    elseif($paymentAction==='asaas'&&$this->ci->db->table_exists(db_prefix().'asaas_company_hosted_links')){require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$link=(new \Asaas\CompanyHostedLinks($this->ci->db,db_prefix()))->portalLink($portal,$identity['binding'],$issuer,$id);$this->verified($identity,$identities,$issuer);$this->ci->output->set_header('Referrer-Policy: no-referrer');redirect($link['url'],'location',303);return;}
    else throw new DomainException('company_portal_invoice_unavailable');
   }
@@ -44,6 +52,14 @@ final class NativePortalInvoiceDetailHttp
   $payments=$legacy?$legacyState['payments']:$documents->payments($identity['binding'],$issuer,$id);if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   $attachments=$legacy?$legacy->attachments($identity['binding'],$issuer,(int)$id,$hash):$documents->attachments($identity['binding'],$issuer,$id);$available=['bb'=>false,'asaas'=>false];if(!$legacy&&$this->ci->db->table_exists(db_prefix().'bb_checkout_publications')){require_once FCPATH.'modules/banco_brasil/libraries/BancoBrasil/Checkout.php';$available['bb']=!empty((new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_hosted_links')){require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$available['asaas']=!empty((new \Asaas\CompanyHostedLinks($this->ci->db,db_prefix()))->portalPage($portal,$identity['binding'],$issuer,[(int)$id])[(int)$id]);}if($identities->current($this->ci->session,$issuer)!==$identity)throw new DomainException('company_portal_invoice_unavailable');
   if($bbInstrument!==null){$bbInstrument=(new \BancoBrasil\Checkout($this->ci->db,db_prefix()))->portalInstrument($portal,$identity['binding'],$issuer,$id);}$this->verified($identity,$identities,$issuer);
-  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
+  $pixConsent=null;
+  if(!$legacy&&$this->ci->db->table_exists(db_prefix().'asaas_company_proofs')){
+   require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPixConsent.php';
+   try{$pixConsent=(new \Asaas\CompanyPixConsent($this->ci->db,db_prefix()))->page($portal,$identity['binding'],$issuer,(int)$id);}
+   catch(DomainException $denied){$pixConsent=null;}
+  }
+  $this->verified($identity,$identities,$issuer);
+  $this->ci->output->set_header('Cache-Control: private, no-store')->set_header('Referrer-Policy: no-referrer');
+  $this->ci->data(['title'=>$data['number'],'native_portal_invoice_document'=>$data,'native_portal_invoice_payments'=>$payments,'native_portal_invoice_attachments'=>$attachments,'native_portal_payment_available'=>$available,'native_portal_bb_instrument'=>$bbInstrument,'native_portal_pix_consent'=>$pixConsent,'native_portal_invoice_hash'=>$hash,'native_portal_csrf'=>PortalRequestScope::csrfToken($this->ci)]);$this->ci->view('invoicehtml');$this->ci->layout();
  }
 }

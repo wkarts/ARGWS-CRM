@@ -159,6 +159,8 @@ jobs:
           php tests/companies/asaas_pix_reservations.php
           php tests/companies/asaas_pix_recovery.php
           php tests/companies/asaas_pix_consent.php
+          php tests/companies/asaas_pix_portal_controller.php
+          php tests/companies/asaas_pix_initial_receipt.php
           php tests/companies/asaas_pix_inbox_controller.php
           php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php

@@ -14,6 +14,21 @@
 <?php if($native_portal_payment_available['bb']) { ?><?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" name="native_payment_action" value="bb" class="btn btn-default">Consultar boleto Banco do Brasil</button><?= form_close(); ?><?php } ?>
 <?php if(is_array($native_portal_bb_instrument)) { ?><section aria-label="Boleto Banco do Brasil"><h4>Banco do Brasil — <?= e($native_portal_bb_instrument['environment']==='production'?'Produção':'Homologação — sem pagamento real'); ?></h4><p>Valor original: R$ <?= e($native_portal_bb_instrument['amount']); ?> · Vencimento: <?= e($native_portal_bb_instrument['due_date']); ?></p><label for="native-bb-line">Linha digitável confirmada</label><textarea id="native-bb-line" readonly rows="3" class="form-control"><?= e($native_portal_bb_instrument['line']); ?></textarea><p>Confira beneficiário, valor e vencimento no aplicativo do banco. A exibição do boleto não confirma liquidação.</p></section><?php } ?>
 <?php if($native_portal_payment_available['asaas']) { ?><?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" name="native_payment_action" value="asaas" class="btn btn-success"><?= e(_l('invoice_html_online_payment_button_text')); ?> — Asaas</button><?= form_close(); ?><?php } ?>
+<?php if(is_array($native_portal_pix_consent??null)) { $pix=$native_portal_pix_consent;$frequency=['WEEKLY'=>'Semanal','MONTHLY'=>'Mensal','QUARTERLY'=>'Trimestral','SEMIANNUALLY'=>'Semestral','ANNUALLY'=>'Anual']; ?>
+<section aria-labelledby="native-pix-consent-title" class="panel_s mtop15"><div class="panel-body">
+<h4 id="native-pix-consent-title">Pix Automático — revisão do consentimento</h4>
+<p>Empresa: <?= e($document['identity']['legal_name']); ?> · Fatura: <?= e($document['number']); ?></p>
+<p>Valor: R$ <?= e($pix['terms']['amount']); ?> · Periodicidade: <?= e($frequency[$pix['terms']['frequency']]??$pix['terms']['frequency']); ?> · Início: <?= e($pix['terms']['start_date']); ?></p>
+<p><?= e($pix['terms']['text']); ?></p>
+<?php if($pix['accepted']) { ?><p role="status">Aceite registrado para esta revisão. A confirmação bancária e o pagamento são etapas distintas.</p>
+<?php } else { ?>
+<?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?>
+<?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><?= form_hidden('pix_consent_revision',$pix['revision']); ?>
+<div class="checkbox"><label><input type="checkbox" name="pix_consent_accept" value="1" required> Li os termos acima e autorizo a adesão descrita.</label></div>
+<button type="submit" name="native_payment_action" value="asaas_pix_consent" class="btn btn-default">Registrar meu aceite</button>
+<?= form_close(); ?><?php } ?>
+<p>Esta etapa registra somente o consentimento. Nenhuma solicitação ao banco ou cobrança é enviada por este formulário.</p>
+</div></section><?php } ?>
 <a class="btn btn-default go-to-portal" href="<?= e(NativePortalPresentation::url('clients/invoices')); ?>"><?= e(_l('client_go_to_dashboard')); ?></a>
 <?= form_open(NativePortalPresentation::url('invoice/'.$document['invoice_id'].'/'.$native_portal_invoice_hash)); ?><?= form_hidden('_native_portal_csrf',$native_portal_csrf); ?><button type="submit" name="invoicepdf" value="invoicepdf" class="btn btn-default"><?= e(_l('clients_invoice_html_btn_download')); ?></button><?= form_close(); ?>
 </div></div></div><?php return; } ?>

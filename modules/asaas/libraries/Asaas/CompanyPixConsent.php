@@ -27,6 +27,21 @@ final class CompanyPixConsent
  {
   return $this->run(function()use($portal,$session,$issuer,$invoice){[$terms,$revision]=$this->source($portal,$session,$issuer,$invoice);return ['terms'=>$terms,'revision'=>$revision];});
  }
+ /** Optional invoice panel; never performs transport or infers acceptance from bank status. */
+ public function page(\CompanyPortal $portal,array $session,int $issuer,int $invoice):?array
+ {
+  return $this->run(function()use($portal,$session,$issuer,$invoice){
+   [$terms,$revision]=$this->source($portal,$session,$issuer,$invoice);
+   $proofs=$this->rows('SELECT result_json,evidence_hash FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? AND operation=? FOR UPDATE',[$terms['origin_id'],'pix_consent']);
+   $accepted=false;
+   if($proofs){
+    if(count($proofs)!==1||self::hash(json_decode($proofs[0]['result_json'],true,32,JSON_THROW_ON_ERROR))!==$proofs[0]['evidence_hash'])throw new \DomainException('asaas_pix_consent_conflict');
+    $accepted=hash_equals($revision,$proofs[0]['evidence_hash']);
+    if(!$accepted)throw new \DomainException('asaas_pix_consent_conflict');
+   }
+   return ['terms'=>$terms,'revision'=>$revision,'accepted'=>$accepted];
+  });
+ }
  public function accept(\CompanyPortal $portal,array $session,int $issuer,int $invoice,string $revision,$accepted):int
  {
   if($accepted!==true||!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new \DomainException('asaas_pix_explicit_consent_required');
@@ -59,6 +74,22 @@ final class CompanyPixConsent
    if(($saved['evidence_hash']??null)!==$hash||$state!=='sending')throw new \RuntimeException('issuer_asaas_pix_claim_unconfirmed');
    return ['claimed'=>true,'proof_id'=>$id,'state'=>'sending'];
   });
+ }
+
+ /** Private, fresh QR recovery. No QR bytes are persisted in proofs, session or browser storage. */
+ public function instrument(\CompanyPortal $portal,array $session,int $issuer,int $invoice,string $revision,callable $decrypt,?callable $transport=null):array
+ {
+  $read=function()use($portal,$session,$issuer,$invoice,$revision){$value=$this->source($portal,$session,$issuer,$invoice);if(!hash_equals($revision,$value[1]))throw new \DomainException('asaas_pix_consent_stale');return $value;};
+  $page=$this->page($portal,$session,$issuer,$invoice);if(!$page['accepted']||!hash_equals($page['revision'],$revision))throw new \DomainException('asaas_pix_explicit_consent_required');
+  [$terms,,$account,$source,$actor]=$this->run($read);
+  $observed=$this->service->recoverPixAuthorization($issuer,$actor,$terms['origin_id'],'',$decrypt,$transport);$this->run($read);
+  try{$secret=$decrypt($account['secret_cipher']);}catch(\Throwable $error){throw new \DomainException('asaas_company_credentials_required');}if(!is_string($secret))throw new \DomainException('asaas_company_credentials_required');
+  $client=new CompanyClient($account['environment'],$secret,$transport);
+  $safe=CompanyPixAuthorizationContract::response($source+array_intersect_key($observed,array_flip(['remote_id','status','conciliation_id'])),$client->request('GET','pix/automatic/authorizations/'.$observed['remote_id']));
+  $withoutQr=$safe;unset($withoutQr['qr']);if($withoutQr!==$observed||$safe['status']!=='CREATED'||$safe['expires_at']<=gmdate('Y-m-d H:i:s'))throw new \DomainException('asaas_pix_qr_unavailable');
+  $this->run($read);$current=$this->page($portal,$session,$issuer,$invoice);if(!$current['accepted']||!hash_equals($current['revision'],$revision))throw new \DomainException('asaas_pix_explicit_consent_required');
+  // Only the copy-and-paste payload: arbitrary provider image bytes are never embedded.
+  return ['invoice_id'=>$invoice,'environment'=>$account['environment'],'amount'=>$source['amount'],'expires_at'=>$safe['expires_at'],'payload'=>$safe['qr']['payload']];
  }
 
  /** Server-side enrollment transport; no QR or financial posting is released by this method. */
