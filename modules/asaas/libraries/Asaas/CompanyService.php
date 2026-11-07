@@ -550,7 +550,7 @@ final class CompanyService
             $version=$this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0';
             if(version_compare($version,'1.9.1','<'))throw new \DomainException('asaas_module_191_required');
             $row=$bound['origin'];$meta=$bound['meta'];$account=$bound['account'];$parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);
-            if($write){if($this->installmentRemovalLedger($origin)!==null)throw new \DomainException('asaas_installment_removal_pending');CompanyOriginGenerations::assertActive($bound['root']);if((int)$account['enabled']!==1||$account['verified_at']===null||$row['active_slot']!==null)throw new \DomainException('asaas_refund_account_unverified');}
+            if($write){if($this->installmentRemovalLedger($origin)!==null)throw new \DomainException('asaas_installment_removal_pending');CompanyOriginGenerations::assertActive($bound['root']);CompanyInstallmentGenerations::currentMembers($this->db,$this->p,$bound['root'],$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE invoice_id=? ORDER BY id FOR UPDATE',[$row['invoice_id']]));if((int)$account['enabled']!==1||$account['verified_at']===null||$row['active_slot']!==null)throw new \DomainException('asaas_refund_account_unverified');}
             $meta['reviewed_amount']=$bound['identity']['member_value'];$meta['reviewed_due_date']=$bound['identity']['member_due_date'];$meta['installment_identity']=$bound['identity'];
             (new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['invoice_id']);
             return [$row,$meta,$account,$parent];

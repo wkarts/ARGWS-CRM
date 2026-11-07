@@ -1,20 +1,20 @@
 # Referência Asaas 1.5.8 e adaptação multiempresa
 
-A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale à versão instalada do módulo no CRM: o CRM preserva sua sequência própria, agora 1.8.7/187. Nenhuma migration 158 existente foi substituída. A integração completa da referência ainda não está concluída.
+A release 1.5.8 substitui 1.5.7 como contrato funcional de origem. Não equivale à versão instalada do módulo no CRM: o CRM preserva sua sequência própria, agora 2.0.3/203. Nenhuma migration 158 existente foi substituída. A integração completa da referência ainda não está concluída.
 
 Fonte efetivamente baixada: [ZIP oficial](https://github.com/wkarts/asaas-payment-module-perfex-crm/releases/download/v1.5.8/asaas-module-v1.5.8.zip). SHA-256 `a8c5d140c6b099805d34758aaae6fb4187d0afd1495bf8f55d96f5cb74a05da3`, 660 arquivos (768 entradas incluindo diretórios). O manifesto `asaas-158-source-manifest.json` registra hash de cada arquivo, inclusive vendor. O hash do ZIP não é o hash de outro empacotamento. Comparação com a cópia local 1.5.7 identificou 49 arquivos não-vendor adicionados/alterados; isso não é contagem de todas as diferenças de dependências.
 
-## Matriz inicial da atualização
+## Matriz atual da adaptação (203; seções seguintes preservam a evolução)
 
 | Requisito/fonte | Código atual do CRM | Adaptação/evidência | Situação |
 |---|---|---|---|
 | Exportação integral paginada em `AsaasReports::export` | Monitor remoto validado por empresa/conta/revisão | `CompanyPaymentReport`, formulário nativo e ação POST com CSRF; CSV entregue somente após todas as páginas | Implementado para cobranças e filtros já suportados pelo monitor |
 | Arquivo privado, orçamento de execução, rejeição de repetição e lista variável | Transporte limitado e DTO mínimo existentes | Temporário 0600 descartado em `finally`, 10 mil linhas/8 MiB/45s, duplicatas/total variável/ACL revogada rejeitados | Testes MySQL com provedor simulado |
 | Autorização de relatórios | ACL nativa por empresa | Exportação exige asaas_reports.view/export da empresa, settings.view e invoices.view; sem settings.edit | Implementado187 para a exportação disponível; demais relatórios e delegação sem acesso à tela de configurações permanecem pendentes |
-| Saldo/extrato/estatísticas e demais relatórios | Não adaptados | Não são expostos pelo exportador de cobranças | Pendente; impedir uso de gateway global/conta compartilhada |
-| Pix Automático: autorização, jobs, cron e rotas públicas | Monitor188, inbox/worker observacional190 e contratos estritos192 | Transporte sintético e testes de isolamento do observador; sem busca global por ID | Adesão, consentimento, intenção durável e jobs financeiros ainda pendentes; contratos não são fluxo integrado |
+| Saldo/extrato/estatísticas e demais relatórios | Catálogo189 com20 recursos | CompanyReportEngine e permissões empresariais separadas, carteira/ambiente exclusivos; MySQL e apresentação testados | Implementado189; homologação individual no provedor e delegação fora de Configurações pendentes |
+| Pix Automático: autorização, jobs, cron e rotas públicas | Monitor188; inbox190; adesão/portal194–196; retirada197; ciclos198; worker199; sucessão200 | Consentimento explícito, envio único, QR privado, baixa nativa, recuperação, jobs por vínculo e substituição revisada; testes MySQL/controller/Chromium e provedor simulado | Fluxos operacionais implementados nos incrementos; homologação bancária e aceites integrados completos permanecem pendentes |
 | SDK 0.3.0/dependências da referência | Lock e runtime da release incorporados no186 | 534 assinaturas públicas preservadas, 14 novas; 23 suites de contrato do CRM passaram | Dependência adaptada; isso não habilita Pix Automático nem completa os relatórios |
-| Edição/reembolso/recriação de grupos e alocações parciais | Vínculos e recebimentos por parcela, remoção individual/conjunta184 | Preservados integralmente | Ciclo restante pendente |
+| Edição/reembolso/recriação de grupos e alocações parciais | Associação/baixa182; remoção184; reembolso191; edição201; sucessão202/203 | Principal fixo, membros elegíveis, cadeia auditada, envio único/recuperação e testes reais MySQL; ver asaas-installment-groups.md | Parcial: recriação só para grupos totalmente excluídos sem pagamentos; grupos parcialmente pagos/reembolsados e reversão parcial canônica ainda pendentes |
 | Cartão com trânsito de dados | Decisão específica ainda pendente | Nenhum novo fluxo de coleta implementado | Aguarda decisão |
 
 ## Escopo da exportação de cobranças185

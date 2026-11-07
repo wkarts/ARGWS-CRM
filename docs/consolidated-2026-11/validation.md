@@ -1075,3 +1075,9 @@ MySQL descartável e API simulada:155 verificações adicionais de recriação, 
 Runner nativo:432 assertions MySQL com tracking202, retry e replay; migrations154/15548/101(SQLite); callback13; controller real44 guards após179 cumulativos; transporte22 sem rede, incluindo totalValue exclusivo e paginação limitada. Chromium:8 estados da view PHP de recriação e12 da grade, em desktop/mobile e perfis negados/históricos; apresentação real com dados sintéticos, não sessão HTTP autenticada completa nem homologação financeira. Sintaxe dos25 arquivos PHP alterados/novos aprovada e diff sem whitespace inválido.
 
 CI201 remoto30f4a439: workflow Asaas42358241912 aprovado, assim como núcleo/módulos e interfaces; stacks/HTTP e agregado ainda em execução na consulta desta etapa. Não equivale ao CI202. Inventários conservadores continuam com rollout bloqueado; as lacunas funcionais e a paridade integral R01–R11 não foram marcadas como concluídas. Nenhuma chamada financeira real, merge ou implantação.
+
+## Incremento203 — cadeia de sucessão antes do reembolso
+
+Regressão de reembolsos:33 verificações adicionais passaram, com dois processos e falha tardia de auditoria. Recriação:157 verificações adicionais MySQL com provedor simulado, incluindo cadeia adulterada bloqueando a intenção de reembolso antes de qualquer envio e preservação do fluxo válido. Runner nativo:436 assertions MySQL, preservando202 e acrescentando falha/tracking/retry/replay203. Migrations154/155:48/101 novamente em MySQL; callback13. Sintaxe PHP e diff aprovados. Matriz inicial da referência1.5.8 atualizada para refletir incrementos189–203, sem marcar como concluídos os fluxos restantes ou a homologação.
+
+CI202 (01cc7af6): contratos PHP8.1/8.5 e settings-ui Asaas aprovados; MySQL ainda em execução na leitura. Núcleo/migrations, interfaces, PWA, recorrências/reajustes e PIGE aprovados. Não atribuir esses resultados ao incremento203. Sem operações financeiras reais, merge ou deploy.

@@ -8599,7 +8599,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "c6c6c223b6f9e8fc8c70c86541c9e1cfa198258646006709081363cecb380e3f",
+      "sha256": "fb14ef316b3db48b37a97ccda16bf898673cf10779aaea27f5a087b55ba1d2f8",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -8945,7 +8945,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "e6b050fa377d9a8ef680931b583de04e41fc773aa3b18cd9304693b939564e02",
+      "sha256": "cc53247857120d4deed3f257eedbcf17dbc2118467b00a17583c39be494280e0",
       "categories": [
         "customer_privacy",
         "invoice_table",

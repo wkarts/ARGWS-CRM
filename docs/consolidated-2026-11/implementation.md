@@ -395,3 +395,9 @@ Só após confirmação canônica de todas as parcelas uma transação nativa re
 Limites: recriação de grupos parcialmente pagos, reaproveitamento de parcelas pagas, alteração irrestrita do total e reversão parcial canônica não estão concluídos. Os bloqueios são de implementação explícita, não indisponibilidade externa. A paridade integral Asaas1.5.8 e R01–R11 continua aberta; cartão aguarda decisão específica. Sem alterações no SDK ou no repositório Perfex.
 
 Asaas2.0.2/202 é sequência nativa do CRM, não versão upstream. Migration NOOP, sem DDL, backfill, grant ou ativação. Implantação futura requer backup consistente e runner nativo com marcador202. Reverter código não desfaz criação remota: preservar claims/provas/vínculos e recuperar por consulta, sem baixar marcador ou apagar histórico. Nenhum merge, deploy ou operação real foi executado.
+
+## Incremento203 — autoridade de reembolso e sucessão
+
+Antes de reservar, enviar ou confirmar reembolso de uma parcela, a composição privada valida também a cadeia do grupo ativo e suas provas pareadas de sucessão/exclusão. A identidade histórica do membro permanece imutável e a leitura histórica continua disponível; nenhuma prova202 é reescrita. Uma cadeia adulterada falha antes de reservar intenção ou chamar o provedor. Isso fecha uma diferença entre a autoridade de conciliação e a de reembolso dos grupos sucessores.
+
+Asaas2.0.3/203, migration NOOP, sem DDL, seed, backfill ou grants. Preservar journals e marcadores em implantação futura; rollback não desfaz operações financeiras e deve manter o guard de autoridade. Recriação de grupos parcialmente pagos/reembolsados, reversão parcial e paridade integral1.5.8/R01–R11 permanecem pendentes de implementação/validação; não são bloqueios externos presumidos. Cartão continua aguardando decisão.
