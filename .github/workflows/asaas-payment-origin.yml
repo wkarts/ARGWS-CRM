@@ -164,6 +164,7 @@ jobs:
           php tests/companies/asaas_pix_portal_enrollment.php
           php tests/companies/asaas_pix_receipt_jobs.php
           php tests/companies/asaas_pix_revocation.php
+          php tests/companies/asaas_pix_future_cycles.php
           php tests/companies/asaas_pix_inbox_controller.php
           php tests/companies/asaas_account_reports.php
           php tests/companies/asaas_batch_concurrency.php
@@ -196,6 +197,7 @@ jobs:
           node tests/browser/asaas_installments.cjs
           node tests/browser/asaas_payment_report.cjs
           node tests/browser/asaas_automatic_pix.cjs
+          node tests/asaas_pix_future.browser.cjs
           node tests/browser/asaas_account_reports.cjs
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs

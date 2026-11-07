@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "9b97fbbcc1021e80943beca572c7163263e9c189896f68db955075d28eabb71c",
+    "source_manifest_sha256": "90fee7cca57b62a3e9a014e52fbdbcc8d2081c94694226158cef9d46b00a0be1",
     "counts": {
         "modules": 38,
-        "source_files": 4924,
+        "source_files": 4929,
         "literal_option_keys": 680,
         "dynamic_option_references": 162,
         "controllers": 205,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.9.7",
+            "version": "1.9.8",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -26329,7 +26329,7 @@
         {
             "name": "asaas_company_pix_events",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
         },
         {
             "name": "asaas_company_pix_observations",
@@ -26364,12 +26364,12 @@
         {
             "name": "asaas_company_proofs",
             "state": "not_verified",
-            "reference_count": 49
+            "reference_count": 56
         },
         {
             "name": "asaas_company_receipts",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "asaas_company_recreations",
@@ -26414,7 +26414,7 @@
         {
             "name": "asaas_payment_origins",
             "state": "not_verified",
-            "reference_count": 105
+            "reference_count": 109
         },
         {
             "name": "asaas_payments_map",
@@ -28124,7 +28124,7 @@
         {
             "name": "contact_permissions",
             "state": "not_verified",
-            "reference_count": 61
+            "reference_count": 62
         },
         {
             "name": "contactpermissions",
@@ -28134,7 +28134,7 @@
         {
             "name": "contacts",
             "state": "not_verified",
-            "reference_count": 350
+            "reference_count": 351
         },
         {
             "name": "contract_comments",
@@ -29059,7 +29059,7 @@
         {
             "name": "invoicepaymentrecords",
             "state": "not_verified",
-            "reference_count": 148
+            "reference_count": 149
         },
         {
             "name": "invoicepaymentsmodes",
@@ -29069,7 +29069,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 655
+            "reference_count": 657
         },
         {
             "name": "issuer_certificate_audit",
@@ -29099,7 +29099,7 @@
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 171
+            "reference_count": 172
         },
         {
             "name": "issuers_installation_identity",
@@ -29109,7 +29109,7 @@
         {
             "name": "issuers_invoice_documents",
             "state": "not_verified",
-            "reference_count": 59
+            "reference_count": 60
         },
         {
             "name": "issuers_lock",
@@ -29539,7 +29539,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 150
+            "reference_count": 151
         },
         {
             "name": "mrp_manufacturing_orders",

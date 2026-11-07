@@ -1031,3 +1031,13 @@ O teste da guia isolada falhou por ausência de APPPATH no fixture após a inclu
 Runner nativo:411 verificações MySQL, incluindo falha/tracking/retry/replay197;26 scripts de contratos sem rede passaram. CI196 (1462ef7) aprovou contratos8.1/8.5 e settings-ui; MySQL ainda estava em andamento na leitura. Esses resultados não equivalem a CI197 nem homologação bancária.
 
 Validação complementar197: portal de retirada em Chromium1280/375 sobre view PHP real, com confirmação desmarcada, revisão e CSRF;8 cenários da guia administrativa incluindo cancelamento permitido/negado;9 guards do controller. Fixtures mantêm constantes e campos reais, sem reduzir asserts anteriores. Migrations154/15548/101 passaram. São testes de apresentação/controlador, não navegador autenticado por socket nem homologação financeira. CI Asaas196 concluído com sucesso em contracts8.1/8.5, settings-ui e MySQL: [run42351714316](https://github.com/wkarts/ARGWS-CRM/actions/runs/42351714316). Não substitui CI197.
+
+## Incremento198 — séries e ciclos Pix
+
+MySQL descartável com API simulada:15 verificações adicionais de preparação e27 de ciclos, além da cadeia de consentimento anterior. Cobrem origem estrangeira antes do HTTP, valor/periodicidade incompatíveis, contato revogado, revisão/confirmacão, rollback de auditoria, janela bancária, POST único, recuperação de resposta perdida, instrução de autorização incompatível, baixa idempotente, interrupção e retirada durante POST. Dois processos separados aguardam o mutex real e produzem exatamente um POST e uma prova de ciclo. Nenhuma chamada financeira real.
+
+Runner de migrations:415 verificações MySQL; callback13; controller real16 guards de CSRF; Chromium renderiza a view PHP nos estados preparado/interrompido em1280/375, verificando confirmação desmarcada, revisões, contexto/CSRF e recuperação preservada. A evidência de navegador é apresentação sintética da view, não sessão autenticada HTTP completa. Teste de ciclo integrado ao job MySQL e apresentação ao job settings-ui.
+
+CI do incremento197 remoto0d12e14f: Asaas completo aprovado em42352621834; agregado ainda em andamento na última consulta desta etapa. Não usar esse resultado como CI198 ou homologação bancária.
+
+Complemento198: os26 scripts de contrato sem rede passaram; sintaxe PHP dos serviços/views e diff sem whitespace inválido. Inventários conservadores regenerados sem marcar paridade/isolamento global como concluídos.

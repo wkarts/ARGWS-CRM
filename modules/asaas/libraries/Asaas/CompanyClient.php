@@ -37,6 +37,11 @@ final class CompanyClient
         if(!$invoiceEdit&&!$webhookRead&&!$webhookWrite&&(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/(?:refund|payWithCreditCard|payWithCard|receiveInCash)$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))))throw new \DomainException('asaas_company_request_invalid');
         return $this->perform($method,$path,$payload);
     }
+    public function pixInstructionsForPayment(string $id):array
+    {
+        if(!preg_match('/^pay_[A-Za-z0-9_-]{1,60}$/D',$id))throw new \DomainException('asaas_pix_payment_conflict');
+        return $this->perform('GET','pix/automatic/paymentInstructions?paymentId='.$id.'&limit=100&offset=0',null);
+    }
     /** Cancellation has its own bounded endpoint, never a caller-selected mutation path. */
     public function cancelPixAuthorization(string $id):array
     {

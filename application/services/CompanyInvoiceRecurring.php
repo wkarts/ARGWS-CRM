@@ -54,6 +54,13 @@ final class CompanyInvoiceRecurring extends CompanyInvoiceRecurringStorage
         $i=IssuerPolicy::id($issuer);$a=IssuerPolicy::id($actor);$id=IssuerPolicy::id($schedule);
         return $this->scheduleTx($i,$a,fn()=>$this->readDocument($i,$a,$id),false);
     }
+    /** Read-only composition under an existing owner; does not open a nested transaction. */
+    public function documentInOwnedTransaction(int $issuer,int $actor,int $schedule):array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables());
+        (new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);
+        $this->access($issuer,$actor,false);return $this->readDocument($issuer,$actor,$schedule);
+    }
     /** Complete directory snapshot. The existing page() contract retains its bounded summary. */
     public function directory($issuer,$actor):array
     {
