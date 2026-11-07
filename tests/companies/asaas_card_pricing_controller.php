@@ -5,6 +5,11 @@ require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyCardPricing.php';
 $start=$GLOBALS['essentialChecks'];
 \Asaas\CompanyCardPricingSchema::ensure($db,$p);unset($db->data_cache['table_names']);
 $db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.7.3','asaas']);
+// Tracking alone must not bypass the required native170 journal schema.
+$controller->input->verb='GET';
+essentialThrows(fn()=>$run(),'asaas_invoice_edit_schema_required','incomplete tracked upgrade fails closed before rendering settings');
+\Asaas\CompanyInvoiceEditSchema::ensure($db,$p);
+\Asaas\CompanyOriginPolicy::ensure($db,$p,true);
 $pricing=new \Asaas\CompanyCardPricing($db,$p);
 $controller->input->verb='GET';$controller->output->status=200;$run();
 $page=$pricing->page($a,7,$accounts[$a]);$values=$page['settings'];$values['card_fee_mode']='customer';

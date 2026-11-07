@@ -122,3 +122,55 @@ de botão de baixa em parcela paga. Binário Chromium do executor; no CI usa o
 binário pareado. Esses cenários de view não equivalem a homologação HTTP completa.
 Regressão de pós-reembolso corrigida:30 checks adicionais MySQL após69 de gerações
 e suas dependências. Gates do novo SHA e CI permanecem verificações separadas.
+
+## Exclusão individual — módulo1.8.3/183
+
+A grade permite excluir explicitamente uma parcela pendente/vencida ainda sem
+recibo local. O endpoint é `DELETE payments/{id}`; não é exclusão do grupo nem
+cancelamento da recorrência. Contrato oficial consultado em 7/11/2026:
+https://docs.asaas.com/reference/excluir-cobranca . Exclusão não é reembolso.
+
+O serviço valida empresa/conta/ambiente, ACL de exclusão, vínculo original,
+consulta canônica recente e estado não pago. Recebimentos das outras parcelas
+podem coexistir; créditos ou pagamentos nativos sem vínculo revisado impedem a
+operação. O mesmo mutex financeiro protege a intenção e a baixa por parcela.
+O journal existente grava `sending` antes do DELETE; retry retorna o estado
+persistido e nunca envia novamente. Uma perda de resposta permanece `uncertain`.
+Conferir exclusão faz GET e exige `deleted=true` com a mesma identidade e nominal.
+Resposta contraditória retira a confirmação e exige revisão. Não modifica saldo,
+fatura, calendário, política manual, vínculo original ou recibos das demais parcelas.
+
+Um evento PAYMENT_DELETED após a intenção enviada pode ser conferido por GET,
+sem apagar o evento nem reescrever a prova de associação. Eventos financeiros
+adversos diferentes, conflitos de payload e vínculos corrompidos continuam
+bloqueados. A baixa de uma parcela com intenção de exclusão é impedida; não há
+ativação automática de novo recebimento após restauração remota.
+
+CSRF e confirmação são independentes para excluir e conciliar. A interface
+expõe estado da intenção e consulta de recuperação. A observação técnica da
+resposta em trânsito pode ser gravada após revogação de ACL; isso não permite
+novas ações ou efeitos financeiros ao ator revogado.
+
+Migration183 NOOP. Banco, constraints e histórico publicados permanecem intactos.
+Futura implantação deverá confirmar1.8.3 pelo runner nativo. Reverter código não
+restaura cobranças removidas no provedor nem desfaz recebimentos; preserve o
+journal, use consulta de recuperação e não repita DELETE para reconstruir estado.
+Nenhum deploy, transação real, SDK ou coleta de cartão foi executado neste delta.
+
+Ainda pendentes: edição e remoção do recurso de grupo como conjunto, reembolso,
+recriação e ciclo completo das alocações parciais. Exclusão por membro não atende,
+sozinha, esses requisitos. Não confundir testes com transporte simulado com
+homologação Asaas ou autorização para operações reais.
+
+CI do checkpoint182: run42328340135/job128268789854 falhou porque a fixture de
+preço de cartão anunciava1.7.3 sem criar journal170/política157. Reprodução local
+confirmou o mesmo erro. Corrigida somente a preparação da fixture, acrescentando
+assert de falha fechada antes do schema. Controller de preços:9 checks adicionais
+MySQL após179 cumulativos. Nenhum guard de produção foi afrouxado.
+
+Validação183 executada:43 verificações MySQL adicionais na suíte de remoção
+(depois65/74/11/38/118 das dependências);16 guards do controlador depois179
+cumulativos;353 assertions MySQL do runner nativo até183;13 callback/version;
+quatro cenários Chromium de view PHP real,1280/390px, leitura/escrita, confirmação
+separada e CSRF. Reentrada concorrente no transporte verifica envio único e veto
+à baixa; a suíte182 mantém o teste de dois processos para recibo canônico.

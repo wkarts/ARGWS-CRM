@@ -216,3 +216,15 @@ financeiro dos grupos continuam pendentes; não equivaler consulta a conciliaç�
 Identidades imutáveis do grupo/membros, confirmação por digest e recebimento
 nominal pelo escritor nativo. Política manual, rollback e idempotência preservados.
 Ver `asaas-installment-groups.md` para formato, evidências e ciclo ainda pendente.
+
+### Continuação183 — ciclo dos membros de parcelamento
+
+| Requisito | Existente | Lacuna/implementação | Evidência |
+|---|---|---|---|
+| Exclusão de parcela sem perder recebimentos irmãos | Associação e recibo individual182 | Serviço e grade183; intenção única, DELETE individual, GET de confirmação | `tests/companies/asaas_installment_removal.php`, transporte simulado |
+| Concorrência e resultado incerto | Mutex e journals nativos | Intenção impede baixa concorrente; retry nunca repete DELETE; revogação bloqueia novas ações | MySQL, reentrada durante transporte, perda de resposta |
+| Isolamento e confirmação administrativa | Contexto/ACL/CSRF nativos | Ações remove/refresh no controlador; confirmação individual | Controller real e Chromium desktop/mobile |
+| Edição/reembolso/recriação de grupos e alocações parciais | Ciclo avulso anterior | Continua pendente; exclusão individual não equivale a ciclo integral | Sem alegação de conclusão |
+
+Migration183 NOOP; core4.9.2 preservado. Cartão com trânsito de dados aguarda decisão;
+SDK sem ampliação. Sem merge/deploy/operações financeiras reais.

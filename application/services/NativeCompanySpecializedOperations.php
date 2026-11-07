@@ -170,7 +170,7 @@ trait NativeCompanySpecializedOperations
                         if($action==='rotate'&&($post['confirm']??null)!=='1'){show_error('Confirme a substituição do token desta conta.',403);return;}
                         foreach(['token','webhook_token','one_time_token','api_key'] as $field)if(array_key_exists($field,$post)){show_error('O token é gerado exclusivamente pelo CRM.',400);return;}
                     }
-                    if(in_array($action,['confirm_legacy_installments','open_installment_group','observe_installment','reconcile_installment','preview_legacy_installments','preview_legacy_binding','confirm_legacy_binding','batch_compare','batch_reconcile','remote_monitor','save_profile','save_card_settings','save_card_pricing','preview_card_pricing','save_manual_policy','recover_manual','recover_invoice_edit','card_pay','card_query','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
+                    if(in_array($action,['remove_installment','refresh_installment_removal','confirm_legacy_installments','open_installment_group','observe_installment','reconcile_installment','preview_legacy_installments','preview_legacy_binding','confirm_legacy_binding','batch_compare','batch_reconcile','remote_monitor','save_profile','save_card_settings','save_card_pricing','preview_card_pricing','save_manual_policy','recover_manual','recover_invoice_edit','card_pay','card_query','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
                     if(str_starts_with($action,'refund_')){if(($post['confirm']??null)!=='1'||!is_string($post['company_asaas_refund_csrf']??null)||!hash_equals($refundCsrf,$post['company_asaas_refund_csrf'])){show_error('Reabra o formulário e confirme esta ação no reembolso.',403);return;}}
                     $this->load->library('encryption');
                     $decrypt=fn($value)=>$this->encryption->decrypt($value);
@@ -207,6 +207,15 @@ trait NativeCompanySpecializedOperations
                             $approval='';if($action==='confirm_legacy_installments'){if(($post['confirm']??null)!=='1'||!is_string($post['review_hash']??null)||$post['review_hash']==='')throw new DomainException('asaas_company_confirmation_required');$approval=$post['review_hash'];}
                             $legacyReview=$service->reviewLegacyInstallments($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,$post['remote_id'],$decrypt,null,$approval);
                             if($legacyReview['bound']){$installmentPanel=$service->installmentGroupPage($issuer,$actor,$legacyReview['origin_id']);$legacyReview=null;$saved='Grupo vinculado. Nenhum recebimento aplicado.';}break;
+                        case 'remove_installment':case 'refresh_installment_removal':
+                            $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
+                            if(!is_string($post['remote_id']??null))throw new DomainException('asaas_company_invalid_input');
+                            if($action==='remove_installment'){
+                                if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
+                                $operation=$service->removeInstallment($issuer,$actor,$groupOrigin,$post['remote_id'],hash('sha256','installment-removal:'.$issuer.':'.$groupOrigin.':'.$post['remote_id']),$decrypt);
+                            }else $operation=$service->refreshInstallmentRemoval($issuer,$actor,$groupOrigin,$post['remote_id'],$decrypt);
+                            $saved='Exclusão da parcela: '.$operation['state'].'. A fatura e os recebimentos das outras parcelas foram preservados.';
+                            $installmentPanel=$service->installmentGroupPage($issuer,$actor,$groupOrigin);break;
                         case 'open_installment_group':case 'observe_installment':case 'reconcile_installment':
                             $groupOrigin=IssuerPolicy::id($post['group_origin']??null);
                             if($action!=='open_installment_group'){
